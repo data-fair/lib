@@ -1,0 +1,78 @@
+{
+  "name": "@data-fair/lib",
+  "version": "0.0.1",
+  "description": "A collection of javascript functions, components, types, etc to help work inside the data-fair stack.",
+  "scripts": {
+    "lint": "eslint . --fix",
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "src",
+    "dist"
+  ],
+  "exports": {
+    "use-session": {
+      "types": "./dist/vue/use-session.d.ts",
+      "import": "./dist/vue/use-session.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/data-fair/lib.git"
+  },
+  "author": "Alban Mouton <alban.mouton@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/data-fair/lib/issues"
+  },
+  "homepage": "https://github.com/data-fair/lib#readme",
+  "peerDependencies": {
+    "@vueuse/integrations": "*",
+    "debug": ">= 4.0.0",
+    "jwt-decode": ">= 3.0.0",
+    "ofetch": ">= 1.0.0",
+    "vue": ">= 3.0.0 < 4.0.0",
+    "vue-i18n": ">= 9.0.0 < 10.0.0",
+    "vue-router": ">= 4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@vueuse/integrations": {
+      "optional": true
+    },
+    "jwt-decode": {
+      "optional": true
+    },
+    "ofetch": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "vue-i18n": {
+      "optional": true
+    },
+    "vue-router": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@babel/types": "^7.20.7",
+    "@types/debug": "^4.1.7",
+    "@types/node": "^18.13.0",
+    "@types/vue": "^2.0.0",
+    "@vueuse/integrations": "^9.12.0",
+    "debug": "^4.3.4",
+    "eslint": "^8.34.0",
+    "jwt-decode": "^3.1.2",
+    "ofetch": "^1.0.0",
+    "typescript": "^4.9.5",
+    "universal-cookie": "^4.0.4",
+    "vite-plugin-vuetify": "^1.0.2",
+    "vue": "^3.2.47",
+    "vue-i18n": "^9.2.2",
+    "vue-router": "^4.1.6"
+  }
+}
