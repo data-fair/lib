@@ -1,0 +1,1 @@
+export const lib = "Always import subpaths directly."

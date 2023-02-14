@@ -1,0 +1,12 @@
+version: '3'
+services:
+  #####
+  # dev tools installed through docker for convenience
+  #####
+
+  jtd:
+    build: ./dev/docker/jtd
+    profiles:
+      - tools
+    volumes:
+      - ./:/jtd

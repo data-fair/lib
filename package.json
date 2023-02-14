@@ -14,7 +14,11 @@
     "dist"
   ],
   "exports": {
-    "use-session": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./use-session": {
       "types": "./dist/vue/use-session.d.ts",
       "import": "./dist/vue/use-session.js"
     }
