@@ -11,18 +11,9 @@
   "sideEffects": false,
   "files": [
     "src",
-    "dist"
+    "vue",
+    "payload"
   ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./use-session": {
-      "types": "./dist/vue/use-session.d.ts",
-      "import": "./dist/vue/use-session.js"
-    }
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/data-fair/lib.git"

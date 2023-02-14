@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { ofetch } from 'ofetch'
 import jwtDecode from 'jwt-decode'
 import * as Debug from 'debug'
-import { SessionUser, OrganizationMembership } from '../types/session-user'
+import { SessionUser, OrganizationMembership } from '../payload/session-user'
 
 const debug = Debug('session')
 debug.log = console.log.bind(console)

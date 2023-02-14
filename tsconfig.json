@@ -4,11 +4,11 @@
     "module": "esnext",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "rootDir": "src",
-    "outDir": "dist",
+    "outDir": "./",
     "declaration": true,
     "strict": true,
     "moduleResolution": "node"
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "vue", "payload"]
 }
