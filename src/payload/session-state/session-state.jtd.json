@@ -1,0 +1,120 @@
+{
+  "definitions": {
+    "organizationMembership": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      },
+      "optionalProperties": {
+        "department": {
+          "type": "string"
+        },
+        "departmentName": {
+          "type": "string"
+        },
+        "dflt": {
+          "type": "boolean"
+        }
+      }
+    },
+    "userRef": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "user": {
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "organizations": {
+          "elements": {
+            "ref": "organizationMembership"
+          }
+        }
+      },
+      "optionalProperties": {
+        "isAdmin": {
+          "type": "boolean"
+        },
+        "adminMode": {
+          "type": "boolean"
+        },
+        "asAdmin": {
+          "ref": "userRef"
+        },
+        "pd": {
+          "type": "string",
+          "metadata": {
+            "alias": "plannedDeletion"
+          }
+        },
+        "ipa": {
+          "type": "string",
+          "metadata": {
+            "alias": "ipa"
+          }
+        }
+      }
+    },
+    "account": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "optionalProperties": {
+        "department": {
+          "type": "string"
+        },
+        "departmentName": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "optionalProperties": {
+    "user": {
+      "ref": "user"
+    },
+    "organization": {
+      "ref": "organizationMembership"
+    },
+    "account": {
+      "ref": "account"
+    },
+    "accountRole": {
+      "type": "string"
+    },
+    "lang": {
+      "type": "string"
+    },
+    "dark": {
+      "type": "boolean"
+    }
+  }
+}

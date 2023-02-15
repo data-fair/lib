@@ -11,5 +11,5 @@ alias dcr="docker compose run --rm"
 Some types are managed using [JSON Type Definitions](https://jsontypedef.com/) and [jtd-codegen](https://github.com/jsontypedef/json-typedef-codegen).
 
 ```
-dcr jtd jtd-codegen types/session-user/session-user.jtd.json --typescript-out types/session-user/
+dcr jtd jtd-codegen src/payload/session-state/session-state.jtd.json --typescript-out src/payload/session-state/
 ```

@@ -10,5 +10,5 @@
     "moduleResolution": "node"
   },
   "include": ["src"],
-  "exclude": ["node_modules", "vue", "payload"]
+  "exclude": ["node_modules", "vue", "payload", "express"]
 }
