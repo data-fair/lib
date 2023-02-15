@@ -1,5 +1,6 @@
+import { type IncomingMessage } from 'http'
 import { type Ref, onUnmounted, computed, watch } from 'vue'
-import { useCookies } from '@vueuse/integrations/useCookies'
+import { useCookies, createCookies } from '@vueuse/integrations/useCookies'
 import { useRoute } from 'vue-router'
 import { ofetch } from 'ofetch'
 import jwtDecode from 'jwt-decode'
@@ -12,6 +13,7 @@ debug.log = console.log.bind(console)
 export interface SessionOptions {
   directoryUrl?: string
   logoutRedirectUrl?: string
+  req?: IncomingMessage
 }
 
 export interface Session {
@@ -48,7 +50,6 @@ const jwtDecodeAlive = (jwt: string | null) => {
 }
 
 const getTopLocation = () => {
-  if (typeof window === 'undefined') return undefined
   try {
     return window.top ? window.top.location : window.location
   } catch (err) {
@@ -70,21 +71,14 @@ export const defaultOptions = { directoryUrl: '/simple-directory' }
 export const useSession = async (initOptions?: SessionOptions) => {
   const options = { ...defaultOptions, ...initOptions }
   debug(`init directoryUrl=${options.directoryUrl}`)
-
-  // sessionData is also stored in localStorage as a way to access it in simpler pages that do not require sd-vue
-  // and in order to listen to storage event from other contexts and sync session info accross windows and tabs
-  if (typeof window !== 'undefined') {
-    const storageListener = (event: StorageEvent) => {
-      if (event.key === 'sd-session') readCookies()
-    }
-    window.addEventListener('storage', storageListener)
-    onUnmounted(() => { window.removeEventListener('storage', storageListener) })
-  }
+  const ssr = !!options.req
+  if (ssr) debug('run in SSR context')
 
   // use vue-router to detect page change and maintain a reference to the current page location
   // top page if we are in iframe context
   const route = useRoute()
   const topLocation = computed(() => {
+    if (!ssr) return undefined
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     route // adds reactivity
     return getTopLocation()
@@ -94,7 +88,7 @@ export const useSession = async (initOptions?: SessionOptions) => {
   const state: SessionState = {}
 
   // cookies are the source of truth and this information is transformed into the state reactive object
-  const cookies = useCookies(['id_token', 'id_token_org'], { doNotParse: true })
+  const cookies = (options.req ? createCookies(options.req) : useCookies)(['id_token', 'id_token_org'], { doNotParse: true })
   const readCookies = () => {
     const darkCookie = cookies.get('theme_dark')
     state.dark = darkCookie === '1' || darkCookie === 'true'
@@ -143,30 +137,40 @@ export const useSession = async (initOptions?: SessionOptions) => {
   }
   readCookies()
 
-  // trigger some full page refresh when some key session elements are changed
-  // the danger of simply using reactivity is too high, data must be re-fetched, etc.
-  watch(() => state.account, (account, oldAccount) => {
-    if (account?.type !== oldAccount?.type || account?.id !== oldAccount?.id || account?.department !== oldAccount?.department) {
+  if (!ssr) {
+    // sessionData is also stored in localStorage as a way to access it in simpler pages that do not require sd-vue
+    // and in order to listen to storage event from other contexts and sync session info accross windows and tabs
+    const storageListener = (event: StorageEvent) => {
+      if (event.key === 'sd-session') readCookies()
+    }
+    window.addEventListener('storage', storageListener)
+    onUnmounted(() => { window.removeEventListener('storage', storageListener) })
+
+    // trigger some full page refresh when some key session elements are changed
+    // the danger of simply using reactivity is too high, data must be re-fetched, etc.
+    watch(() => state.account, (account, oldAccount) => {
+      if (account?.type !== oldAccount?.type || account?.id !== oldAccount?.id || account?.department !== oldAccount?.department) {
+        goTo(null)
+      }
+    })
+    watch(() => state.lang, () => {
       goTo(null)
-    }
-  })
-  watch(() => state.lang, () => {
-    goTo(null)
-  })
-  watch(() => state.dark, () => {
-    goTo(null)
-  })
-  watch(state, (state) => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('sd-session', JSON.stringify(state))
-    }
-  })
+    })
+    watch(() => state.dark, () => {
+      goTo(null)
+    })
+    watch(state, (state) => {
+      if (!ssr) {
+        window.localStorage.setItem('sd-session', JSON.stringify(state))
+      }
+    })
+  }
 
   // login can be performed as a simple link (please use target=top) or as a function
   const loginUrl = (redirect?: string, extraParams: Record<string, string> = {}, immediateRedirect?: true) => {
     // login can also be used to redirect user immediately if he is already logged
-    if (redirect && (state.user != null) && immediateRedirect) return redirect
-    if (!redirect && (topLocation.value != null)) redirect = topLocation.value.href
+    if (redirect && state.user && immediateRedirect) return redirect
+    if (!redirect && topLocation.value) redirect = topLocation.value.href
     let url = `${options.directoryUrl}/login?redirect=${encodeURIComponent(redirect ?? '')}`
     Object.keys(extraParams).filter(key => ![null, undefined, ''].includes(extraParams[key])).forEach((key) => {
       url += `&${key}=${encodeURIComponent(extraParams[key])}`
@@ -239,9 +243,9 @@ export const useSession = async (initOptions?: SessionOptions) => {
     readCookies()
   }
 
-  // immediately performe a keepalive, but only on top windows (not iframes or popups)
+  // immediately performs a keepalive, but only on top windows (not iframes or popups)
   // and only if it was not done very recently (maybe from a refreshed page next to this one)
-  if (typeof window !== 'undefined' && window.top === window.self) {
+  if (!ssr && window.top === window.self) {
     const lastKeepalive = window.localStorage.getItem('sd-keepalive')
     if (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) < 10000) {
       await keepalive()
