@@ -4,7 +4,7 @@ import { useCookies, createCookies } from '@vueuse/integrations/useCookies'
 import { useRoute } from 'vue-router'
 import { ofetch } from 'ofetch'
 import jwtDecode from 'jwt-decode'
-import * as Debug from 'debug'
+import Debug from 'debug'
 import { type SessionState, type User } from '../payload/session-state'
 
 const debug = Debug('session')
@@ -136,6 +136,7 @@ export const useSession = async (initOptions?: SessionOptions) => {
     }
   }
   readCookies()
+  debug('initial state', state)
 
   if (!ssr) {
     // sessionData is also stored in localStorage as a way to access it in simpler pages that do not require sd-vue
@@ -163,6 +164,7 @@ export const useSession = async (initOptions?: SessionOptions) => {
       if (!ssr) {
         window.localStorage.setItem('sd-session', JSON.stringify(state))
       }
+      debug('state changed', state)
     })
   }
 
