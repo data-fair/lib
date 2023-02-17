@@ -5,7 +5,7 @@ import { useRoute } from 'vue-router'
 import { ofetch } from 'ofetch'
 import jwtDecode from 'jwt-decode'
 import Debug from 'debug'
-import { type SessionState, type User } from '../payload/session-state'
+import { type SessionState, type User } from '../types/session-state'
 
 const debug = Debug('session')
 debug.log = console.log.bind(console)
@@ -98,14 +98,16 @@ export const useSession = async (initOptions?: SessionOptions) => {
     else delete state.lang
 
     const idToken = cookies.get('id_token')
-    state.user = jwtDecodeAlive(idToken)
+    const user = jwtDecodeAlive(idToken)
 
-    if (state.user == null) {
+    if (!user) {
+      delete state.user
       delete state.organization
       delete state.account
       delete state.accountRole
       return
     }
+    state.user = user
     const organizationId = cookies.get('id_token_org')
     const departmentId = cookies.get('id_token_dep')
     if (organizationId) {

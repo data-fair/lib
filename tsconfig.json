@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2017",
-    "module": "esnext",
+    "module": "CommonJS",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "rootDir": "src",
     "outDir": "./",
@@ -10,5 +10,5 @@
     "moduleResolution": "node"
   },
   "include": ["src"],
-  "exclude": ["node_modules", "vue", "payload", "express"]
+  "exclude": ["node_modules", "vue", "types", "express"]
 }

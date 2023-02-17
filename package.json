@@ -7,12 +7,10 @@
     "build": "tsc",
     "prepublishOnly": "eslint . && npm run build"
   },
-  "type": "module",
-  "sideEffects": false,
   "files": [
     "src",
     "vue",
-    "payload",
+    "types",
     "express"
   ],
   "repository": {
@@ -27,10 +25,17 @@
   "homepage": "https://github.com/data-fair/lib#readme",
   "peerDependencies": {
     "@vueuse/integrations": "*",
+    "ajv": ">= 8.0.0",
+    "ajv-errors": ">= 3.0.0",
+    "ajv-formats": ">= 2.0.0",
+    "ajv-i18n": ">= 4.0.0",
     "debug": ">= 4.0.0",
     "express": ">= 4.0.0 < 5.0.0",
     "express-async-handler": ">= 1.0.0",
+    "fast-json-stringify": ">= 5.0.0",
+    "flatstr": ">= 1.0.0",
     "jsonwebtoken": ">= 9.0.0",
+    "jwks-rsa": ">= 3.0.0",
     "jwt-decode": ">= 3.0.0",
     "ofetch": ">= 1.0.0",
     "vue": ">= 3.0.0 < 4.0.0",
@@ -41,13 +46,34 @@
     "@vueuse/integrations": {
       "optional": true
     },
+    "ajv": {
+      "optional": true
+    },
+    "ajv-errors": {
+      "optional": true
+    },
+    "ajv-formats": {
+      "optional": true
+    },
+    "ajv-i18n": {
+      "optional": true
+    },
     "express": {
       "optional": true
     },
     "express-async-handler": {
       "optional": true
     },
+    "fast-json-stringify": {
+      "optional": true
+    },
+    "flatstr": {
+      "optional": true
+    },
     "jsonwebtoken": {
+      "optional": true
+    },
+    "jwks-rsa": {
       "optional": true
     },
     "jwt-decode": {
@@ -74,12 +100,18 @@
     "@types/node": "^18.13.0",
     "@types/vue": "^2.0.0",
     "@vueuse/integrations": "^9.12.0",
+    "ajv": "^8.12.0",
+    "ajv-errors": "^3.0.0",
+    "ajv-formats": "^2.1.1",
+    "ajv-i18n": "^4.2.0",
     "cookie": "^0.5.0",
     "debug": "^4.3.4",
     "eslint": "^8.34.0",
     "eslint-config-standard-with-typescript": "^34.0.0",
     "express": "^4.18.2",
     "express-async-handler": "^1.2.0",
+    "fast-json-stringify": "^5.5.0",
+    "flatstr": "^1.0.12",
     "jsonwebtoken": "^9.0.0",
     "jwks-rsa": "^3.0.1",
     "jwt-decode": "^3.1.2",

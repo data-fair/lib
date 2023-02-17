@@ -3,7 +3,7 @@ import * as jwt from 'jsonwebtoken'
 import * as JwksClient from 'jwks-rsa'
 import * as asyncHandler from 'express-async-handler'
 import * as cookie from 'cookie'
-import { type SessionState, type User } from '../payload/session-state'
+import { type SessionState, type User } from '../types/session-state'
 
 // cf https://blog.logrocket.com/extend-express-request-object-typescript/
 declare global {
