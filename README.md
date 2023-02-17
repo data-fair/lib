@@ -13,7 +13,7 @@ npm i @data-fair/lib
 - [Vue](#vue)
   - [useSession](#usesession)
 - [Express](#express)
-  - [session middleware](#session-middleware)
+  - [session](#session)
   - [reqBuilder](#reqbuilder)
 
 
@@ -78,7 +78,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
 ## Express
 
-### session middleware
+### session
 
 This middleware provides a thin layer for connecting to simple-directory using jwks, validating session tokens and casting to the SessionState type (see section payload). This module extends the standard express Request type to add the session property, this way all access to req.session is fully typed and safe.
 
@@ -109,6 +109,7 @@ This module implements a strategy similar to [Fastify](https://www.fastify.io/do
     - the schemas act as type guards
     - the user is responsible for ensuring coherence of the schema and the type (see json-schema-to-typescript, json-schema-to-ts, typebox, etc.)
   - fast response serialization using [fast-json-stringify](https://www.npmjs.com/package/fast-json-stringify)
+  - headers are not included for concision and because they are much less frequently manipulated on a per-route basis
 
 Install peer dependencies:
 
@@ -121,8 +122,8 @@ import { reqBuilder } from '@data-fair/lib/express/req'
 
 const listReq = reqBuilder<MyQuery, MyBody, MyResponse>(myQuerySchema, myBodySchema, myResponseSchema)
 router.post('', asyncHandler(async (req, res) => {
-  // query and body are safe and typed
-  // send is a function that expects a typed value and will perform fast serialization into the HTTP response
+  // query and body are safe and typed with user defined MyQuery and MyBody types
+  // send is a function that expects a value with type MyResponse and will perform fast serialization into the HTTP response
   const { query, body, send } = listReq(req, res)
   const results = await ...
   send({ count: results.length, results })
