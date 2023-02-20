@@ -123,7 +123,8 @@ import { reqBuilder } from '@data-fair/lib/express/req'
 const listReq = reqBuilder<MyQuery, MyBody, MyResponse>(myQuerySchema, myBodySchema, myResponseSchema)
 router.post('', asyncHandler(async (req, res) => {
   // query and body are safe and typed with user defined MyQuery and MyBody types
-  // send is a function that expects a value with type MyResponse and will perform fast serialization into the HTTP response
+  // send is a function that expects a value with type MyResponse and will perform
+  // fast serialization into the HTTP response
   const { query, body, send } = listReq(req, res)
   const results = await ...
   send({ count: results.length, results })
