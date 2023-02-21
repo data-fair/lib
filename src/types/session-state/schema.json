@@ -128,7 +128,7 @@
       }
     }
   },
-  "$id": "data-fair/types/session-state",
+  "$id": "@data-fair/lib/types/session-state",
   "type":"object",
   "title": "session state",
   "properties":{
