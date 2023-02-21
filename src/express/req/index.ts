@@ -67,6 +67,22 @@ export const validateThrow = <Type>(validate: ValidateFunction, data: any, lang:
 // prepare a function with generic types and schemas for query/body/response
 // the returned function will be used on req/res and return type checked and valid query object, body object and send method
 export const reqBuilder = <QueryType = any, BodyType = any, ResponseType = any>(querySchema?: any, bodySchema?: any, responseSchema?: any) => {
+  if (querySchema?.$id) {
+    ajvQueries.addSchema(querySchema)
+    ajvBodies.addSchema(querySchema)
+    ajvResponses.addSchema(querySchema)
+  }
+  if (bodySchema?.$id) {
+    ajvQueries.addSchema(bodySchema)
+    ajvBodies.addSchema(bodySchema)
+    ajvResponses.addSchema(bodySchema)
+  }
+  if (responseSchema?.$id) {
+    ajvQueries.addSchema(responseSchema)
+    ajvBodies.addSchema(responseSchema)
+    ajvResponses.addSchema(responseSchema)
+  }
+
   const validateQuery = querySchema ? ajvQueries.compile(querySchema) : null
   const validateBody = bodySchema ? ajvBodies.compile(bodySchema) : null
   const validateResponse = responseSchema ? ajvResponses.compile(responseSchema) : null
