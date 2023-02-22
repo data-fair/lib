@@ -80,6 +80,10 @@ const main = async () => {
     const mainTypeName = pascalCase(schema.title || key)
     const schemaExports = schema['x-exports'] || ['types', 'validate', 'stringify', 'schema']
     let code = ''
+    if (fs.existsSync(path.join(dir, key, 'validate.js'))) fs.unlinkSync(path.join(dir, key, 'validate.js'))
+    if (fs.existsSync(path.join(dir, key, 'stringify.js'))) fs.unlinkSync(path.join(dir, key, 'stringify.js'))
+    if (fs.existsSync(path.join(dir, key, 'index.ts'))) fs.unlinkSync(path.join(dir, key, 'index.ts'))
+
     for (const schemaExport of schemaExports) {
       if (schemaExport === 'types') {
         code += await compileTs(schema, schema.$id || key,
