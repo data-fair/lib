@@ -12,7 +12,13 @@ const path = require('node:path')
 const standaloneCode = require('ajv/dist/standalone').default
 const { pascalCase } = require('pascal-case')
 
-const ajv = new Ajv({ useDefaults: true, coerceTypes: 'array', allErrors: true, code: { source: true, optimize: true } })
+const ajv = new Ajv({
+  useDefaults: true,
+  coerceTypes: 'array',
+  allErrors: true,
+  strict: false,
+  code: { source: true, optimize: true }
+})
 addFormats(ajv)
 ajvErrors(ajv)
 
@@ -55,6 +61,19 @@ const main = async () => {
     ajv.addSchema(schema, schema.$id || key)
   }
 
+  const localResolver = {
+    order: 1,
+    canRead (file: { url: string }) {
+      if (file.url.startsWith('https://github.com/data-fair/') && !schemas[file.url]) {
+        throw new Error(`the $ref ${file.url} should probably be resolved locally but was not found`)
+      }
+      return !!schemas[file.url]
+    },
+    async read (file: { url: string }, callback: (err: any, doc?: any) => void) {
+      callback(null, schemas[file.url])
+    }
+  }
+
   for (const key of keys) {
     // const ts = await compile(schema, key, { $refOptions: { resolve: { 'data-fair-lib': dataFairLibResolver, local: localResolver } } })
     const schema = require(path.join(dir, key, 'schema'))
@@ -63,7 +82,8 @@ const main = async () => {
     let code = ''
     for (const schemaExport of schemaExports) {
       if (schemaExport === 'types') {
-        code += await compileTs(schema, schema.$id || key, { bannerComment: '', unreachableDefinitions: true }) as string
+        code += await compileTs(schema, schema.$id || key,
+          { bannerComment: '', unreachableDefinitions: true, $refOptions: { resolve: { local: localResolver } } }) as string
       } else if (schemaExport === 'schema') {
         code += `
 // raw schema
@@ -78,8 +98,9 @@ export const schema = ${JSON.stringify(schema, null, 2)}
 // @ts-ignore
 import validateUnsafe from './validate.js'
 import { validateThrow } from '${inLib ? '../validation' : '@data-fair/lib/types/validation'}'
+import { type ValidateFunction } from 'ajv'
 export const validate = (data: any, lang: string = 'fr', name: string = 'data', internal?: boolean): ${mainTypeName} => {
-  return validateThrow<${mainTypeName}>(validateUnsafe, data, lang, name, internal)
+  return validateThrow<${mainTypeName}>(validateUnsafe as unknown as ValidateFunction, data, lang, name, internal)
 }
         `
       } else if (schemaExport === 'stringify') {

@@ -58,8 +58,9 @@ export interface Account {
 // @ts-ignore
 import validateUnsafe from './validate.js'
 import { validateThrow } from '../validation'
+import { type ValidateFunction } from 'ajv'
 export const validate = (data: any, lang: string = 'fr', name: string = 'data', internal?: boolean): SessionState => {
-  return validateThrow<SessionState>(validateUnsafe, data, lang, name, internal)
+  return validateThrow<SessionState>(validateUnsafe as unknown as ValidateFunction, data, lang, name, internal)
 }
         
 // stringify function compiled using fast-json-stringify
