@@ -12,7 +12,7 @@ import ajvFr from 'ajv-i18n/localize/fr'
 import ajvEn from 'ajv-i18n/localize/en'
 import fastJsonStringify from 'fast-json-stringify'
 import flatstr from 'flatstr'
-import { sessionStateSchema } from '../../types/session-state'
+import { schema as sessionStateSchema } from '../../types/session-state'
 
 // for bodies and queries it is better to break and help the user fix his request with a message
 // strong coercion on queries is good to help finishing the parsing of the querystring but discourage on body and response where the payload should be strictly valid
@@ -88,9 +88,9 @@ export const reqBuilder = <QueryType = any, BodyType = any, ResponseType = any>(
     ajvResponses.addSchema(responseSchema)
   }
 
-  const validateQuery = querySchema ? ajvQueries.compile(querySchema) : null
-  const validateBody = bodySchema ? ajvBodies.compile(bodySchema) : null
-  const validateResponse = responseSchema ? ajvResponses.compile(responseSchema) : null
+  const validateQuery = querySchema ? (querySchema.$id ? ajvQueries.getSchema(querySchema.$id) : ajvQueries.compile(querySchema)) : null
+  const validateBody = bodySchema ? (bodySchema.$id ? ajvBodies.getSchema(bodySchema.$id) : ajvBodies.compile(bodySchema)) : null
+  const validateResponse = responseSchema ? (responseSchema.$id ? ajvResponses.getSchema(responseSchema.$id) : ajvResponses.compile(responseSchema)) : null
   // TODO use { largeArrayMechanism: 'json-stringify', largeArray: 1000 } see https://github.com/fastify/fast-json-stringify/issues/602
   const serializeResponse = responseSchema ? fastJsonStringify(responseSchema) : null
   return (req: Request, res: Response): { query: QueryType, body: BodyType, send: (response: ResponseType) => void } => {

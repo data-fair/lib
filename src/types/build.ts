@@ -2,32 +2,113 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-const { compile } = require('json-schema-to-typescript')
-const fs = require('node:fs')
+import Ajv from 'ajv'
+import addFormats from 'ajv-formats'
+import ajvErrors from 'ajv-errors'
+import fastJsonStringify from 'fast-json-stringify'
+import * as fs from 'fs'
+const { compile: compileTs } = require('json-schema-to-typescript')
 const path = require('node:path')
-const { camelCase } = require('camel-case')
-const { sessionStateSchema } = require('./session-state');
+const standaloneCode = require('ajv/dist/standalone').default
+const { pascalCase } = require('pascal-case')
 
-(async () => {
+const ajv = new Ajv({ useDefaults: true, coerceTypes: 'array', allErrors: true, code: { source: true, optimize: true } })
+addFormats(ajv)
+ajvErrors(ajv)
+
+const main = async () => {
+  let pJsonName
+  try {
+    const pJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'))
+    pJsonName = pJson.name
+  } catch (err) {
+    // nothing to do
+  }
+  if (!pJsonName) {
+    const pJson = JSON.parse(fs.readFileSync('../package.json', 'utf8'))
+    pJsonName = pJson.name
+  }
+  const inLib = pJsonName === '@data-fair/lib'
+
   const dir = path.resolve(process.argv[2] || './types')
   let prefix = process.argv[3]
-  if (!prefix) {
-    let pJsonName
-    try {
-      const pJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'))
-      pJsonName = pJson.name
-    } catch (err) {
-      // nothing to do
-    }
-    if (!pJsonName) {
-      const pJson = JSON.parse(fs.readFileSync('../package.json', 'utf8'))
-      pJsonName = pJson.name
-    }
-    prefix = pJsonName.replace('@data-fair/', 'https://github.com/data-fair/')
-  }
+  if (!prefix) prefix = pJsonName.replace('@data-fair/', 'https://github.com/data-fair/')
   console.log(`look for schemas in subdirectories of ${dir} and match wityh prefix ${prefix}`)
 
-  const dataFairLibResolver = {
+  const schemas: Record<string, any> = {}
+
+  const keys = fs.readdirSync(dir)
+    .filter(key => key !== 'node_modules' && fs.lstatSync(path.join(dir, key)).isDirectory())
+
+  if (!inLib) {
+    const { schema: sessionStateSchema } = require('../types/session-state')
+    ajv.addSchema(sessionStateSchema)
+    schemas[sessionStateSchema.$id] = sessionStateSchema
+  }
+
+  // first loop to read all raw schemas
+  for (const key of keys) {
+    if (key === 'node_modules' || !fs.lstatSync(path.join(dir, key)).isDirectory()) continue
+    console.log(`compute ${key}`)
+    const schema = require(path.join(dir, key, 'schema'))
+    schemas[schema.$id || key] = schema
+    ajv.addSchema(schema, schema.$id || key)
+  }
+
+  for (const key of keys) {
+    // const ts = await compile(schema, key, { $refOptions: { resolve: { 'data-fair-lib': dataFairLibResolver, local: localResolver } } })
+    const schema = require(path.join(dir, key, 'schema'))
+    const mainTypeName = pascalCase(schema.title || key)
+    const schemaExports = schema['x-exports'] || ['types', 'validate', 'stringify', 'schema']
+    let code = ''
+    for (const schemaExport of schemaExports) {
+      if (schemaExport === 'types') {
+        code += await compileTs(schema, schema.$id || key, { bannerComment: '', unreachableDefinitions: true }) as string
+      } else if (schemaExport === 'schema') {
+        code += `
+// raw schema
+export const schema = ${JSON.stringify(schema, null, 2)}
+`
+      } else if (schemaExport === 'validate') {
+        const validate = ajv.getSchema(schema.$id || key)
+        const validateCode = standaloneCode(ajv, validate)
+        fs.writeFileSync(path.join(dir, key, 'validate.js'), validateCode)
+        code += `
+// validate function compiled using ajv
+// @ts-ignore
+import validateUnsafe from './validate.js'
+import { validateThrow } from '${inLib ? '../validation' : '@data-fair/lib/types/validation'}'
+export const validate = (data: any, lang: string = 'fr', name: string = 'data', internal?: boolean): ${mainTypeName} => {
+  return validateThrow<${mainTypeName}>(validateUnsafe, data, lang, name, internal)
+}
+        `
+      } else if (schemaExport === 'stringify') {
+        const stringifyCode = fastJsonStringify(schema, { mode: 'standalone', schema: schemas })
+        fs.writeFileSync(path.join(dir, key, 'stringify.js'), stringifyCode)
+        code += `
+// stringify function compiled using fast-json-stringify
+// @ts-ignore
+import stringifyUnsafe from './stringify.js'
+// @ts-ignore
+import flatstr from 'flatstr'
+export const  stringify = (data: ${mainTypeName}): string => {
+  const str = stringifyUnsafe(data)
+  flatstr(str)
+  return str
+}
+        `
+      } else {
+        throw new Error(`unsupported export ${schemaExport}`)
+      }
+    }
+    fs.writeFileSync(path.join(dir, key, 'index.ts'), code)
+  }
+}
+main()
+
+/*
+const { sessionStateSchema } = require('./session-state');
+const dataFairLibResolver = {
     order: 1,
     canRead (file: { url: string }) {
       return file.url.startsWith('https://github.com/data-fair/lib/')
@@ -55,18 +136,7 @@ const { sessionStateSchema } = require('./session-state');
         callback(err)
       }
     }
-  }
-
-  for (const key of fs.readdirSync(dir)) {
-    if (key === 'node_modules' || !fs.lstatSync(path.join(dir, key)).isDirectory()) continue
-    console.log(`compute ${key}`)
-    const schema = require(path.join(dir, key, 'schema'))
-    const ts = await compile(schema, key, { $refOptions: { resolve: { 'data-fair-lib': dataFairLibResolver, local: localResolver } } })
-    fs.writeFileSync(path.join(dir, key, 'index.ts'), `${ts}
-export const ${camelCase(key)}Schema = ${JSON.stringify(schema, null, 2)}
-`)
-  }
-})()
+  } */
 
 /*
 keep for reference a version using schema2td + jtd-codegen
