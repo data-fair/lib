@@ -46,6 +46,29 @@ export interface Account {
 }
 
 export const sessionStateSchema = {
+  "$id": "https://github.com/data-fair/lib/session-state",
+  "type": "object",
+  "title": "session state",
+  "properties": {
+    "user": {
+      "$ref": "#/definitions/user"
+    },
+    "organization": {
+      "$ref": "#/definitions/organizationMembership"
+    },
+    "account": {
+      "$ref": "#/definitions/account"
+    },
+    "accountRole": {
+      "type": "string"
+    },
+    "lang": {
+      "type": "string"
+    },
+    "dark": {
+      "type": "boolean"
+    }
+  },
   "definitions": {
     "organizationMembership": {
       "type": "object",
@@ -173,27 +196,6 @@ export const sessionStateSchema = {
           "type": "string"
         }
       }
-    }
-  },
-  "type": "object",
-  "properties": {
-    "user": {
-      "$ref": "#/definitions/user"
-    },
-    "organization": {
-      "$ref": "#/definitions/organizationMembership"
-    },
-    "account": {
-      "$ref": "#/definitions/account"
-    },
-    "accountRole": {
-      "type": "string"
-    },
-    "lang": {
-      "type": "string"
-    },
-    "dark": {
-      "type": "boolean"
     }
   }
 }

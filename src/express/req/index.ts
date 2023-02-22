@@ -12,6 +12,7 @@ import ajvFr from 'ajv-i18n/localize/fr'
 import ajvEn from 'ajv-i18n/localize/en'
 import fastJsonStringify from 'fast-json-stringify'
 import flatstr from 'flatstr'
+import { sessionStateSchema } from '../../types/session-state'
 
 // for bodies and queries it is better to break and help the user fix his request with a message
 // strong coercion on queries is good to help finishing the parsing of the querystring but discourage on body and response where the payload should be strictly valid
@@ -33,6 +34,10 @@ const localize: Record<string, Localize> = {
   fr: ajvFr,
   en: ajvEn
 }
+
+// add some shared definitions
+ajvBodies.addSchema(sessionStateSchema)
+ajvResponses.addSchema(sessionStateSchema)
 
 class ValidationError extends Error {
   status: number
