@@ -134,7 +134,8 @@
       ],
       "properties":{
         "type":{
-          "type":"string"
+          "type":"string",
+          "enum": ["user", "organization"]
         },
         "id":{
           "type":"string"

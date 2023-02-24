@@ -47,7 +47,7 @@ export interface UserRef {
  * via the `definition` "account".
  */
 export interface Account {
-  type: string;
+  type: "user" | "organization";
   id: string;
   name: string;
   department?: string;
@@ -211,7 +211,11 @@ export const schema = {
       ],
       "properties": {
         "type": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "user",
+            "organization"
+          ]
         },
         "id": {
           "type": "string"
