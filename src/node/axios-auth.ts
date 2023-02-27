@@ -8,14 +8,16 @@ interface AxiosAuthOpts {
   password: string
   org?: string
   dep?: string
+  adminMode?: boolean
   directoryUrl?: string
   axiosOpts?: any
 }
 
 module.exports.axiosAuth = async (opts: AxiosAuthOpts) => {
-  const body: Record<string, string> = { email: opts.email, password: opts.password }
+  const body: any = { email: opts.email, password: opts.password }
   if (opts.org) body.org = opts.org
   if (opts.dep) body.org = opts.dep
+  if (opts.adminMode) body.adminMode = opts.adminMode
   const axiosOpts = opts.axiosOpts ?? {}
   const directoryUrl = opts.directoryUrl ?? 'http://localhost:8080'
   let callbackUrl = (await instance.post(directoryUrl + '/api/auth/password', body, { params: { redirect: directoryUrl }, maxRedirects: 0 })).data
