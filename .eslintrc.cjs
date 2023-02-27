@@ -9,7 +9,7 @@ module.exports = {
   env: {
     node: true // Enable Node.js global variables
   },
-  ignorePatterns: ['/node_modules', '/vue', '/types', '/express', '/src/types/**/*.js'],
+  ignorePatterns: ['/node_modules', '/vue', '/types', '/express', '/node', '/src/types/**/*.js'],
   rules: {
     '@typescript-eslint/explicit-function-return-type': 0,
     '@typescript-eslint/restrict-template-expressions': 0,
