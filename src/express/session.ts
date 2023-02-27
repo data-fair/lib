@@ -1,8 +1,8 @@
 import { type Request, type Response, type NextFunction } from 'express'
-import * as jwt from 'jsonwebtoken'
-import * as JwksClient from 'jwks-rsa'
-import * as asyncHandler from 'express-async-handler'
-import * as cookie from 'cookie'
+import jwt from 'jsonwebtoken'
+import JwksClient from 'jwks-rsa'
+import asyncHandler from 'express-async-handler'
+import cookie from 'cookie'
 import { type SessionState, type User } from '../types/session-state'
 
 // cf https://blog.logrocket.com/extend-express-request-object-typescript/
