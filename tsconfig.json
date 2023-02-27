@@ -11,5 +11,5 @@
     "allowJs": true
   },
   "include": ["src"],
-  "exclude": ["node_modules", "vue", "types", "express"]
+  "exclude": ["node_modules", "vue", "types", "express", "node"]
 }
