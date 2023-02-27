@@ -26,10 +26,13 @@
   "homepage": "https://github.com/data-fair/lib#readme",
   "peerDependencies": {
     "@vueuse/integrations": "*",
+    "agentkeepalive": ">= 4.0.0",
     "ajv": ">= 8.0.0",
     "ajv-errors": ">= 3.0.0",
     "ajv-formats": ">= 2.0.0",
     "ajv-i18n": ">= 4.0.0",
+    "axios": ">= 1.0.0",
+    "cacheable-lookup": ">= 7.0.0",
     "debug": ">= 4.0.0",
     "express": ">= 4.0.0 < 5.0.0",
     "express-async-handler": ">= 1.0.0",
@@ -50,6 +53,9 @@
     "@vueuse/integrations": {
       "optional": true
     },
+    "agentkeepalive": {
+      "optional": true
+    },
     "ajv": {
       "optional": true
     },
@@ -60,6 +66,12 @@
       "optional": true
     },
     "ajv-i18n": {
+      "optional": true
+    },
+    "axios": {
+      "optional": true
+    },
+    "cacheable-lookup": {
       "optional": true
     },
     "pascal-case": {
@@ -113,10 +125,13 @@
     "@types/node": "^18.13.0",
     "@types/vue": "^2.0.0",
     "@vueuse/integrations": "^9.12.0",
+    "agentkeepalive": "^4.2.1",
     "ajv": "^8.12.0",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
     "ajv-i18n": "^4.2.0",
+    "axios": "^1.3.4",
+    "cacheable-lookup": "^7.0.0",
     "cookie": "^0.5.0",
     "debug": "^4.3.4",
     "eslint": "^8.34.0",
