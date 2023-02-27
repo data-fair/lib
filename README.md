@@ -10,11 +10,13 @@ npm i @data-fair/lib
 
 - [Types](#types)
   - [SessionState](#sessionstate)
+  - [build.ts](#buildts)
 - [Vue](#vue)
   - [useSession](#usesession)
 - [Express](#express)
   - [session](#session)
-  - [reqBuilder](#reqbuilder)
+- [Nodejs](#nodejs)
+  - [Prometheus](#prometheus)
 
 
 ## Types
@@ -27,6 +29,81 @@ Describes the current session, the logged in user, their organizations, etc. Usu
 
 ```ts
 import { type SessionState } from '@data-fair/lib/types/session-state'
+```
+
+### build.ts
+
+
+This module implements a strategy similar to [Fastify](https://www.fastify.io/docs/latest/Reference/Validation-and-Serialization/) for validation and serialization. But it is a simple optional tool used to improve our apis, not a framework.
+
+  - validation of body and query is encouraged (headers are not usually included because they are much less frequently manipulated on a per-route basis)
+  - type casting : the schemas act as type guards
+  - fast response serialization using [fast-json-stringify](https://www.npmjs.com/package/fast-json-stringify)
+  - use json-schema-to-typescript to create coherent schemas and types
+  - a provided script helps building a typescript module with types, compiled validation function and compiled serialization function
+
+Create a directory structure compatible with the build script:
+
+```
+types/
+├── my-type
+│   └── schema.json
+
+```
+
+Schemas can contain instructions to generate optional functionalities:
+```json
+  "x-exports": ["types", "validate", "stringify", "schema"],
+```
+
+In the types directory install build peer dependencies:
+```sh
+npm i -D ajv ajv-formats ajv-errors fast-json-stringify json-schema-to-typescript
+```
+
+In the types directory's package.json create this script:
+
+```json
+  "scripts": {
+    "build": "node node_modules/@data-fair/lib/types/build.js ./ && tsc"
+  },
+```
+
+Running this script should fill the types directory like so:
+
+```
+types/
+├── my-type
+│   ├── index.d.ts
+│   ├── index.js
+│   ├── index.ts
+│   ├── schema.json
+│   └── validate.js
+```
+
+In the nodejs service, install peer dependencies:
+
+```sh
+npm i ajv-i18n flatstr
+```
+
+Then in a route use the built modules:
+
+```ts
+import * as myBodySchema from 'types/my-body'
+import * as myQuerySchema from 'types/my-query'
+import * as myResponseSchema from 'types/my-response'
+
+router.post('', asyncHandler(async (req, res) => {
+  // after these lines body and query will be typed and the schema will be validated
+  // a 400 error is thrown in case of failure
+  const body = myQuerySchema.validate(req.body, req.session.lang, 'body')
+  const query = myQuerySchema.validate(req.query, req.session.lang, 'query')
+  
+  const result = await ...
+
+  res.type('json').send(myResponseSchema.stringify(result))
+}))
 ```
 
 ## Vue
@@ -100,33 +177,69 @@ router.get('', (req, res) => {
 })
 ```
 
-### reqBuilder
+## Nodejs
 
-This module implements a strategy similar to [Fastify](https://www.fastify.io/docs/latest/Reference/Validation-and-Serialization/) for validation and serialization. But it is a simple optional tool used to improve our apis, not a framework.
+### Prometheus
 
-  - validation of body, query and response
-  - type casting
-    - the schemas act as type guards
-    - the user is responsible for ensuring coherence of the schema and the type (see json-schema-to-typescript, json-schema-to-ts, typebox, etc.)
-  - fast response serialization using [fast-json-stringify](https://www.npmjs.com/package/fast-json-stringify)
-  - headers are not included for concision and because they are much less frequently manipulated on a per-route basis
+Every Web service and all other processes (workers, etc) should expose prometheus metrics for monitoring.
 
 Install peer dependencies:
 
 ```sh
-npm i ajv ajv-formats ajv-errors ajv-i18n fast-json-stringify flatstr
+npm i prom-client
 ```
 
-```ts
-import { reqBuilder } from '@data-fair/lib/express/req'
+Run a mini webserver to serve metrics:
 
-const listReq = reqBuilder<MyQuery, MyBody, MyResponse>(myQuerySchema, myBodySchema, myResponseSchema)
-router.post('', asyncHandler(async (req, res) => {
-  // query and body are safe and typed with user defined MyQuery and MyBody types
-  // send is a function that expects a value with type MyResponse and will perform
-  // fast serialization into the HTTP response
-  const { query, body, send } = listReq(req, res)
-  const results = await ...
-  send({ count: results.length, results })
-}))
+```ts
+import * as prometheus from '@data-fair/lib/node/prometheus'
+
+...
+await prometheus.start(config.prometheus.port)
+
+...
+await prometheus.stop()
+```
+
+Increment the shared "df_internal_error" metric and produce a corresponding log:
+
+```ts
+import * as prometheus from '@data-fair/lib/node/prometheus'
+
+app.use(function (err: HttpError, _req: Request, res: Response, next: NextFunction) {
+  ...
+  if (status >= 500) {
+    prometheus.internalError('http', 'failure while serving http request', err)
+    // TODO: prometheus
+  }
+  ...
+})
+```
+
+Define a custom metric and use it:
+
+```ts
+const myCounter = new Counter({
+  name: 'df_my_counter',
+  help: '...',
+  labelNames: ['myLabel']
+})
+
+...
+myCounter.inc({myLabel: 'label value'})
+```
+
+Define a custom global metric (a global metric value depends on a shared state instead of only the activity of the current process):
+
+```ts
+import * as prometheus from '@data-fair/lib/node/prometheus'
+
+new client.Gauge({
+  name: 'df_my_gauge',
+  help: '...',
+  registers: [prometheus.globalRegistry],
+  async collect () {
+    this.set(await db.collection('collection').estimatedDocumentCount())
+  }
+})
 ```

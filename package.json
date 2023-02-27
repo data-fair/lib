@@ -30,7 +30,6 @@
     "ajv-errors": ">= 3.0.0",
     "ajv-formats": ">= 2.0.0",
     "ajv-i18n": ">= 4.0.0",
-    "pascal-case": ">= 3.0.0",
     "debug": ">= 4.0.0",
     "express": ">= 4.0.0 < 5.0.0",
     "express-async-handler": ">= 1.0.0",
@@ -41,6 +40,8 @@
     "jwks-rsa": ">= 3.0.0",
     "jwt-decode": ">= 3.0.0",
     "ofetch": ">= 1.0.0",
+    "pascal-case": ">= 3.0.0",
+    "prom-client": ">= 14.0.0",
     "vue": ">= 3.0.0 < 4.0.0",
     "vue-i18n": ">= 9.0.0 < 10.0.0",
     "vue-router": ">= 4.0.0"
@@ -62,6 +63,9 @@
       "optional": true
     },
     "pascal-case": {
+      "optional": true
+    },
+    "prom-client": {
       "optional": true
     },
     "express": {
@@ -128,6 +132,7 @@
     "nuxt": "^3.2.0",
     "ofetch": "^1.0.0",
     "pascal-case": "^3.1.2",
+    "prom-client": "^14.1.1",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.5",
     "universal-cookie": "^4.0.4",
