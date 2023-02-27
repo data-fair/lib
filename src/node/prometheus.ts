@@ -3,7 +3,7 @@
 // /metrics serves container/process/pod specific metrics while /global-metrics
 // serves metrics for the whole service installation no matter the scaling
 
-import { createServer, type ServerResponse } from 'node:http'
+import { createServer, type Server, type ServerResponse } from 'node:http'
 import { Registry, Counter, register } from 'prom-client'
 
 // a special registry for metrics that are global
@@ -37,23 +37,23 @@ const serveRegistry = (res: ServerResponse, registry: Registry) => {
     })
 }
 
-const server = createServer((req, res) => {
-  if (req.method === 'GET' && req.url === '/metrics') {
-    serveRegistry(res, register)
-  } else if (req.method === 'GET' && req.url === '/global-metrics') {
-    serveRegistry(res, globalRegistry)
-  } else {
-    res.writeHead(404)
-    res.end()
-  }
-})
-
+let server: Server
 export const start = async (port: number) => {
+  server = createServer((req, res) => {
+    if (req.method === 'GET' && req.url === '/metrics') {
+      serveRegistry(res, register)
+    } else if (req.method === 'GET' && req.url === '/global-metrics') {
+      serveRegistry(res, globalRegistry)
+    } else {
+      res.writeHead(404)
+      res.end()
+    }
+  })
   server.listen(port)
   await new Promise(resolve => server.once('listening', resolve))
   console.log(`Prometheus metrics server available on http://localhost:${port}/metrics`)
 }
 
 export const stop = async () => {
-  server.close()
+  if (server) server.close()
 }
