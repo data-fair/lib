@@ -12,7 +12,8 @@
     "src",
     "vue",
     "types",
-    "express"
+    "express",
+    "node"
   ],
   "repository": {
     "type": "git",
