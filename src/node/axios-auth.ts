@@ -27,9 +27,9 @@ module.exports.axiosAuth = async (opts: AxiosAuthOpts) => {
   try {
     await instance.get(callbackUrl, { maxRedirects: 0 })
   } catch (err: any) {
-    if (!err.response || err.response.status !== 302) throw err
+    if (err.status !== 302) throw err
     axiosOpts.headers = axiosOpts.headers || {}
-    axiosOpts.headers.Cookie = err.response.headers['set-cookie'].map((s: string) => s.split(';')[0]).join(';')
+    axiosOpts.headers.Cookie = err.headers['set-cookie'].map((s: string) => s.split(';')[0]).join(';')
   }
   return builder(axiosOpts)
 }

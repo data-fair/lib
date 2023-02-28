@@ -27,28 +27,29 @@
   "homepage": "https://github.com/data-fair/lib#readme",
   "peerDependencies": {
     "@vueuse/integrations": "*",
-    "agentkeepalive": ">= 4.0.0",
-    "ajv": ">= 8.0.0",
-    "ajv-errors": ">= 3.0.0",
-    "ajv-formats": ">= 2.0.0",
-    "ajv-i18n": ">= 4.0.0",
-    "axios": ">= 1.0.0",
+    "agentkeepalive": ">= 4.0.0 < 5.0.0",
+    "ajv": ">= 8.0.0 < 9.0.0",
+    "ajv-errors": ">= 3.0.0 < 4.0.0",
+    "ajv-formats": ">= 2.0.0 < 3.0.0",
+    "ajv-i18n": ">= 4.0.0 < 5.0.0",
+    "axios": ">= 1.0.0 < 2.0.0",
     "cacheable-lookup": ">= 6.0.0 < 7.0.0",
-    "debug": ">= 4.0.0",
+    "debug": ">= 4.0.0 < 5.0.0",
     "express": ">= 4.0.0 < 5.0.0",
-    "express-async-handler": ">= 1.0.0",
-    "fast-json-stringify": ">= 5.0.0",
-    "flatstr": ">= 1.0.0",
-    "json-schema-to-typescript": ">= 11.0.0",
-    "jsonwebtoken": ">= 9.0.0",
-    "jwks-rsa": ">= 3.0.0",
-    "jwt-decode": ">= 3.0.0",
-    "ofetch": ">= 1.0.0",
-    "pascal-case": ">= 3.0.0",
-    "prom-client": ">= 14.0.0",
+    "express-async-handler": ">= 1.0.0 < 2.0.0",
+    "fast-json-stringify": ">= 5.0.0 < 6.0.0",
+    "flatstr": ">= 1.0.0 < 2.0.0",
+    "json-schema-to-typescript": ">= 11.0.0 < 12.0.0",
+    "jsonwebtoken": ">= 9.0.0 < 10.0.0",
+    "jwks-rsa": ">= 3.0.0 < 4.0.0",
+    "jwt-decode": ">= 3.0.0 < 4.0.0",
+    "ofetch": ">= 1.0.0 < 2.0.0",
+    "pascal-case": ">= 3.0.0 < 4.0.0",
+    "prom-client": ">= 14.0.0 < 15.0.0",
     "vue": ">= 3.0.0 < 4.0.0",
     "vue-i18n": ">= 9.0.0 < 10.0.0",
-    "vue-router": ">= 4.0.0"
+    "vue-router": ">= 4.0.0 < 5.0.0",
+    "ws": ">= 8.0.0 < 9.0.0"
   },
   "peerDependenciesMeta": {
     "@vueuse/integrations": {
@@ -116,6 +117,9 @@
     },
     "vue-router": {
       "optional": true
+    },
+    "ws": {
+      "optional": true
     }
   },
   "devDependencies": {
@@ -125,6 +129,7 @@
     "@types/jsonwebtoken": "^9.0.1",
     "@types/node": "^18.13.0",
     "@types/vue": "^2.0.0",
+    "@types/ws": "^8.5.4",
     "@vueuse/integrations": "^9.12.0",
     "agentkeepalive": "^4.2.1",
     "ajv": "^8.12.0",
@@ -155,6 +160,7 @@
     "vite-plugin-vuetify": "^1.0.2",
     "vue": "^3.2.47",
     "vue-i18n": "^9.2.2",
-    "vue-router": "^4.1.6"
+    "vue-router": "^4.1.6",
+    "ws": "^8.12.1"
   }
 }
