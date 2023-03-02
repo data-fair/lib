@@ -1,5 +1,5 @@
 import { type IncomingMessage } from 'http'
-import { type Ref, onUnmounted, computed, watch } from 'vue'
+import { type Ref, reactive, computed, watch } from 'vue'
 import { useCookies, createCookies } from '@vueuse/integrations/useCookies'
 import { type RouteLocation } from 'vue-router'
 import { ofetch } from 'ofetch'
@@ -87,7 +87,7 @@ export const useSession = async (initOptions?: SessionOptions) => {
   })
 
   // the core state of the session that is filled by reading cookies
-  const state: SessionState = {}
+  const state: SessionState = reactive({})
 
   // cookies are the source of truth and this information is transformed into the state reactive object
   const cookies = (options.req ? createCookies(options.req) : useCookies)(['id_token', 'id_token_org'], { doNotParse: true })
@@ -149,7 +149,9 @@ export const useSession = async (initOptions?: SessionOptions) => {
       if (event.key === 'sd-session') readCookies()
     }
     window.addEventListener('storage', storageListener)
-    onUnmounted(() => { window.removeEventListener('storage', storageListener) })
+    // we cannot use onUnmounted here or we get warnings "onUnmounted is called when there is no active component instance to be associated with. "
+    // TODO: should we have another cleanup mechanism ?
+    // onUnmounted(() => { window.removeEventListener('storage', storageListener) })
 
     // trigger some full page refresh when some key session elements are changed
     // the danger of simply using reactivity is too high, data must be re-fetched, etc.
