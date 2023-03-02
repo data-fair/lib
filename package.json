@@ -4,16 +4,14 @@
   "description": "A collection of javascript functions, components, types, etc to help work inside the data-fair stack.",
   "scripts": {
     "lint": "eslint . --fix",
-    "build": "tsc",
+    "build": "tsc && tsc -p tsconfig.mjs.json",
     "build-types": "ts-node src/types/build.ts ./src/types/",
     "prepublishOnly": "eslint . && npm run build-types && npm run build"
   },
   "files": [
     "src",
-    "vue",
-    "types",
-    "express",
-    "node"
+    "cjs",
+    "mjs"
   ],
   "repository": {
     "type": "git",

@@ -39,7 +39,7 @@ const main = async () => {
   const dir = path.resolve(process.argv[2] || './types')
   let prefix = process.argv[3]
   if (!prefix) prefix = pJsonName.replace('@data-fair/', 'https://github.com/data-fair/')
-  console.log(`look for schemas in subdirectories of ${dir} and match wityh prefix ${prefix}`)
+  console.log(`look for schemas in subdirectories of ${dir} and match with prefix ${prefix}`)
 
   const schemas: Record<string, any> = {}
 
