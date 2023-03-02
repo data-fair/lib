@@ -1,7 +1,7 @@
 import { type IncomingMessage } from 'http'
 import { type Ref, onUnmounted, computed, watch } from 'vue'
 import { useCookies, createCookies } from '@vueuse/integrations/useCookies'
-import { useRoute } from 'vue-router'
+import { type RouteLocation } from 'vue-router'
 import { ofetch } from 'ofetch'
 import jwtDecode from 'jwt-decode'
 import Debug from 'debug'
@@ -11,6 +11,7 @@ const debug = Debug('session')
 debug.log = console.log.bind(console)
 
 export interface SessionOptions {
+  route: RouteLocation
   directoryUrl?: string
   logoutRedirectUrl?: string
   req?: IncomingMessage
@@ -76,12 +77,13 @@ export const useSession = async (initOptions?: SessionOptions) => {
 
   // use vue-router to detect page change and maintain a reference to the current page location
   // top page if we are in iframe context
-  const route = useRoute()
   const topLocation = computed(() => {
-    if (!ssr) return undefined
+    if (ssr) return undefined
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    route // adds reactivity
-    return getTopLocation()
+    options.route?.fullPath // adds reactivity
+    const location = getTopLocation()
+    debug('update location based on route change', location)
+    return location
   })
 
   // the core state of the session that is filled by reading cookies
