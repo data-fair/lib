@@ -40,8 +40,8 @@ export const validateThrow = <Type>(validate: ValidateFunction, data: any, lang:
   if (!validate(data)) {
     (localize[lang] || localize.fr)(validate.errors)
     const message = errorsText(validate.errors, name)
-    if (internal) throw new ValidationError(message)
-    else throw new InternalValidationError(message)
+    if (internal) throw new InternalValidationError(message)
+    else throw new ValidationError(message)
   }
   return data as Type
 }
