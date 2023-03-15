@@ -10,6 +10,7 @@ module.exports = {
     node: true // Enable Node.js global variables
   },
   ignorePatterns: ['/node_modules', '/cjs', '/mjs', '/src/types/**/*.js'],
+  plugins: ['no-only-tests'],
   rules: {
     '@typescript-eslint/explicit-function-return-type': 0,
     '@typescript-eslint/restrict-template-expressions': 0,

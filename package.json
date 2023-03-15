@@ -6,7 +6,9 @@
     "lint": "eslint . --fix",
     "build": "tsc && tsc -p tsconfig.mjs.json",
     "build-types": "ts-node src/types/build.ts ./src/types/",
-    "prepublishOnly": "eslint . && npm run build-types && npm run build"
+    "prepublishOnly": "eslint . && npm run build-types && npm run build",
+    "pre-test": "cd src/types/test && ts-node ../build.ts",
+    "test": "npm run pre-test && ts-mocha --type-check --paths 'src/**/*.spec.ts'"
   },
   "files": [
     "src",
@@ -125,6 +127,7 @@
     "@types/debug": "^4.1.7",
     "@types/express": "^4.17.17",
     "@types/jsonwebtoken": "^9.0.1",
+    "@types/mocha": "^10.0.1",
     "@types/node": "^18.13.0",
     "@types/vue": "^2.0.0",
     "@types/ws": "^8.5.4",
@@ -148,10 +151,12 @@
     "jsonwebtoken": "^9.0.0",
     "jwks-rsa": "^3.0.1",
     "jwt-decode": "^3.1.2",
+    "mocha": "^10.2.0",
     "nuxt": "^3.2.0",
     "ofetch": "^1.0.0",
     "pascal-case": "^3.1.2",
     "prom-client": "^14.1.1",
+    "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.5",
     "universal-cookie": "^4.0.4",

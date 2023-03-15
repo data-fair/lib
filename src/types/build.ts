@@ -17,7 +17,7 @@ const ajv = new Ajv({
   coerceTypes: 'array',
   allErrors: true,
   strict: false,
-  code: { source: true, optimize: true }
+  code: { source: true, optimize: true, lines: true }
 })
 addFormats(ajv)
 ajvErrors(ajv)
@@ -35,6 +35,7 @@ const main = async () => {
     pJsonName = pJson.name
   }
   const inLib = pJsonName === '@data-fair/lib'
+  const inTest = pJsonName === '@data-fair/lib-test'
 
   const dir = path.resolve(process.argv[2] || './types')
   let prefix = process.argv[3]
@@ -96,12 +97,15 @@ export const schema = ${JSON.stringify(schema, null, 2)}
       } else if (schemaExport === 'validate') {
         const validate = ajv.getSchema(schema.$id || key)
         const validateCode = standaloneCode(ajv, validate)
+        let validationImport = '@data-fair/lib/cjs/types/validation'
+        if (inLib) validationImport = '../validation'
+        if (inTest) validationImport = '../../../validation'
         fs.writeFileSync(path.join(dir, key, 'validate.js'), validateCode)
         code += `
 // validate function compiled using ajv
 // @ts-ignore
 import validateUnsafe from './validate.js'
-import { validateThrow } from '${inLib ? '../validation' : '@data-fair/lib/cjs/types/validation'}'
+import { validateThrow } from '${validationImport}'
 import { type ValidateFunction } from 'ajv'
 export const validate = (data: any, lang: string = 'fr', name: string = 'data', internal?: boolean): ${mainTypeName} => {
   return validateThrow<${mainTypeName}>(validateUnsafe as unknown as ValidateFunction, data, lang, name, internal)

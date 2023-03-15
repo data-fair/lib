@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "required": ["str1", "str2"],
+  "additionalProperties": false,
+  "properties": {
+    "str1": {"type": "string", "default": "Str 1"},
+    "str2": {"type": "string"}
+  }
+}
