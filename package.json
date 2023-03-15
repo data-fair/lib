@@ -6,7 +6,7 @@
     "lint": "eslint . --fix",
     "build": "tsc && tsc -p tsconfig.mjs.json",
     "build-types": "ts-node src/types/build.ts ./src/types/",
-    "prepublishOnly": "eslint . && npm run build-types && npm run build",
+    "prepublish": "eslint . && npm test && npm run build-types && npm run build",
     "pre-test": "cd src/types/test && ts-node ../build.ts",
     "test": "npm run pre-test && ts-mocha --type-check --paths 'src/**/*.spec.ts'"
   },
@@ -147,6 +147,7 @@
     "debug": "^4.3.4",
     "eslint": "^8.34.0",
     "eslint-config-standard-with-typescript": "^34.0.0",
+    "eslint-plugin-no-only-tests": "^3.1.0",
     "express": "^4.18.2",
     "express-async-handler": "^1.2.0",
     "fast-json-stringify": "^5.5.0",

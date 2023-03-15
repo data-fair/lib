@@ -74,7 +74,6 @@ export const  stringify = (data: SessionState): string => {
   return str
 }
         
-// raw schema
 export const schema = {
   "$id": "https://github.com/data-fair/lib/session-state",
   "type": "object",

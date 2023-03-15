@@ -45,7 +45,7 @@ const main = async () => {
   const schemas: Record<string, any> = {}
 
   const keys = fs.readdirSync(dir)
-    .filter(key => key !== 'node_modules' && fs.lstatSync(path.join(dir, key)).isDirectory())
+    .filter(key => key !== 'node_modules' && key !== 'test' && key !== 'tests' && fs.lstatSync(path.join(dir, key)).isDirectory())
 
   if (!inLib) {
     const { schema: sessionStateSchema } = require('../types/session-state')
