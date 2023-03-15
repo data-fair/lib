@@ -86,6 +86,11 @@ const main = async () => {
     if (fs.existsSync(path.join(dir, key, 'index.ts'))) fs.unlinkSync(path.join(dir, key, 'index.ts'))
 
     const $refOptions = { resolve: { local: localResolver } }
+    let resolvedSchema
+    if (schemaExports.includes('resolvedSchema')) {
+      const refParser = require('@bcherny/json-schema-ref-parser')
+      resolvedSchema = await refParser.dereference(schema, $refOptions)
+    }
 
     for (const schemaExport of schemaExports) {
       if (schemaExport === 'types') {
@@ -96,12 +101,11 @@ const main = async () => {
 export const schema = ${JSON.stringify(schema, null, 2)}
 `
       } else if (schemaExport === 'resolvedSchema') {
-        const refParser = require('@bcherny/json-schema-ref-parser')
         code += `
-export const resolvedSchema = ${JSON.stringify(await refParser.dereference(schema, $refOptions), null, 2)}
+export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
 `
       } else if (schemaExport === 'validate') {
-        const validate = ajv.getSchema(schema.$id || key)
+        const validate = ajv.getSchema(resolvedSchema || schema.$id || key)
         const validateCode = standaloneCode(ajv, validate)
         let validationImport = '@data-fair/lib/cjs/types/validation'
         if (inLib) validationImport = '../validation'
