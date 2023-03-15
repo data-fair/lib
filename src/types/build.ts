@@ -85,14 +85,20 @@ const main = async () => {
     if (fs.existsSync(path.join(dir, key, 'stringify.js'))) fs.unlinkSync(path.join(dir, key, 'stringify.js'))
     if (fs.existsSync(path.join(dir, key, 'index.ts'))) fs.unlinkSync(path.join(dir, key, 'index.ts'))
 
+    const $refOptions = { resolve: { local: localResolver } }
+
     for (const schemaExport of schemaExports) {
       if (schemaExport === 'types') {
         code += await compileTs(schema, schema.$id || key,
-          { bannerComment: '', unreachableDefinitions: true, $refOptions: { resolve: { local: localResolver } } }) as string
+          { bannerComment: '', unreachableDefinitions: true, $refOptions }) as string
       } else if (schemaExport === 'schema') {
         code += `
-// raw schema
 export const schema = ${JSON.stringify(schema, null, 2)}
+`
+      } else if (schemaExport === 'resolvedSchema') {
+        const refParser = require('@bcherny/json-schema-ref-parser')
+        code += `
+export const resolvedSchema = ${JSON.stringify(await refParser.dereference(schema, $refOptions), null, 2)}
 `
       } else if (schemaExport === 'validate') {
         const validate = ajv.getSchema(schema.$id || key)

@@ -7,4 +7,14 @@ describe('build.ts script', () => {
     const o: SimpleObject = simpleObject.validate({"str2": "Str 2"})
     assert.deepEqual(o, {str1: 'Str 1', str2: 'Str 2'})
   })
+
+  it('should support resolving references', () => {
+    const objectWithReference = require('./types/object-with-reference')
+    assert.deepEqual(objectWithReference.resolvedSchema, {
+      title: 'object with reference',
+      type: 'object',
+      'x-exports': [ 'resolvedSchema' ],
+      properties: { str: { type: 'string', default: 'val1' } }
+    })
+  })
 })

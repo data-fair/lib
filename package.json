@@ -52,6 +52,9 @@
     "ws": "8"
   },
   "peerDependenciesMeta": {
+    "@bcherny/json-schema-ref-parser": {
+      "optional": true
+    },
     "@vueuse/integrations": {
       "optional": true
     },
@@ -124,6 +127,7 @@
   },
   "devDependencies": {
     "@babel/types": "^7.20.7",
+    "@bcherny/json-schema-ref-parser": "10.0.5-fork",
     "@types/debug": "^4.1.7",
     "@types/express": "^4.17.17",
     "@types/jsonwebtoken": "^9.0.1",

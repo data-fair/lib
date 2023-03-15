@@ -58,7 +58,7 @@ Schemas can contain instructions to generate optional functionalities:
 
 In the types directory install build peer dependencies:
 ```sh
-npm i -D ajv ajv-formats ajv-errors fast-json-stringify json-schema-to-typescript
+npm i -D ajv ajv-formats ajv-errors fast-json-stringify json-schema-to-typescript @bcherny/json-schema-ref-parser
 ```
 
 In the types directory's package.json create this script:

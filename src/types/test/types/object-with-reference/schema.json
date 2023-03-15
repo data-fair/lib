@@ -1,0 +1,8 @@
+{
+  "title": "object with reference",
+  "type": "object",
+  "x-exports": ["resolvedSchema"],
+  "properties": {
+    "str": {"$ref": "https://github.com/data-fair/lib-test/simple-object#/definitions/str3"}
+  }
+}
