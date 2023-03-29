@@ -3,6 +3,7 @@
   "type": "object",
   "x-exports": ["resolvedSchema"],
   "properties": {
-    "str": {"$ref": "https://github.com/data-fair/lib-test/simple-object#/definitions/str3"}
+    "str": {"$ref": "https://github.com/data-fair/lib-test/simple-object#/definitions/str3"},
+    "str4": {"$ref": "https://github.com/data-fair/lib-test/simple-object#/properties/str4"}
   }
 }

@@ -15,7 +15,10 @@ describe('build.ts script', () => {
       title: 'object with reference',
       type: 'object',
       'x-exports': ['resolvedSchema'],
-      properties: { str: { type: 'string', default: 'val1' } }
+      properties: {
+        str: { type: 'string', default: 'val1' },
+        str4: { type: 'string', const: 'Str 4' }
+      }
     })
   })
 })
