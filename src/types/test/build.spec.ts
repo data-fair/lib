@@ -12,9 +12,10 @@ describe('build.ts script', () => {
   it('should support resolving references', () => {
     const objectWithReference = require('./types/object-with-reference')
     assert.deepEqual(objectWithReference.resolvedSchema, {
+      $id: 'https://github.com/data-fair/lib-test/object-with-reference',
       title: 'object with reference',
       type: 'object',
-      'x-exports': ['resolvedSchema'],
+      'x-exports': ['types', 'validate', 'stringify', 'resolvedSchema'],
       properties: {
         str: { type: 'string', default: 'val1' },
         str4: { type: 'string', const: 'Str 4' }

@@ -105,7 +105,7 @@ export const schema = ${JSON.stringify(schema, null, 2)}
 export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
 `
       } else if (schemaExport === 'validate') {
-        const validate = ajv.getSchema(resolvedSchema || schema.$id || key)
+        const validate = resolvedSchema ? ajv.compile(resolvedSchema) : ajv.getSchema(schema.$id || key)
         const validateCode = standaloneCode(ajv, validate)
         let validationImport = '@data-fair/lib/cjs/types/validation'
         if (inLib) validationImport = '../validation'

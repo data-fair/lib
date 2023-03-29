@@ -1,0 +1,97 @@
+{
+  "type": "object",
+  "$id": "https://github.com/data-fair/simple-directory/site",
+  "title": "Site",
+  "x-exports": ["types", "resolvedSchema"],
+  "required": ["_id", "owner", "host", "theme", "authMode"],
+  "properties": {
+    "_id": {
+      "type": "string"
+    },
+    "owner": {
+      "$ref": "https://github.com/data-fair/lib/session-state#/definitions/account"
+    },
+    "host": {
+      "type": "string"
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties":false,
+      "required": ["primaryColor"],
+      "properties": {
+        "primaryColor": {
+          "type": "string"
+        }
+      }
+    },
+    "logo": {
+      "type": "string"
+    },
+    "authMode": {
+      "default": "onlyBackOffice",
+      "title": "Mode d'authentification",
+      "type": "string",
+      "oneOf": [
+        { "const": "onlyLocal", "title": "uniquement sur le site lui même" },
+        { "const": "onlyBackOffice", "title": "uniquement sur le back-office" },
+        { "const": "ssoBackOffice", "title": "sur le site et sur le back-office par SSO"}
+      ]
+    },
+    "authProviders": {
+      "type": "array",
+      "title": "Fournisseurs d'identité (SSO)",
+      "items": {
+        "type": "object",
+        "required": ["title", "type"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Nom"
+          },
+          "color": {
+            "type": "string",
+            "title": "Couleur",
+            "x-display": "color-picket"
+          },
+          "img": {
+            "type": "string",
+            "title": "Lien vers logo (petite taille)"
+          }
+        },
+        "oneOf": [{
+          "type": "object",
+          "title": "OpenID Connect",
+          "required": ["discovery", "client"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "title": "Type de founisseur",
+              "const": "oidc"
+            },
+            "discovery": {
+              "type": "string",
+              "title": "URL de découverte OICD",
+              "description": "probablement de la forme http://mon-fournisseur/.well-known/openid-configuration"
+            },
+            "client": {
+              "type": "object",
+              "required": ["id", "secret"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "title": "Identifiant du client"
+                },
+                "secret": {
+                  "type": "string",
+                  "title": "Secret",
+                  "x-display": "textarea",
+                  "writeOnly": true
+                }
+              }
+            }
+          }
+        }]
+      }
+    }
+  }
+}
