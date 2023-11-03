@@ -1,16 +1,15 @@
 {
   "compilerOptions": {
-    "target": "es2017",
-    "module": "CommonJS",
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "rootDir": "src",
-    "outDir": "./cjs",
+    "target": "esnext",
+    "module": "nodenext",
     "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": true,
     "strict": true,
-    "moduleResolution": "node",
     "allowJs": true,
-    "esModuleInterop": true
+    "checkJs": true,
+    "outDir": "types"
   },
   "include": ["src"],
-  "exclude": ["node_modules", "mjs", "cjs"]
+  "exclude": ["node_modules", "types/*/validate.js", "types/*/stringify.js"]
 }

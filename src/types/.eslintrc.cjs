@@ -1,3 +1,3 @@
 module.exports = {
-  ignorePatterns: ['**/index.ts']
+  ignorePatterns: ['**/*.js', '**/*.ts']
 }

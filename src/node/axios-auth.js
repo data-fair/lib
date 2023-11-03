@@ -1,20 +1,19 @@
 // build axios instances with sessions on a simple-directory instance
 // used for integration testing
 
-import { builder, instance } from './axios'
+import { builder, instance } from './axios.js'
 
-interface AxiosAuthOpts {
-  email: string
-  password: string
-  org?: string
-  dep?: string
-  adminMode?: boolean
-  directoryUrl?: string
-  axiosOpts?: any
-}
+/**
+ * @typedef {import('./axios-auth-types.js').AxiosAuthOpts} AxiosAuthOpts
+ */
 
-module.exports.axiosAuth = async (opts: AxiosAuthOpts) => {
-  const body: any = { email: opts.email, password: opts.password }
+/**
+ * @param {AxiosAuthOpts} opts
+ * @returns {Promise<import('axios').AxiosInstance>}
+ */
+export const axiosAuth = async (opts) => {
+  /** @type {any} */
+  const body = { email: opts.email, password: opts.password }
   if (opts.org) body.org = opts.org
   if (opts.dep) body.org = opts.dep
   if (opts.adminMode) body.adminMode = opts.adminMode
@@ -26,10 +25,10 @@ module.exports.axiosAuth = async (opts: AxiosAuthOpts) => {
   }
   try {
     await instance.get(callbackUrl, { maxRedirects: 0 })
-  } catch (err: any) {
+  } catch (/** @type {any} */err) {
     if (err.status !== 302) throw err
     axiosOpts.headers = axiosOpts.headers || {}
-    axiosOpts.headers.Cookie = err.headers['set-cookie'].map((s: string) => s.split(';')[0]).join(';')
+    axiosOpts.headers.Cookie = err.headers['set-cookie'].map((/** @type {string} */s) => s.split(';')[0]).join(';')
   }
   return builder(axiosOpts)
 }

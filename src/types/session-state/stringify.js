@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 
   'use strict'
 
@@ -634,5 +636,5 @@ class Serializer {
     
   
 
-  module.exports = main
+  export default main
       

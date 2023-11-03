@@ -1,9 +1,13 @@
 // prepare an axios instance with improved error management and some performance tuning for nodejs usage
 
 import axios from 'axios'
-import { httpAgent, httpsAgent } from './http-agents'
+import { httpAgent, httpsAgent } from './http-agents.js'
 
-export const builder = (opts) => {
+/**
+ * @param {object} [opts]
+ * @returns {import('axios').AxiosInstance}
+ */
+export const builder = (opts = {}) => {
   const ax = axios.create({
     ...opts,
     httpAgent,
@@ -27,4 +31,5 @@ export const builder = (opts) => {
   return ax
 }
 
+/** @type {import('axios').AxiosInstance} */
 export const instance = builder()

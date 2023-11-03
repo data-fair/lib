@@ -1,16 +1,25 @@
-import { type ErrorObject, type ValidateFunction } from 'ajv'
-import ajvFr from 'ajv-i18n/localize/fr'
-import ajvEn from 'ajv-i18n/localize/en'
-import { type Localize } from 'ajv-i18n/localize/types'
+import ajvFrModule from 'ajv-i18n/localize/fr/index.js'
+import ajvEnModule from 'ajv-i18n/localize/en/index.js'
 
-const localize: Record<string, Localize> = {
+// @ts-ignore
+const ajvFr = /** @type {typeof ajvFrModule.default} */ (ajvFrModule)
+// @ts-ignore
+const ajvEn = /** @type {typeof ajvEnModule.default} */ (ajvEnModule)
+
+/** @type {Record<string, import('ajv-i18n/localize/types.js').Localize>} */
+const localize = {
   fr: ajvFr,
   en: ajvEn
 }
 
 class ValidationError extends Error {
-  status: number
-  constructor (message: string) {
+  /** @type {number} */
+  status
+
+  /**
+   * @param {string} message
+   */
+  constructor (message) {
     super(message)
     this.name = 'ValidationError'
     this.status = 400
@@ -20,8 +29,13 @@ class ValidationError extends Error {
 ValidationError.stackTraceLimit = 0
 
 class InternalValidationError extends Error {
-  status: number
-  constructor (message: string) {
+  /** @type {number} */
+  status
+
+  /**
+   * @param {string} message
+   */
+  constructor (message) {
     super(message)
     this.name = 'InternalValidationError'
     this.status = 500
@@ -29,19 +43,26 @@ class InternalValidationError extends Error {
 }
 
 // cf https://github.com/ajv-validator/ajv/blob/b3e0cb17d0e095b5c883042b2306571be5ec86b7/lib/core.ts#L650
-const errorsText = (errors: ErrorObject[] | null | undefined, varName = 'data') => {
+/**
+ * @param {import('ajv').ErrorObject[] | null | undefined} errors
+ * @param {string} [varName]
+ * @returns {string}
+ */
+const errorsText = (errors, varName = 'data') => {
   if (!errors || errors.length === 0) return 'No errors'
   return errors
     .map((e) => `${varName}${e.instancePath} ${e.message}`)
     .reduce((text, msg) => text + ', ' + msg)
 }
 
-export const validateThrow = <Type>(validate: ValidateFunction, data: any, lang: string = 'fr', name: string = 'data', internal?: boolean): Type => {
+/** @type {import('./validation-types.js').ValidateThrowType} */
+export const validateThrow = (validate, data, lang = 'fr', name = 'data', internal) => {
   if (!validate(data)) {
     (localize[lang] || localize.fr)(validate.errors)
     const message = errorsText(validate.errors, name)
     if (internal) throw new InternalValidationError(message)
     else throw new ValidationError(message)
   }
-  return data as Type
+  // @ts-ignore
+  return data
 }

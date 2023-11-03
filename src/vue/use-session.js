@@ -1,41 +1,27 @@
-import { type IncomingMessage } from 'http'
-import { type Ref, reactive, computed, watch } from 'vue'
+import { reactive, computed, watch } from 'vue'
 import { useCookies, createCookies } from '@vueuse/integrations/useCookies'
-import { type RouteLocation } from 'vue-router'
 import { ofetch } from 'ofetch'
-import jwtDecode from 'jwt-decode'
+import jwtDecodeModule from 'jwt-decode'
 import Debug from 'debug'
-import { type SessionState, type User } from '../types/session-state'
+
+/**
+ * @typedef {import('./use-session-types.js').SessionOptions} SessionOptions
+ * @typedef {import('./use-session-types.js').Session} Session
+ */
+
+// @ts-ignore
+const jwtDecode = /** @type {typeof jwtDecodeModule.default} */ (jwtDecodeModule)
 
 const debug = Debug('session')
 debug.log = console.log.bind(console)
 
-export interface SessionOptions {
-  route: RouteLocation
-  directoryUrl?: string
-  logoutRedirectUrl?: string
-  req?: IncomingMessage
-}
-
-export interface Session {
-  state: SessionState
-  loginUrl: (redirect?: string, extraParams?: Record<string, string>, immediateRedirect?: true) => string
-  login: (redirect?: string, extraParams?: Record<string, string>, immediateRedirect?: true) => void
-  logout: (redirect?: string) => Promise<void>
-  switchOrganization: (org: string | null, dep?: string) => void
-  setAdminMode: (adminMode: boolean, redirect?: string) => Promise<void>
-  asAdmin: (user: any | null) => Promise<void>
-  cancelDeletion: () => Promise<void>
-  keepalive: () => Promise<void>
-  switchDark: (value: boolean) => void
-  switchLang: (value: string) => void
-  topLocation: Ref<Location | undefined>
-  options: SessionOptions
-}
-
-const jwtDecodeAlive = (jwt: string | null) => {
+/**
+ * @param {string | null} jwt
+ * @returns {import('../types/session-state/types.js').User | undefined}
+ */
+const jwtDecodeAlive = (jwt) => {
   if (!jwt) return
-  const decoded = jwtDecode<any>(jwt)
+  const decoded = /** @type {any} */(jwtDecode(jwt))
   if (!decoded) return
   const now = Math.ceil(Date.now().valueOf() / 1000)
   if (typeof decoded.exp !== 'undefined' && decoded.exp < now) {
@@ -47,7 +33,7 @@ const jwtDecodeAlive = (jwt: string | null) => {
     // do not return null here, this is probably a false flag due to a slightly mismatched clock
     // return null
   }
-  return decoded as User
+  return /** @type {import('../types/session-state/types.js').User} */(decoded)
 }
 
 const getTopLocation = () => {
@@ -58,7 +44,10 @@ const getTopLocation = () => {
   }
 }
 
-const goTo = (url: string | null) => {
+/**
+ * @param {string | null} url
+ */
+const goTo = (url) => {
   const topLocation = getTopLocation()
   if (topLocation == null) {
     throw new TypeError('session.goTo was called without access to the window object or its location')
@@ -69,7 +58,11 @@ const goTo = (url: string | null) => {
 
 export const defaultOptions = { directoryUrl: '/simple-directory' }
 
-export const useSession = async (initOptions?: SessionOptions) => {
+/**
+ * @param {SessionOptions} [initOptions]
+ * @returns {Promise<Session>}
+ */
+export const useSession = async (initOptions) => {
   const options = { ...defaultOptions, ...initOptions }
   debug(`init directoryUrl=${options.directoryUrl}`)
   const ssr = !!options.req
@@ -79,7 +72,7 @@ export const useSession = async (initOptions?: SessionOptions) => {
   // top page if we are in iframe context
   const topLocation = computed(() => {
     if (ssr) return undefined
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    // eslint-disable-next-line no-unused-expressions
     options.route?.fullPath // adds reactivity
     const location = getTopLocation()
     debug('update location based on route change', location)
@@ -87,7 +80,8 @@ export const useSession = async (initOptions?: SessionOptions) => {
   })
 
   // the core state of the session that is filled by reading cookies
-  const state: SessionState = reactive({})
+  /** @type {import('../types/session-state/types.js').SessionState} */
+  const state = reactive({})
 
   // cookies are the source of truth and this information is transformed into the state reactive object
   const cookies = (options.req ? createCookies(options.req) : useCookies)(['id_token', 'id_token_org'], { doNotParse: true })
@@ -145,7 +139,7 @@ export const useSession = async (initOptions?: SessionOptions) => {
   if (!ssr) {
     // sessionData is also stored in localStorage as a way to access it in simpler pages that do not require sd-vue
     // and in order to listen to storage event from other contexts and sync session info accross windows and tabs
-    const storageListener = (event: StorageEvent) => {
+    const storageListener = (/** @type {StorageEvent} */event) => {
       if (event.key === 'sd-session') readCookies()
     }
     window.addEventListener('storage', storageListener)
@@ -175,7 +169,13 @@ export const useSession = async (initOptions?: SessionOptions) => {
   }
 
   // login can be performed as a simple link (please use target=top) or as a function
-  const loginUrl = (redirect?: string, extraParams: Record<string, string> = {}, immediateRedirect?: true) => {
+  /**
+   * @param {string} [redirect]
+   * @param {Record<string, string>} [extraParams]
+   * @param {boolean} [immediateRedirect ]
+   * @returns {string}
+   */
+  const loginUrl = (redirect, extraParams = {}, immediateRedirect = true) => {
     // login can also be used to redirect user immediately if he is already logged
     if (redirect && state.user && immediateRedirect) return redirect
     if (!redirect && topLocation.value) redirect = topLocation.value.href
@@ -185,10 +185,18 @@ export const useSession = async (initOptions?: SessionOptions) => {
     })
     return url
   }
-  const login = (redirect?: string, extraParams: Record<string, string> = {}, immediateRedirect?: true) => {
+  /**
+   * @param {string} [redirect]
+   * @param {Record<string, string>} [extraParams]
+   * @param {boolean} [immediateRedirect ]
+   */
+  const login = (redirect, extraParams = {}, immediateRedirect) => {
     goTo(loginUrl(redirect, extraParams, immediateRedirect))
   }
-  const logout = async (redirect?: string) => {
+  /**
+   * @param {string} [redirect]
+   */
+  const logout = async (redirect) => {
     await ofetch(`${options.directoryUrl}/api/auth`, { method: 'DELETE' })
     // sometimes server side cookie deletion is not applied immediately in browser local js context
     // so we do it here to
@@ -198,7 +206,12 @@ export const useSession = async (initOptions?: SessionOptions) => {
     goTo(redirect ?? options.logoutRedirectUrl ?? null)
   }
 
-  const switchOrganization = (org: string | null, dep?: string) => {
+  /**
+   *
+   * @param {string | null} org
+   * @param {string} [dep]
+   */
+  const switchOrganization = (org, dep) => {
     if (org) cookies.set('id_token_org', org, { path: '/' })
     else cookies.remove('id_token_org')
     if (org) cookies.set('id_token_dep', dep, { path: '/' })
@@ -206,9 +219,14 @@ export const useSession = async (initOptions?: SessionOptions) => {
     readCookies()
   }
 
-  const setAdminMode = async (adminMode: boolean, redirect?: string) => {
+  /**
+   * @param {boolean} adminMode
+   * @param {string} [redirect]
+   */
+  const setAdminMode = async (adminMode, redirect) => {
     if (adminMode) {
-      const params: Record<string, string> = { adminMode: 'true' }
+      /** @type {Record<string, string> } */
+      const params = { adminMode: 'true' }
       if (state.user != null) params.email = state.user.email
       const url = loginUrl(redirect, params, true)
       goTo(url)
@@ -218,7 +236,10 @@ export const useSession = async (initOptions?: SessionOptions) => {
     }
   }
 
-  const asAdmin = async (user: any | null) => {
+  /**
+   * @param {any | null} user
+   */
+  const asAdmin = async (user) => {
     if (user) {
       await fetch(`${options.directoryUrl}/api/auth/asadmin`, { method: 'POST', body: user })
     } else {
@@ -229,17 +250,23 @@ export const useSession = async (initOptions?: SessionOptions) => {
 
   const cancelDeletion = async () => {
     if (state.user == null) return
-    await fetch(`${options.directoryUrl}/api/users/${state.user.id}`, { method: 'PATCH', body: <any>{ plannedDeletion: null } })
+    await fetch(`${options.directoryUrl}/api/users/${state.user.id}`, { method: 'PATCH', body: /** @type {any} */({ plannedDeletion: null }) })
     readCookies()
   }
 
-  const switchDark = (value: boolean) => {
+  /**
+   * @param {boolean} value
+   */
+  const switchDark = (value) => {
     const maxAge = 60 * 60 * 24 * 365 // 1 year
     cookies.set('theme_dark', `${value}`, { maxAge, path: '/' })
     readCookies()
   }
 
-  const switchLang = (value: string) => {
+  /**
+   * @param {string} value
+   */
+  const switchLang = (value) => {
     const maxAge = 60 * 60 * 24 * 365 // 1 year
     cookies.set('i18n_lang', value, { maxAge, path: '/' })
     readCookies()
@@ -260,7 +287,7 @@ export const useSession = async (initOptions?: SessionOptions) => {
     }
   }
 
-  return <Session>{
+  return /** @type {Session} */({
     state,
     loginUrl,
     login,
@@ -274,5 +301,5 @@ export const useSession = async (initOptions?: SessionOptions) => {
     switchLang,
     topLocation,
     options
-  }
+  })
 }

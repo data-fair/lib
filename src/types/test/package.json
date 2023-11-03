@@ -1,3 +1,4 @@
 {
-  "name": "@data-fair/lib-test"
+  "name": "@data-fair/lib-test",
+  "type": "module"
 }

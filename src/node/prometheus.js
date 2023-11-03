@@ -3,7 +3,7 @@
 // /metrics serves container/process/pod specific metrics while /global-metrics
 // serves metrics for the whole service installation no matter the scaling
 
-import { createServer, type Server, type ServerResponse } from 'node:http'
+import { createServer } from 'node:http'
 import { Registry, Counter, register } from 'prom-client'
 
 // a special registry for metrics that are global
@@ -17,12 +17,21 @@ const internalErrorCounter = new Counter({
   labelNames: ['errorCode']
 })
 
-export const internalError = (errorCode: string, message: string, ...optionalParams: any[]) => {
+/**
+ * @param {string} errorCode
+ * @param {string} message
+ * @param  {...any} optionalParams
+ */
+export const internalError = (errorCode, message, ...optionalParams) => {
   internalErrorCounter.inc({ errorCode })
   console.error(`[${errorCode}] ${message}`, ...optionalParams)
 }
 
-const serveRegistry = (res: ServerResponse, registry: Registry) => {
+/**
+ * @param {import('node:http').ServerResponse} res
+ * @param {Registry} registry
+ */
+const serveRegistry = (res, registry) => {
   registry.metrics()
     .then(metrics => {
       res.setHeader('Content-Type', registry.contentType)
@@ -37,8 +46,15 @@ const serveRegistry = (res: ServerResponse, registry: Registry) => {
     })
 }
 
-let server: Server
-export const start = async (port: number) => {
+/**
+ * @type {import('node:http').Server}
+ */
+let server
+
+/**
+ * @param {number} port
+ */
+export const start = async (port) => {
   server = createServer((req, res) => {
     if (req.method === 'GET' && req.url === '/metrics') {
       serveRegistry(res, register)

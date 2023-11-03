@@ -1,79 +1,36 @@
-export interface SessionState {
-  user?: User;
-  organization?: OrganizationMembership;
-  account?: Account;
-  accountRole?: string;
-  lang?: string;
-  dark?: boolean;
-  [k: string]: unknown;
-}
-/**
- * This interface was referenced by `SessionState`'s JSON-Schema
- * via the `definition` "user".
- */
-export interface User {
-  email: string;
-  id: string;
-  name: string;
-  organizations: OrganizationMembership[];
-  isAdmin?: 0 | 1;
-  adminMode?: 0 | 1;
-  asAdmin?: UserRef;
-  pd?: string;
-  ipa?: 0 | 1;
-}
-/**
- * This interface was referenced by `SessionState`'s JSON-Schema
- * via the `definition` "organizationMembership".
- */
-export interface OrganizationMembership {
-  id: string;
-  name: string;
-  role: string;
-  department?: string;
-  departmentName?: string;
-  dflt?: boolean;
-}
-/**
- * This interface was referenced by `SessionState`'s JSON-Schema
- * via the `definition` "userRef".
- */
-export interface UserRef {
-  id: string;
-  name: string;
-}
-/**
- * This interface was referenced by `SessionState`'s JSON-Schema
- * via the `definition` "account".
- */
-export interface Account {
-  type: "user" | "organization";
-  id: string;
-  name: string;
-  department?: string;
-  departmentName?: string;
-}
 
 // validate function compiled using ajv
 // @ts-ignore
 import validateUnsafe from './validate.js'
-import { validateThrow } from '../validation'
-import { type ValidateFunction } from 'ajv'
-export const validate = (data: any, lang: string = 'fr', name: string = 'data', internal?: boolean): SessionState => {
-  return validateThrow<SessionState>(validateUnsafe as unknown as ValidateFunction, data, lang, name, internal)
-}
-        
+import { validateThrow } from '../validation.js'
 // stringify function compiled using fast-json-stringify
 // @ts-ignore
 import stringifyUnsafe from './stringify.js'
 // @ts-ignore
 import flatstr from 'flatstr'
-export const  stringify = (data: SessionState): string => {
+
+
+/**
+ * @param {any} data
+ * @param {string} [lang]
+ * @param {string} [name]
+ * @param {boolean} [internal]
+ * @returns {import('./types.js').SessionState}
+ */
+export const validate = (data, lang = 'fr', name = 'data', internal) => {
+  return validateThrow(/** @type {import('ajv').ValidateFunction} */(validateUnsafe), data, lang, name, internal)
+}
+
+/**
+ * @param {import('./types.js').SessionState} data
+ * @returns {string}
+ */
+export const stringify = (data) => {
   const str = stringifyUnsafe(data)
   flatstr(str)
   return str
 }
-        
+
 export const schema = {
   "$id": "https://github.com/data-fair/lib/session-state",
   "type": "object",

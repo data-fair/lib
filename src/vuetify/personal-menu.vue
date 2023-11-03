@@ -186,16 +186,24 @@ en:
   cancelDeletion: Cancel the deletion of the user
 </i18n>
 
-<script setup lang="ts">
+<script setup>
 import { computed, toRefs } from 'vue'
-import {Session} from '../vue/use-session'
+// @ts-ignore
+import {useI18N} from 'vue-i18n'
 
-const props = withDefaults(
-  defineProps<{darkModeSwitch?: boolean, session: Session}>(),
-  { darkModeSwitch: false }
-)
+const props = defineProps({
+  darkModeSwitch: {
+    type: Boolean,
+    default: false
+  },
+  session: {
+    /** @type import('vue').PropType<import('../vue/use-session.js').Session> */
+    type: Object,
+    required: true
+  }
+})
 
-const { t } = useI18n({ useScope: 'local' })
+const { t } = useI18N({ useScope: 'local' })
 const { user, account } = toRefs(props.session.state)
 const switchableOrganizations = computed(() => {
   const { user, account } = props.session.state

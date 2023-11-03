@@ -1,32 +1,28 @@
-import { type Request, type Response, type NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import JwksClient from 'jwks-rsa'
 import asyncHandler from 'express-async-handler'
 import cookie from 'cookie'
-import { type SessionState, type User } from '../types/session-state'
-
-// cf https://blog.logrocket.com/extend-express-request-object-typescript/
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    export interface Request {
-      session: SessionState
-    }
-  }
-}
-
-export interface SessionOptions {
-  directoryUrl?: string
-}
 
 export const defaultOptions = { directoryUrl: 'http://simple-directory:8080' }
 
-export const initSession = (initOptions?: SessionOptions) => {
+/**
+ * @typedef {import('./session-types.js').SessionOptions} SessionOptions
+ */
+
+/**
+ * @param {SessionOptions} [initOptions]
+ * @returns {{auth: import('express').RequestHandler, requiredAuth: import('express').RequestHandler, adminAuth: import('express').RequestHandler}}
+ */
+export const initSession = (initOptions) => {
   const options = { ...defaultOptions, ...initOptions }
   const jwksClient = JwksClient({ jwksUri: options.directoryUrl + '/.well-known/jwks.json' })
 
-  const setSessionState = async (req: Request) => {
-    req.session = <SessionState>{}
+  /**
+   * @param {import('express').Request} req
+   */
+  const setSessionState = async (req) => {
+    /** @type {import('../types/session-state/types.js').SessionState} */
+    req.session = {}
     const cookieStr = req.get('cookie')
     if (!cookieStr) return
     const cookies = cookie.parse(cookieStr)
@@ -38,7 +34,7 @@ export const initSession = (initOptions?: SessionOptions) => {
     const decoded = jwt.decode(token, { complete: true })
     if (!decoded) return
     const signingKey = await jwksClient.getSigningKey(decoded.header.kid)
-    const user = jwt.verify(token, signingKey.getPublicKey()) as User
+    const user = /** @type {import('../types/session-state/types.js').User} */(jwt.verify(token, signingKey.getPublicKey()))
     if (!user) return
     req.session.user = user
 
@@ -71,12 +67,12 @@ export const initSession = (initOptions?: SessionOptions) => {
     req.session.accountRole = org.role
   }
 
-  const auth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  const auth = asyncHandler(async (req, res, next) => {
     await setSessionState(req)
     next()
   })
 
-  const requiredAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  const requiredAuth = asyncHandler(async (req, res, next) => {
     await setSessionState(req)
     if (!req.session.user) {
       res.status(401).send()
@@ -85,7 +81,7 @@ export const initSession = (initOptions?: SessionOptions) => {
     next()
   })
 
-  const adminAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  const adminAuth = asyncHandler(async (req, res, next) => {
     await setSessionState(req)
     if (!req.session.user) {
       res.status(401).send()

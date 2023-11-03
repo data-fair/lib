@@ -1,6 +1,9 @@
-import CacheableLookup from 'cacheable-lookup'
+import cacheableLookupModule from 'cacheable-lookup'
 import AgentKeepAlive from 'agentkeepalive'
 import https from 'node:https'
+
+// @ts-ignore
+const CacheableLookup = /** @type {typeof cacheableLookupModule.default} */ (cacheableLookupModule)
 
 // HTTP agent performance, cf https://github.com/nodejitsu/node-http-proxy/issues/1058
 // use agent keepalive only for http (meaning probably internal to the infrastructure)

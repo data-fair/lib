@@ -1,6 +1,9 @@
+// @ts-nocheck
+
+import { fullFormats } from "ajv-formats/dist/formats.js";
 "use strict";
-module.exports = validate14;
-module.exports.default = validate14;
+export const validate = validate14;
+export default validate14;
 const schema16 = {"$id":"https://github.com/data-fair/lib/session-state","type":"object","title":"session state","properties":{"user":{"$ref":"#/definitions/user"},"organization":{"$ref":"#/definitions/organizationMembership"},"account":{"$ref":"#/definitions/account"},"accountRole":{"type":"string"},"lang":{"type":"string"},"dark":{"type":"boolean"}},"definitions":{"organizationMembership":{"type":"object","additionalProperties":false,"required":["id","name","role"],"properties":{"id":{"type":"string"},"name":{"type":"string"},"role":{"type":"string"},"department":{"type":"string"},"departmentName":{"type":"string"},"dflt":{"type":"boolean"}}},"userRef":{"type":"object","additionalProperties":false,"required":["id","name"],"properties":{"id":{"type":"string"},"name":{"type":"string"}}},"user":{"type":"object","additionalProperties":false,"required":["email","id","name","organizations"],"properties":{"email":{"type":"string","format":"email"},"id":{"type":"string"},"name":{"type":"string"},"organizations":{"type":"array","items":{"$ref":"#/definitions/organizationMembership"}},"isAdmin":{"type":"integer","enum":[0,1]},"adminMode":{"type":"integer","enum":[0,1]},"asAdmin":{"$ref":"#/definitions/userRef"},"pd":{"type":"string","format":"date"},"ipa":{"type":"integer","enum":[0,1]}}},"account":{"type":"object","additionalProperties":false,"required":["type","id","name"],"properties":{"type":{"type":"string","enum":["user","organization"]},"id":{"type":"string"},"name":{"type":"string"},"department":{"type":"string"},"departmentName":{"type":"string"}}}}};
 const schema18 = {"type":"object","additionalProperties":false,"required":["id","name","role"],"properties":{"id":{"type":"string"},"name":{"type":"string"},"role":{"type":"string"},"department":{"type":"string"},"departmentName":{"type":"string"},"dflt":{"type":"boolean"}}};
 const schema21 = {"type":"object","additionalProperties":false,"required":["type","id","name"],"properties":{"type":{"type":"string","enum":["user","organization"]},"id":{"type":"string"},"name":{"type":"string"},"department":{"type":"string"},"departmentName":{"type":"string"}}};
@@ -8,7 +11,7 @@ const schema17 = {"type":"object","additionalProperties":false,"required":["emai
 const schema19 = {"type":"object","additionalProperties":false,"required":["id","name"],"properties":{"id":{"type":"string"},"name":{"type":"string"}}};
 const func2 = Object.prototype.hasOwnProperty;
 const formats0 = /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i;
-const formats2 = require("ajv-formats/dist/formats").fullFormats.date;
+const formats2 = fullFormats.date;
 
 function validate15(data, {instancePath="", parentData, parentDataProperty, rootData=data}={}){
 let vErrors = null;
