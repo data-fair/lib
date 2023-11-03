@@ -8,7 +8,8 @@
     "strict": true,
     "allowJs": true,
     "checkJs": true,
-    "outDir": "types"
+    "outDir": "types",
+    "skipLibCheck": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "types/*/validate.js", "types/*/stringify.js"]
