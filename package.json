@@ -4,11 +4,10 @@
   "description": "A collection of javascript functions, components, types, etc to help work inside the data-fair stack.",
   "scripts": {
     "lint": "eslint . --fix",
-    "build": "rm -rf ./types && tsc -p tsconfig.build.json",
-    "build-types": "node src/types/build.js ./src/types/",
-    "prepare": "npm run build-types && npm run build && husky install",
+    "build": "rm -rf ./types && tsc -p tsconfig.build.json && node src/types/build.js ./src/",
+    "prepare": "husky install",
     "quality": "eslint . && npm test",
-    "prepublishOnly": "npm run quality",
+    "prepublishOnly": "npm run quality && npm run build",
     "pre-test": "cd src/types/test && node ../build.js",
     "test": "npm run pre-test && node --test"
   },
