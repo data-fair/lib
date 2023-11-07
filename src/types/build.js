@@ -36,20 +36,20 @@ const main = async () => {
   const inLib = pJsonName === '@data-fair/lib'
   const inTest = pJsonName === '@data-fair/lib-test'
 
-  const relRootDir = process.argv[2] || './types'
+  const relRootDir = process.argv[2] || './'
   const rootDir = path.resolve(relRootDir)
 
   console.log(`scan dir ${relRootDir} looking for pattern types/*/schema.json or type/schema.json`)
   const dirs = []
   for (const _file of readdirSync(rootDir, { recursive: true})) {
     const file = /** @type {string} */(_file)
-    if (['/node_modules/', '/test/', '/test-it/'].find(exclude => file.includes(exclude))) continue
     if (!file.endsWith('/schema.json')) continue
     const filePath = path.resolve(rootDir, file.toString())
-    path.parse(filePath)
-    const parts = filePath.split(path.sep).slice(-3)
-    if (parts[0] === 'types') dirs.push([path.resolve(filePath, '..'), parts[1]])
-    if (parts[1] === 'type') dirs.push([path.resolve(filePath, './'), parts[0]])
+    const parts = filePath.split(path.sep)
+    if (parts.includes('node_modules')) continue
+    const lastParts = parts.slice(-3)
+    if (lastParts[0] === 'types') dirs.push([path.dirname(filePath), lastParts[1]])
+    if (lastParts[1] === 'type') dirs.push([path.dirname(filePath), lastParts[0]])
   }
   console.log(`found ${dirs.length} types to compile`)
 
@@ -87,13 +87,13 @@ const main = async () => {
   }
 
   for (const [dir, key] of dirs) {
-    console.log('compile type ' + key)
-    console.log('  dir: ' + dir)
+    console.log(`compile ${key} in ${dir}`)
     // const ts = await compile(schema, key, { $refOptions: { resolve: { 'data-fair-lib': dataFairLibResolver, local: localResolver } } })
     const schema = JSON.parse(readFileSync(path.join(dir, 'schema.json'), 'utf8'))
+    if (schema.$id) console.log(`  $id: ${JSON.stringify(schema.$id)}`)
     const mainTypeName = pascalCase(schema.title || key)
     const schemaExports = schema['x-exports'] || ['types', 'validate', 'stringify', 'schema']
-    console.log(`  exports: ${schemaExports.join(', ')}`)
+    console.log(`  exports: ${JSON.stringify(schemaExports)}`)
     let importsCode = ''
     let code = ''
     if (existsSync(path.join(dir, 'validate.js'))) unlinkSync(path.join(dir, 'validate.js'))
