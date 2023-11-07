@@ -6,7 +6,7 @@
     "lint": "eslint . --fix",
     "build": "rm -rf ./types && tsc -p tsconfig.build.json",
     "build-types": "node src/types/build.js ./src/types/",
-    "prepublish": "eslint . && npm test && npm run build-types && npm run build",
+    "prepublishOnly": "eslint . && npm test && npm run build-types && npm run build",
     "pre-test": "cd src/types/test && node ../build.js",
     "test": "npm run pre-test && node --test"
   },
@@ -16,41 +16,61 @@
     "LICENSE",
     "README.md"
   ],
+  "bin": {
+    "df-build-types": "./src/types/build.js"
+  },
   "type": "module",
   "exports": {
-    "./express/session": {
+    ".": "./index.js",
+    "./express/index.js": {
+      "default": "./src/express/index.js",
+      "types": "./types/express/index.d.ts"
+    },
+    "./express/session.js": {
       "default": "./src/express/session.js",
       "types": "./types/express/session.d.ts"
     },
-    "./node/axios-auth": {
+    "./express/async-handler.js": {
+      "default": "./src/express/async-handler.js",
+      "types": "./types/express/async-handler.d.ts"
+    },
+    "./node/axios-auth.js": {
       "default": "./src/node/axio-auth.js",
       "types": "./types/node/axios-auth.d.ts"
     },
-    "./node/axios": {
+    "./node/axios.js": {
       "default": "./src/node/axios.js",
       "types": "./types/node/axios.d.ts"
     },
-    "./node/http-agents": {
+    "./node/http-agents.js": {
       "default": "./src/node/http-agents.js",
       "types": "./types/node/http-agents.d.ts"
     },
-    "./node/prometheus": {
+    "./node/prometheus.js": {
       "default": "./src/node/prometheus.js",
       "types": "./types/node/prometheus.d.ts"
     },
-    "./node/ws": {
+    "./node/ws.js": {
       "default": "./src/node/ws.js",
       "types": "./types/node/ws.d.ts"
     },
-    "./types/build": {
-      "default": "./src/types/build.js",
-      "types": "./types/types/build.d.ts"
+    "./node/mongo.js": {
+      "default": "./src/node/mongo.js",
+      "types": "./types/node/mongo.d.ts"
     },
-    "./types/session-state": {
+    "./types/validation.js": {
+      "default": "./src/types/validation.js",
+      "types": "./types/types/validation.d.ts"
+    },
+    "./types/session-state.js": {
       "default": "./src/types/session-state/index.js",
       "types": "./types/types/session-state/index.d.ts"
     },
-    "./vue/use-session": {
+    "./types/identity.js": {
+      "default": "./src/types/identity/index.js",
+      "types": "./types/types/identity/index.d.ts"
+    },
+    "./vue/use-session.js": {
       "default": "./src/vue/use-session.js",
       "types": "./types/vue/use-session.d.ts"
     },
@@ -80,13 +100,13 @@
     "cacheable-lookup": "6",
     "debug": "4",
     "express": "4",
-    "express-async-handler": "1",
     "fast-json-stringify": "5",
     "flatstr": "1",
     "json-schema-to-typescript": "11",
     "jsonwebtoken": "9",
     "jwks-rsa": "3",
     "jwt-decode": "3",
+    "mongodb": "6",
     "ofetch": "1",
     "pascal-case": "3",
     "prom-client": "14",
@@ -132,9 +152,6 @@
     "express": {
       "optional": true
     },
-    "express-async-handler": {
-      "optional": true
-    },
     "fast-json-stringify": {
       "optional": true
     },
@@ -151,6 +168,9 @@
       "optional": true
     },
     "jwt-decode": {
+      "optional": true
+    },
+    "mongodb": {
       "optional": true
     },
     "ofetch": {

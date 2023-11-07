@@ -162,19 +162,19 @@ This middleware provides a thin layer for connecting to simple-directory using j
 Install peer dependencies:
 
 ```sh
-npm i jsonwebtoken jwks-rsa express-async-handler cookie
+npm i jsonwebtoken jwks-rsa cookie
 ```
 
 ```ts
-import { initSession } from '@data-fair/lib/express/session'
+import { asyncHandler, initSession } from '@data-fair/lib/express/index.js'
 export const app = express()
 const session = initSession({ directoryUrl: config.directoryUrl })
 app.use(session.auth)
 
-router.get('', (req, res) => {
+router.get('', asyncHandler(async (req, res) => {
   if (!req.session.account) { res.status(401).send(); return }
   ...
-})
+}))
 ```
 
 ## Nodejs

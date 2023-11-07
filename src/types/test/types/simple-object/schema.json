@@ -1,5 +1,6 @@
 {
   "$id": "https://github.com/data-fair/lib-test/simple-object",
+  "x-ajv": { "useDefaults": true, "coerceTypes": true },
   "title": "simple object",
   "type": "object",
   "required": ["str1", "str2"],

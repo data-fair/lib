@@ -1,42 +1,67 @@
 import jwt from 'jsonwebtoken'
 import JwksClient from 'jwks-rsa'
-import asyncHandler from 'express-async-handler'
 import cookie from 'cookie'
-
-export const defaultOptions = { directoryUrl: 'http://simple-directory:8080' }
-
-/**
- * @typedef {import('./session-types.js').SessionOptions} SessionOptions
- */
+import asyncHandler from '../express/async-handler.js'
+import { validate } from '../types/session-state/index.js'
 
 /**
- * @param {SessionOptions} [initOptions]
- * @returns {{auth: import('express').RequestHandler, requiredAuth: import('express').RequestHandler, adminAuth: import('express').RequestHandler}}
+ * @typedef {import('./session-types.js').ReqSession} ReqSession
+ * @typedef {import('./session-types.js').SessionStateWithAuth} SessionStateWithAuth
+ * @typedef {import('../types/session-state/index.js').SessionState} SessionState
  */
-export const initSession = (initOptions) => {
-  const options = { ...defaultOptions, ...initOptions }
-  const jwksClient = JwksClient({ jwksUri: options.directoryUrl + '/.well-known/jwks.json' })
+
+export class Session {
+  /**
+   * @type {JwksClient.JwksClient | undefined}
+   * @private
+   */
+  _jwksClient
+
+  get jwksClient () {
+    if (!this._jwksClient) throw new Error('session management was not initialized')
+    return this._jwksClient
+  }
+
+  /**
+   * @param {string} [directoryUrl]
+   */
+  init (directoryUrl = 'http://simple-directory:8080') {
+    this._jwksClient = JwksClient({ jwksUri: directoryUrl + '/.well-known/jwks.json' })
+  }
+
+  /**
+   * @param {ReqSession} req
+   * @returns {Promise<import('../types/session-state/types.js').SessionState>}
+   */
+  async state (req) {
+    if (req.session) return req.session
+    const session = await this.readState(req)
+    validate(session)
+    req.session = session
+    return session
+  }
 
   /**
    * @param {import('express').Request} req
+   * @returns {Promise<import('../types/session-state/types.js').SessionState>}
    */
-  const setSessionState = async (req) => {
+  async readState (req) {
     /** @type {import('../types/session-state/types.js').SessionState} */
-    req.session = {}
+    const session = {}
     const cookieStr = req.get('cookie')
-    if (!cookieStr) return
+    if (!cookieStr) return session
     const cookies = cookie.parse(cookieStr)
-    req.session.dark = cookies.theme_dark === '1' || cookies.theme_dark === 'true'
-    if (cookies.i18n_lang) req.session.lang = cookies.i18n_lang
+    session.dark = cookies.theme_dark === '1' || cookies.theme_dark === 'true'
+    if (cookies.i18n_lang) session.lang = cookies.i18n_lang
 
-    if (!cookies.id_token || !cookies.id_token_sign) return
+    if (!cookies.id_token || !cookies.id_token_sign) return session
     const token = cookies.id_token + '.' + cookies.id_token_sign
     const decoded = jwt.decode(token, { complete: true })
-    if (!decoded) return
-    const signingKey = await jwksClient.getSigningKey(decoded.header.kid)
+    if (!decoded) return session
+    const signingKey = await this.jwksClient.getSigningKey(decoded.header.kid)
     const user = /** @type {import('../types/session-state/types.js').User} */(jwt.verify(token, signingKey.getPublicKey()))
-    if (!user) return
-    req.session.user = user
+    if (!user) return session
+    session.user = user
 
     const organizationId = cookies.id_token_org
     const departmentId = cookies.id_token_dep
@@ -49,54 +74,54 @@ export const initSession = (initOptions) => {
       }
     }
     if (!org) {
-      req.session.account = {
+      session.account = {
         type: 'user',
         id: user.id,
         name: user.name
       }
-      return
+      session.accountRole = 'admin'
+      return session
     }
 
-    req.session.account = {
+    session.account = {
       type: 'organization',
       id: org.id,
       name: org.name,
       department: org.department,
       departmentName: org.departmentName
     }
-    req.session.accountRole = org.role
+    session.accountRole = org.role
+    return session
   }
 
-  const auth = asyncHandler(async (req, res, next) => {
-    await setSessionState(req)
-    next()
-  })
-
-  const requiredAuth = asyncHandler(async (req, res, next) => {
-    await setSessionState(req)
-    if (!req.session.user) {
-      res.status(401).send()
-      return
-    }
-    next()
-  })
-
-  const adminAuth = asyncHandler(async (req, res, next) => {
-    await setSessionState(req)
-    if (!req.session.user) {
-      res.status(401).send()
-      return
-    }
-    if (!req.session.user.adminMode) {
-      res.status(403).send('admin only')
-      return
-    }
-    next()
-  })
-
-  return {
-    auth,
-    requiredAuth,
-    adminAuth
+  /**
+   * @param {{required?: boolean, adminOnly?: boolean}} [options]
+   * @returns {import('express').RequestHandler}
+   */
+  middleware (options = {}) {
+    return asyncHandler(async (/** @type {ReqSession} */req, res, next) => {
+      const sessionState = await this.state(req)
+      if (options.required || options.adminOnly) {
+        if (!sessionState.user) {
+          res.status(401).send()
+          return
+        }
+        if (options.adminOnly) {
+          if (!sessionState.user.adminMode) {
+            res.status(403).send('admin only')
+            return
+          }
+        }
+      }
+      next()
+    })
   }
 }
+
+/** @type {(sessionState: import('../types/session-state/types.js').SessionState) => sessionState is SessionStateWithAuth} */
+export const isAuthenticated = (sessionState) => {
+  return !!sessionState.user
+}
+
+export const session = new Session()
+export default session

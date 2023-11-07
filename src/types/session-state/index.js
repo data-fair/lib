@@ -2,37 +2,26 @@
 // validate function compiled using ajv
 // @ts-ignore
 import validateUnsafe from './validate.js'
-import { validateThrow } from '../validation.js'
-// stringify function compiled using fast-json-stringify
-// @ts-ignore
-import stringifyUnsafe from './stringify.js'
-// @ts-ignore
-import flatstr from 'flatstr'
-
+import { assertValid as assertValidGeneric } from '../validation.js'
 
 /**
- * @param {any} data
- * @param {string} [lang]
- * @param {string} [name]
- * @param {boolean} [internal]
- * @returns {import('./types.js').SessionState}
+ * @typedef {import('./types.js').SessionState} SessionState
  */
-export const validate = (data, lang = 'fr', name = 'data', internal) => {
-  return validateThrow(/** @type {import('ajv').ValidateFunction} */(validateUnsafe), data, lang, name, internal)
-}
 
-/**
- * @param {import('./types.js').SessionState} data
- * @returns {string}
- */
-export const stringify = (data) => {
-  const str = stringifyUnsafe(data)
-  flatstr(str)
-  return str
+/** @type {{errors?: import('ajv').ErrorObject[] | null | undefined} & ((data: any) => data is SessionState)} */
+export const validate = /** @type {import('ajv').ValidateFunction} */(validateUnsafe)
+/** @type {(data: any, lang?: string, name?: string, internal?: boolean) => asserts data is SessionState} */
+export const assertValid = (data, lang = 'fr', name = 'data', internal) => {
+  assertValidGeneric(/** @type {import('ajv').ValidateFunction} */(validateUnsafe), data, lang, name, internal)
 }
 
 export const schema = {
   "$id": "https://github.com/data-fair/lib/session-state",
+  "x-exports": [
+    "types",
+    "validate",
+    "schema"
+  ],
   "type": "object",
   "title": "session state",
   "properties": {

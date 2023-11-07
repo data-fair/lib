@@ -52,9 +52,9 @@ const serveRegistry = (res, registry) => {
 let server
 
 /**
- * @param {number} port
+ * @param {number} [port]
  */
-export const start = async (port) => {
+export const start = async (port = 9090) => {
   server = createServer((req, res) => {
     if (req.method === 'GET' && req.url === '/metrics') {
       serveRegistry(res, register)

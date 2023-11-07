@@ -48,15 +48,23 @@ class InternalValidationError extends Error {
  * @param {string} [varName]
  * @returns {string}
  */
-const errorsText = (errors, varName = 'data') => {
+export const errorsText = (errors, varName = 'data') => {
   if (!errors || errors.length === 0) return 'No errors'
   return errors
-    .map((e) => `${varName}${e.instancePath} ${e.message}`)
+    .map((e) => {
+      let msg = `${varName}${e.instancePath} ${e.message}`
+      const params = Object.keys(e.params || {})
+        .filter(key => key !== 'error')
+        .map(key => `${key}=${e.params[key]}`)
+        .join(', ')
+      if (params) msg += ` (${params})`
+      return msg
+    })
     .reduce((text, msg) => text + ', ' + msg)
 }
 
-/** @type {import('./validation-types.js').ValidateThrowType} */
-export const validateThrow = (validate, data, lang = 'fr', name = 'data', internal) => {
+/** @type {<Type>(validate: import('ajv').ValidateFunction, data: any, lang?: string, name?: string, internal?: boolean) => asserts data is Type} */
+export const assertValid = (validate, data, lang = 'fr', name = 'data', internal) => {
   if (!validate(data)) {
     (localize[lang] || localize.fr)(validate.errors)
     const message = errorsText(validate.errors, name)

@@ -21,16 +21,6 @@ const ajvErrors = /** @type {typeof ajvErrorsModule.default} */ (ajvErrorsModule
 // @ts-ignore
 const standaloneCode = /** @type {typeof standaloneCodeModule.default} */ (standaloneCodeModule)
 
-const ajv = new Ajv({
-  useDefaults: true,
-  coerceTypes: 'array',
-  allErrors: true,
-  strict: false,
-  code: { source: true, esm: true, optimize: true, lines: true }
-})
-addFormats(ajv)
-ajvErrors(ajv)
-
 const main = async () => {
   let pJsonName
   try {
@@ -59,7 +49,6 @@ const main = async () => {
 
   if (!inLib) {
     const { schema: sessionStateSchema } = await import('../types/session-state/index.js')
-    ajv.addSchema(sessionStateSchema)
     schemas[sessionStateSchema.$id] = sessionStateSchema
   }
 
@@ -69,7 +58,6 @@ const main = async () => {
     console.log(`compile schema for type ${key}`)
     const schema = JSON.parse(fs.readFileSync(path.join(dir, key, 'schema.json'), 'utf8'))
     schemas[schema.$id || key] = schema
-    ajv.addSchema(schema, schema.$id || key)
   }
 
   const localResolver = {
@@ -118,6 +106,11 @@ const main = async () => {
         const typesCode = await compileTs(schema, schema.$id || key,
           { bannerComment: '', unreachableDefinitions: true, $refOptions })
         fs.writeFileSync(path.join(dir, key, 'types.ts'), typesCode)
+        code += `
+/**
+ * @typedef {import('./types.js').${mainTypeName}} ${mainTypeName}
+ */
+`
       } else if (schemaExport === 'schema') {
         code += `
 export const schema = ${JSON.stringify(schema, null, 2)}
@@ -127,6 +120,16 @@ export const schema = ${JSON.stringify(schema, null, 2)}
 export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
 `
       } else if (schemaExport === 'validate') {
+        const schemaAjvOpts = schema['x-ajv'] || {}
+        const ajv = new Ajv({
+          ...schemaAjvOpts,
+          allErrors: true,
+          strict: false,
+          code: { source: true, esm: true, optimize: true, lines: true },
+          schemas
+        })
+        addFormats(ajv)
+        ajvErrors(ajv)
         const validate = resolvedSchema ? ajv.compile(resolvedSchema) : ajv.getSchema(schema.$id || key)
         let validateCode = standaloneCode(ajv, validate)
 
@@ -141,7 +144,7 @@ export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
           validateCode = validateCode.replace(/require\("ajv\/dist\/runtime\/ucs2length"\)/g, 'ucs2length')
         }
 
-        let validationImport = '@data-fair/lib/cjs/types/validation'
+        let validationImport = '@data-fair/lib/types/validation.js'
         if (inLib) validationImport = '../validation.js'
         if (inTest) validationImport = '../../../validation.js'
         fs.writeFileSync(path.join(dir, key, 'validate.js'), '// @ts-nocheck\n\n' + validateCode)
@@ -149,17 +152,13 @@ export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
 // validate function compiled using ajv
 // @ts-ignore
 import validateUnsafe from './validate.js'
-import { validateThrow } from '${validationImport}'`
+import { assertValid as assertValidGeneric } from '${validationImport}'`
         code += `
-/**
- * @param {any} data
- * @param {string} [lang]
- * @param {string} [name]
- * @param {boolean} [internal]
- * @returns {import('./types.js').${mainTypeName}}
- */
-export const validate = (data, lang = 'fr', name = 'data', internal) => {
-  return validateThrow(/** @type {import('ajv').ValidateFunction} */(validateUnsafe), data, lang, name, internal)
+/** @type {{errors?: import('ajv').ErrorObject[] | null | undefined} & ((data: any) => data is ${mainTypeName})} */
+export const validate = /** @type {import('ajv').ValidateFunction} */(validateUnsafe)
+/** @type {(data: any, lang?: string, name?: string, internal?: boolean) => asserts data is ${mainTypeName}} */
+export const assertValid = (data, lang = 'fr', name = 'data', internal) => {
+  assertValidGeneric(/** @type {import('ajv').ValidateFunction} */(validateUnsafe), data, lang, name, internal)
 }
 `
       } else if (schemaExport === 'stringify') {

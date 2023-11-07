@@ -1,0 +1,19 @@
+{
+  "$id": "https://github.com/data-fair/lib/identity",
+  "x-exports": ["types", "validate"],
+  "type":"object",
+  "title": "identity",
+  "required": ["type", "id"],
+  "properties":{
+    "type":{
+      "type": "string",
+      "enum": ["user", "organization"]
+    },
+    "id":{
+      "type":"string"
+    },
+    "name":{
+      "type":"string"
+    }
+  }
+}

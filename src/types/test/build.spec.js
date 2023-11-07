@@ -1,16 +1,28 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
+import * as simpleObject from './types/simple-object/index.js'
+import * as objectWithReference from './types/object-with-reference/index.js'
 
 describe('build.ts script', () => {
-  it('should build a simple schema', async () => {
-    const simpleObject = await import('./types/simple-object/index.js')
-    /** @type {import('./types/simple-object/types.js').SimpleObject} */
-    const o = simpleObject.validate({ str2: 'Str 2' })
-    assert.deepEqual(o, { str1: 'Str 1', str2: 'Str 2' })
+  it('should build a simple schema and expose validation function', async () => {
+    const obj = /** @type {any} */({ str2: 'Str 2' })
+    if (simpleObject.validate(obj)) {
+      // here obj is typed as SimpleObject
+    }
+    // default value was written as x-ajv was used in schema
+    assert.deepEqual(obj, { str1: 'Str 1', str2: 'Str 2' })
+  })
+
+  it('should build a simple schema and expose a type assertion function', async () => {
+    const obj = /** @type {any} */({ str2: 'Str 2' })
+    simpleObject.assertValid(obj)
+    // here obj is typed as SimpleObject
+
+    // default value was written as x-ajv was used in schema
+    assert.deepEqual(obj, { str1: 'Str 1', str2: 'Str 2' })
   })
 
   it('should support resolving references', async () => {
-    const objectWithReference = await import('./types/object-with-reference/index.js')
     assert.deepEqual(objectWithReference.resolvedSchema, {
       $id: 'https://github.com/data-fair/lib-test/object-with-reference-resolved',
       title: 'object with reference',

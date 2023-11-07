@@ -1,5 +1,6 @@
 {
   "$id": "https://github.com/data-fair/lib/session-state",
+  "x-exports": ["types", "validate", "schema"],
   "type":"object",
   "title": "session state",
   "properties":{
