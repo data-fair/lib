@@ -6,7 +6,9 @@
     "lint": "eslint . --fix",
     "build": "rm -rf ./types && tsc -p tsconfig.build.json",
     "build-types": "node src/types/build.js ./src/types/",
-    "prepublishOnly": "eslint . && npm test && npm run build-types && npm run build",
+    "prepare": "npm run build-types && npm run build && husky install",
+    "quality": "eslint . && npm test",
+    "prepublishOnly": "npm run quality",
     "pre-test": "cd src/types/test && node ../build.js",
     "test": "npm run pre-test && node --test"
   },
@@ -193,11 +195,14 @@
     }
   },
   "devDependencies": {
+    "@commitlint/cli": "^18.2.0",
+    "@commitlint/config-conventional": "^18.1.0",
     "@types/debug": "^4.1.10",
     "@types/node": "^20.8.10",
     "@types/ws": "^8.5.8",
     "eslint": "^8.52.0",
     "eslint-config-standard-with-typescript": "^39.1.1",
-    "eslint-plugin-jsdoc": "^46.8.2"
+    "eslint-plugin-jsdoc": "^46.8.2",
+    "husky": "^8.0.3"
   }
 }

@@ -3,7 +3,7 @@ import { strict as assert } from 'assert'
 import * as simpleObject from './types/simple-object/index.js'
 import * as objectWithReference from './types/object-with-reference/index.js'
 
-describe('build.ts script', () => {
+describe('build.js script', () => {
   it('should build a simple schema and expose validation function', async () => {
     const obj = /** @type {any} */({ str2: 'Str 2' })
     if (simpleObject.validate(obj)) {
