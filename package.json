@@ -16,6 +16,9 @@
     "LICENSE",
     "README.md"
   ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "bin": {
     "df-build-types": "./src/types/build.js"
   },
@@ -191,6 +194,7 @@
   },
   "devDependencies": {
     "@types/debug": "^4.1.10",
+    "@types/node": "^20.8.10",
     "@types/ws": "^8.5.8",
     "eslint": "^8.52.0",
     "eslint-config-standard-with-typescript": "^39.1.1",

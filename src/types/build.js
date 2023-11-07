@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-import * as fs from 'node:fs'
+import { readFileSync, readdirSync, writeFileSync, lstatSync, existsSync, unlinkSync } from 'node:fs'
 import path from 'node:path'
 import ajvModule from 'ajv'
 import ajvFormatsModule from 'ajv-formats'
@@ -24,42 +24,47 @@ const standaloneCode = /** @type {typeof standaloneCodeModule.default} */ (stand
 const main = async () => {
   let pJsonName
   try {
-    const pJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'))
+    const pJson = JSON.parse(readFileSync('./package.json', 'utf8'))
     pJsonName = pJson.name
   } catch (err) {
     // nothing to do
   }
   if (!pJsonName) {
-    const pJson = JSON.parse(fs.readFileSync('../package.json', 'utf8'))
+    const pJson = JSON.parse(readFileSync('../package.json', 'utf8'))
     pJsonName = pJson.name
   }
   const inLib = pJsonName === '@data-fair/lib'
   const inTest = pJsonName === '@data-fair/lib-test'
 
-  const dir = path.resolve(process.argv[2] || './types')
-  let prefix = process.argv[3]
-  if (!prefix) prefix = pJsonName.replace('@data-fair/', 'https://github.com/data-fair/')
-  console.log(`look for schemas in subdirectories of ${dir} and match with prefix ${prefix}`)
+  const relRootDir = process.argv[2] || './types'
+  const rootDir = path.resolve(relRootDir)
+
+  console.log(`scan dir ${relRootDir} looking for pattern types/*/schema.json or type/schema.json`)
+  const dirs = []
+  for (const _file of readdirSync(rootDir, { recursive: true})) {
+    const file = /** @type {string} */(_file)
+    if (['/node_modules/', '/test/', '/test-it/'].find(exclude => file.includes(exclude))) continue
+    if (!file.endsWith('/schema.json')) continue
+    const filePath = path.resolve(rootDir, file.toString())
+    path.parse(filePath)
+    const parts = filePath.split(path.sep).slice(-3)
+    if (parts[0] === 'types') dirs.push([path.resolve(filePath, '..'), parts[1]])
+    if (parts[1] === 'type') dirs.push([path.resolve(filePath, './'), parts[0]])
+  }
+  console.log(`found ${dirs.length} types to compile`)
 
   /** @type {Record<string, any>} */
   const schemas = {}
-
-  const keys = fs.readdirSync(dir)
-    .filter(key => key !== 'node_modules' && key !== 'test' && key !== 'tests' && fs.lstatSync(path.join(dir, key)).isDirectory())
-
   if (!inLib) {
     const { schema: sessionStateSchema } = await import('../types/session-state/index.js')
     schemas[sessionStateSchema.$id] = sessionStateSchema
   }
 
-  // first loop to read all raw schemas
-  for (const key of keys) {
-    if (key === 'node_modules' || !fs.lstatSync(path.join(dir, key)).isDirectory()) continue
-    console.log(`compile schema for type ${key}`)
-    const schema = JSON.parse(fs.readFileSync(path.join(dir, key, 'schema.json'), 'utf8'))
+  for (const [dir, key] of dirs) {
+    const schema = JSON.parse(readFileSync(path.join(dir, 'schema.json'), 'utf8'))
     schemas[schema.$id || key] = schema
   }
-
+  
   const localResolver = {
     order: 1,
     /**
@@ -81,17 +86,20 @@ const main = async () => {
     }
   }
 
-  for (const key of keys) {
+  for (const [dir, key] of dirs) {
+    console.log('compile type ' + key)
+    console.log('  dir: ' + dir)
     // const ts = await compile(schema, key, { $refOptions: { resolve: { 'data-fair-lib': dataFairLibResolver, local: localResolver } } })
-    const schema = JSON.parse(fs.readFileSync(path.join(dir, key, 'schema.json'), 'utf8'))
+    const schema = JSON.parse(readFileSync(path.join(dir, 'schema.json'), 'utf8'))
     const mainTypeName = pascalCase(schema.title || key)
     const schemaExports = schema['x-exports'] || ['types', 'validate', 'stringify', 'schema']
+    console.log(`  exports: ${schemaExports.join(', ')}`)
     let importsCode = ''
     let code = ''
-    if (fs.existsSync(path.join(dir, key, 'validate.js'))) fs.unlinkSync(path.join(dir, key, 'validate.js'))
-    if (fs.existsSync(path.join(dir, key, 'stringify.js'))) fs.unlinkSync(path.join(dir, key, 'stringify.js'))
-    if (fs.existsSync(path.join(dir, key, 'index.js'))) fs.unlinkSync(path.join(dir, key, 'index.js'))
-    if (fs.existsSync(path.join(dir, key, 'types.ts'))) fs.unlinkSync(path.join(dir, key, 'types.ts'))
+    if (existsSync(path.join(dir, 'validate.js'))) unlinkSync(path.join(dir, 'validate.js'))
+    if (existsSync(path.join(dir, 'stringify.js'))) unlinkSync(path.join(dir, 'stringify.js'))
+    if (existsSync(path.join(dir, 'index.js'))) unlinkSync(path.join(dir, 'index.js'))
+    if (existsSync(path.join(dir, 'types.ts'))) unlinkSync(path.join(dir, 'types.ts'))
 
     const $refOptions = { resolve: { local: localResolver } }
     let resolvedSchema
@@ -105,7 +113,7 @@ const main = async () => {
       if (schemaExport === 'types') {
         const typesCode = await compileTs(schema, schema.$id || key,
           { bannerComment: '', unreachableDefinitions: true, $refOptions })
-        fs.writeFileSync(path.join(dir, key, 'types.ts'), typesCode)
+        writeFileSync(path.join(dir, 'types.ts'), typesCode)
         code += `
 /**
  * @typedef {import('./types.js').${mainTypeName}} ${mainTypeName}
@@ -121,6 +129,7 @@ export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
 `
       } else if (schemaExport === 'validate') {
         const schemaAjvOpts = schema['x-ajv'] || {}
+        console.log(`  ajv options: ${JSON.stringify(schemaAjvOpts)}`)
         const ajv = new Ajv({
           ...schemaAjvOpts,
           allErrors: true,
@@ -147,7 +156,7 @@ export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
         let validationImport = '@data-fair/lib/types/validation.js'
         if (inLib) validationImport = '../validation.js'
         if (inTest) validationImport = '../../../validation.js'
-        fs.writeFileSync(path.join(dir, key, 'validate.js'), '// @ts-nocheck\n\n' + validateCode)
+        writeFileSync(path.join(dir, 'validate.js'), '// @ts-nocheck\n\n' + validateCode)
         importsCode += `
 // validate function compiled using ajv
 // @ts-ignore
@@ -163,7 +172,7 @@ export const assertValid = (data, lang = 'fr', name = 'data', internal) => {
 `
       } else if (schemaExport === 'stringify') {
         const stringifyCode = fastJsonStringify(schema, { mode: 'standalone', schema: schemas })
-        fs.writeFileSync(path.join(dir, key, 'stringify.js'), '// @ts-nocheck\n\n' + stringifyCode.replace('module.exports = main', 'export default main'))
+        writeFileSync(path.join(dir, 'stringify.js'), '// @ts-nocheck\n\n' + stringifyCode.replace('module.exports = main', 'export default main'))
         importsCode += `
 // stringify function compiled using fast-json-stringify
 // @ts-ignore
@@ -186,7 +195,7 @@ export const stringify = (data) => {
         throw new Error(`unsupported export ${schemaExport}`)
       }
     }
-    fs.writeFileSync(path.join(dir, key, 'index.js'), importsCode + '\n' + code)
+    writeFileSync(path.join(dir, 'index.js'), importsCode + '\n' + code)
   }
 }
 main()
@@ -215,7 +224,7 @@ const dataFairLibResolver = {
       const schemaPath = path.join(dir, file.url.replace(prefix, ''), 'schema.json')
       console.log(`match url to local type ${file.url} -> ${schemaPath}`)
       try {
-        const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'))
+        const schema = JSON.parse(readFileSync(schemaPath, 'utf8'))
         callback(null, schema)
       } catch (err) {
         callback(err)
