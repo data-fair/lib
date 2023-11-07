@@ -9,7 +9,8 @@
     "allowJs": true,
     "checkJs": true,
     "outDir": "types",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "rootDir": "src"
   },
   "include": ["src"],
   "exclude": ["node_modules", "types/*/validate.js", "types/*/stringify.js"]
