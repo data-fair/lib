@@ -4,22 +4,7 @@
 
 import { readFileSync, readdirSync, writeFileSync, lstatSync, existsSync, unlinkSync } from 'node:fs'
 import path from 'node:path'
-import ajvModule from 'ajv'
-import ajvFormatsModule from 'ajv-formats'
-import ajvErrorsModule from 'ajv-errors'
-import standaloneCodeModule from 'ajv/dist/standalone/index.js'
-import fastJsonStringify from 'fast-json-stringify'
-import { compile as compileTs } from 'json-schema-to-typescript'
-import { pascalCase } from 'pascal-case'
-
-// @ts-ignore
-const Ajv = /** @type {typeof ajvModule.default} */ (ajvModule)
-// @ts-ignore
-const addFormats = /** @type {typeof ajvFormatsModule.default} */ (ajvFormatsModule)
-// @ts-ignore
-const ajvErrors = /** @type {typeof ajvErrorsModule.default} */ (ajvErrorsModule)
-// @ts-ignore
-const standaloneCode = /** @type {typeof standaloneCodeModule.default} */ (standaloneCodeModule)
+import { pascalCase } from 'change-case'
 
 const main = async () => {
   let pJsonName
@@ -39,7 +24,7 @@ const main = async () => {
   const relRootDir = process.argv[2] || './'
   const rootDir = path.resolve(relRootDir)
 
-  console.log(`scan dir ${relRootDir} looking for pattern types/*/schema.json or type/schema.json`)
+  console.log(`scan dir ${relRootDir} looking for pattern */schema.json, */types/schema.json or */type/schema.json`)
   const dirs = []
   for (const _file of readdirSync(rootDir, { recursive: true})) {
     const file = /** @type {string} */(_file)
@@ -48,21 +33,25 @@ const main = async () => {
     const parts = filePath.split(path.sep)
     if (parts.includes('node_modules')) continue
     const lastParts = parts.slice(-3)
-    if (lastParts[0] === 'types') dirs.push([path.dirname(filePath), lastParts[1]])
-    if (lastParts[1] === 'type') dirs.push([path.dirname(filePath), lastParts[0]])
+    if (lastParts[1] === 'type' || lastParts[1] === 'types') dirs.push([path.dirname(filePath), lastParts[0]])
+    else dirs.push([path.dirname(filePath), lastParts[1]])
   }
   console.log(`found ${dirs.length} types to compile`)
 
   /** @type {Record<string, any>} */
   const schemas = {}
   if (!inLib) {
-    const { schema: sessionStateSchema } = await import('../types/session-state/index.js')
+    const { schema: sessionStateSchema } = await import('../shared/session/state/index.js')
     schemas[sessionStateSchema.$id] = sessionStateSchema
+    const { schema: accountSchema } = await import('../shared/account/index.js')
+    schemas[accountSchema.$id] = accountSchema
   }
 
   for (const [dir, key] of dirs) {
     const schema = JSON.parse(readFileSync(path.join(dir, 'schema.json'), 'utf8'))
-    schemas[schema.$id || key] = schema
+    schema.$id = schema.$id || key
+    if (schemas[schema.$id]) throw new Error(`duplicate schema key ${schema.$id}`)
+    schemas[schema.$id] = schema
   }
   
   const localResolver = {
@@ -94,7 +83,7 @@ const main = async () => {
     const mainTypeName = pascalCase(schema.title || key)
     const schemaExports = schema['x-exports'] || ['types', 'validate', 'stringify', 'schema']
     console.log(`  exports: ${JSON.stringify(schemaExports)}`)
-    let importsCode = ''
+    let importsCode = '/* eslint-disable */\n\n'
     let code = ''
     if (existsSync(path.join(dir, 'validate.js'))) unlinkSync(path.join(dir, 'validate.js'))
     if (existsSync(path.join(dir, 'stringify.js'))) unlinkSync(path.join(dir, 'stringify.js'))
@@ -111,14 +100,21 @@ const main = async () => {
 
     for (const schemaExport of schemaExports) {
       if (schemaExport === 'types') {
+        const compileTs = (await import('json-schema-to-typescript')).compile
         const typesCode = await compileTs(schema, schema.$id || key,
           { bannerComment: '', unreachableDefinitions: true, $refOptions })
-        writeFileSync(path.join(dir, 'types.ts'), typesCode)
-        code += `
-/**
- * @typedef {import('./types.js').${mainTypeName}} ${mainTypeName}
- */
-`
+        writeFileSync(path.join(dir, 'types.ts'), '/* eslint-disable */\n\n' + typesCode)
+        const importedTypes = [mainTypeName]
+        if (schema.$defs) {
+          for (const key of Object.keys(schema.$defs)) {
+            importedTypes.push(pascalCase(key))
+          }
+        }
+        code += '/**'
+        for (const importedType of importedTypes) {
+          code += `\n * @typedef {import('./types.js').${importedType}} ${importedType}`
+        }
+        code += '\n */\n'
       } else if (schemaExport === 'schema') {
         code += `
 export const schema = ${JSON.stringify(schema, null, 2)}
@@ -128,8 +124,14 @@ export const schema = ${JSON.stringify(schema, null, 2)}
 export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
 `
       } else if (schemaExport === 'validate') {
+        const Ajv = (await import('ajv')).default
+        const addFormats = (await import('ajv-formats')).default
+        const ajvErrors = (await import('ajv-errors')).default
+        const standaloneCode = (await import('ajv/dist/standalone/index.js')).default
+
         const schemaAjvOpts = schema['x-ajv'] || {}
         console.log(`  ajv options: ${JSON.stringify(schemaAjvOpts)}`)
+        // @ts-ignore
         const ajv = new Ajv({
           ...schemaAjvOpts,
           allErrors: true,
@@ -137,9 +139,12 @@ export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
           code: { source: true, esm: true, optimize: true, lines: true },
           schemas
         })
+        // @ts-ignore
         addFormats(ajv)
+        // @ts-ignore
         ajvErrors(ajv)
         const validate = resolvedSchema ? ajv.compile(resolvedSchema) : ajv.getSchema(schema.$id || key)
+        // @ts-ignore
         let validateCode = standaloneCode(ajv, validate)
 
         // some internal imports to ajv are not translated to esm, we do it here
@@ -154,9 +159,9 @@ export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
         }
 
         let validationImport = '@data-fair/lib/types/validation.js'
-        if (inLib) validationImport = '../validation.js'
+        if (inLib ) validationImport = '#lib/types/validation.js'
         if (inTest) validationImport = '../../../validation.js'
-        writeFileSync(path.join(dir, 'validate.js'), '// @ts-nocheck\n\n' + validateCode)
+        writeFileSync(path.join(dir, 'validate.js'), '/* eslint-disable */\n// @ts-nocheck\n\n' + validateCode)
         importsCode += `
 // validate function compiled using ajv
 // @ts-ignore
@@ -171,8 +176,9 @@ export const assertValid = (data, lang = 'fr', name = 'data', internal) => {
 }
 `
       } else if (schemaExport === 'stringify') {
+        const fastJsonStringify = (await import('fast-json-stringify')).default
         const stringifyCode = fastJsonStringify(schema, { mode: 'standalone', schema: schemas })
-        writeFileSync(path.join(dir, 'stringify.js'), '// @ts-nocheck\n\n' + stringifyCode.replace('module.exports = main', 'export default main'))
+        writeFileSync(path.join(dir, 'stringify.js'), '/* eslint-disable */\n// @ts-nocheck\n\n' + stringifyCode.replace('module.exports = main', 'export default main'))
         importsCode += `
 // stringify function compiled using fast-json-stringify
 // @ts-ignore

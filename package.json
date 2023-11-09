@@ -4,7 +4,7 @@
   "description": "A collection of javascript functions, components, types, etc to help work inside the data-fair stack.",
   "scripts": {
     "lint": "eslint . --fix",
-    "build": "rm -rf ./types && tsc -p tsconfig.build.json && node src/types/build.js ./src/",
+    "build": "rm -rf ./types && node src/types/build.js ./src/ && tsc -p tsconfig.build.json",
     "prepare": "husky install",
     "quality": "eslint . && npm test",
     "prepublishOnly": "npm run quality && npm run build",
@@ -24,6 +24,12 @@
     "df-build-types": "./src/types/build.js"
   },
   "type": "module",
+  "imports": {
+    "#lib/*.js": {
+      "default": "./src/*.js",
+      "types": "./types/*.d.ts"
+    }
+  },
   "exports": {
     ".": "./index.js",
     "./express/index.js": {
@@ -31,8 +37,8 @@
       "types": "./types/express/index.d.ts"
     },
     "./express/session.js": {
-      "default": "./src/express/session.js",
-      "types": "./types/express/session.d.ts"
+      "default": "./src/express/session/index.js",
+      "types": "./types/express/session/index.d.ts"
     },
     "./express/async-handler.js": {
       "default": "./src/express/async-handler.js",
@@ -66,13 +72,17 @@
       "default": "./src/types/validation.js",
       "types": "./types/types/validation.d.ts"
     },
-    "./types/session-state.js": {
-      "default": "./src/types/session-state/index.js",
-      "types": "./types/types/session-state/index.d.ts"
+    "./shared/session.js": {
+      "default": "./src/shared/session/index.js",
+      "types": "./types/shared/session/index.d.ts"
     },
-    "./types/identity.js": {
-      "default": "./src/types/identity/index.js",
-      "types": "./types/types/identity/index.d.ts"
+    "./shared/session/state.js": {
+      "default": "./src/shared/session/state/index.js",
+      "types": "./types/shared/session/state/index.d.ts"
+    },
+    "./shared/account.js": {
+      "default": "./src/shared/account/index.js",
+      "types": "./types/shared/account/index.d.ts"
     },
     "./vue/use-session.js": {
       "default": "./src/vue/use-session.js",
@@ -112,7 +122,6 @@
     "jwt-decode": "3",
     "mongodb": "6",
     "ofetch": "1",
-    "pascal-case": "3",
     "prom-client": "14",
     "vue": "3",
     "vue-i18n": "9",
@@ -145,9 +154,6 @@
       "optional": true
     },
     "cacheable-lookup": {
-      "optional": true
-    },
-    "pascal-case": {
       "optional": true
     },
     "prom-client": {
@@ -203,5 +209,8 @@
     "eslint-config-standard-with-typescript": "^39.1.1",
     "eslint-plugin-jsdoc": "^46.8.2",
     "husky": "^8.0.3"
+  },
+  "dependencies": {
+    "change-case": "^5.1.2"
   }
 }

@@ -3,6 +3,7 @@
   "x-exports": ["types", "validate", "schema"],
   "type":"object",
   "title": "session state",
+  "additionalProperties":false,
   "properties":{
     "user":{
       "$ref":"#/definitions/user"

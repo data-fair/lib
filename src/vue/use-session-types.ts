@@ -1,7 +1,7 @@
 import { type IncomingMessage } from 'node:http'
 import { type Ref } from 'vue'
 import { type RouteLocation } from 'vue-router'
-import { type SessionState } from '../types/session-state/types.js'
+import { type SessionState } from '../shared/session/state/types.js'
 
 export interface SessionOptions {
   route: RouteLocation

@@ -1,4 +1,4 @@
-import { type Account } from '../types/session-state/types.js'
+import { type Account } from '../shared/session/state/types.js'
 
 export interface WsClientOpts {
   log?: any

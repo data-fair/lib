@@ -12,7 +12,7 @@ const localize = {
   en: ajvEn
 }
 
-class ValidationError extends Error {
+export class ValidationError extends Error {
   /** @type {number} */
   status
 
@@ -28,7 +28,7 @@ class ValidationError extends Error {
 // capturing stack traces is costly, never needed on this error that concerns mostly the client
 ValidationError.stackTraceLimit = 0
 
-class InternalValidationError extends Error {
+export class InternalValidationError extends Error {
   /** @type {number} */
   status
 
