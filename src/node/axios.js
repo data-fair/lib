@@ -7,11 +7,11 @@ import { httpAgent, httpsAgent } from './http-agents.js'
  * @param {object} [opts]
  * @returns {import('axios').AxiosInstance}
  */
-export const builder = (opts = {}) => {
+export const axiosBuilder = (opts = {}) => {
   const ax = axios.create({
-    ...opts,
     httpAgent,
-    httpsAgent
+    httpsAgent,
+    ...opts
   })
 
   // shorter stack traces
@@ -32,4 +32,4 @@ export const builder = (opts = {}) => {
 }
 
 /** @type {import('axios').AxiosInstance} */
-export const instance = builder()
+export const axiosInstance = axiosBuilder()

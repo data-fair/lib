@@ -115,7 +115,7 @@ This composable for Vue 3 provides a reactive session state and useful methods (
 Install peer dependencies:
 
 ```sh
-npm i @vueuse/integrations ofetch jwt-decode debug
+npm i @vueuse/integrations ofetch jwt-decode debug universal-cookie
 ```
 
 Use as a nuxt plugin in js (plugins/session.js):
@@ -132,8 +132,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 Use as a nuxt plugin in typescript (plugins/session.ts):
 
 ```ts
-import { useSession } from '@data-fair/lib/vue/use-session'
-import { Session } from '@data-fair/lib/vue/use-session.d'
+import { useSession, type Session } from '@data-fair/lib/vue/use-session'
 
 declare module '#app' {
   interface NuxtApp {

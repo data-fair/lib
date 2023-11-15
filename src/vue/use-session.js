@@ -1,16 +1,13 @@
 import { reactive, computed, watch } from 'vue'
 import { useCookies, createCookies } from '@vueuse/integrations/useCookies'
 import { ofetch } from 'ofetch'
-import jwtDecodeModule from 'jwt-decode'
+import { jwtDecode } from 'jwt-decode'
 import Debug from 'debug'
 
 /**
  * @typedef {import('./use-session-types.js').SessionOptions} SessionOptions
  * @typedef {import('./use-session-types.js').Session} Session
  */
-
-// @ts-ignore
-const jwtDecode = /** @type {typeof jwtDecodeModule.default} */ (jwtDecodeModule)
 
 const debug = Debug('session')
 debug.log = console.log.bind(console)
@@ -56,7 +53,7 @@ const goTo = (url) => {
   else topLocation.reload()
 }
 
-export const defaultOptions = { directoryUrl: '/simple-directory' }
+const defaultOptions = { directoryUrl: '/simple-directory' }
 
 /**
  * @param {SessionOptions} [initOptions]
@@ -137,7 +134,7 @@ export const useSession = async (initOptions) => {
   debug('initial state', state)
 
   if (!ssr) {
-    // sessionData is also stored in localStorage as a way to access it in simpler pages that do not require sd-vue
+    // sessionData is also stored in localStorage as a way to access it in simpler pages that do not require use-session
     // and in order to listen to storage event from other contexts and sync session info accross windows and tabs
     const storageListener = (/** @type {StorageEvent} */event) => {
       if (event.key === 'sd-session') readCookies()
@@ -274,6 +271,7 @@ export const useSession = async (initOptions) => {
 
   const keepalive = async () => {
     if (state.user == null) return
+    window.localStorage.setItem('sd-keepalive', `${new Date().getTime()}`)
     await fetch(`${options.directoryUrl}/api/auth/keepalive`, { method: 'POST' })
     readCookies()
   }

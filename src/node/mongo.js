@@ -27,6 +27,10 @@ export class Mongo {
    * @param {import('mongodb').MongoClientOptions} options
    */
   connect = async (mongoUrl, options = {}) => {
+    if (this._client) {
+      console.warn('db already connected')
+      return
+    }
     options.maxPoolSize = options.maxPoolSize ?? 5
     console.log('connecting to mongodb...')
     this._client = await MongoClient.connect(mongoUrl, options)
