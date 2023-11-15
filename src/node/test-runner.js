@@ -59,6 +59,7 @@ export const reporter = () => {
  * @param {string} dir
  */
 export const run = async (dir) => {
+  process.env.NODE_ENV = 'test'
   const files = (await readdir(dir))
     .filter(f => f.endsWith('.js') && f !== 'index.js')
     .map(f => `test-it/${f}`)
