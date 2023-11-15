@@ -178,7 +178,10 @@ export const assertValid = (data, lang = 'fr', name = 'data', internal) => {
       } else if (schemaExport === 'stringify') {
         const fastJsonStringify = (await import('fast-json-stringify')).default
         const stringifyCode = fastJsonStringify(schema, { mode: 'standalone', schema: schemas })
-        writeFileSync(path.join(dir, 'stringify.js'), '/* eslint-disable */\n// @ts-nocheck\n\n' + stringifyCode.replace('module.exports = main', 'export default main'))
+          .replace('module.exports = ', 'export default ')
+          .replace('const { dependencies } = require(\'fast-json-stringify/lib/standalone\')', 'import {dependencies} from \'fast-json-stringify/lib/standalone.js\'')
+        
+        writeFileSync(path.join(dir, 'stringify.js'), '/* eslint-disable */\n// @ts-nocheck\n\n' + stringifyCode)
         importsCode += `
 // stringify function compiled using fast-json-stringify
 // @ts-ignore
