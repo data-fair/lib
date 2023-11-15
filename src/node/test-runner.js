@@ -13,14 +13,26 @@ import chalk from 'chalk'
  * @returns {Writable}
  */
 export const reporter = () => {
+  let nesting = 0
+  const changeNesting = (/** @type {any} */event) => {
+    if ('nesting' in event.data) {
+      let newNesting = event.data.nesting
+      if (event.data.file) newNesting += 1
+      if (newNesting !== nesting) console.log('')
+      nesting = newNesting
+    }
+  }
   return new Writable({
     objectMode: true,
     write (event, encoding, callback) {
       // console.log(event)
+
       switch (event.type) {
         case 'test:dequeue':
+          changeNesting(event)
+          // eslint-disable-next-line no-case-declarations
           if (!event.data.file) console.log(chalk.bold.underline(`${event.data.name}\n`)) // entering a file
-          else console.log(chalk.bold(`\n${new Array(event.data.nesting + 1).join('  ')}> ${event.data.name}`)) // entering a test
+          else console.log(chalk.bold(`${new Array(nesting + 1).join('  ')}${event.data.name}`)) // entering a test
           break
         case 'test:enqueue':
           break
@@ -29,15 +41,18 @@ export const reporter = () => {
         case 'test:start':
           break
         case 'test:pass':
-          console.log(chalk.greenBright.bold(`${new Array(event.data.nesting + 1).join('  ')}V ${event.data.name}\n`))
+          changeNesting(event)
+          console.log(chalk.greenBright.bold(`${new Array(event.data.nesting + 2).join('  ')}ok`))
           break
         case 'test:fail':
-          if (event.data.details?.error) console.error(event.data.details.error.stack)
-          console.log(chalk.red.bold(`${new Array(event.data.nesting + 1).join('  ')}X ${event.data.name}`))
+          if (event.data.details?.error?.cause) console.error(event.data.details.error.cause)
+          else if (event.data.details?.error) console.error(event.data.details.error)
+          console.log(chalk.red.bold(`X ${event.data.name}`))
           return callback(new Error('test failure'))
         case 'test:plan':
           break
         case 'test:diagnostic':
+          changeNesting(event)
           console.log(chalk.blue.bold(`${event.data.message}`))
           break
         case 'test:stderr':
