@@ -42,7 +42,7 @@ export const reporter = () => {
           break
         case 'test:pass':
           changeNesting(event)
-          console.log(chalk.greenBright.bold(`${new Array(event.data.nesting + 2).join('  ')}ok`))
+          // console.log(chalk.greenBright.bold(`${new Array(event.data.nesting + 2).join('  ')}ok`))
           break
         case 'test:fail':
           if (event.data.details?.error?.cause) console.error(event.data.details.error.cause)

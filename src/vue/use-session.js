@@ -14,7 +14,7 @@ debug.log = console.log.bind(console)
 
 /**
  * @param {string | null} jwt
- * @returns {import('../shared/session/state/types.js').User | undefined}
+ * @returns {import('../shared/session/index.js').User | undefined}
  */
 const jwtDecodeAlive = (jwt) => {
   if (!jwt) return
@@ -30,7 +30,7 @@ const jwtDecodeAlive = (jwt) => {
     // do not return null here, this is probably a false flag due to a slightly mismatched clock
     // return null
   }
-  return /** @type {import('../shared/session/state/types.js').User} */(decoded)
+  return /** @type {import('../shared/session/index.js').User} */(decoded)
 }
 
 const getTopLocation = () => {
@@ -77,7 +77,7 @@ export const useSession = async (initOptions) => {
   })
 
   // the core state of the session that is filled by reading cookies
-  /** @type {import('../shared/session/state/types.js').SessionState} */
+  /** @type {import('../shared/session/index.js').SessionState} */
   const state = reactive({})
 
   // cookies are the source of truth and this information is transformed into the state reactive object

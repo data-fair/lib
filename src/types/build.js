@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-import { readFileSync, readdirSync, writeFileSync, lstatSync, existsSync, unlinkSync } from 'node:fs'
+import { readFileSync, readdirSync, writeFileSync, lstatSync, existsSync, rmSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { pascalCase } from 'change-case'
 
@@ -41,7 +41,7 @@ const main = async () => {
   /** @type {Record<string, any>} */
   const schemas = {}
   if (!inLib) {
-    const { schema: sessionStateSchema } = await import('../shared/session/state/index.js')
+    const { schema: sessionStateSchema } = await import('../shared/session/index.js')
     schemas[sessionStateSchema.$id] = sessionStateSchema
     const { schema: accountSchema } = await import('../shared/account/index.js')
     schemas[accountSchema.$id] = accountSchema
@@ -85,10 +85,8 @@ const main = async () => {
     console.log(`  exports: ${JSON.stringify(schemaExports)}`)
     let importsCode = '/* eslint-disable */\n\n'
     let code = ''
-    if (existsSync(path.join(dir, 'validate.js'))) unlinkSync(path.join(dir, 'validate.js'))
-    if (existsSync(path.join(dir, 'stringify.js'))) unlinkSync(path.join(dir, 'stringify.js'))
-    if (existsSync(path.join(dir, 'index.js'))) unlinkSync(path.join(dir, 'index.js'))
-    if (existsSync(path.join(dir, 'types.ts'))) unlinkSync(path.join(dir, 'types.ts'))
+    if (existsSync(path.join(dir, '.type'))) rmSync(path.join(dir, '.type'), {recursive: true   })
+    mkdirSync(path.join(dir, '.type'))
 
     const $refOptions = { resolve: { local: localResolver } }
     let resolvedSchema
@@ -103,7 +101,7 @@ const main = async () => {
         const compileTs = (await import('json-schema-to-typescript')).compile
         const typesCode = await compileTs(schema, schema.$id || key,
           { bannerComment: '', unreachableDefinitions: true, $refOptions })
-        writeFileSync(path.join(dir, 'types.ts'), '/* eslint-disable */\n\n' + typesCode)
+        writeFileSync(path.join(dir, '.type', 'types.ts'), '/* eslint-disable */\n\n' + typesCode)
         const importedTypes = [mainTypeName]
         if (schema.$defs) {
           for (const key of Object.keys(schema.$defs)) {
@@ -160,8 +158,8 @@ export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
 
         let validationImport = '@data-fair/lib/types/validation.js'
         if (inLib ) validationImport = '#lib/types/validation.js'
-        if (inTest) validationImport = '../../../validation.js'
-        writeFileSync(path.join(dir, 'validate.js'), '/* eslint-disable */\n// @ts-nocheck\n\n' + validateCode)
+        if (inTest) validationImport = '../../../../validation.js'
+        writeFileSync(path.join(dir, '.type', 'validate.js'), '/* eslint-disable */\n// @ts-nocheck\n\n' + validateCode)
         importsCode += `
 // validate function compiled using ajv
 // @ts-ignore
@@ -181,7 +179,7 @@ export const assertValid = (data, lang = 'fr', name = 'data', internal) => {
           .replace('module.exports = ', 'export default ')
           .replace('const { dependencies } = require(\'fast-json-stringify/lib/standalone\')', 'import {dependencies} from \'fast-json-stringify/lib/standalone.js\'')
         
-        writeFileSync(path.join(dir, 'stringify.js'), '/* eslint-disable */\n// @ts-nocheck\n\n' + stringifyCode)
+        writeFileSync(path.join(dir, '.type', 'stringify.js'), '/* eslint-disable */\n// @ts-nocheck\n\n' + stringifyCode)
         importsCode += `
 // stringify function compiled using fast-json-stringify
 // @ts-ignore
@@ -204,62 +202,7 @@ export const stringify = (data) => {
         throw new Error(`unsupported export ${schemaExport}`)
       }
     }
-    writeFileSync(path.join(dir, 'index.js'), importsCode + '\n' + code)
+    writeFileSync(path.join(dir, '.type', 'index.js'), importsCode + '\n' + code)
   }
 }
 main()
-
-/*
-const { sessionStateSchema } = require('./session-state');
-const dataFairLibResolver = {
-    order: 1,
-    canRead (file: { url: string }) {
-      return file.url.startsWith('https://github.com/data-fair/lib/')
-    },
-    read (file: { url: string }, callback: (err: Error | null, doc?: any) => void) {
-      const key = file.url.replace('https://github.com/data-fair/lib/', '')
-      console.log(`match url to @data-fair/lib type ${file.url} -> ${key}`)
-      if (key === 'session-state') callback(null, sessionStateSchema)
-      else callback(new Error(`unknown schema in @data-fair/lib ${key}`))
-    }
-  }
-
-  const localResolver = {
-    order: 2,
-    canRead (file: { url: string }) {
-      return file.url.startsWith(prefix)
-    },
-    async read (file: { url: string }, callback: (err: any, doc?: any) => void) {
-      const schemaPath = path.join(dir, file.url.replace(prefix, ''), 'schema.json')
-      console.log(`match url to local type ${file.url} -> ${schemaPath}`)
-      try {
-        const schema = JSON.parse(readFileSync(schemaPath, 'utf8'))
-        callback(null, schema)
-      } catch (err) {
-        callback(err)
-      }
-    }
-  } */
-
-/*
-keep for reference a version using schema2td + jtd-codegen
-
-const { spawnSync } = require('node:child_process')
-
-for (const key of ['agg-result']) {
-  const schema2td = `schema2td types/${key}/${key}.schema.json types/${key}/${key}.jtd.json`
-  console.log(`> ${schema2td}`)
-  spawnSync(
-    `npx --package @koumoul/schema-jtd@0.3.0 ${schema2td}`,
-    [],
-    {shell: true, stdio: 'inherit'}
-  )
-
-  const jtdCodegen = `jtd-codegen types/${key}/${key}.jtd.json --typescript-out types/${key}`
-  console.log(`> ${jtdCodegen}`)
-  spawnSync(
-    `docker compose run --rm jtd ${jtdCodegen}`,
-    [],
-    {shell: true, stdio: 'inherit'}
-  )
-} */

@@ -6,13 +6,13 @@
   "additionalProperties":false,
   "properties":{
     "user":{
-      "$ref":"#/definitions/user"
+      "$ref":"#/$defs/user"
     },
     "organization":{
-      "$ref":"#/definitions/organizationMembership"
+      "$ref":"#/$defs/organizationMembership"
     },
     "account":{
-      "$ref":"#/definitions/account"
+      "$ref":"#/$defs/account"
     },
     "accountRole":{
       "type":"string"
@@ -24,7 +24,7 @@
       "type":"boolean"
     }
   },
-  "definitions":{
+  "$defs":{
     "organizationMembership":{
       "type":"object",
       "additionalProperties":false,
@@ -93,7 +93,7 @@
         "organizations":{
           "type":"array",
           "items":{
-            "$ref":"#/definitions/organizationMembership"
+            "$ref":"#/$defs/organizationMembership"
           }
         },
         "isAdmin":{
@@ -111,7 +111,7 @@
           ]
         },
         "asAdmin":{
-          "$ref":"#/definitions/userRef"
+          "$ref":"#/$defs/userRef"
         },
         "pd":{
           "type":"string",

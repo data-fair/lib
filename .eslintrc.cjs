@@ -17,7 +17,7 @@ module.exports = {
       }
     }
   ],
-  ignorePatterns: ['/node_modules', '/types', 'types/*/*.js'],
+  ignorePatterns: ['/node_modules', '/types', '.type'],
   plugins: ['jsdoc'],
   rules: {
     'jsdoc/require-param-description': 0,

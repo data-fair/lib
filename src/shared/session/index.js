@@ -1,9 +1,11 @@
 /**
  * @typedef {import('./types.js').SessionStateAuthenticated} SessionStateAuthenticated
- * @typedef {import('./state/index.js').SessionState} SessionState
+ * @typedef {import('./.type/index.js').SessionState} SessionState
  */
 
 import { ValidationError } from '../../types/validation.js'
+
+export * from './.type/index.js'
 
 export class UnauthenticatedError extends Error {
   /** @type {number} */
@@ -49,8 +51,8 @@ export const assertAdminMode = (sessionState) => {
 }
 
 /**
- * @param {import('../account/types.js').AccountKeys} userAccount
- * @param {import('../account/types.js').AccountKeys} resourceAccount
+ * @param {import('../account/index.js').AccountKeys} userAccount
+ * @param {import('../account/index.js').AccountKeys} resourceAccount
  * @returns {boolean}
  */
 const matchAccount = (userAccount, resourceAccount) => {
@@ -61,8 +63,8 @@ const matchAccount = (userAccount, resourceAccount) => {
 }
 
 /**
- * @param {import('./state/types.js').SessionState} sessionState
- * @param {import('../account/types.js').AccountKeys} account
+ * @param {SessionState} sessionState
+ * @param {import('../account/index.js').AccountKeys} account
  * @param {boolean} [onlyActiveAccount]
  * @returns {string | null}
  */
@@ -81,8 +83,8 @@ export const getAccountRole = (sessionState, account, onlyActiveAccount = true) 
 }
 
 /**
- * @param {import('./state/types.js').SessionState} sessionState
- * @param {import('../account/types.js').AccountKeys} account
+ * @param {SessionState} sessionState
+ * @param {import('../account/index.js').AccountKeys} account
  * @param {string} role
  * @param {boolean} [onlyActiveAccount]
  */

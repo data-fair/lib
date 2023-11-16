@@ -2,8 +2,7 @@ import jwt from 'jsonwebtoken'
 import JwksClient from 'jwks-rsa'
 import cookie from 'cookie'
 import asyncHandler from '../../express/async-handler.js'
-import { validate } from '../../shared/session/state/index.js'
-import { assertAdminMode, assertAuthenticated } from '../../shared/session/index.js'
+import { validate, assertAdminMode, assertAuthenticated } from '../../shared/session/index.js'
 
 export * from '../../shared/session/index.js'
 
@@ -83,7 +82,7 @@ export class Session {
     const decoded = jwt.decode(token, { complete: true })
     if (!decoded) return session
     const signingKey = await this.jwksClient.getSigningKey(decoded.header.kid)
-    const user = /** @type {import('../../shared/session/state/types.js').User} */(jwt.verify(token, signingKey.getPublicKey()))
+    const user = /** @type {import('../../shared/session/index.js').User} */(jwt.verify(token, signingKey.getPublicKey()))
     if (!user) return session
     session.user = user
 
