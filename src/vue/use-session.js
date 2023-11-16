@@ -301,3 +301,5 @@ export const useSession = async (initOptions) => {
     options
   })
 }
+
+export default useSession

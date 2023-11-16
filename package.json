@@ -92,6 +92,14 @@
       "default": "./src/vue/use-session.js",
       "types": "./types/vue/use-session.d.ts"
     },
+    "./vue/app-info.js": {
+      "default": "./src/vue/app-info.js",
+      "types": "./types/vue/app-info.d.ts"
+    },
+    "./vuetify.js": {
+      "default": "./src/vuetify/index.js",
+      "types": "./types/vuetify/index.d.ts"
+    },
     "./vuetivy/personal-menu.vue": {
       "default": "./src/vuetify/personal-menu.vue"
     }
