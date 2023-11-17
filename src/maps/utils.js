@@ -1,0 +1,17 @@
+/**
+ * @param {[number, number, number, number]} bbox
+ * @returns {number}
+ */
+exports.bbox2zoom = (bbox) => {
+  const latDiff = bbox[3] - bbox[1]
+  const lngDiff = bbox[2] - bbox[0]
+  const maxDiff = (lngDiff > latDiff) ? lngDiff : latDiff
+  let zoomLevel
+  if (maxDiff < 360 / Math.pow(2, 20)) {
+    zoomLevel = 21
+  } else {
+    zoomLevel = -1 * ((Math.log(maxDiff) / Math.log(2)) - (Math.log(360) / Math.log(2)))
+    if (zoomLevel < 1) zoomLevel = 1
+  }
+  return zoomLevel
+}

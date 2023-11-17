@@ -45,6 +45,8 @@ const main = async () => {
     schemas[sessionStateSchema.$id] = sessionStateSchema
     const { schema: accountSchema } = await import('../shared/account/index.js')
     schemas[accountSchema.$id] = accountSchema
+    const { schema: appSchema } = await import('../shared/application/index.js')
+    schemas[appSchema.$id] = appSchema
   }
 
   for (const [dir, key] of dirs) {
@@ -90,9 +92,9 @@ const main = async () => {
 
     const $refOptions = { resolve: { local: localResolver } }
     let resolvedSchema
-    if (schemaExports.includes('resolvedSchema')) {
+    if (schemaExports.includes('resolvedSchema') || schemaExports.includes('resolvedSchemaJson')) {
       const refParser = await import('@bcherny/json-schema-ref-parser')
-      resolvedSchema = await refParser.dereference(schema, $refOptions)
+      resolvedSchema = /** @type {any} */(await refParser.dereference(schema, $refOptions))
       if (resolvedSchema.$id) resolvedSchema.$id += '-resolved'
     }
 
@@ -121,6 +123,9 @@ export const schema = ${JSON.stringify(schema, null, 2)}
         code += `
 export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
 `
+      } else if (schemaExport === 'resolvedSchemaJson') {
+        delete resolvedSchema['x-exports']
+        writeFileSync(path.join(dir, '.type', 'resolved-schema.json'), JSON.stringify(resolvedSchema, null, 2))
       } else if (schemaExport === 'validate') {
         const Ajv = (await import('ajv')).default
         const addFormats = (await import('ajv-formats')).default
