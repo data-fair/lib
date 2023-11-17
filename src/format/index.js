@@ -24,3 +24,11 @@ export function formatField (item, field) {
   }
   return '' + value
 }
+
+/**
+ * @param {import('../shared/application/index.js').Field} field
+ * @returns {string}
+ */
+export const getFieldLabel = (field) => {
+  return field.title || field['x-originalName'] || field.key
+}
