@@ -107,7 +107,7 @@ const main = async () => {
         const importedTypes = [mainTypeName]
         if (schema.$defs) {
           for (const key of Object.keys(schema.$defs)) {
-            importedTypes.push(pascalCase(key))
+            importedTypes.push(pascalCase(schema.$defs[key].title ?? key))
           }
         }
         code += '/**'

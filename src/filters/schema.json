@@ -1,0 +1,127 @@
+{
+  "title": "Filtres",
+  "x-exports": ["types"],
+  "type": "array",
+  "items": {"$ref": "#/$defs/filter"},
+  "$defs": {
+    "filter": {
+      "type": "object",
+      "default": {
+        "type": "in"
+      },
+      "x-itemKey": "type",
+      "oneOf": [
+        {
+          "title": "Restreindre à des valeurs",
+          "required": [
+            "type",
+            "field",
+            "values"
+          ],
+          "properties": {
+            "type": {
+              "const": "in"
+            },
+            "field": {
+              "$ref": "#/$defs/filterField"
+            },
+            "values": {
+              "type": "array",
+              "title": "Valeurs",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "title": "Restreindre à un interval de valeurs",
+          "required": [
+            "type",
+            "field"
+          ],
+          "properties": {
+            "type": {
+              "const": "interval"
+            },
+            "field": {
+              "$ref": "#/$defs/filterField"
+            },
+            "minValue": {
+              "type": "string",
+              "title": "Valeur min"
+            },
+            "maxValue": {
+              "type": "string",
+              "title": "Valeur max"
+            }
+          }
+        },
+        {
+          "title": "Exclure des valeurs",
+          "required": [
+            "type",
+            "field",
+            "values"
+          ],
+          "properties": {
+            "type": {
+              "const": "out"
+            },
+            "field": {
+              "$ref": "#/$defs/filterField"
+            },
+            "values": {
+              "type": "array",
+              "title": "Valeurs à exclure",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "title": "Commence par",
+          "required": [
+            "type",
+            "field",
+            "value"
+          ],
+          "properties": {
+            "type": {
+              "const": "starts"
+            },
+            "field": {
+              "$ref": "#/$defs/filterField"
+            },
+            "value": {
+              "type": "string",
+              "title": "Valeur"
+            }
+          }
+        }
+      ]
+    },
+    "filterField": {
+      "type": "object",
+      "title": "Colonne de filtre",
+      "x-fromUrl": "{datasets.0.href}/schema",
+      "x-itemTitle": "label",
+      "x-itemKey": "key",
+      "required": [
+        "key",
+        "label"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "title": "Clé"
+        },
+        "label": {
+          "type": "string",
+          "title": "Libellé"
+        }
+      }
+    }
+  }
+}

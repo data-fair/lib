@@ -2,7 +2,7 @@
  * @param {[number, number, number, number]} bbox
  * @returns {number}
  */
-exports.bbox2zoom = (bbox) => {
+export const bbox2zoom = (bbox) => {
   const latDiff = bbox[3] - bbox[1]
   const lngDiff = bbox[2] - bbox[0]
   const maxDiff = (lngDiff > latDiff) ? lngDiff : latDiff
@@ -14,4 +14,19 @@ exports.bbox2zoom = (bbox) => {
     if (zoomLevel < 1) zoomLevel = 1
   }
   return zoomLevel
+}
+
+/**
+ * @param {string} svgStr
+ * @returns {string}
+ */
+export const svgToDataURL = svgStr => {
+  const encoded = encodeURIComponent(svgStr)
+    .replace(/'/g, '%27')
+    .replace(/"/g, '%22')
+
+  const header = 'data:image/svg+xml,'
+  const dataUrl = header + encoded
+
+  return dataUrl
 }
