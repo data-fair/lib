@@ -145,8 +145,8 @@
     "cacheable-lookup": "6",
     "chalk": "5",
     "dayjs": "1",
-    "debug": "4",
     "debounce": "2",
+    "debug": "4",
     "express": "4",
     "fast-json-stringify": "5",
     "flatstr": "1",
@@ -159,6 +159,7 @@
     "ofetch": "1",
     "prom-client": "14",
     "vue": "3",
+    "vuetify": "3",
     "vue-i18n": "9",
     "vue-router": "4",
     "ws": "8"
@@ -236,6 +237,9 @@
     "vue": {
       "optional": true
     },
+    "vuetify": {
+      "optional": true
+    },
     "vue-i18n": {
       "optional": true
     },
@@ -281,7 +285,8 @@
     "ofetch": "^1.3.3",
     "prom-client": "^15.0.0",
     "vue": "^3.3.8",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.2.5",
+    "vuetify": "^3.4.2"
   },
   "dependencies": {
     "change-case": "^5.1.2"
