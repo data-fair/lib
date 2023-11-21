@@ -1,5 +1,7 @@
+/** @type {import('vuetify').VuetifyOptions} */
 export const defaultOptions = {
   ssr: false,
+  locale: { locale: 'fr' }, // TODO: sync this with the i18n locale
   theme: {
     defaultTheme: 'light',
     themes: {

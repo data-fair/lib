@@ -104,6 +104,10 @@
       "default": "./src/vue/use-concept-filters.js",
       "types": "./types/vue/use-concept-filters.d.ts"
     },
+    "./vue/reactive-search-params.js": {
+      "default": "./src/vue/reactive-search-params.js",
+      "types": "./types/vue/reactive-search-params.d.ts"
+    },
     "./vuetify.js": {
       "default": "./src/vuetify/index.js",
       "types": "./types/vuetify/index.d.ts"
@@ -113,6 +117,9 @@
     },
     "./vuetify/search-address.vue": {
       "default": "./src/vuetify/search-address.vue"
+    },
+    "./vuetify/date-match-filter.vue": {
+      "default": "./src/vuetify/date-match-filter.vue"
     },
     "./maps/utils.js": {
       "default": "./src/maps/utils.js",

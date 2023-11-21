@@ -62,7 +62,8 @@
       "required": [
         "href",
         "id",
-        "title"
+        "title",
+        "finalizedAt"
       ],
       "properties": {
         "href": {
@@ -83,6 +84,10 @@
           "items": {
             "$ref": "#/$defs/field"
           }
+        },
+        "finalizedAt": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },
