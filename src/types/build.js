@@ -24,7 +24,7 @@ const main = async () => {
   const relRootDir = process.argv[2] || './'
   const rootDir = path.resolve(relRootDir)
 
-  console.log(`scan dir ${relRootDir} looking for pattern */schema.json, */types/schema.json or */type/schema.json`)
+  console.log(`scan dir ${relRootDir} looking for pattern */schema.json`)
   const dirs = []
   for (const _file of readdirSync(rootDir, { recursive: true})) {
     const file = /** @type {string} */(_file)
