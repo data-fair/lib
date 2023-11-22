@@ -2,7 +2,7 @@ import { computed } from 'vue'
 
 // eslint-disable-next-line jsdoc/require-returns
 /**
- * @param {import('@vueuse/core').UrlParams} searchParams
+ * @param {Record<string, string>} searchParams
  */
 export const useFilters = (searchParams) => {
   const filters = computed(() => {
