@@ -7,7 +7,7 @@ import { httpAgent, httpsAgent } from './http-agents.js'
  * @param {object} [opts]
  * @returns {import('axios').AxiosInstance}
  */
-export const axiosBuilder = (opts = {}) => {
+export function axiosBuilder (opts = {}) {
   const ax = axios.create({
     httpAgent,
     httpsAgent,

@@ -3,6 +3,11 @@
 
 import { reactive, watch } from 'vue'
 
+// @ts-ignore
+if (import.meta.env?.SSR) {
+  throw new Error('this module uses a module level singleton, it cannot be used in SSR mode')
+}
+
 const state = reactive(/** @type {Record<string, string>} */({}))
 
 function updateState () {
