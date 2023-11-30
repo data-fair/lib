@@ -151,7 +151,7 @@
     "axios": "1",
     "cacheable-lookup": "6",
     "chalk": "5",
-    "cookie": "5",
+    "cookie": "0.5",
     "dayjs": "1",
     "debounce": "2",
     "debug": "4",
