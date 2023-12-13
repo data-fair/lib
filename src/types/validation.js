@@ -52,10 +52,14 @@ export const errorsText = (errors, varName = 'data') => {
   if (!errors || errors.length === 0) return 'No errors'
   return errors
     .map((e) => {
-      let msg = `${varName}${e.instancePath} ${e.message}`
-      const params = Object.keys(e.params || {})
-        .filter(key => key !== 'error')
-        .map(key => `${key}=${e.params[key]}`)
+      let msg = `${varName}${e.instancePath} ${e.message}`.trim()
+      const paramKeys = Object.keys(e.params || {}).filter(key => {
+        if (key === 'error') return false
+        if (e.keyword === 'type' && key === 'type') return false
+        return true
+      })
+      const params = paramKeys
+        .map(key => paramKeys.length > 1 ? `${key}=${e.params[key]}` : e.params[key])
         .join(', ')
       if (params) msg += ` (${params})`
       return msg
