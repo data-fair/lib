@@ -5,6 +5,7 @@
 import { readFileSync, readdirSync, writeFileSync, lstatSync, existsSync, rmSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { pascalCase } from 'change-case'
+import clone from '../clone.js'
 
 const main = async () => {
   let pJsonName
@@ -73,7 +74,7 @@ const main = async () => {
      * @param {(err: any, doc?: any) => void} callback
      */
     async read (/** @type {{ url: string }} */file, callback) {
-      callback(null, schemas[file.url])
+      callback(null, clone(schemas[file.url]))
     }
   }
 
@@ -101,7 +102,7 @@ const main = async () => {
     for (const schemaExport of schemaExports) {
       if (schemaExport === 'types') {
         const compileTs = (await import('json-schema-to-typescript')).compile
-        const typesCode = await compileTs(schema, schema.$id || key,
+        const typesCode = await compileTs(clone(schema), schema.$id || key,
           { bannerComment: '', unreachableDefinitions: true, $refOptions })
         writeFileSync(path.join(dir, '.type', 'types.ts'), '/* eslint-disable */\n\n' + typesCode)
         const importedTypes = [mainTypeName]
