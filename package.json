@@ -44,6 +44,10 @@
       "default": "./src/express/async-handler.js",
       "types": "./types/express/async-handler.d.ts"
     },
+    "./express/error-handler.js": {
+      "default": "./src/express/error-handler.js",
+      "types": "./types/express/error-handler.d.ts"
+    },
     "./node/axios-auth.js": {
       "default": "./src/node/axios-auth.js",
       "types": "./types/node/axios-auth.d.ts"
