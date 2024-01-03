@@ -1,6 +1,7 @@
 // build axios instances with sessions on a simple-directory instance
 // used for integration testing
 
+import { Agent } from 'node:http'
 import { axiosBuilder, axiosInstance } from './axios.js'
 
 /**
@@ -17,7 +18,10 @@ export const axiosAuth = async (opts) => {
   if (opts.org) body.org = opts.org
   if (opts.dep) body.org = opts.dep
   if (opts.adminMode) body.adminMode = opts.adminMode
-  const axiosOpts = { ...opts.axiosOpts }
+  const axiosOpts = {
+    httpAgent: new Agent({ keepAlive: false }),
+    ...opts.axiosOpts
+  }
   const directoryUrl = opts.directoryUrl ?? 'http://localhost:8080'
   let callbackUrl = (await axiosInstance.post(directoryUrl + '/api/auth/password', body, { params: { redirect: directoryUrl }, maxRedirects: 0 })).data
   if (callbackUrl.startsWith(directoryUrl + '/simple-directory')) {
@@ -32,3 +36,4 @@ export const axiosAuth = async (opts) => {
   }
   return axiosBuilder(axiosOpts)
 }
+export default axiosAuth

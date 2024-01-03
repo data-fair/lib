@@ -33,3 +33,5 @@ export function axiosBuilder (opts = {}) {
 
 /** @type {import('axios').AxiosInstance} */
 export const axiosInstance = axiosBuilder()
+
+export default axiosInstance
