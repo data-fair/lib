@@ -76,6 +76,14 @@
       "default": "./src/node/test-runner.js",
       "types": "./types/node/test-runner.d.ts"
     },
+    "./node/test-module-hooks.js": {
+      "default": "./src/node/test-module-hooks.js",
+      "types": "./types/node/test-module-hooks.d.ts"
+    },
+    "./node/test-spies.js": {
+      "default": "./src/node/test-spies.js",
+      "types": "./types/node/test-spies.d.ts"
+    },
     "./types/validation.js": {
       "default": "./src/types/validation.js",
       "types": "./types/types/validation.d.ts"
@@ -100,17 +108,41 @@
       "default": "./src/format/index.js",
       "types": "./types/format/index.d.ts"
     },
-    "./vue/use-session.js": {
-      "default": "./src/vue/use-session.js",
-      "types": "./types/vue/use-session.d.ts"
+    "./format/bytes.js": {
+      "default": "./src/format/bytes.js",
+      "types": "./types/format/bytes.d.ts"
     },
-    "./vue/use-concept-filters.js": {
-      "default": "./src/vue/use-concept-filters.js",
-      "types": "./types/vue/use-concept-filters.d.ts"
+    "./vue/session.js": {
+      "default": "./src/vue/session.js",
+      "types": "./types/vue/session.d.ts"
+    },
+    "./vue/concept-filters.js": {
+      "default": "./src/vue/concept-filters.js",
+      "types": "./types/vue/concept-filters.d.ts"
     },
     "./vue/reactive-search-params.js": {
       "default": "./src/vue/reactive-search-params.js",
       "types": "./types/vue/reactive-search-params.d.ts"
+    },
+    "./vue/reactive-search-params-global.js": {
+      "default": "./src/vue/reactive-search-params-global.js",
+      "types": "./types/vue/reactive-search-params-global.d.ts"
+    },
+    "./vue/locale-dayjs.js": {
+      "default": "./src/vue/locale-dayjs.js",
+      "types": "./types/vue/locale-dayjs.d.ts"
+    },
+    "./vue/locale-dayjs-global.js": {
+      "default": "./src/vue/locale-dayjs-global.js",
+      "types": "./types/vue/locale-dayjs-global.d.ts"
+    },
+    "./vue/ui-notif.js": {
+      "default": "./src/vue/ui-notif.js",
+      "types": "./types/vue/ui-notif.d.ts"
+    },
+    "./vue/ui-notif-global.js": {
+      "default": "./src/vue/ui-notif-global.js",
+      "types": "./types/vue/ui-notif-global.d.ts"
     },
     "./vuetify.js": {
       "default": "./src/vuetify/index.js",
@@ -304,9 +336,10 @@
     "ofetch": "^1.3.3",
     "prom-client": "^15.0.0",
     "universal-cookie": "^6.1.1",
-    "vue": "^3.3.8",
+    "vue": "^3.3.12",
     "vue-router": "^4.2.5",
-    "vuetify": "^3.4.2"
+    "vuetify": "^3.4.7",
+    "ws": "^8.16.0"
   },
   "dependencies": {
     "change-case": "^5.1.2"
