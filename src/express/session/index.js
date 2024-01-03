@@ -6,9 +6,9 @@ import { validate, assertAdminMode, assertAuthenticated } from '../../shared/ses
 
 export * from '../../shared/session/index.js'
 
+const sessionKey = Symbol('session')
+
 /**
- * @typedef {import('./types.js').ReqSession} ReqSession
- * @typedef {import('./types.js').IncomingMessageSession} IncomingMessageSession
  * @typedef {import('../../shared/session/index.js').SessionStateAuthenticated} SessionStateAuthenticated
  * @typedef {import('../../shared/session/index.js').SessionState} SessionState
  */
@@ -33,19 +33,21 @@ export class Session {
   }
 
   /**
-   * @param {ReqSession | IncomingMessageSession} req
+   * @param {import('express').Request | import('node:http').IncomingMessage} req
    * @returns {Promise<SessionState>}
    */
   async req (req) {
-    if (req.session) return req.session
+    // @ts-ignore
+    if (req[sessionKey]) return req[sessionKey]
     const sessionState = await this.readState(req)
     validate(sessionState)
-    req.session = sessionState
+    // @ts-ignore
+    req[sessionKey] = sessionState
     return sessionState
   }
 
   /**
-   * @param {ReqSession | IncomingMessageSession} req
+   * @param {import('express').Request | import('node:http').IncomingMessage} req
    * @returns {Promise<SessionStateAuthenticated>}
    */
   async reqAuthenticated (req) {
@@ -55,7 +57,7 @@ export class Session {
   }
 
   /**
-   * @param {ReqSession | IncomingMessageSession} req
+   * @param {import('express').Request | import('node:http').IncomingMessage} req
    * @returns {Promise<SessionStateAuthenticated>}
    */
   async reqAdminMode (req) {
@@ -121,7 +123,7 @@ export class Session {
    * @returns {import('express').RequestHandler}
    */
   middleware (options = {}) {
-    return asyncHandler(async (/** @type {ReqSession} */req, res, next) => {
+    return asyncHandler(async (/** @type {import('express').Request} */req, res, next) => {
       const sessionState = await this.req(req)
       if (options.required || options.adminOnly) {
         if (!sessionState.user) {
