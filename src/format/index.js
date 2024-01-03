@@ -1,3 +1,4 @@
+// TODO: use locale-dayjs for localization of date formats
 import dayjs from 'dayjs'
 
 /**
