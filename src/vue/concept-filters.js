@@ -3,7 +3,7 @@ import { computed } from 'vue'
 /**
  * @param {Record<string, string>} reactiveSearchParams
  */
-export default (reactiveSearchParams) => {
+export function useConceptFilters (reactiveSearchParams) {
   /** @type {import('vue').ComputedRef<Record<string, string>>} */
   const conceptFilters = computed(() => {
     /** @type {Record<string, string>} */
