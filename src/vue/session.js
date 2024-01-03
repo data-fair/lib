@@ -1,12 +1,12 @@
-import { reactive, computed, watch } from 'vue'
+import { reactive, computed, watch, inject } from 'vue'
 import { useCookies, createCookies } from '@vueuse/integrations/useCookies'
 import { ofetch } from 'ofetch'
 import { jwtDecode } from 'jwt-decode'
 import Debug from 'debug'
 
 /**
- * @typedef {import('./use-session-types.js').SessionOptions} SessionOptions
- * @typedef {import('./use-session-types.js').Session} Session
+ * @typedef {import('./session-types.js').SessionOptions} SessionOptions
+ * @typedef {import('./session-types.js').Session} Session
  */
 
 const debug = Debug('session')
@@ -59,7 +59,7 @@ const defaultOptions = { directoryUrl: '/simple-directory' }
  * @param {SessionOptions} [initOptions]
  * @returns {Promise<Session>}
  */
-export const useSession = async (initOptions) => {
+export const getSession = async (initOptions) => {
   const options = { ...defaultOptions, ...initOptions }
   debug(`init directoryUrl=${options.directoryUrl}`)
   const ssr = !!options.req
@@ -302,4 +302,15 @@ export const useSession = async (initOptions) => {
   })
 }
 
+// uses pattern for SSR friendly plugin/composable, cf https://antfu.me/posts/composable-vue-vueday-2021#shared-state-ssr-friendly
+export const sessionKey = Symbol('session')
+export async function createSession (/** @type {SessionOptions} */initOptions) {
+  const session = await getSession(initOptions)
+  return { install (/** @type {import('vue').App} */app) { app.provide(sessionKey, session) } }
+}
+export function useSession () {
+  const session = inject(sessionKey)
+  if (!session) throw new Error('useSession requires using the plugin createSession')
+  return /** @type {ReturnType<typeof getSession>} */(session)
+}
 export default useSession
