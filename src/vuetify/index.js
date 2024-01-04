@@ -17,9 +17,12 @@ const baseDarkColors = {
 
 /**
  * @param {Record<string, string>} [searchParams]
+ * @param {boolean} [darkCookie]
  * @returns {import('vuetify').VuetifyOptions}
  */
-export const defaultOptions = (searchParams) => {
+export const defaultOptions = (searchParams, darkCookie = false) => {
+  const dark = searchParams?.dark ? searchParams.dark === 'true' : darkCookie
+
   /** @type {Record<string, string>} */
   const searchParamsColors = {}
   for (const colorCode of ['primary', 'secondary']) {
@@ -29,7 +32,7 @@ export const defaultOptions = (searchParams) => {
   const lightColors = { ...baseColors, ...searchParamsColors }
   const darkColors = { ...baseColors, ...baseDarkColors, ...searchParamsColors }
 
-  const defaultTheme = searchParams?.dark === 'true' ? 'dark' : 'light'
+  const defaultTheme = dark ? 'dark' : 'light'
 
   return {
     ssr: false,
