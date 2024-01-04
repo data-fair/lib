@@ -1,10 +1,36 @@
 import { fr, en } from 'vuetify/locale'
 
+const baseColors = {
+  primary: '#1E88E5', // blue.darken1
+  secondary: '#42A5F5', // blue.lighten1,
+  accent: '#FF9800', // orange.base
+  error: '#FF5252', // red.accent2
+  info: '#2196F3', // blue.base
+  success: '#4CAF50', // green.base
+  warning: '#E91E63', // pink.base
+  admin: '#E53935' // red.darken1
+}
+const baseDarkColors = {
+  primary: '#2196F3', // blue.base
+  success: '#00E676' // green.accent3
+}
+
 /**
  * @param {Record<string, string>} [searchParams]
  * @returns {import('vuetify').VuetifyOptions}
  */
 export const defaultOptions = (searchParams) => {
+  /** @type {Record<string, string>} */
+  const searchParamsColors = {}
+  for (const colorCode of ['primary', 'secondary']) {
+    if (searchParams?.[colorCode]) searchParamsColors[colorCode] = searchParams[colorCode]
+  }
+
+  const lightColors = { ...baseColors, ...searchParamsColors }
+  const darkColors = { ...baseColors, ...baseDarkColors, ...searchParamsColors }
+
+  const defaultTheme = searchParams?.dark === 'true' ? 'dark' : 'light'
+
   return {
     ssr: false,
     locale: {
@@ -12,20 +38,15 @@ export const defaultOptions = (searchParams) => {
       messages: { fr, en }
     }, // TODO: sync this with the i18n locale
     theme: {
-      defaultTheme: 'light',
+      defaultTheme,
       themes: {
         light: {
           dark: false,
-          colors: {
-            primary: searchParams?.primary || '#1E88E5', // blue.darken1
-            secondary: searchParams?.secondary || '#42A5F5', // blue.lighten1,
-            accent: '#FF9800', // orange.base
-            error: '#FF5252', // red.accent2
-            info: '#2196F3', // blue.base
-            success: '#4CAF50', // green.base
-            warning: '#E91E63', // pink.base
-            admin: '#E53935' // red.darken1
-          }
+          colors: lightColors
+        },
+        dark: {
+          dark: true,
+          colors: darkColors
         }
       }
     }
