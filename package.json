@@ -157,6 +157,9 @@
     "./vuetify/date-match-filter.vue": {
       "default": "./src/vuetify/date-match-filter.vue"
     },
+    "./vuetify/tutorial-alert.vue": {
+      "default": "./src/vuetify/tutorial-alert.vue"
+    },
     "./maps/utils.js": {
       "default": "./src/maps/utils.js",
       "types": "./types/maps/utils.d.ts"
