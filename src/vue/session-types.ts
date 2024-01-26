@@ -1,13 +1,22 @@
 import { type IncomingMessage } from 'node:http'
 import { type Ref } from 'vue'
 import { type RouteLocation } from 'vue-router'
+import { type $Fetch } from 'ofetch'
 import { type SessionState } from '../shared/session/index.js'
+
+interface Cookies {
+  get: (key: string) => string | undefined
+  set: (key: string, value: string, options?: Record<string, any>) => void
+  remove: (key: string) => void
+}
 
 export interface SessionOptions {
   route: RouteLocation
   directoryUrl?: string
   logoutRedirectUrl?: string
   req?: IncomingMessage
+  cookies?: Cookies
+  customFetch?: $Fetch
 }
 
 export interface Session {
