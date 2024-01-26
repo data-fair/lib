@@ -65,6 +65,8 @@ export const getSession = async (initOptions) => {
   const ssr = !!options.req
   if (ssr) debug('run in SSR context')
 
+  const customFetch = initOptions?.customFetch ?? ofetch
+
   // use vue-router to detect page change and maintain a reference to the current page location
   // top page if we are in iframe context
   const topLocation = computed(() => {
@@ -81,7 +83,7 @@ export const getSession = async (initOptions) => {
   const state = reactive({})
 
   // cookies are the source of truth and this information is transformed into the state reactive object
-  const cookies = (options.req ? createCookies(options.req) : useCookies)(['id_token', 'id_token_org'], { doNotParse: true })
+  const cookies = initOptions?.cookies ?? (options.req ? createCookies(options.req) : useCookies)(['id_token', 'id_token_org'], { doNotParse: true })
   const readCookies = () => {
     const darkCookie = cookies.get('theme_dark')
     state.dark = darkCookie === '1' || darkCookie === 'true'
@@ -194,7 +196,7 @@ export const getSession = async (initOptions) => {
    * @param {string} [redirect]
    */
   const logout = async (redirect) => {
-    await ofetch(`${options.directoryUrl}/api/auth`, { method: 'DELETE' })
+    await customFetch(`${options.directoryUrl}/api/auth`, { method: 'DELETE' })
     // sometimes server side cookie deletion is not applied immediately in browser local js context
     // so we do it here to
     cookies.remove('id_token')
@@ -228,7 +230,7 @@ export const getSession = async (initOptions) => {
       const url = loginUrl(redirect, params, true)
       goTo(url)
     } else {
-      await ofetch(`${options.directoryUrl}/api/auth/adminmode`, { method: 'DELETE' })
+      await customFetch(`${options.directoryUrl}/api/auth/adminmode`, { method: 'DELETE' })
       goTo(redirect ?? null)
     }
   }
@@ -238,16 +240,16 @@ export const getSession = async (initOptions) => {
    */
   const asAdmin = async (user) => {
     if (user) {
-      await fetch(`${options.directoryUrl}/api/auth/asadmin`, { method: 'POST', body: user })
+      await customFetch(`${options.directoryUrl}/api/auth/asadmin`, { method: 'POST', body: user })
     } else {
-      await fetch(`${options.directoryUrl}/api/auth/asadmin`, { method: 'DELETE' })
+      await customFetch(`${options.directoryUrl}/api/auth/asadmin`, { method: 'DELETE' })
     }
     readCookies()
   }
 
   const cancelDeletion = async () => {
     if (state.user == null) return
-    await fetch(`${options.directoryUrl}/api/users/${state.user.id}`, { method: 'PATCH', body: /** @type {any} */({ plannedDeletion: null }) })
+    await customFetch(`${options.directoryUrl}/api/users/${state.user.id}`, { method: 'PATCH', body: /** @type {any} */({ plannedDeletion: null }) })
     readCookies()
   }
 
@@ -272,7 +274,7 @@ export const getSession = async (initOptions) => {
   const keepalive = async () => {
     if (state.user == null) return
     window.localStorage.setItem('sd-keepalive', `${new Date().getTime()}`)
-    await fetch(`${options.directoryUrl}/api/auth/keepalive`, { method: 'POST' })
+    await customFetch(`${options.directoryUrl}/api/auth/keepalive`, { method: 'POST' })
     readCookies()
   }
 
