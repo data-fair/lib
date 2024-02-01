@@ -313,6 +313,6 @@ export async function createSession (/** @type {SessionOptions} */initOptions) {
 export function useSession () {
   const session = inject(sessionKey)
   if (!session) throw new Error('useSession requires using the plugin createSession')
-  return /** @type {ReturnType<typeof getSession>} */(session)
+  return /** @type {Session} */(session)
 }
 export default useSession
