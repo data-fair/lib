@@ -8,15 +8,18 @@ All dependencies are declared as optional peer dependencies, you should install 
 npm i @data-fair/lib
 ```
 
-- [Types](#types)
-  - [SessionState](#sessionstate)
-  - [build.ts](#buildts)
-- [Vue](#vue)
-  - [useSession](#usesession)
-- [Express](#express)
-  - [session](#session)
-- [Nodejs](#nodejs)
-  - [Prometheus](#prometheus)
+- [@data-fair/lib](#data-fairlib)
+  - [Types](#types)
+    - [SessionState](#sessionstate)
+    - [build.ts](#buildts)
+  - [Vue](#vue)
+    - [useSession](#usesession)
+  - [Express](#express)
+    - [session](#session)
+  - [Nodejs](#nodejs)
+    - [Prometheus](#prometheus)
+  - [Processings](#processings)
+    - [test-util.js](#test-utiljs)
 
 
 ## Types
@@ -241,4 +244,21 @@ new client.Gauge({
     this.set(await db.collection('collection').estimatedDocumentCount())
   }
 })
+```
+
+
+## Processings
+
+### test-util.js
+
+This module provides a set of utilities to help testing processings like generating context.
+
+In a classic processing test file, use :
+```js
+import { testUtil } from '@data-fair/lib/processings/test-util.js'
+```
+
+Or for a commonjs processing test file, use :
+```js
+const { testUtil } = require('@data-fair/lib/processings/test-util.js')
 ```
