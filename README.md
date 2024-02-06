@@ -8,15 +8,18 @@ All dependencies are declared as optional peer dependencies, you should install 
 npm i @data-fair/lib
 ```
 
-- [Types](#types)
-  - [SessionState](#sessionstate)
-  - [build.ts](#buildts)
-- [Vue](#vue)
-  - [useSession](#usesession)
-- [Express](#express)
-  - [session](#session)
-- [Nodejs](#nodejs)
-  - [Prometheus](#prometheus)
+- [@data-fair/lib](#data-fairlib)
+  - [Types](#types)
+    - [SessionState](#sessionstate)
+    - [build.ts](#buildts)
+  - [Vue](#vue)
+    - [useSession](#usesession)
+  - [Express](#express)
+    - [session](#session)
+  - [Nodejs](#nodejs)
+    - [Prometheus](#prometheus)
+  - [Processings](#processings)
+    - [tests-utils.js](#tests-utilsjs)
 
 
 ## Types
@@ -241,4 +244,37 @@ new client.Gauge({
     this.set(await db.collection('collection').estimatedDocumentCount())
   }
 })
+```
+
+
+## Processings
+
+### tests-utils.js
+This utility provides a context generator for processing tests.
+
+In a classic processing test file, import with :
+```js
+import testsUtils from '@data-fair/lib/processings/tests-utils.js'
+```
+
+Or for a commonjs processing test file, import with :
+```js
+const testsUtils = require('@data-fair/lib/processings/tests-utils.js')
+```
+
+Then use the utility to generate a context and test the processing:
+```js
+const context = testsUtils.context({
+  pluginConfig: {
+    apiKey: config.apiKey
+  },
+  processingConfig: {
+    datasetMode: 'create',
+    dataset: { title: 'Titre du jeu de donnée' },
+    // Autres paramètres de configuration
+  },
+  tmpDir: 'data'
+}, config, false)
+
+await processing.run(context)
 ```

@@ -84,6 +84,10 @@
       "default": "./src/node/test-spies.js",
       "types": "./types/node/test-spies.d.ts"
     },
+    "./processings/tests-utils.js": {
+      "default": "./src/processings/tests-utils.js",
+      "types": "./types/processings/tests-utils.d.ts"
+    },
     "./types/validation.js": {
       "default": "./src/types/validation.js",
       "types": "./types/types/validation.d.ts"
@@ -194,6 +198,7 @@
     "dayjs": "1",
     "debounce": "2",
     "debug": "4",
+    "draftlog": "1",
     "express": "4",
     "fast-json-stringify": "5",
     "flatstr": "1",
@@ -250,6 +255,9 @@
       "optional": true
     },
     "debounce": {
+      "optional": true
+    },
+    "draftlog": {
       "optional": true
     },
     "prom-client": {
@@ -323,6 +331,7 @@
     "cookie": "^0.5.0",
     "dayjs": "^1.11.10",
     "debounce": "^2.0.0",
+    "draftlog": "^1.0.13",
     "eslint": "^8.52.0",
     "eslint-config-standard-with-typescript": "^39.1.1",
     "eslint-plugin-jsdoc": "^46.8.2",
