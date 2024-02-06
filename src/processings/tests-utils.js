@@ -35,9 +35,9 @@ const denseInspect = (arg) => {
  * Create log functions.
  * @param {boolean} debug - Enable debug logging.
  * @param {boolean} testDebug - Enable test debug logging.
- * @returns {import('./processings-types.ts').LogFunctions} Log functions.
+ * @returns {import('./types.js').LogFunctions} Log functions.
  */
-export const log = (debug, testDebug) => {
+const log = (debug, testDebug) => {
   return {
     step: (msg) => console.log(chalk.blueBright.bold.underline(`[${dayjs().format('LTS')}] ${msg}`)),
     error: (msg, extra) => console.log(chalk.red.bold(`[${dayjs().format('LTS')}] ${msg}`), denseInspect(extra)),
@@ -60,19 +60,11 @@ export const log = (debug, testDebug) => {
 }
 
 /**
- * @typedef {object} config
- * @property {string} dataFairAPIKey - DataFair API key.
- * @property {string} dataFairUrl - DataFair URL.
- * @property {boolean} adminMode - Admin mode.
- * @property {import('../shared/session/index.js').Account} account - Account.
- */
-
-/**
  * Create an Axios instance.
- * @param {config} config - Configuration.
- * @returns {import('./processings-types.ts').AxiosInstance} Axios instance.
+ * @param {import('./tests-utils-types.ts').ProcessingTestConfig} config - Configuration.
+ * @returns {import('axios').AxiosInstance} Axios instance.
  */
-export const axiosInstance = (config) => {
+const axiosInstance = (config) => {
   const headers = { 'x-apiKey': config.dataFairAPIKey }
   const axiosInstance = axios.create({
     // this is necessary to prevent excessive memory usage during large file uploads, see https://github.com/axios/axios/issues/1045
@@ -104,11 +96,11 @@ export const axiosInstance = (config) => {
 
 /**
  * Create a WebSocket instance.
- * @param {config} config - Configuration.
+ * @param {import('./tests-utils-types.ts').ProcessingTestConfig} config - Configuration.
  * @param {object} log - Log functions.
- * @returns {object} WebSocket instance.
+ * @returns {DataFairWsClient} WebSocket instance.
  */
-export const wsInstance = (config, log) => {
+const wsInstance = (config, log) => {
   return new DataFairWsClient({
     url: config.dataFairUrl,
     apiKey: config.dataFairAPIKey,
@@ -121,17 +113,17 @@ export const wsInstance = (config, log) => {
 /**
  * Create a context instance.
  * @param {any} initialContext - Initial context.
- * @param {config} config - Configuration.
+ * @param {import('./tests-utils-types.ts').ProcessingTestConfig} config - Configuration.
  * @param {boolean} debug - Enable debug logging.
  * @param {boolean} testDebug - Enable test debug logging.
- * @returns {import('./processings-types.ts').Context} Context instance.
+ * @returns {import('./tests-utils-types.js').ProcessingTestContext} Context instance.
  */
 export const context = (initialContext, config, debug, testDebug) => {
   /** @type {{ id: string; }} */
   let createdDataset
 
-  /** @type {import('./processings-types.ts').Context} */
-  const context = {
+  /** @type {import('./tests-utils-types.js').ProcessingTestContext} */
+  const processingContext = {
     ...initialContext,
     processingConfig: initialContext.processingConfig || {},
     pluginConfig: initialContext.pluginConfig || {},
@@ -142,20 +134,21 @@ export const context = (initialContext, config, debug, testDebug) => {
     patchConfig: async () => {},
     cleanup: async () => {}
   }
-  context.sendMail = async (/** @type {string} */ mail) => context.log.testInfo('send email', mail)
-  context.patchConfig = async (/** @type {{ datasetMode: string; dataset: any; }} */ patch) => {
-    context.log.testInfo('received config patch', patch)
+  processingContext.sendMail = async (/** @type {string} */ mail) => processingContext.log.testInfo('send email', mail)
+  processingContext.patchConfig = async (/** @type {{ datasetMode: string; dataset: any; }} */ patch) => {
+    processingContext.log.testInfo('received config patch', patch)
     if (patch.datasetMode === 'update' && patch.dataset) createdDataset = patch.dataset
-    Object.assign(context.processingConfig, patch)
+    Object.assign(processingContext.processingConfig, patch)
   }
-  context.cleanup = async () => {
-    if (context.ws._ws) context.ws._ws.terminate()
+  processingContext.cleanup = async () => {
+    if (processingContext.ws._ws) processingContext.ws.close()
     if (createdDataset) {
-      context.log.testInfo('delete test dataset', createdDataset)
-      await context.axios.delete('api/v1/datasets/' + createdDataset.id)
+      processingContext.log.testInfo('delete test dataset', createdDataset)
+      await processingContext.axios.delete('api/v1/datasets/' + createdDataset.id)
     }
   }
-  return context
+  return processingContext
 }
 
-export default context
+export const testsUtils = { context }
+export default testsUtils

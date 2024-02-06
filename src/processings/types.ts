@@ -1,15 +1,20 @@
+import type { AxiosInstance } from 'axios'
+import type { DataFairWsClient } from '../node/ws.js'
+
 /**
  * Processing context.
  */
-export interface Context {
+export interface ProcessingContext {
   processingConfig: object
   pluginConfig: object
+  processingId: string
+  dir: string
+  tmpDir: string
   log: LogFunctions
   axios: AxiosInstance
-  ws: WsInstance
+  ws: DataFairWsClient
   sendMail: (mail: string) => Promise<void>
   patchConfig: (patch: { datasetMode: string, dataset: any }) => Promise<void>
-  cleanup: () => Promise<void>
 }
 
 /**
@@ -25,24 +30,4 @@ export interface LogFunctions {
   progress: (taskName: string, progress: number, total: number) => void
   testInfo: (msg: any, extra: any) => void
   testDebug: (msg: any, extra: any) => void
-}
-
-/**
- * Axios instance.
- */
-export interface AxiosInstance {
-  request: (config: any) => Promise<any>
-  get: (url: string, config?: any) => Promise<any>
-  delete: (url: string, config?: any) => Promise<any>
-  head: (url: string, config?: any) => Promise<any>
-  post: (url: string, data?: any, config?: any) => Promise<any>
-  put: (url: string, data?: any, config?: any) => Promise<any>
-  patch: (url: string, data?: any, config?: any) => Promise<any>
-}
-
-/**
- * WebSocket instance.
- */
-export interface WsInstance {
-  _ws?: { terminate: () => void }
 }

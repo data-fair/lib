@@ -250,15 +250,31 @@ new client.Gauge({
 ## Processings
 
 ### tests-utils.js
+This utility provides a context generator for processing tests.
 
-This module provides a set of utilities to help testing processings like generating context.
-
-In a classic processing test file, use :
+In a classic processing test file, import with :
 ```js
-import { testUtils } from '@data-fair/lib/processings/tests-utils.js'
+import testsUtils from '@data-fair/lib/processings/tests-utils.js'
 ```
 
-Or for a commonjs processing test file, use :
+Or for a commonjs processing test file, import with :
 ```js
-const { testUtils } = require('@data-fair/lib/processings/tests-utils.js')
+const testsUtils = require('@data-fair/lib/processings/tests-utils.js')
+```
+
+Then use the utility to generate a context and test the processing:
+```js
+const context = testsUtils.context({
+  pluginConfig: {
+    apiKey: config.apiKey
+  },
+  processingConfig: {
+    datasetMode: 'create',
+    dataset: { title: 'Titre du jeu de donnée' },
+    // Autres paramètres de configuration
+  },
+  tmpDir: 'data'
+}, config, false)
+
+await processing.run(context)
 ```
