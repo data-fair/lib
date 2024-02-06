@@ -19,7 +19,7 @@ npm i @data-fair/lib
   - [Nodejs](#nodejs)
     - [Prometheus](#prometheus)
   - [Processings](#processings)
-    - [test-util.js](#test-utiljs)
+    - [tests-utils.js](#tests-utilsjs)
 
 
 ## Types
@@ -249,16 +249,16 @@ new client.Gauge({
 
 ## Processings
 
-### test-util.js
+### tests-utils.js
 
 This module provides a set of utilities to help testing processings like generating context.
 
 In a classic processing test file, use :
 ```js
-import { testUtil } from '@data-fair/lib/processings/test-util.js'
+import { testUtils } from '@data-fair/lib/processings/tests-utils.js'
 ```
 
 Or for a commonjs processing test file, use :
 ```js
-const { testUtil } = require('@data-fair/lib/processings/test-util.js')
+const { testUtils } = require('@data-fair/lib/processings/tests-utils.js')
 ```
