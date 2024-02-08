@@ -20,7 +20,8 @@ npm i @data-fair/lib
     - [Prometheus](#prometheus)
   - [Processings](#processings)
     - [tests-utils.js](#tests-utilsjs)
-
+  - [Colors](#colors)
+    - [colors.js](#colorsjs)
 
 ## Types
 
@@ -277,4 +278,103 @@ const context = testsUtils.context({
 }, config, false)
 
 await processing.run(context)
+```
+
+
+## Colors
+
+### colors.js
+
+A simple yet complete color palette generator.
+
+Install peer dependencies :
+
+```sh
+npm i chroma-js
+```
+
+The simple (and most common) usage : you have a colorscheme, some data and want to generate an accompanying palette.
+
+**`getColors(colorscheme, data, size, vuetifyColors = null)`**
+- Generates a palette of colors from a given colorscheme, data and size.
+- If vuetifyColors is provided, the palette will be composed of the app's theme primary and secondary colors (case where the colorscheme type is vuetify-theme).
+- Returns an array of hex values.
+
+```js
+import getColors from '@data-fair/lib/color-scheme/colors.js'
+
+const colorscheme = {
+  type: 'qualitative',
+  name: 'Accent'
+}
+const data = {
+  ... // some data
+}
+
+const palette = getColors(colorscheme, data, data.results.length)
+```
+
+The colorscheme is a standardized object that describes the colorscheme as a json-schema. More info about the structure it must follow can be found here : [`color-scheme/schema.json`](https://github.com/data-fair/lib/blob/main/src/color-scheme/schema.json)
+
+---
+
+Your data doesn't follow the standard structure ? Or you simply want to generate a palette without any data to provide ?  
+Well fear not, as `colors.js` also provides helper functions to generate color palettes !
+
+**`generateGreyscale(start, end, steps)`**  
+- Generates a palette composed of shades of grey, from a start to an end value, with a given number of steps (the bigger the steps, the more contrasted the palette will be).
+- Returns an array of hex values.
+
+```js
+import { generateGreyscale } from '@data-fair/lib/color-scheme/colors.js'
+
+const palette = generateGreyscale(0, 30, 5)
+// palette will be an array of 30 hex values, from black to white
+```
+
+**`generateDynamicPalette(baseColors, paletteType, size)`**  
+- Generates a palette of colors from a given array of base colors, with a given palette type and size.  
+  - A complementary palette will generate a palette of colors that are complementary to the base colors.
+  - A hues palette will generate a palette of colors that are different hues of the base colors.
+- If the size is bigger than the amount of colors we can generate, shades of grey will be added to the palette.
+- Returns an array of hex values.
+
+```js
+import { generateDynamicPalette } from '@data-fair/lib/color-scheme/colors.js'
+
+const baseColors = ['#ff0000', '#00ff00', '#0000ff']
+const paletteType = 'complementary' // or 'hues'
+const size = 10
+
+const palette = generateDynamicPalette(baseColors, paletteType, size)
+// palette will be an array of 10 hex values, complementary to the base colors
+```
+
+**`generateHuesFromColor(colorHex, numColors = 10)`**  
+- Generates a palette of colors that are different hues of a given color, with a given number of colors (defaults to 10).  
+- Returns an array of hex values.
+
+```js
+import { generateHuesFromColor } from '@data-fair/lib/color-scheme/colors.js'
+
+const colorHex = '#ff0000'
+const numColors = 18
+
+const palette = generateHuesFromColor(colorHex, numColors)
+// palette will be an array of 18 hex values, different hues of red
+```
+
+**`generatePaletteFromColor(colorHex, numColors = 10)`**  
+- Generates a palette of colors that are complementary and analogous to a given color, with a given number of colors (defaults to 10).  
+- If the size is bigger than the amount of complementary colors we can generate, we will then add triadic colors to the palette.  
+- Returns an array of hex values.
+
+```js
+import { generatePaletteFromColor } from '@data-fair/lib/color-scheme/colors.js'
+
+const colorHex = '#ff0000'
+const numColors = 30
+
+const palette = generatePaletteFromColor(colorHex, numColors)
+// palette will be an array of 30 hex values, complementary to red
 ```

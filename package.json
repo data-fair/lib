@@ -32,6 +32,10 @@
   },
   "exports": {
     ".": "./index.js",
+    "./color-scheme/colors.js": {
+      "default": "./src/color-scheme/colors.js",
+      "types": "./types/color-scheme/colors.d.ts"
+    },
     "./express/index.js": {
       "default": "./src/express/index.js",
       "types": "./types/express/index.d.ts"
@@ -194,6 +198,7 @@
     "axios": "1",
     "cacheable-lookup": "6",
     "chalk": "5",
+    "chroma-js": "^2.4.2",
     "cookie": "0.5",
     "dayjs": "1",
     "debounce": "2",
@@ -202,7 +207,6 @@
     "express": "4",
     "fast-json-stringify": "5",
     "flatstr": "1",
-    "google-palette": "1",
     "json-schema-to-typescript": "11",
     "jsonwebtoken": "9",
     "jwks-rsa": "3",
@@ -248,6 +252,9 @@
     "chalk": {
       "optional": true
     },
+    "chroma-js": {
+      "optional": true
+    },
     "cookue": {
       "optional": true
     },
@@ -270,9 +277,6 @@
       "optional": true
     },
     "flatstr": {
-      "optional": true
-    },
-    "google-palette": {
       "optional": true
     },
     "json-schema-to-typescript": {
@@ -315,6 +319,7 @@
   "devDependencies": {
     "@commitlint/cli": "^18.2.0",
     "@commitlint/config-conventional": "^18.1.0",
+    "@types/chroma-js": "^2.4.4",
     "@types/cookie": "^0.5.4",
     "@types/debounce": "^1.2.4",
     "@types/debug": "^4.1.10",
@@ -328,6 +333,7 @@
     "axios": "^1.6.1",
     "cacheable-lookup": "^7.0.0",
     "chalk": "^5.3.0",
+    "chroma-js": "^2.4.2",
     "cookie": "^0.5.0",
     "dayjs": "^1.11.10",
     "debounce": "^2.0.0",
@@ -338,7 +344,6 @@
     "express": "^4.18.2",
     "fast-json-stringify": "^5.9.1",
     "flatstr": "^1.0.12",
-    "google-palette": "^1.1.1",
     "husky": "^8.0.3",
     "json-schema-to-typescript": "^13.1.1",
     "jsonwebtoken": "^9.0.2",
