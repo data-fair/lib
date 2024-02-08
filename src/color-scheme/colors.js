@@ -1,3 +1,7 @@
+/**
+ * @typedef {import('./.type/types.js').PaletteDeCouleur} PaletteDeCouleur
+ */
+
 import chroma from 'chroma-js'
 
 // TODO: replace this with a vjsf component so that chroma-js is loaded only once at config time and not at runtime by the app
@@ -68,7 +72,7 @@ function generateDynamicPalette (baseColors, paletteType, size) {
 
 /**
  * Generates a palette of colors based on the given colorscheme and data.
- * @param {Record<string, any>} colorscheme - The colorscheme to generate the palette from.
+ * @param {PaletteDeCouleur} colorscheme - The colorscheme to generate the palette from.
  * @param {Record<string, any>} data - The data used to generate the palette.
  * @param {number} numColors - The number of colors to generate in the palette. Default is 10.
  * @returns {Array<string>} - An array of color strings representing the generated palette.
@@ -81,22 +85,23 @@ function generatePalette (colorscheme, data, numColors = 10) {
     let set = ''
     if (colorscheme.type === 'qualitative') {
       const paletteSets = ['Set1', 'Set2', 'Set3', 'Dark2', 'Paired', 'Accent', 'Pastel1', 'Pastel2']
-      set = paletteSets.includes(colorscheme.qualitativeName) ? colorscheme.qualitativeName : 'Accent'
+      set = paletteSets.includes(colorscheme.name) ? colorscheme.name : 'Accent'
     } else if (colorscheme.type === 'diverging') {
       const paletteSets = ['Spectral', 'RdYlBu', 'RdYlGn', 'BrBG', 'PiYG', 'PRGn', 'PuOr', 'RdBu', 'RdGy']
-      set = paletteSets.includes(colorscheme.divergingName) ? colorscheme.divergingName : 'RdYlGn'
+      set = paletteSets.includes(colorscheme.name) ? colorscheme.name : 'RdYlGn'
     } else if (colorscheme.type === 'sequential') {
       const paletteSets = ['Blues', 'Greens', 'Greys', 'Oranges', 'Purples', 'Reds', 'BuGn', 'BuPu', 'GnBu', 'OrRd', 'PuBuGn', 'PuBu', 'PuRd', 'RdPu', 'YlGnBu', 'YlGn', 'YlOrBr', 'YlOrRd']
-      set = paletteSets.includes(colorscheme.sequentialName) ? colorscheme.sequentialName : 'YlOrRd'
+      set = paletteSets.includes(colorscheme.name) ? colorscheme.name : 'YlOrRd'
     }
     return chroma.scale(set).mode('lch').colors(numColors)
   }
   const set = []
+  const colors = colorscheme.colors ? colorscheme.colors : []
   if (data.aggs) {
     data.aggs.forEach(/** @param {Record<string, any>} value */ value => {
       if (value.aggs) {
         value.aggs.forEach(/** @param {Record<string, any>} val2 */ val2 => {
-          set.push(colorscheme.colors.find(/** @param {Record<string, string>} c */ c => c.value === val2.value.toString())?.color || colorscheme.defaultColor)
+          set.push(colors.find(/** @param {Record<string, any>} c */ c => c.value === val2.value.toString())?.color || colorscheme.defaultColor)
         })
       } else {
         set.push(colorscheme.defaultColor)
@@ -105,6 +110,7 @@ function generatePalette (colorscheme, data, numColors = 10) {
   } else {
     set.push(colorscheme.defaultColor)
   }
+  // @ts-ignore
   return set
 }
 
@@ -157,7 +163,7 @@ function generatePaletteFromColor (colorHex, numColors = 10) {
 
 /**
  * Generates an array of colors based on the given colorscheme, data, size, and optional vuetifyColors.
- * @param {Record<string, any>} colorscheme - The colorscheme object.
+ * @param {PaletteDeCouleur} colorscheme - The colorscheme object.
  * @param {Record<string, any>} data - The data object.
  * @param {number} size - The size of the color array to generate.
  * @param {Record<string, string> | null} vuetifyColors - Optional vuetifyColors object.
@@ -168,7 +174,7 @@ function getColors (colorscheme, data, size, vuetifyColors = null) {
     const baseColors = [vuetifyColors.primary, vuetifyColors.secondary]
 
     if (colorscheme.generatePalette) {
-      return generateDynamicPalette(baseColors, colorscheme.paletteType, size)
+      return generateDynamicPalette(baseColors, colorscheme.paletteType ?? 'hues', size)
     } else {
       return baseColors.slice(0, size)
     }
