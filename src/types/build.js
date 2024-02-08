@@ -29,7 +29,7 @@ const main = async () => {
   const dirs = []
   for (const _file of readdirSync(rootDir, { recursive: true})) {
     const file = /** @type {string} */(_file)
-    if (!file.endsWith('/schema.json')) continue
+    if (!file.endsWith('schema.json')) continue
     const filePath = path.resolve(rootDir, file.toString())
     const parts = filePath.split(path.sep)
     if (parts.includes('node_modules')) continue
