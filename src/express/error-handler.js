@@ -1,4 +1,5 @@
 import { internalError } from '../node/prometheus.js'
+import { logGlobalReqEvent } from './events-log.js'
 
 /** @type {import('express').ErrorRequestHandler} */
 export default function (err, req, res, next) {
@@ -8,6 +9,12 @@ export default function (err, req, res, next) {
   const status = err.status || err.statusCode || 500
   if (status >= 500) {
     internalError('http', 'failure while serving http request', err)
+  }
+  if (status === 403) {
+    logGlobalReqEvent(req, 'forbidden', err.message)
+  }
+  if (status === 401) {
+    logGlobalReqEvent(req, 'unauthorized', err.message)
   }
   res.set('Cache-Control', 'no-cache')
   res.set('Expires', '-1')

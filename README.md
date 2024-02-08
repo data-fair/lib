@@ -8,20 +8,20 @@ All dependencies are declared as optional peer dependencies, you should install 
 npm i @data-fair/lib
 ```
 
-- [@data-fair/lib](#data-fairlib)
-  - [Types](#types)
-    - [SessionState](#sessionstate)
-    - [build.ts](#buildts)
-  - [Vue](#vue)
-    - [useSession](#usesession)
-  - [Express](#express)
-    - [session](#session)
-  - [Nodejs](#nodejs)
-    - [Prometheus](#prometheus)
-  - [Processings](#processings)
-    - [tests-utils.js](#tests-utilsjs)
-  - [Colors](#colors)
-    - [colors.js](#colorsjs)
+- [Types](#types)
+  - [SessionState](#sessionstate)
+  - [build.ts](#buildts)
+- [Vue](#vue)
+  - [useSession](#usesession)
+- [Express](#express)
+  - [session](#session)
+- [Nodejs](#nodejs)
+  - [Prometheus](#prometheus)
+- [Processings](#processings)
+  - [tests-utils.js](#tests-utilsjs)
+- [Colors](#colors)
+  - [colors.js](#colorsjs)
+
 
 ## Types
 
@@ -252,6 +252,12 @@ new client.Gauge({
 
 ### tests-utils.js
 This utility provides a context generator for processing tests.
+
+Install peer dependencies:
+
+```sh
+npm i --save-dev dayjs ws draftlog axios
+```
 
 In a classic processing test file, import with :
 ```js
