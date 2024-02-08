@@ -75,7 +75,7 @@ function generateDynamicPalette (baseColors, paletteType, size) {
  */
 function generatePalette (colorscheme, data, numColors = 10) {
   if (colorscheme.type === 'manual') {
-    return Object.assign({}, ...colorscheme.styles.map(s => ({ [s.value]: s.color })))
+    return Object.assign({}, ...colorscheme.styles.map(/** @param {any} s */ s => ({ [s.value]: s.color })))
   }
   if (colorscheme.type !== 'custom') {
     let set = ''
@@ -93,10 +93,10 @@ function generatePalette (colorscheme, data, numColors = 10) {
   }
   const set = []
   if (data.aggs) {
-    data.aggs.forEach(/** @type {Record<string, any>} */ value => {
+    data.aggs.forEach(/** @param {Record<string, any>} value */ value => {
       if (value.aggs) {
-        value.aggs.forEach(/** @type {Record<string, any>} */ val2 => {
-          set.push(colorscheme.colors.find(/** @type {Record<string, string>} */ c => c.value === val2.value.toString())?.color || colorscheme.defaultColor)
+        value.aggs.forEach(/** @param {Record<string, any>} val2 */ val2 => {
+          set.push(colorscheme.colors.find(/** @param {Record<string, string>} c */ c => c.value === val2.value.toString())?.color || colorscheme.defaultColor)
         })
       } else {
         set.push(colorscheme.defaultColor)
