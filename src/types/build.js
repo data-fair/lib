@@ -48,6 +48,8 @@ const main = async () => {
     schemas[accountSchema.$id] = accountSchema
     const { schema: appSchema } = await import('../shared/application/index.js')
     schemas[appSchema.$id] = appSchema
+    const { schema: colorsSchema } = await import('../color-scheme/colors.js')
+    schemas[colorsSchema.$id] = colorsSchema
   }
 
   for (const [dir, key] of dirs) {

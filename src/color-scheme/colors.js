@@ -4,6 +4,8 @@
 
 import chroma from 'chroma-js'
 
+export * from './.type/index.js'
+
 // TODO: replace this with a vjsf component so that chroma-js is loaded only once at config time and not at runtime by the app
 
 /**
@@ -186,5 +188,4 @@ function getColors (colorscheme, data, size, vuetifyColors = null) {
   return colors.concat(greyscaleColors)
 }
 
-export { generateGreyscale, generateDynamicPalette, generateHuesFromColor, generatePaletteFromColor }
 export default getColors
