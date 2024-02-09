@@ -81,7 +81,8 @@ function generateDynamicPalette (baseColors, paletteType, size) {
  */
 function generatePalette (colorscheme, data, numColors = 10) {
   if (colorscheme.type === 'manual') {
-    return Object.assign({}, ...colorscheme.styles.map(/** @param {any} s */ s => ({ [s.value]: s.color })))
+    // @ts-ignore
+    return colorscheme.styles.map(s => s.color)
   }
   if (colorscheme.type !== 'custom') {
     let set = ''
