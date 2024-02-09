@@ -76,7 +76,9 @@ const main = async () => {
      * @param {(err: any, doc?: any) => void} callback
      */
     async read (/** @type {{ url: string }} */file, callback) {
-      callback(null, clone(schemas[file.url]))
+      const clonedSchema = clone(schemas[file.url])
+      delete clonedSchema.$id
+      callback(null, clonedSchema)
     }
   }
 
