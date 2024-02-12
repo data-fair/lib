@@ -1,5 +1,9 @@
+<!-- eslint-disable vue/no-v-html -->
 <template lang="html">
-  <div class="tutorial-alert pt-3 pb-2 pr-3" v-if="show || showBtn">
+  <div
+    v-if="show || showBtn"
+    class="tutorial-alert pt-3 pb-2 pr-3"
+  >
     <v-alert
       v-if="show"
       dark
@@ -70,14 +74,14 @@ export default {
   data: () => ({
     show: false
   }),
-  watch: {
-    show () {
-      window.localStorage['closed-tutorial-' + this.id] = '' + !this.show
-    }
-  },
   computed: {
     showBtn () {
       return this.show || (!this.show && this.persistent)
+    }
+  },
+  watch: {
+    show () {
+      window.localStorage['closed-tutorial-' + this.id] = '' + !this.show
     }
   },
   mounted () {

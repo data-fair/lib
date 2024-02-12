@@ -13,15 +13,19 @@
       nudge-left
       max-height="700"
     >
-      <template #activator="{props}">
+      <template #activator="{props: activatorProps}">
         <v-btn
           text
           class="px-0"
           :title="t('openPersonalMenu')"
-          v-bind="props"
+          v-bind="activatorProps"
         >
           <avatar show-account />
-          <v-icon v-if="user.pd" color="warning" style="position:absolute;">
+          <v-icon
+            v-if="user.pd"
+            color="warning"
+            style="position:absolute;"
+          >
             mdi-alert
           </v-icon>
         </v-btn>
@@ -32,8 +36,14 @@
         class="py-0"
       >
         <!-- current account, not actionable -->
-        <v-list-item disabled :style="account.type !== 'user' ? 'padding-left:0' : ''">
-          <avatar show-account style="margin-right: 16px;" />
+        <v-list-item
+          disabled
+          :style="account.type !== 'user' ? 'padding-left:0' : ''"
+        >
+          <avatar
+            show-account
+            style="margin-right: 16px;"
+          />
 
           <v-list-item-content class="text--secondary">
             <v-list-item-title>
@@ -71,7 +81,10 @@
 
         <!-- account switching (personal account and organizations) -->
         <template v-if="user.organizations.length > 1 || (user.organizations.length === 1 && (!user.ipa || account.type === 'user'))">
-          <v-subheader v-t="'switchAccount'" style="height: 24px" />
+          <v-subheader
+            v-t="'switchAccount'"
+            style="height: 24px"
+          />
           <v-list-item
             v-if="account.type !== 'user' && !user.ipa"
             id="toolbar-menu-switch-user"
@@ -92,8 +105,14 @@
           >
             <v-list-item-action class="my-0">
               <v-avatar :size="28">
-                <img v-if="organization.department" :src="`${session.options.directoryUrl}/api/avatars/organization/${organization.id}/${organization.department}/avatar.png`">
-                <img v-else :src="`${session.options.directoryUrl}/api/avatars/organization/${organization.id}/avatar.png`">
+                <img
+                  v-if="organization.department"
+                  :src="`${session.options.directoryUrl}/api/avatars/organization/${organization.id}/${organization.department}/avatar.png`"
+                >
+                <img
+                  v-else
+                  :src="`${session.options.directoryUrl}/api/avatars/organization/${organization.id}/avatar.png`"
+                >
               </v-avatar>
             </v-list-item-action>
             <v-list-item-content>
@@ -112,7 +131,10 @@
         <slot name="actions-before" />
 
         <!-- toggle admin mode -->
-        <v-list-item v-if="user.isAdmin" dense>
+        <v-list-item
+          v-if="user.isAdmin"
+          dense
+        >
           <v-list-item-action><v-icon>mdi-shield-alert</v-icon></v-list-item-action>
           <v-list-item-title style="overflow: visible;">
             <v-switch
@@ -127,7 +149,11 @@
         </v-list-item>
 
         <!-- get back to normal admin session after impersonating a user -->
-        <v-list-item v-if="user.asAdmin" color="admin" @click="session.asAdmin(null)">
+        <v-list-item
+          v-if="user.asAdmin"
+          color="admin"
+          @click="session.asAdmin(null)"
+        >
           <v-list-item-action><v-icon>mdi-account-switch-outline</v-icon></v-list-item-action>
           <v-list-item-title>{{ t('backToAdmin') }}</v-list-item-title>
         </v-list-item>
@@ -189,7 +215,7 @@ en:
 <script setup>
 import { computed, toRefs } from 'vue'
 // @ts-ignore
-import {useI18N} from 'vue-i18n'
+import { useI18N } from 'vue-i18n'
 
 const props = defineProps({
   darkModeSwitch: {
@@ -197,7 +223,7 @@ const props = defineProps({
     default: false
   },
   session: {
-    /** @type import('vue').PropType<import('../vue/use-session.js').Session> */
+    /** @type {import('vue').PropType<import('../vue/session.js').Session>} */
     type: Object,
     required: true
   }
