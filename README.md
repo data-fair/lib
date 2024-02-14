@@ -16,7 +16,7 @@ npm i @data-fair/lib
 - [Express](#express)
   - [session](#session)
 - [Nodejs](#nodejs)
-  - [Prometheus](#prometheus)
+  - [Observer](#observer)
 - [Processings](#processings)
   - [tests-utils.js](#tests-utilsjs)
 
@@ -180,44 +180,37 @@ router.get('', asyncHandler(async (req, res) => {
 
 ## Nodejs
 
-### Prometheus
+### Observer
 
-Every Web service and all other processes (workers, etc) should expose prometheus metrics for monitoring.
+Very light web server to expose prometheus metrics, export a cpu profile and maybe other incoming obervability features.
 
 Install peer dependencies:
 
 ```sh
-npm i prom-client
+npm i prom-client debug
 ```
 
-Run a mini webserver to serve metrics:
+Run a mini webserver to observability functionalities:
 
 ```ts
-import * as prometheus from '@data-fair/lib/node/prometheus'
+import {startObserver, stopObserver} from '@data-fair/lib/node/observer.js'
 
 ...
-await prometheus.start(config.prometheus.port)
+await startObserver(port) // default port is 9090
 
 ...
-await prometheus.stop()
+await stopObserver()
 ```
 
 Increment the shared "df_internal_error" metric and produce a corresponding log:
 
 ```ts
-import * as prometheus from '@data-fair/lib/node/prometheus'
+import { internalError } from '@data-fair/lib/node/observer.js'
 
-app.use(function (err: HttpError, _req: Request, res: Response, next: NextFunction) {
-  ...
-  if (status >= 500) {
-    prometheus.internalError('http', 'failure while serving http request', err)
-    // TODO: prometheus
-  }
-  ...
-})
+internalError('http', 'failure while serving http request', err)
 ```
 
-Define a custom metric and use it:
+Define a custom prometheus metric and use it:
 
 ```ts
 const myCounter = new Counter({
@@ -230,15 +223,15 @@ const myCounter = new Counter({
 myCounter.inc({myLabel: 'label value'})
 ```
 
-Define a custom global metric (a global metric value depends on a shared state instead of only the activity of the current process):
+Define a custom service-level metric (a service-level metric value depends on a shared state of the system instead of only the activity of the current process):
 
 ```ts
-import * as prometheus from '@data-fair/lib/node/prometheus'
+import { servicePromRegistry } from '@data-fair/lib/node/observer.js'
 
 new client.Gauge({
   name: 'df_my_gauge',
   help: '...',
-  registers: [prometheus.globalRegistry],
+  registers: [servicePromRegistry],
   async collect () {
     this.set(await db.collection('collection').estimatedDocumentCount())
   }
