@@ -37,7 +37,7 @@ const denseInspect = (arg) => {
  * @param {boolean} testDebug - Enable test debug logging.
  * @returns {import('./types.js').LogFunctions} Log functions.
  */
-const log = (debug, testDebug) => {
+const prepareLog = (debug, testDebug) => {
   return {
     step: (msg) => console.log(chalk.blueBright.bold.underline(`[${dayjs().format('LTS')}] ${msg}`)),
     error: (msg, extra) => console.log(chalk.red.bold(`[${dayjs().format('LTS')}] ${msg}`), denseInspect(extra)),
@@ -97,7 +97,7 @@ const axiosInstance = (config) => {
 /**
  * Create a WebSocket instance.
  * @param {import('./tests-utils-types.ts').ProcessingTestConfig} config - Configuration.
- * @param {object} log - Log functions.
+ * @param {import('./types.js').LogFunctions} log - Log functions.
  * @returns {DataFairWsClient} WebSocket instance.
  */
 const wsInstance = (config, log) => {
@@ -122,12 +122,14 @@ export const context = (initialContext, config, debug, testDebug) => {
   /** @type {{ id: string; }} */
   let createdDataset
 
+  const log = prepareLog(debug, testDebug)
+
   /** @type {import('./tests-utils-types.js').ProcessingTestContext} */
   const processingContext = {
     ...initialContext,
     processingConfig: initialContext.processingConfig || {},
     pluginConfig: initialContext.pluginConfig || {},
-    log: log(debug, testDebug),
+    log,
     axios: axiosInstance(config),
     ws: wsInstance(config, log),
     sendMail: async () => {},

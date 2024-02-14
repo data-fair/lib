@@ -10,6 +10,7 @@ const debug = Debug('ws')
 /**
  * @typedef {import('./ws-types.js').Message} Message
  * @typedef {import('./ws-types.js').WsClientOpts} WsClientOpts
+ * @typedef {import('./ws-types.js').FullWsClientOpts} FullWsClientOpts
  */
 
 export class WsClient extends EventEmitter {
@@ -17,7 +18,7 @@ export class WsClient extends EventEmitter {
   _channels
   /** @type {WebSocket | undefined} */
   _ws
-  /** @type {WsClientOpts} */
+  /** @type {FullWsClientOpts} */
   opts
 
   /**
