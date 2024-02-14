@@ -8,7 +8,7 @@
 
 import { Counter } from 'prom-client'
 import session from './session/index.js'
-import { internalError } from '../node/prometheus.js'
+import { internalError } from '../node/observer.js'
 
 export const eventsLogCounter = new Counter({
   name: 'df_events_log',

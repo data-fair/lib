@@ -1,4 +1,4 @@
-import { internalError } from '../node/prometheus.js'
+import { internalError } from '../node/observer.js'
 import { logGlobalReqEvent } from './events-log.js'
 
 /** @type {import('express').ErrorRequestHandler} */
