@@ -6,14 +6,21 @@
 // account events might be sent to a an organization's security officer
 // global events are only for hosting superadmins
 
+import { hostname as getHostname } from 'os'
 import { Counter } from 'prom-client'
 import session from './session/index.js'
 import { internalError } from '../node/observer.js'
 
+/**
+ * @typedef {import('./events-log-types.js').EventLogContext} EventLogContext
+ */
+
+const hostname = getHostname()
+
 export const eventsLogCounter = new Counter({
   name: 'df_events_log',
   help: 'A counter of sensitive events logged by the service. Each increment should be accompanied by a log of the event in stdout.',
-  labelNames: ['type']
+  labelNames: ['level', 'code']
 })
 
 /** @type {{service?: string}} */
@@ -27,80 +34,80 @@ export function init (service) {
 }
 
 /**
- * @param {import('../shared/session/index.js').Account} account
- * @param {import('../shared/session/index.js').UserRef | undefined} user
- * @param {string} type
- * @param {string} message
- * @param {string} [ip]
- * @param {string} [origin]
- * @param {string} [path]
+ * @param {import('./events-log-types.js').EventLog} event
  */
-export function logAccountEvent (account, user, type, message, ip, origin, path) {
-  try {
-    console.log('df-account-event:', JSON.stringify({
-      ...globalInfo,
-      accountKey: account.type + ':' + account.id,
-      accountName: account.name,
-      userId: user?.id,
-      userName: user?.name,
-      type,
-      message,
-      ip,
-      origin,
-      path
-    }))
-    eventsLogCounter.inc({ type })
-  } catch (err) {
-    internalError('log-account-event', 'Failure to log account event', err, account, user, type, message, ip)
+export function logEvent (event) {
+  event.hostname = hostname
+  eventsLogCounter.inc({ level: event.level, code: event.code })
+  console.log('df-event:', JSON.stringify(event))
+}
+
+/**
+ * @param {import('./events-log-types.js').EventLogLevel} level
+ * @param {string} code
+ * @param {string} message
+ * @param {import('./events-log-types.js').EventLogContext} [context]
+ */
+async function log (level, code, message, context = {}) {
+  // looking into req.user for retro-compatibility with older session management
+
+  /** @type {import('../shared/session/index.js').UserRef | undefined} */
+  // @ts-ignore
+  let user = context.user ?? context.req?.user
+  if (!user && context.req) {
+    try {
+      const sessionState = await session.req(context.req)
+      user = sessionState.user
+    } catch (/** @type {any} */err) {
+      internalError('event-log-session', err)
+    }
   }
-}
 
-/**
- * @param {import('express').Request} req
- * @param {import('../shared/session/index.js').Account} account
- * @param {string} type
- * @param {string} message
- */
-export function logAccountReqEvent (req, account, type, message) {
-  session.req(req).then(sessionState => {
-    logAccountEvent(account, sessionState.user, type, message, req.get('X-Client-IP'), req.get('Origin'), req.originalUrl)
-  }).catch(err => {
-    internalError('log-account-req-event', err)
-  })
-}
-
-/**
- * @param {import('../shared/session/index.js').UserRef | undefined} user
- * @param {string} type
- * @param {string} message
- * @param {string} [ip]
- * @param {string} [url]
- */
-export function logGlobalEvent (user, type, message, ip, url) {
-  try {
-    console.log('df-global-event:', JSON.stringify({
-      ...globalInfo,
-      userId: user?.id,
-      userName: user?.name,
-      type,
-      message,
-      ip
-    }))
-    eventsLogCounter.inc({ type })
-  } catch (err) {
-    internalError('log-global-event', 'Failure to log global event', err, user, type, message, ip)
+  /** @type {import('./events-log-types.js').EventLog} */
+  const event = {
+    level,
+    code,
+    message,
+    hostname,
+    ip: context.ip ?? context.req?.get('X-Client-IP'),
+    host: context.host ?? context.req?.get('Host'),
+    accountKey: context.account && (context.account.type + ':' + context.account.id),
+    accountDep: context.account?.department,
+    accountName: context.account?.name,
+    userId: user?.id,
+    userName: user?.name
   }
+  logEvent(event)
 }
 
 /**
- * @param {import('express').Request} req
- * @param {string} type
+ * @param {string} code
  * @param {string} message
+ * @param {import('./events-log-types.js').EventLogContext} [context]
  */
-export function logGlobalReqEvent (req, type, message) {
-  session.req(req).then(sessionState => {
-    logGlobalEvent(sessionState.user, type, message, req.get('X-Client-IP'), req.originalUrl)
-  }).catch(err => {
-    internalError('log-global-req-event', err)
-  })
+function info (code, message, context) {
+  log('info', code, message, context)
+    .catch(err => internalError('event-log-fail', err))
 }
+
+/**
+ * @param {string} code
+ * @param {string} message
+ * @param {import('./events-log-types.js').EventLogContext} [context]
+ */
+function warn (code, message, context) {
+  log('warn', code, message, context)
+    .catch(err => internalError('event-log-fail', err))
+}
+
+/**
+ * @param {string} code
+ * @param {string} message
+ * @param {import('./events-log-types.js').EventLogContext} [context]
+ */
+function alert (code, message, context) {
+  log('alert', code, message, context)
+    .catch(err => internalError('event-log-fail', err))
+}
+
+export default { info, warn, alert }

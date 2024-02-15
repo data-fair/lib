@@ -48,6 +48,10 @@
       "default": "./src/express/error-handler.js",
       "types": "./types/express/error-handler.d.ts"
     },
+    "./express/events-log.js": {
+      "default": "./src/express/events-log.js",
+      "types": "./types/express/events-log.d.ts"
+    },
     "./node/axios-auth.js": {
       "default": "./src/node/axios-auth.js",
       "types": "./types/node/axios-auth.d.ts"
@@ -83,6 +87,10 @@
     "./node/test-spies.js": {
       "default": "./src/node/test-spies.js",
       "types": "./types/node/test-spies.d.ts"
+    },
+    "./node/observer.js": {
+      "default": "./src/node/observer.js",
+      "types": "./types/node/observer.d.ts"
     },
     "./processings/tests-utils.js": {
       "default": "./src/processings/tests-utils.js",
@@ -349,6 +357,7 @@
     "ws": "^8.16.0"
   },
   "dependencies": {
-    "change-case": "^5.1.2"
+    "change-case": "^5.1.2",
+    "commander": "^12.0.0"
   }
 }

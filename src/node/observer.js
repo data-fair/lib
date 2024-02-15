@@ -23,11 +23,12 @@ const internalErrorCounter = new Counter({
 
 /**
  * @param {string} errorCode
- * @param {string} message
+ * @param {any} error
  * @param  {...any} optionalParams
  */
-export const internalError = (errorCode, message, ...optionalParams) => {
+export const internalError = (errorCode, error, ...optionalParams) => {
   internalErrorCounter.inc({ errorCode })
+  const message = error.message || error
   console.error(`[${errorCode}] ${message}`, ...optionalParams)
 }
 
