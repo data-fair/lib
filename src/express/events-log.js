@@ -12,7 +12,7 @@ import session from './session/index.js'
 import { internalError } from '../node/observer.js'
 
 const level = process.env.EVENTS_LOG_LEVEL || 'info'
-const levels = ['alert', 'warn', 'info']
+const levels = ['silent', 'alert', 'warn', 'info']
 const activeLevels = levels.slice(0, levels.indexOf(level) + 1)
 
 /**
