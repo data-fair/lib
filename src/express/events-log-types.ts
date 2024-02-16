@@ -15,7 +15,7 @@ export interface EventLog {
   userId?: string
   userName?: string
   ip?: string
-  host?: string
+  host: string
 }
 
 export interface EventLogContext {
