@@ -1,13 +1,17 @@
 import { type Account } from '../shared/session/index.js'
 
+type logFn = (msg: string, ...args: any[]) => void
+
 export interface WsClientOpts {
-  log?: any
+  log?: { info: logFn, error: logFn, debug: logFn }
   url: string
   headers?: Record<string, string>
   apiKey?: string
   adminMode?: boolean
   account?: Account
 }
+
+export type FullWsClientOpts = WsClientOpts & Required<Pick<WsClientOpts, 'log'>>
 
 export interface Message {
   type: string

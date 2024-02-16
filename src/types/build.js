@@ -5,9 +5,14 @@
 import { readFileSync, readdirSync, writeFileSync, lstatSync, existsSync, rmSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { pascalCase } from 'change-case'
+import {program} from 'commander'
 import clone from '../clone.js'
 
-const main = async () => {
+/**
+ * @param {string} dir 
+ * @param {{mjs: boolean}} options
+ */
+const main = async (dir, options) => {
   let pJsonName
   try {
     const pJson = JSON.parse(readFileSync('./package.json', 'utf8'))
@@ -22,10 +27,9 @@ const main = async () => {
   const inLib = pJsonName === '@data-fair/lib'
   const inTest = pJsonName === '@data-fair/lib-test'
 
-  const relRootDir = process.argv[2] || './'
-  const rootDir = path.resolve(relRootDir)
+  const rootDir = path.resolve(dir)
 
-  console.log(`scan dir ${relRootDir} looking for pattern */schema.json`)
+  console.log(`scan dir ${dir} looking for pattern */schema.json`)
   const dirs = []
   for (const _file of readdirSync(rootDir, { recursive: true})) {
     const file = /** @type {string} */(_file)
@@ -169,11 +173,11 @@ export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
         let validationImport = '@data-fair/lib/types/validation.js'
         if (inLib ) validationImport = '#lib/types/validation.js'
         if (inTest) validationImport = '../../../../validation.js'
-        writeFileSync(path.join(dir, '.type', 'validate.js'), '/* eslint-disable */\n// @ts-nocheck\n\n' + validateCode)
+        writeFileSync(path.join(dir, '.type', 'validate.' + (options.mjs ? 'mjs' : 'js')), '/* eslint-disable */\n// @ts-nocheck\n\n' + validateCode)
         importsCode += `
 // validate function compiled using ajv
 // @ts-ignore
-import validateUnsafe from './validate.js'
+import validateUnsafe from './validate.${options.mjs ? 'mjs' : 'js'}'
 import { assertValid as assertValidGeneric } from '${validationImport}'`
         code += `
 /** @type {{errors?: import('ajv').ErrorObject[] | null | undefined} & ((data: any) => data is ${mainTypeName})} */
@@ -190,11 +194,11 @@ export const assertValid = (data, lang = 'fr', name = 'data', internal) => {
           .replace('const { dependencies } = require(\'fast-json-stringify/lib/standalone\')', 'import {dependencies} from \'fast-json-stringify/lib/standalone.js\'')
           + ')'
         
-        writeFileSync(path.join(dir, '.type', 'stringify.js'), '/* eslint-disable */\n// @ts-nocheck\n\n' + stringifyCode)
+        writeFileSync(path.join(dir, '.type', 'stringify.' + (options.mjs ? 'mjs' : 'js')), '/* eslint-disable */\n// @ts-nocheck\n\n' + stringifyCode)
         importsCode += `
 // stringify function compiled using fast-json-stringify
 // @ts-ignore
-import stringifyUnsafe from './stringify.js'
+import stringifyUnsafe from './stringify.${options.mjs ? 'mjs' : 'js'}'
 // @ts-ignore
 import flatstr from 'flatstr'
 `
@@ -213,7 +217,15 @@ export const stringify = (data) => {
         throw new Error(`unsupported export ${schemaExport}`)
       }
     }
-    writeFileSync(path.join(dir, '.type', 'index.js'), importsCode + '\n' + code)
+    writeFileSync(path.join(dir, '.type', 'index.' + (options.mjs ? 'mjs' : 'js')), importsCode + '\n' + code)
+
+    const indexFilePath = path.join(dir, 'index.' + (options.mjs ? 'mjs' : 'js'))
+    if (!existsSync(indexFilePath)) writeFileSync(indexFilePath, `export * from './.type/index.${options.mjs ? 'mjs' : 'js'}'`)
   }
 }
-main()
+
+program
+  .argument('[dir]', 'root directory to scan for schema.json files', './')
+  .option('--mjs', 'produce mjs files', false)
+  .action(main)
+  .parseAsync()

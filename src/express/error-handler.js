@@ -1,5 +1,5 @@
-import { internalError } from '../node/prometheus.js'
-import { logGlobalReqEvent } from './events-log.js'
+import { internalError } from '../node/observer.js'
+import eventsLog from './events-log.js'
 
 /** @type {import('express').ErrorRequestHandler} */
 export default function (err, req, res, next) {
@@ -11,14 +11,15 @@ export default function (err, req, res, next) {
     internalError('http', 'failure while serving http request', err)
   }
   if (status === 403) {
-    logGlobalReqEvent(req, 'forbidden', err.message)
+    eventsLog.warn('forbidden-req', err.message, { req })
   }
   if (status === 401) {
-    logGlobalReqEvent(req, 'unauthorized', err.message)
+    eventsLog.warn('unauthorized-req', err.message, { req })
   }
   res.set('Cache-Control', 'no-cache')
   res.set('Expires', '-1')
   res.status(status)
+  res.type('text/plain')
   if (process.env.NODE_ENV === 'production') {
     if (status < 500) res.send(err.message)
     else res.send(err.name || 'internal error')

@@ -1,6 +1,9 @@
 module.exports = {
   root: true,
-  extends: ['standard', 'plugin:jsdoc/recommended-typescript-flavor-error'],
+  extends: [
+    'standard',
+    'plugin:jsdoc/recommended-typescript-flavor-error'
+  ],
   overrides: [
     {
       files: ['*.ts'],
@@ -15,6 +18,11 @@ module.exports = {
         '@typescript-eslint/strict-boolean-expressions': 0,
         '@typescript-eslint/consistent-type-assertions': 0
       }
+    },
+    {
+      files: ['*.vue'],
+      parser: 'vue-eslint-parser',
+      extends: 'plugin:vue/vue3-recommended'
     }
   ],
   ignorePatterns: ['/node_modules', '/types', '.type'],
