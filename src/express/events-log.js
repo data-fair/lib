@@ -24,7 +24,7 @@ const hostname = getHostname()
 export const eventsLogCounter = new Counter({
   name: 'df_events_log',
   help: 'A counter of sensitive events logged by the service. Each increment should be accompanied by a log of the event in stdout.',
-  labelNames: ['level', 'code']
+  labelNames: ['level', 'code', 'host']
 })
 
 /** @type {{service?: string}} */
@@ -42,7 +42,7 @@ export function init (service) {
  */
 export function logEvent (event) {
   event.hostname = hostname
-  eventsLogCounter.inc({ level: event.level, code: event.code })
+  eventsLogCounter.inc({ level: event.level, code: event.code, host: event.host })
   if (activeLevels.includes(event.level)) {
     console.log('df-event:', JSON.stringify(event))
   }
@@ -69,6 +69,9 @@ async function log (level, code, message, context = {}) {
     }
   }
 
+  let host = context.host ?? context.req?.get('Host')
+  if (!host || host.startsWith('localhost') || host.endsWith(':8080')) host = '-'
+
   /** @type {import('./events-log-types.js').EventLog} */
   const event = {
     time: new Date().toISOString(),
@@ -77,7 +80,7 @@ async function log (level, code, message, context = {}) {
     message,
     hostname,
     ip: context.ip ?? context.req?.get('X-Client-IP'),
-    host: context.host ?? context.req?.get('Host') ?? '-',
+    host,
     accountKey: context.account && (context.account.type + '.' + context.account.id),
     accountDep: context.account?.department,
     accountName: context.account?.name,
