@@ -11,6 +11,10 @@ import { Counter } from 'prom-client'
 import session from './session/index.js'
 import { internalError } from '../node/observer.js'
 
+const level = process.env.EVENTS_LOG_LEVEL || 'info'
+const levels = ['alert', 'warn', 'info']
+const activeLevels = levels.slice(0, levels.indexOf(level) + 1)
+
 /**
  * @typedef {import('./events-log-types.js').EventLogContext} EventLogContext
  */
@@ -39,7 +43,9 @@ export function init (service) {
 export function logEvent (event) {
   event.hostname = hostname
   eventsLogCounter.inc({ level: event.level, code: event.code })
-  console.log('df-event:', JSON.stringify(event))
+  if (activeLevels.includes(event.level)) {
+    console.log('df-event:', JSON.stringify(event))
+  }
 }
 
 /**
