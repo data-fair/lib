@@ -71,6 +71,7 @@ async function log (level, code, message, context = {}) {
 
   /** @type {import('./events-log-types.js').EventLog} */
   const event = {
+    time: new Date().toISOString(),
     level,
     code,
     message,

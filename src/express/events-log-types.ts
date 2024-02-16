@@ -4,6 +4,7 @@ import { type Request } from 'express'
 export type EventLogLevel = 'info' | 'warn' | 'alert'
 
 export interface EventLog {
+  time: string
   code: string
   message: string
   level: EventLogLevel
