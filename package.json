@@ -64,10 +64,6 @@
       "default": "./src/node/http-agents.js",
       "types": "./types/node/http-agents.d.ts"
     },
-    "./node/prometheus.js": {
-      "default": "./src/node/prometheus.js",
-      "types": "./types/node/prometheus.d.ts"
-    },
     "./node/ws.js": {
       "default": "./src/node/ws.js",
       "types": "./types/node/ws.d.ts"
@@ -91,6 +87,10 @@
     "./node/observer.js": {
       "default": "./src/node/observer.js",
       "types": "./types/node/observer.d.ts"
+    },
+    "./node/event-promise.js": {
+      "default": "./src/node/event-promise.js",
+      "types": "./types/node/event-promise.d.ts"
     },
     "./processings/tests-utils.js": {
       "default": "./src/processings/tests-utils.js",

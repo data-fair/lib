@@ -7,6 +7,7 @@ import process from 'node:process'
 import { Writable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { readdir } from 'node:fs/promises'
+import path from 'node:path'
 import chalk from 'chalk'
 
 /**
@@ -72,11 +73,12 @@ export const reporter = () => {
 
 /**
  * @param {string} dir
+ * @param {string} [ext]
  */
-export const run = async (dir) => {
+export const run = async (dir, ext = '.js') => {
   process.env.NODE_ENV = 'test'
-  const files = (await readdir(dir))
-    .filter(f => f.endsWith('.js') && f !== 'index.js')
-    .map(f => `test-it/${f}`)
+  const files = (await readdir(dir, { recursive: true }))
+    .filter(f => f.endsWith(ext) && f !== 'index.js')
+    .map(f => path.join(dir, f))
   await pipeline([nodeRunTests({ files }), reporter()])
 }
