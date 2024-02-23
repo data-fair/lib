@@ -96,6 +96,10 @@
       "default": "./src/processings/tests-utils.js",
       "types": "./types/processings/tests-utils.d.ts"
     },
+    "./processings/types.js": {
+      "default": "./src/processings/types.js",
+      "types": "./types/processings/types.d.ts"
+    },
     "./types/validation.js": {
       "default": "./src/types/validation.js",
       "types": "./types/types/validation.d.ts"
