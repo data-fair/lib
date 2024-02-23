@@ -1,21 +1,21 @@
-import { computed } from 'vue'
+// filter reactiveSearchParams to conceptFilters (params prefixed by _c_)
+
+import { reactive, watch } from 'vue'
 
 /**
  * @param {Record<string, string>} reactiveSearchParams
  */
 export function useConceptFilters (reactiveSearchParams) {
-  /** @type {import('vue').ComputedRef<Record<string, string>>} */
-  const conceptFilters = computed(() => {
-    /** @type {Record<string, string>} */
-    const conceptFilters = {}
-    for (const key of Object.keys(reactiveSearchParams)) {
-      if (key.startsWith('_c_')) {
-        if (Array.isArray(reactiveSearchParams[key])) throw new Error('concept filters cannot be arrays')
-        conceptFilters[key] = reactiveSearchParams[key]
-      }
-    }
-    return conceptFilters
-  })
+  const conceptFilters = reactive(/** @type {Record<string, string>} */({}))
 
-  return { conceptFilters }
+  watch(reactiveSearchParams, () => {
+    for (const key of Object.keys(reactiveSearchParams)) {
+      if (key.startsWith('_c_')) conceptFilters[key] = reactiveSearchParams[key]
+    }
+    for (const key of Object.keys(conceptFilters)) {
+      if (reactiveSearchParams[key] === undefined) delete conceptFilters[key]
+    }
+  }, { immediate: true })
+
+  return conceptFilters
 }
