@@ -99,7 +99,11 @@ export const startObserver = async (port = 9090) => {
   })
   server.listen(port)
   await new Promise(resolve => server.once('listening', resolve))
-  console.log(`Prometheus metrics server available on http://localhost:${port}/metrics`)
+  console.log(`Observer server available on http://localhost:${port}
+    GET /metrics -> get prometheus metrics for this instance
+    GET /service-metrics -> get prometheus metrics shared accross all instances
+    GET /cpu-profile -> generate and fetch a CPU profile
+`)
 }
 
 export const stopObserver = async () => {
