@@ -33,7 +33,7 @@ const main = async (dir, options) => {
   const dirs = []
   for (const _file of readdirSync(rootDir, { recursive: true})) {
     const file = /** @type {string} */(_file)
-    if (!file.endsWith('/schema.json')) continue
+    if (path.basename(file) !== 'schema.json') continue
     const filePath = path.resolve(rootDir, file.toString())
     const parts = filePath.split(path.sep)
     if (parts.includes('node_modules')) continue
@@ -52,6 +52,8 @@ const main = async (dir, options) => {
     schemas[accountSchema.$id] = accountSchema
     const { schema: appSchema } = await import('../shared/application/index.js')
     schemas[appSchema.$id] = appSchema
+    const { schema: colorsSchema } = await import('../color-scheme/colors.js')
+    schemas[colorsSchema.$id] = colorsSchema
   }
 
   for (const [dir, key] of dirs) {
@@ -78,7 +80,9 @@ const main = async (dir, options) => {
      * @param {(err: any, doc?: any) => void} callback
      */
     async read (/** @type {{ url: string }} */file, callback) {
-      callback(null, clone(schemas[file.url]))
+      const clonedSchema = clone(schemas[file.url])
+      delete clonedSchema.$id
+      callback(null, clonedSchema)
     }
   }
 

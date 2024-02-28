@@ -1,8 +1,11 @@
 {
+  "$id": "https://github.com/data-fair/lib/colors",
   "type": "object",
   "title": "Palette de couleur",
+  "description": "**Qualitative** : pour représenter des données catégorielles ou nominales.\n\n**Divergente** : accorde la même importance aux différentes valeurs des données.\n\n**Séquentielle** : pour des données ordonnées qui varient d'une valeur faible à une valeur forte (gradient)\n\n**Thème global** : utilise les couleurs principales de l'interface, peut être étendu en une palette pour plus de variété\n\n**Palette personnalisée** : choisissez vos propres couleurs",
   "x-exports": [
-    "types"
+    "types",
+    "schema"
   ],
   "default": {
     "type": "qualitative"
@@ -17,8 +20,7 @@
       ],
       "properties": {
         "type": {
-          "const": "qualitative",
-          "description": "**Qualitative** : pour représenter des données catégorielles ou nominales.\n\n**Divergente** : accorde la même importance aux différentes valeurs des données.\n\n**Séquentielle** : pour des données ordonnées qui varient d’une valeur faible à une valeur forte (gradient)"
+          "const": "qualitative"
         },
         "name": {
           "type": "string",
@@ -42,10 +44,21 @@
             {
               "const": "Set2",
               "title": "Ensemble 2"
+            },
+            {
+              "const": "Set3",
+              "title": "Ensemble 3"
+            },
+            {
+              "const": "Pastel1",
+              "title": "Pastel 1"
+            },
+            {
+              "const": "Pastel2",
+              "title": "Pastel 2"
             }
           ],
-          "default": "Accent",
-          "title": "Nom de la palette de couleurs"
+          "default": "Accent"
         }
       }
     },
@@ -99,8 +112,7 @@
               "title": "Spectral"
             }
           ],
-          "default": "RdYlGn",
-          "title": "Nom de la palette de couleurs"
+          "default": "RdYlGn"
         },
         "reverse": {
           "type": "boolean",
@@ -190,39 +202,15 @@
               "title": "Jaune-Orange-Marron"
             },
             {
-              "const": "Oranges",
-              "title": "Orange"
-            },
-            {
               "const": "YlOrRd",
               "title": "Jaune-Orange-Marron"
             }
           ],
-          "default": "YlOrRd",
-          "title": "Nom de la palette de couleurs"
+          "default": "YlOrRd"
         },
         "reverse": {
           "type": "boolean",
           "title": "Inverser"
-        },
-        "subset": {
-          "type": "string",
-          "title": "Sous-ensemble",
-          "oneOf": [
-            {
-              "const": "all",
-              "title": "Tout"
-            },
-            {
-              "const": "light",
-              "title": "Clair"
-            },
-            {
-              "const": "dark",
-              "title": "Foncé"
-            }
-          ],
-          "default": "all"
         }
       }
     },
@@ -261,6 +249,85 @@
               }
             }
           }
+        }
+      }
+    },
+    {
+      "title": "Thème global",
+      "properties": {
+        "type": {
+          "const": "vuetify-theme"
+        },
+        "generatePalette": {
+          "type": "boolean",
+          "title": "Générer une palette",
+          "description": "Génère des couleurs complémentaires à partir de celles de l'interface. Autrement utilise uniquement les couleurs de l'interface.",
+          "default": true
+        },
+        "paletteType": {
+          "type": "string",
+          "title": "Couleur de palette",
+          "description": "Cette option n'aura d'effet que si vous avez coché l'option Générer une palette.",
+          "oneOf": [
+            {
+              "const": "hues",
+              "title": "Teintes"
+            },
+            {
+              "const": "complementary",
+              "title": "Complémentaire"
+            }
+          ],
+          "default": "hues"
+        }
+      }
+    },
+    {
+      "title": "Palette personnalisée",
+      "properties": {
+        "type": {
+          "const": "custom"
+        },
+        "colorField": {
+          "title": "Couleur par valeur d'un champ",
+          "description": "Les champs multivalués ou ayant plus de 12 valeurs différentes ne peuvent pas être utilisés",
+          "type": "string",
+          "x-fromUrl": "{datasets.0.href}/schema?calculated=false&separator=false&maxCardinality=12",
+          "x-itemTitle": "label",
+          "x-itemKey": "key"
+        },
+        "colors": {
+          "x-if": "colorscheme.colorField",
+          "title": "Couleurs et ordre",
+          "type": "array",
+          "x-fromUrl": "{datasets.0.href}/values_agg?field={colorscheme.colorField}",
+          "x-display": "list",
+          "x-itemTitle": "value",
+          "x-itemKey": "value",
+          "x-itemsProp": "aggs",
+          "items": {
+            "type": "object",
+            "required": ["value", "color"],
+            "properties": {
+              "value": {
+                "type": "string",
+                "x-display": "hidden"
+              },
+              "color": {
+                "type": "string",
+                "format": "hexcolor",
+                "default": "#828282",
+                "x-display": "color-picker"
+              }
+            }
+          }
+        },
+        "defaultColor": {
+          "title": "Couleur par défaut",
+          "type": "string",
+          "format": "hexcolor",
+          "default": "#828282",
+          "x-display": "color-picker"
         }
       }
     }

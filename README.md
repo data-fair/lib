@@ -19,6 +19,8 @@ npm i @data-fair/lib
   - [Observer](#observer)
 - [Processings](#processings)
   - [tests-utils.js](#tests-utilsjs)
+- [Colors](#colors)
+  - [colors.js](#colorsjs)
 
 
 ## Types
@@ -276,3 +278,39 @@ const context = testsUtils.context({
 
 await processing.run(context)
 ```
+
+
+## Colors
+
+### colors.js
+
+A simple yet complete color palette generator.
+
+Install peer dependencies :
+
+```sh
+npm i chroma-js
+```
+
+Use case : you have a colorscheme, some data and want to generate an accompanying palette.
+
+**`getColors(colorscheme, data, size, vuetifyColors = null)`**
+- Generates a palette of colors from a given colorscheme, data and size.
+- If vuetifyColors is provided, the palette will be composed of the app's theme primary and secondary colors (case where the colorscheme type is vuetify-theme).
+- Returns an array of hex values.
+
+```js
+import getColors from '@data-fair/lib/color-scheme/colors.js'
+
+const colorscheme = {
+  type: 'qualitative',
+  name: 'Accent'
+}
+const data = {
+  ... // some data
+}
+
+const palette = getColors(colorscheme, data, data.results.length)
+```
+
+The colorscheme is a standardized object that describes the colorscheme as a json-schema. More info about the structure it must follow can be found here : [`color-scheme/schema.json`](https://github.com/data-fair/lib/blob/main/src/color-scheme/schema.json)
