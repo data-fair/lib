@@ -32,9 +32,9 @@
   },
   "exports": {
     ".": "./index.js",
-    "./color-scheme/colors.js": {
-      "default": "./src/color-scheme/colors.js",
-      "types": "./types/color-scheme/colors.d.ts"
+    "./color-scheme/index.js": {
+      "default": "./src/color-scheme/index.js",
+      "types": "./types/color-scheme/index.d.ts"
     },
     "./express/index.js": {
       "default": "./src/express/index.js",
