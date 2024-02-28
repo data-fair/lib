@@ -31,9 +31,8 @@ export class Mongo {
       console.warn('db already connected')
       return
     }
-    options.maxPoolSize = options.maxPoolSize ?? 5
     console.log('connecting to mongodb...')
-    this._client = await MongoClient.connect(mongoUrl, options)
+    this._client = await MongoClient.connect(mongoUrl, { maxPoolSize: 5, ...options })
     console.log('...ok')
   }
 
