@@ -55,15 +55,21 @@ export function logEvent (event) {
  * @param {import('./events-log-types.js').EventLogContext} [context]
  */
 async function log (level, code, message, context = {}) {
-  // looking into req.user for retro-compatibility with older session management
+  // looking into req.user and req.user.activeAccount for retro-compatibility with older session management
 
   /** @type {import('../shared/session/index.js').UserRef | undefined} */
   // @ts-ignore
   let user = context.user ?? context.req?.user
+  /** @type {import('../shared/session/index.js').Account | undefined} */
+  // @ts-ignore
+  let account = context.account ?? user?.activeAccount
+
+  // new session management
   if (!user && context.req) {
     try {
       const sessionState = await session.req(context.req)
       user = sessionState.user
+      account = sessionState.account
     } catch (/** @type {any} */err) {
       internalError('event-log-session', err)
     }
@@ -81,9 +87,9 @@ async function log (level, code, message, context = {}) {
     hostname,
     ip: context.ip ?? context.req?.get('X-Client-IP'),
     host,
-    accountKey: context.account && (context.account.type + '.' + context.account.id),
-    accountDep: context.account?.department,
-    accountName: context.account?.name,
+    accountKey: account && (account.type + '.' + account.id),
+    accountDep: account?.department,
+    accountName: account?.name,
     userId: user?.id,
     userName: user?.name
   }

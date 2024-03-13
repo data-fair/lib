@@ -220,7 +220,7 @@ export const stringify = (data) => {
     writeFileSync(path.join(dir, '.type', 'index.' + (options.mjs ? 'mjs' : 'js')), importsCode + '\n' + code)
 
     const indexFilePath = path.join(dir, 'index.' + (options.mjs ? 'mjs' : 'js'))
-    if (!existsSync(indexFilePath)) writeFileSync(indexFilePath, `export * from './.type/index.${options.mjs ? 'mjs' : 'js'}'`)
+    if (!existsSync(indexFilePath)) writeFileSync(indexFilePath, `export * from './.type/index.${options.mjs ? 'mjs' : 'js'}'\n`)
   }
 }
 
