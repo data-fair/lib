@@ -33,9 +33,9 @@ const denseInspect = (arg) => {
 
 /**
  * Create log functions.
- * @param {boolean} [debug] - Enable debug logging.
- * @param {boolean} [testDebug] - Enable test debug logging.
- * @returns {import('./types.js').LogFunctions} Log functions.
+ * @param {boolean} debug - Enable debug logging.
+ * @param {boolean} testDebug - Enable test debug logging.
+ * @returns {import('./tests-utils-types.js').LogTestFunctions} Log functions.
  */
 const prepareLog = (debug, testDebug) => {
   return {
@@ -97,7 +97,7 @@ const axiosInstance = (config) => {
 /**
  * Create a WebSocket instance.
  * @param {import('./tests-utils-types.ts').ProcessingTestConfig} config - Configuration.
- * @param {import('./types.js').LogFunctions} log - Log functions.
+ * @param {import('./tests-utils-types.js').LogTestFunctions} log Log functions.
  * @returns {DataFairWsClient} WebSocket instance.
  */
 const wsInstance = (config, log) => {
@@ -114,8 +114,8 @@ const wsInstance = (config, log) => {
  * Create a context instance.
  * @param {any} initialContext - Initial context.
  * @param {import('./tests-utils-types.ts').ProcessingTestConfig} config - Configuration.
- * @param {boolean} [debug] - Enable debug logging.
- * @param {boolean} [testDebug] - Enable test debug logging.
+ * @param {boolean} debug - Enable debug logging.
+ * @param {boolean} testDebug - Enable test debug logging.
  * @returns {import('./tests-utils-types.js').ProcessingTestContext} Context instance.
  */
 export const context = (initialContext, config, debug, testDebug) => {
