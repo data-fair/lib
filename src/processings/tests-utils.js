@@ -39,16 +39,18 @@ const denseInspect = (arg) => {
  */
 const prepareLog = (debug, testDebug) => {
   return {
-    step: (msg) => console.log(chalk.blueBright.bold.underline(`[${dayjs().format('LTS')}] ${msg}`)),
-    error: (msg, extra) => console.log(chalk.red.bold(`[${dayjs().format('LTS')}] ${msg}`), denseInspect(extra)),
-    warning: (msg, extra) => console.log(chalk.red(`[${dayjs().format('LTS')}] ${msg}`), denseInspect(extra)),
-    info: (msg, extra) => console.log(chalk.blueBright(`[${dayjs().format('LTS')}] ${msg}`), denseInspect(extra)),
-    debug: (msg, extra) => debug && console.log(`[${dayjs().format('LTS')}][debug] ${msg}`, denseInspect(extra)),
-    task: (name) => {
+    step: async (msg) => console.log(chalk.blueBright.bold.underline(`[${dayjs().format('LTS')}] ${msg}`)),
+    error: async (msg, extra) => console.log(chalk.red.bold(`[${dayjs().format('LTS')}] ${msg}`), denseInspect(extra)),
+    warning: async (msg, extra) => console.log(chalk.red(`[${dayjs().format('LTS')}] ${msg}`), denseInspect(extra)),
+    info: async (msg, extra) => console.log(chalk.blueBright(`[${dayjs().format('LTS')}] ${msg}`), denseInspect(extra)),
+    debug: async (msg, extra) => {
+      if (debug) console.log(`[${dayjs().format('LTS')}][debug] ${msg}`, denseInspect(extra))
+    },
+    task: async (name) => {
       tasksDraftLog[name] = console.draft()
       tasksDraftLog[name](chalk.yellow(name))
     },
-    progress: (taskName, /** @type {number} */ progress, /** @type {number} */ total) => {
+    progress: async (taskName, /** @type {number} */ progress, /** @type {number} */ total) => {
       const msg = `[${dayjs().format('LTS')}][task] ${taskName} - ${progress} / ${total}`
       if (progress === 0) tasksDraftLog[taskName](chalk.yellow(msg))
       else if (progress >= total) tasksDraftLog[taskName](chalk.greenBright(msg))

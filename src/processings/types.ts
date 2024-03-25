@@ -5,8 +5,8 @@ import type { DataFairWsClient } from '../node/ws.js'
  * Processing context.
  */
 export interface ProcessingContext {
-  processingConfig: object
-  pluginConfig: object
+  processingConfig: any
+  pluginConfig: any
   processingId: string
   dir: string
   tmpDir: string
@@ -21,13 +21,13 @@ export interface ProcessingContext {
  * Log functions.
  */
 export interface LogFunctions {
-  step: (msg: string) => void
-  error: (msg: string, extra: any) => void
-  warning: (msg: string, extra: any) => void
-  info: (msg: string, extra: any) => void
-  debug: (msg: string, extra: any) => void
-  task: (name: string) => void
-  progress: (taskName: string, progress: number, total: number) => void
-  testInfo: (msg: any, extra: any) => void
-  testDebug: (msg: any, extra: any) => void
+  step: (msg: string) => Promise<void>
+  error: (msg: string, extra?: any) => Promise<void>
+  warning: (msg: string, extra?: any) => Promise<void>
+  info: (msg: string, extra?: any) => Promise<void>
+  debug: (msg: string, extra?: any) => Promise<void>
+  task: (name: string) => Promise<void>
+  progress: (taskName: string, progress: number, total: number) => Promise<void>
+  testInfo: (msg: any, extra?: any) => void
+  testDebug: (msg: any, extra?: any) => void
 }
