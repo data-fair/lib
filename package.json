@@ -96,6 +96,10 @@
       "default": "./src/node/event-promise.js",
       "types": "./types/node/event-promise.d.ts"
     },
+    "./node/locks.js": {
+      "default": "./src/node/locks.js",
+      "types": "./types/node/locks.d.ts"
+    },
     "./processings/tests-utils.js": {
       "default": "./src/processings/tests-utils.js",
       "types": "./types/processings/tests-utils.d.ts"
