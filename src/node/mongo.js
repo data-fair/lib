@@ -32,7 +32,7 @@ export class Mongo {
       return
     }
     console.log('connecting to mongodb...')
-    this._client = await MongoClient.connect(mongoUrl, { maxPoolSize: 5, ...options })
+    this._client = await MongoClient.connect(mongoUrl, { maxPoolSize: 5, ignoreUndefined: true, ...options })
     console.log('...ok')
   }
 
