@@ -28,6 +28,6 @@ export interface LogFunctions {
   debug: (msg: string, extra?: any) => Promise<void>
   task: (name: string) => Promise<void>
   progress: (taskName: string, progress: number, total: number) => Promise<void>
-  testInfo: (msg: any, extra?: any) => void
-  testDebug: (msg: any, extra?: any) => void
+  testInfo?: (msg: any, extra?: any) => void
+  testDebug?: (msg: any, extra?: any) => void
 }
