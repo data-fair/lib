@@ -30,6 +30,7 @@ export const internalError = (errorCode, error, ...optionalParams) => {
   internalErrorCounter.inc({ errorCode })
   const message = error.message || error
   console.error(`[${errorCode}] ${message}`, ...optionalParams)
+  if (error.stack) console.error(error.stack)
 }
 
 /**
