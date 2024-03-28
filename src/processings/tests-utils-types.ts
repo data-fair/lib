@@ -10,4 +10,5 @@ export interface ProcessingTestConfig {
 
 export interface ProcessingTestContext extends ProcessingContext {
   cleanup: () => Promise<void>
+  log: Required<ProcessingContext['log']>
 }
