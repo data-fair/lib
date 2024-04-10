@@ -49,7 +49,8 @@ export const reporter = () => {
           if (event.data.details?.error?.cause) console.error(event.data.details.error.cause)
           else if (event.data.details?.error) console.error(event.data.details.error)
           console.log(chalk.red.bold(`X ${event.data.name}`))
-          return callback(new Error('test failure'))
+          process.exit(1)
+          break
         case 'test:plan':
           break
         case 'test:diagnostic':
@@ -80,5 +81,5 @@ export const run = async (dir, ext = '.js') => {
   const files = (await readdir(dir, { recursive: true }))
     .filter(f => f.endsWith(ext) && f !== 'index.js')
     .map(f => path.join(dir, f))
-  await pipeline([nodeRunTests({ files }), reporter()])
+  await pipeline([nodeRunTests({ files, only: process.argv.includes('--test-only') }), reporter()])
 }
