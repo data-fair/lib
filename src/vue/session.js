@@ -282,7 +282,7 @@ export const getSession = async (initOptions) => {
   // and only if it was not done very recently (maybe from a refreshed page next to this one)
   if (!ssr && window.top === window.self) {
     const lastKeepalive = window.localStorage.getItem('sd-keepalive')
-    if (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) < 10000) {
+    if (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) > 10000) {
       await keepalive()
     }
   }
