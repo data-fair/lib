@@ -102,6 +102,15 @@ export const getSession = async (initOptions) => {
       delete state.accountRole
       return
     }
+
+    // this is to prevent null values that are put by SD versions that do not strictly respect their schema
+    for (const org of user.organizations) {
+      if (!org.department) {
+        delete org.department
+        delete org.departmentName
+      }
+    }
+
     state.user = user
     const organizationId = cookies.get('id_token_org')
     const departmentId = cookies.get('id_token_dep')

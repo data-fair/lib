@@ -86,6 +86,15 @@ export class Session {
     const signingKey = await this.jwksClient.getSigningKey(decoded.header.kid)
     const user = /** @type {import('../../shared/session/index.js').User} */(jwt.verify(token, signingKey.getPublicKey()))
     if (!user) return session
+
+    // this is to prevent null values that are put by SD versions that do not strictly respect their schema
+    for (const org of user.organizations) {
+      if (!org.department) {
+        delete org.department
+        delete org.departmentName
+      }
+    }
+
     session.user = user
 
     const organizationId = cookies.id_token_org
