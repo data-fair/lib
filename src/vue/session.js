@@ -7,6 +7,7 @@ import Debug from 'debug'
 /**
  * @typedef {import('./session-types.js').SessionOptions} SessionOptions
  * @typedef {import('./session-types.js').Session} Session
+ * @typedef {import('./session-types.js').Session} SessionAuthenticated
  */
 
 const debug = Debug('session')
@@ -323,5 +324,16 @@ export function useSession () {
   const session = inject(sessionKey)
   if (!session) throw new Error('useSession requires using the plugin createSession')
   return /** @type {Session} */(session)
+}
+/**
+ * @param {() => any} errorBuilder
+ */
+export function useSessionAuthenticated (errorBuilder) {
+  const session = useSession()
+  if (!session.state.user) {
+    if (errorBuilder) throw errorBuilder()
+    else throw new Error('useSessionAuthenticated requires a logged in user')
+  }
+  return /** @type {SessionAuthenticated} */(session)
 }
 export default useSession

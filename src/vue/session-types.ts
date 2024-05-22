@@ -2,7 +2,7 @@ import { type IncomingMessage } from 'node:http'
 import { type Ref } from 'vue'
 import { type RouteLocation } from 'vue-router'
 import { type $Fetch } from 'ofetch'
-import { type SessionState } from '../shared/session/index.js'
+import { type SessionState, type SessionStateAuthenticated } from '../shared/session/index.js'
 
 interface Cookies {
   get: (key: string) => string | undefined
@@ -33,4 +33,8 @@ export interface Session {
   switchLang: (value: string) => void
   topLocation: Ref<Location | undefined>
   options: SessionOptions
+}
+
+export type SessionAuthenticated = Session & {
+  state: SessionStateAuthenticated
 }
