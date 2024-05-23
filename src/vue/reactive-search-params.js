@@ -117,50 +117,70 @@ export function useReactiveSearchParams () {
 }
 
 /**
- * @param {Record<string, string>} state
  * @param {string} key
  * @param {string | {default?: string}} options
  */
-export const stringSearchParam = (state, key, options = {}) => {
+export const useStringSearchParam = (key, options = {}) => {
+  const reactiveSearchParams = useReactiveSearchParams()
   const defaultValue = typeof options === 'string' ? options : (options.default ?? '')
   return computed({
-    get: () => state[key] ?? defaultValue,
+    get: () => reactiveSearchParams[key] ?? defaultValue,
     set: (value) => {
-      if (value === defaultValue) delete state[key]
-      else state[key] = value
+      if (value === defaultValue) delete reactiveSearchParams[key]
+      else reactiveSearchParams[key] = value
     }
   })
 }
 
 /**
- * @param {Record<string, string>} state
  * @param {string} key
  * @param {boolean | {default?: boolean, strings?: [string, string]}} options
  */
-export const booleanSearchParam = (state, key, options = {}) => {
+export const useBooleanSearchParam = (key, options = {}) => {
+  const reactiveSearchParams = useReactiveSearchParams()
   const defaultValue = typeof options === 'boolean' ? options : (options.default ?? false)
   const strings = (typeof options !== 'boolean' && options.strings) || ['1', '0']
   return computed({
-    get: () => key in state ? state[key] === strings[0] : defaultValue,
+    get: () => key in reactiveSearchParams ? reactiveSearchParams[key] === strings[0] : defaultValue,
     set: (value) => {
-      if (value === defaultValue) delete state[key]
-      else state[key] = value ? strings[0] : strings[1]
+      if (value === defaultValue) delete reactiveSearchParams[key]
+      else reactiveSearchParams[key] = value ? strings[0] : strings[1]
     }
   })
 }
 
 /**
- * @param {Record<string, string>} state
+ * @param {string} key
+ */
+export const useNumberSearchParam = (key) => {
+  const reactiveSearchParams = useReactiveSearchParams()
+  return computed({
+    get: () => {
+      if (key in reactiveSearchParams) {
+        const value = Number(reactiveSearchParams[key])
+        if (!isNaN(value)) return value
+      }
+      return null
+    },
+    set: (value) => {
+      if (value === null) delete reactiveSearchParams[key]
+      else reactiveSearchParams[key] = '' + value
+    }
+  })
+}
+
+/**
  * @param {string} key
  * @param {'csv' | {style?: 'csv'}} options
  */
-export const stringArrayParam = (state, key, options = {}) => {
+export const useStringsArraySearchParam = (key, options = {}) => {
+  const reactiveSearchParams = useReactiveSearchParams()
   // const style = typeof options === 'string' ? options : (options.style ?? 'csv')
   return computed({
-    get: () => state[key] ? state[key]?.split(',') : [],
+    get: () => reactiveSearchParams[key] ? reactiveSearchParams[key]?.split(',') : [],
     set: (value) => {
-      if (value.length === 0) delete state[key]
-      else state[key] = value.join(',')
+      if (value.length === 0) delete reactiveSearchParams[key]
+      else reactiveSearchParams[key] = value.join(',')
     }
   })
 }
