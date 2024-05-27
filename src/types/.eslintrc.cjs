@@ -1,3 +1,1 @@
-module.exports = {
-  ignorePatterns: ['**/*.js', '**/*.ts']
-}
+module.exports = {}

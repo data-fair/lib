@@ -2,14 +2,14 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-import { readFileSync, readdirSync, writeFileSync, lstatSync, existsSync, rmSync, mkdirSync } from 'node:fs'
+import { readFileSync, readdirSync, writeFileSync, existsSync, rmSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { pascalCase } from 'change-case'
-import {program} from 'commander'
+import { program } from 'commander'
 import clone from '../clone.js'
 
 /**
- * @param {string} dir 
+ * @param {string} dir
  * @param {{mjs: boolean}} options
  */
 const main = async (dir, options) => {
@@ -31,7 +31,7 @@ const main = async (dir, options) => {
 
   console.log(`scan dir ${dir} looking for pattern */schema.json`)
   const dirs = []
-  for (const _file of readdirSync(rootDir, { recursive: true})) {
+  for (const _file of readdirSync(rootDir, { recursive: true })) {
     const file = /** @type {string} */(_file)
     if (path.basename(file) !== 'schema.json') continue
     const filePath = path.resolve(rootDir, file.toString())
@@ -62,7 +62,7 @@ const main = async (dir, options) => {
     if (schemas[schema.$id]) throw new Error(`duplicate schema key ${schema.$id}`)
     schemas[schema.$id] = schema
   }
-  
+
   const localResolver = {
     order: 1,
     /**
@@ -92,11 +92,12 @@ const main = async (dir, options) => {
     const schema = JSON.parse(readFileSync(path.join(dir, 'schema.json'), 'utf8'))
     if (schema.$id) console.log(`  $id: ${JSON.stringify(schema.$id)}`)
     const mainTypeName = pascalCase(schema.title || key)
+    /** @type {('types' | 'validate' | 'stringify' | 'schema' | resolvedSchema | 'resolvedSchemaJson')[]} */
     const schemaExports = schema['x-exports'] || ['types', 'validate', 'stringify', 'schema']
     console.log(`  exports: ${JSON.stringify(schemaExports)}`)
     let importsCode = '/* eslint-disable */\n\n'
     let code = ''
-    if (existsSync(path.join(dir, '.type'))) rmSync(path.join(dir, '.type'), {recursive: true   })
+    if (existsSync(path.join(dir, '.type'))) rmSync(path.join(dir, '.type'), { recursive: true })
     mkdirSync(path.join(dir, '.type'))
 
     const $refOptions = { resolve: { local: localResolver } }
@@ -106,6 +107,10 @@ const main = async (dir, options) => {
       resolvedSchema = /** @type {any} */(await refParser.dereference(schema, $refOptions))
       if (resolvedSchema.$id) resolvedSchema.$id += '-resolved'
     }
+
+    code += `
+export const schemaExports = ${JSON.stringify(schemaExports, null, 2)}
+`
 
     for (const schemaExport of schemaExports) {
       if (schemaExport === 'types') {
@@ -119,6 +124,7 @@ const main = async (dir, options) => {
             importedTypes.push(pascalCase(schema.$defs[key].title ?? key))
           }
         }
+        code += '\n// see https://github.com/bcherny/json-schema-to-typescript/issues/439 if some types are not exported\n'
         code += '/**'
         for (const importedType of importedTypes) {
           code += `\n * @typedef {import('./types.js').${importedType}} ${importedType}`
@@ -171,7 +177,7 @@ export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
         }
 
         let validationImport = '@data-fair/lib/types/validation.js'
-        if (inLib ) validationImport = '#lib/types/validation.js'
+        if (inLib) validationImport = '#lib/types/validation.js'
         if (inTest) validationImport = '../../../../validation.js'
         writeFileSync(path.join(dir, '.type', 'validate.' + (options.mjs ? 'mjs' : 'js')), '/* eslint-disable */\n// @ts-nocheck\n\n' + validateCode)
         importsCode += `
@@ -191,9 +197,9 @@ export const assertValid = (data, lang = 'fr', name = 'data', internal) => {
         const fastJsonStringify = (await import('fast-json-stringify')).default
         const stringifyCode = fastJsonStringify(schema, { mode: 'standalone', schema: schemas })
           .replace('module.exports = ', 'export default (')
-          .replace('const { dependencies } = require(\'fast-json-stringify/lib/standalone\')', 'import {dependencies} from \'fast-json-stringify/lib/standalone.js\'')
-          + ')'
-        
+          .replace('const { dependencies } = require(\'fast-json-stringify/lib/standalone\')', 'import {dependencies} from \'fast-json-stringify/lib/standalone.js\'') +
+          ')'
+
         writeFileSync(path.join(dir, '.type', 'stringify.' + (options.mjs ? 'mjs' : 'js')), '/* eslint-disable */\n// @ts-nocheck\n\n' + stringifyCode)
         importsCode += `
 // stringify function compiled using fast-json-stringify

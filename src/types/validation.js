@@ -67,6 +67,7 @@ export const errorsText = (errors, varName = 'data') => {
     .reduce((text, msg) => text + ', ' + msg)
 }
 
+// eslint-disable-next-line jsdoc/valid-types
 /** @type {<Type>(validate: import('ajv').ValidateFunction, data: any, lang?: string, name?: string, internal?: boolean) => asserts data is Type} */
 export const assertValid = (validate, data, lang = 'fr', name = 'data', internal) => {
   if (!validate(data)) {
