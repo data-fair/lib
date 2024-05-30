@@ -72,7 +72,7 @@ const serveCPUProfile = async (res, duration = 2000) => {
   session.disconnect()
 
   res.setHeader('Content-Disposition', `attachment; filename="data-fair-${hostname()}-${new Date().toISOString()}.cpuprofile"`)
-  res.write(profile)
+  res.write(JSON.stringify(profile))
   res.end()
 }
 

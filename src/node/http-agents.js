@@ -13,7 +13,7 @@ const CacheableLookup = /** @type {typeof cacheableLookupModule.default} */ (cac
 const keepaliveOpts = {
   maxSockets: 8,
   maxFreeSockets: 8,
-  timeout: 120000,
+  timeout: 60000,
   freeSocketTimeout: 30000
 }
 

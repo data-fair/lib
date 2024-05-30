@@ -337,7 +337,7 @@
     "@types/chroma-js": "^2.4.4",
     "@types/cookie": "^0.5.4",
     "@types/debug": "^4.1.10",
-    "@types/node": "^20.11.17",
+    "@types/node": "^20.12.13",
     "@types/ws": "^8.5.8",
     "@vueuse/integrations": "^10.6.1",
     "agentkeepalive": "^4.5.0",
