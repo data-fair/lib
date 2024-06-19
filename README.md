@@ -17,6 +17,7 @@ npm i @data-fair/lib
   - [session](#session)
 - [Nodejs](#nodejs)
   - [Observer](#observer)
+  - [Upgrade scripts](#upgrade-scripts)
 - [Processings](#processings)
   - [tests-utils.js](#tests-utilsjs)
 - [Colors](#colors)
@@ -238,6 +239,33 @@ new client.Gauge({
     this.set(await db.collection('collection').estimatedDocumentCount())
   }
 })
+```
+
+### Upgrade scripts
+
+Scripts must be written in 'upgrade/{CURRENT VERSION}' directory. All scripts with a version number greater than or equal to the version of the service registered in the database will executed.
+
+The scripts will be run automatically at startup of service.
+
+Scripts are simple nodejs modules that export an object following UpgradeScript interface:
+
+  - description: A short description string.
+  - exec: An async function. It accepts a mongodb connection as first parameter and debug log method as second parameter.
+
+WARNING: theoretically all scripts are run only once. But this cannot be strictly ensured therefore scripts should be idempotent. It means that running them multiple times should not create problems.
+
+Install peer dependencies:
+
+```sh
+npm i semver debug
+```
+
+Run the scripts somewhere in app intialization:
+
+```ts
+import upgradeScripts from '@data-fair/lib/node/upgrade-scripts.js'
+
+await upgradeScripts(db)
 ```
 
 
