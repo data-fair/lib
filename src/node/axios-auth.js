@@ -16,7 +16,7 @@ export const axiosAuth = async (opts) => {
   /** @type {any} */
   const body = { email: opts.email, password: opts.password }
   if (opts.org) body.org = opts.org
-  if (opts.dep) body.org = opts.dep
+  if (opts.dep) body.dep = opts.dep
   if (opts.adminMode) body.adminMode = opts.adminMode
   const axiosOpts = {
     httpAgent: new Agent({ keepAlive: false }),
