@@ -10,6 +10,10 @@ import { readdir } from 'node:fs/promises'
 import path from 'node:path'
 import chalk from 'chalk'
 
+const prefix = (/** @type {number} */nesting) => {
+  return new Array(nesting + 1).join('  ')
+}
+
 /**
  * @returns {Writable}
  */
@@ -32,8 +36,11 @@ export const reporter = () => {
         case 'test:dequeue':
           changeNesting(event)
           // eslint-disable-next-line no-case-declarations
-          if (!event.data.file) console.log(chalk.bold.underline(`${event.data.name}\n`)) // entering a file
-          else console.log(chalk.bold(`${new Array(nesting + 1).join('  ')}${event.data.name}`)) // entering a test
+          if (!event.data.file || event.data.file.endsWith(event.data.name)) {
+            console.log(chalk.bold.underline(`\n${event.data.name}\n`)) // entering a file
+          } else {
+            console.log(chalk.bold(`${prefix(nesting)}${event.data.name}`)) // entering a test
+          }
           break
         case 'test:enqueue':
           break
@@ -42,13 +49,14 @@ export const reporter = () => {
         case 'test:start':
           break
         case 'test:pass':
+          if (event.data?.skip) console.log(chalk.yellow.bold(`${prefix(nesting)}- ${event.data.skip}`))
           changeNesting(event)
           // console.log(chalk.greenBright.bold(`${new Array(event.data.nesting + 2).join('  ')}ok`))
           break
         case 'test:fail':
           if (event.data.details?.error?.cause) console.error(event.data.details.error.cause)
           else if (event.data.details?.error) console.error(event.data.details.error)
-          console.log(chalk.red.bold(`X ${event.data.name}`))
+          console.log(chalk.red.bold(`${prefix(nesting)}X ${event.data.name}`))
           process.exit(1)
           break
         case 'test:plan':
