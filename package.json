@@ -215,7 +215,6 @@
   "homepage": "https://github.com/data-fair/lib#readme",
   "peerDependencies": {
     "@bcherny/json-schema-ref-parser": "^10.0.5-fork",
-    "@vueuse/integrations": "*",
     "agentkeepalive": "4",
     "ajv": "8",
     "ajv-errors": "3",
@@ -248,9 +247,6 @@
   },
   "peerDependenciesMeta": {
     "@bcherny/json-schema-ref-parser": {
-      "optional": true
-    },
-    "@vueuse/integrations": {
       "optional": true
     },
     "agentkeepalive": {

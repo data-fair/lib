@@ -1,4 +1,6 @@
 import { reactive, computed, watch, inject } from 'vue'
+// @vueuse/integrations is not declared in peer dependencies as it triggers many version conflicts
+// TODO: get rid of it ?
 import { useCookies, createCookies } from '@vueuse/integrations/useCookies'
 import { ofetch } from 'ofetch'
 import { jwtDecode } from 'jwt-decode'
