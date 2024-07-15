@@ -346,7 +346,7 @@
     "@types/debug": "^4.1.10",
     "@types/node": "^20.12.13",
     "@types/ws": "^8.5.8",
-    "@vueuse/integrations": "~10.10.0",
+    "@vueuse/integrations": "~10.11.0",
     "agentkeepalive": "^4.5.0",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
@@ -384,5 +384,11 @@
   "dependencies": {
     "change-case": "^5.4.4",
     "commander": "^12.1.0"
+  },
+  "overrides": {
+    "@vueuse/integrations": {
+      "change-case": "5",
+      "jwt-decode": "4"
+    }
   }
 }
