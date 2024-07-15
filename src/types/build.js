@@ -46,13 +46,13 @@ const main = async (dir, options) => {
   /** @type {Record<string, any>} */
   const schemas = {}
   if (!inLib) {
-    const { schema: sessionStateSchema } = await import('../shared/session/index.js')
+    const { schema: sessionStateSchema } = await import('../shared/session/.type/index.js')
     schemas[sessionStateSchema.$id] = sessionStateSchema
-    const { schema: accountSchema } = await import('../shared/account/index.js')
+    const { schema: accountSchema } = await import('../shared/account/.type/index.js')
     schemas[accountSchema.$id] = accountSchema
-    const { schema: appSchema } = await import('../shared/application/index.js')
+    const { schema: appSchema } = await import('../shared/application/.type/index.js')
     schemas[appSchema.$id] = appSchema
-    const { schema: colorsSchema } = await import('../color-scheme/index.js')
+    const { schema: colorsSchema } = await import('../color-scheme/.type/index.js')
     schemas[colorsSchema.$id] = colorsSchema
   }
 
