@@ -7,7 +7,7 @@ import Debug from 'debug'
 /**
  * @typedef {import('./session-types.js').SessionOptions} SessionOptions
  * @typedef {import('./session-types.js').Session} Session
- * @typedef {import('./session-types.js').Session} SessionAuthenticated
+ * @typedef {import('./session-types.js').SessionAuthenticated} SessionAuthenticated
  */
 
 const debug = Debug('session')
@@ -326,7 +326,7 @@ export function useSession () {
   return /** @type {Session} */(session)
 }
 /**
- * @param {() => any} errorBuilder
+ * @param {() => any} [errorBuilder]
  */
 export function useSessionAuthenticated (errorBuilder) {
   const session = useSession()
