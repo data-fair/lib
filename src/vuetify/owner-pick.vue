@@ -2,13 +2,13 @@
   <v-row>
     <v-col>
       <template v-if="status === 'loading'">
-        <v-skeleton-loader
-          height="20"
-          class="mb-2"
+        <v-progress-linear
+          indeterminate
+          color="primary"
         />
       </template>
       <template v-if="status === 'ok'">
-        <p>{{ message }}</p>
+        <p>{{ message || t('message') }}</p>
         <v-radio-group
           v-if="model"
           v-model="model"
@@ -42,17 +42,18 @@ import { watch, computed } from 'vue'
 import { computedAsync } from '@vueuse/core'
 import { ofetch } from 'ofetch'
 import { useI18n } from 'vue-i18n'
-import { useSessionAuthenticated } from '../vue/session.js'
+import { useSessionAuthenticated } from '@data-fair/lib/vue/session.js'
 
 const { t } = useI18n({ useScope: 'local' })
 
 const props = defineProps({
   otherAccounts: { type: Boolean, default: false },
-  hideSingle: { type: Boolean, default: false },
+  hideSingle: { type: Boolean, default: true },
   message: { type: String, default: null }
 })
 
 const model = defineModel({ type: Object, default: null })
+const ready = defineModel('ready', { type: Boolean, default: false })
 
 const session = useSessionAuthenticated()
 
@@ -103,6 +104,9 @@ const getLabel = (owner) => {
 watch(owners, () => {
   if (!model.value && owners.value?.length >= 1) {
     model.value = owners.value[0]
+  }
+  if (owners.value) {
+    ready.value = true
   }
 })
 
