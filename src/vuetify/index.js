@@ -52,6 +52,13 @@ export const defaultOptions = (searchParams, darkCookie = false) => {
           colors: darkColors
         }
       }
+    },
+    defaults: {
+      VCard: {
+        // grey outlined card by default
+        variant: 'outlined',
+        style: 'border-color: rgba(var(--v-theme-on-surface), var(--v-focus-opacity)) !important;'
+      }
     }
   }
 }
