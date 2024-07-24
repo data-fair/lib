@@ -70,6 +70,9 @@ const owners = computedAsync(async () => {
       if (session.state.account.type !== 'organization' || o.id !== session.state.account.id) {
         continue
       }
+      if (session.state.account.department && session.state.account.department !== o.department) {
+        continue
+      }
     }
     if (o.department && !owners.find(ow => ow.type === 'organization' && ow.id === o.id && ow.department === o.department)) {
       owners.push({ type: 'organization', id: o.id, name: o.name, department: o.department, departmentName: o.departmentName || '' })
