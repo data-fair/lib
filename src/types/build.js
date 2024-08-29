@@ -29,17 +29,18 @@ const main = async (dir, options) => {
 
   const rootDir = path.resolve(dir)
 
-  console.log(`scan dir ${dir} looking for pattern */schema.json`)
+  console.log(`scan dir ${dir} looking for pattern */schema.{json|js}`)
   const dirs = []
   for (const _file of readdirSync(rootDir, { recursive: true })) {
     const file = /** @type {string} */(_file)
-    if (path.basename(file) !== 'schema.json') continue
+    const fileName = path.basename(file)
+    if (!['schema.json', 'schema.js'].includes(fileName)) continue
     const filePath = path.resolve(rootDir, file.toString())
     const parts = filePath.split(path.sep)
     if (parts.includes('node_modules')) continue
     const lastParts = parts.slice(-3)
-    if (lastParts[1] === 'type' || lastParts[1] === 'types') dirs.push([path.dirname(filePath), lastParts[0]])
-    else dirs.push([path.dirname(filePath), lastParts[1]])
+    if (lastParts[1] === 'type' || lastParts[1] === 'types') dirs.push([path.dirname(filePath), lastParts[0], fileName])
+    else dirs.push([path.dirname(filePath), lastParts[1], fileName])
   }
   console.log(`found ${dirs.length} types to compile`)
 
@@ -56,8 +57,11 @@ const main = async (dir, options) => {
     schemas[colorsSchema.$id] = colorsSchema
   }
 
-  for (const [dir, key] of dirs) {
-    const schema = JSON.parse(readFileSync(path.join(dir, 'schema.json'), 'utf8'))
+  for (const [dir, key, fileName] of dirs) {
+    const filePath = path.join(dir, fileName)
+    let schema
+    if (fileName === 'schema.json') schema = JSON.parse(readFileSync(filePath, 'utf8'))
+    else schema = clone((await import(filePath)).default)
     schema.$id = schema.$id || key
     if (schemas[schema.$id]) throw new Error(`duplicate schema key ${schema.$id}`)
     schemas[schema.$id] = schema
@@ -86,10 +90,12 @@ const main = async (dir, options) => {
     }
   }
 
-  for (const [dir, key] of dirs) {
+  for (const [dir, key, fileName] of dirs) {
     console.log(`compile ${key} in ${dir}`)
-    // const ts = await compile(schema, key, { $refOptions: { resolve: { 'data-fair-lib': dataFairLibResolver, local: localResolver } } })
-    const schema = JSON.parse(readFileSync(path.join(dir, 'schema.json'), 'utf8'))
+    const filePath = path.join(dir, fileName)
+    let schema
+    if (fileName === 'schema.json') schema = JSON.parse(readFileSync(filePath, 'utf8'))
+    else schema = clone((await import(filePath)).default)
     if (schema.$id) console.log(`  $id: ${JSON.stringify(schema.$id)}`)
     const mainTypeName = pascalCase(schema.title || key)
     /** @type {('types' | 'validate' | 'stringify' | 'schema' | resolvedSchema | 'resolvedSchemaJson')[]} */
