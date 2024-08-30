@@ -56,6 +56,10 @@
       "default": "./src/express/events-log.js",
       "types": "./types/express/events-log.d.ts"
     },
+    "./express/identities.js": {
+      "default": "./src/express/identities.js",
+      "types": "./types/express/identities.d.ts"
+    },
     "./node/axios-auth.js": {
       "default": "./src/node/axios-auth.js",
       "types": "./types/node/axios-auth.d.ts"
