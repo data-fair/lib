@@ -67,15 +67,17 @@ export const errorsText = (errors, varName = 'data') => {
     .reduce((text, msg) => text + ', ' + msg)
 }
 
+/** @typedef {{lang?: string, name?: string, internal?: boolean}} AssertValidOptions */
+
 // eslint-disable-next-line jsdoc/valid-types
-/** @type {<Type>(validate: import('ajv').ValidateFunction, data: any, lang?: string, name?: string, internal?: boolean) => asserts data is Type} */
-export const assertValid = (validate, data, lang = 'fr', name = 'data', internal) => {
+/** @type {<Type>(validate: import('ajv').ValidateFunction, data: any, options?: AssertValidOptions) => asserts data is Type} */
+export const assertValid = (validate, data, options = {}) => {
+  const lang = options.lang ?? 'fr'
+  const name = options.name ?? 'data'
   if (!validate(data)) {
     (localize[lang] || localize.fr)(validate.errors)
     const message = errorsText(validate.errors, name)
-    if (internal) throw new InternalValidationError(message)
+    if (options.internal) throw new InternalValidationError(message)
     else throw new ValidationError(message)
   }
-  // @ts-ignore
-  return data
 }

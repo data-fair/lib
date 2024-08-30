@@ -115,6 +115,7 @@ const main = async (dir, options) => {
     }
 
     code += `
+/** @type {string[]} */
 export const schemaExports = ${JSON.stringify(schemaExports, null, 2)}
 `
 
@@ -194,9 +195,18 @@ import { assertValid as assertValidGeneric } from '${validationImport}'`
         code += `
 /** @type {{errors?: import('ajv').ErrorObject[] | null | undefined} & ((data: any) => data is ${mainTypeName})} */
 export const validate = /** @type {import('ajv').ValidateFunction} */(validateUnsafe)
-/** @type {(data: any, lang?: string, name?: string, internal?: boolean) => asserts data is ${mainTypeName}} */
-export const assertValid = (data, lang = 'fr', name = 'data', internal) => {
-  assertValidGeneric(/** @type {import('ajv').ValidateFunction} */(validateUnsafe), data, lang, name, internal)
+/** @type {(data: any, options?: import('${validationImport}').AssertValidOptions) => asserts data is ${mainTypeName}} */
+export const assertValid = (data, options) => {
+  assertValidGeneric(/** @type {import('ajv').ValidateFunction} */(validateUnsafe), data, options)
+}
+/**
+ * @param {any} data
+ * @param {import('${validationImport}').AssertValidOptions} [options]
+ * @return {${mainTypeName}}
+*/
+export const returnValid = (data, options) => {
+  assertValid(data, options)
+  return data
 }
 `
       } else if (schemaExport === 'stringify') {
