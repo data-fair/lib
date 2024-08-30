@@ -1,5 +1,5 @@
 export default {
-  $id: 'https://github.com/data-fair/events/api/identities/delete-req',
+  $id: 'https://github.com/data-fair/lib/express/identities/delete-req',
   title: 'Delete identity req',
   'x-exports': ['validate', 'types'],
   type: 'object',

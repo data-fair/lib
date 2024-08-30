@@ -7,7 +7,7 @@ import * as postReq from './types/post-req/index.js'
 import * as deleteReq from './types/delete-req/index.js'
 
 /**
- * @param {string} secretKey
+ * @param {string | null | undefined} secretKey
  * @param {(identityUpdate: import('./types/post-req/index.js').PostIdentityReq['params'] & import('./types/post-req/index.js').PostIdentityReq['body']) => Promise<void>} [onUpdate]
  * @param {(identityUpdate: import('./types/delete-req/index.js').DeleteIdentityReq['params'] & import('./types/delete-req/index.js').DeleteIdentityReq['body']) => Promise<void>} [onDelete]
  * @returns {import('express').Router}

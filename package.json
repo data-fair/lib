@@ -57,8 +57,8 @@
       "types": "./types/express/events-log.d.ts"
     },
     "./express/identities.js": {
-      "default": "./src/express/identities.js",
-      "types": "./types/express/identities.d.ts"
+      "default": "./src/express/identities/index.js.js",
+      "types": "./types/express/identities/index.d.ts"
     },
     "./node/axios-auth.js": {
       "default": "./src/node/axios-auth.js",
@@ -208,6 +208,10 @@
     "./filters.js": {
       "default": "./src/filters/index.js",
       "types": "./types/filters/index.d.ts"
+    },
+    "./http-errors.js": {
+      "default": "./src/http-errors.js",
+      "types": "./src/http-errors.d.ts"
     }
   },
   "repository": {

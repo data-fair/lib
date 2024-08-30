@@ -3,33 +3,9 @@
  * @typedef {import('./.type/index.js').SessionState} SessionState
  */
 
-import { ValidationError } from '../../types/validation.js'
+import { httpError } from '@data-fair/lib/http-errors.js'
 
 export * from './.type/index.js'
-
-export class UnauthenticatedError extends Error {
-  /** @type {number} */
-  status
-
-  /** @param {string} [message] */
-  constructor (message) {
-    super(message ?? 'missing authentication')
-    this.name = 'UnauthenticatedError'
-    this.status = 401
-  }
-}
-
-export class PermissionError extends Error {
-  /** @type {number} */
-  status
-
-  /** @param {string} [message] */
-  constructor (message) {
-    super(message ?? 'missing permission')
-    this.name = 'PermissionError'
-    this.status = 403
-  }
-}
 
 /** @type {(sessionState: SessionState) => sessionState is SessionStateAuthenticated} */
 export const isAuthenticated = (sessionState) => {
@@ -39,7 +15,7 @@ export const isAuthenticated = (sessionState) => {
 // eslint-disable-next-line jsdoc/valid-types
 /** @type {(sessionState: SessionState) => asserts sessionState is SessionStateAuthenticated} */
 export const assertAuthenticated = (sessionState) => {
-  if (!isAuthenticated(sessionState)) throw new UnauthenticatedError()
+  if (!isAuthenticated(sessionState)) throw httpError(401)
 }
 
 // eslint-disable-next-line jsdoc/valid-types
@@ -47,7 +23,7 @@ export const assertAuthenticated = (sessionState) => {
 export const assertAdminMode = (sessionState) => {
   assertAuthenticated(sessionState)
   // TODO: use sessionState.locale to internationalize error message
-  if (!sessionState.user.adminMode) throw new PermissionError('super admin only')
+  if (!sessionState.user.adminMode) throw httpError(403, 'super admin only')
 }
 
 /**
@@ -90,7 +66,7 @@ export const getAccountRole = (sessionState, account, onlyActiveAccount = true) 
  */
 export const assertAccountRole = (sessionState, account, role, onlyActiveAccount = true) => {
   const accountRole = getAccountRole(sessionState, account, onlyActiveAccount)
-  if (accountRole !== role) throw new PermissionError(`requires ${role} role`)
+  if (accountRole !== role) throw httpError(403, `requires ${role} role`)
 }
 
 /** @type {(type: string) => type is "user" | "organization"} */
@@ -101,5 +77,5 @@ export const isValidAccountType = (type) => {
 // eslint-disable-next-line jsdoc/valid-types
 /** @type {(type: string) => asserts type is "user" | "organization"} */
 export const assertValidAccountType = (type) => {
-  if (!isValidAccountType(type)) throw new ValidationError('invalid account type')
+  if (!isValidAccountType(type)) throw httpError(400, 'invalid account type')
 }

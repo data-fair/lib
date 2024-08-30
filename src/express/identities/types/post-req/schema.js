@@ -1,5 +1,5 @@
 export default {
-  $id: 'https://github.com/data-fair/events/api/identities/post-req',
+  $id: 'https://github.com/data-fair/lib/express/identities/post-req',
   title: 'Post identity req',
   'x-exports': ['validate', 'types'],
   type: 'object',
