@@ -1,0 +1,5 @@
+// Specific Vuetify scss settings
+@forward 'vuetify/settings' with (
+    $color-pack: false,
+    $body-font-family: 'Nunito'
+);
