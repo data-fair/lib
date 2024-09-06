@@ -3,6 +3,30 @@
 import axios from 'axios'
 import { httpAgent, httpsAgent } from './http-agents.js'
 
+const { stackTraceLimit } = Error
+
+class AxiosRequestError extends Error {
+  constructor () {
+    super()
+    this.name = 'AxiosRequestError'
+  }
+}
+
+/**
+ * @param {import('axios').InternalAxiosRequestConfig} config
+ */
+const requestInterceptor = (config) => {
+  // better stack traces
+  // see https://github.com/axios/axios/issues/2387#issuecomment-652242713
+  Error.stackTraceLimit = 0
+  const errorContext = new AxiosRequestError()
+  Error.stackTraceLimit = stackTraceLimit
+  Error.captureStackTrace(errorContext, requestInterceptor)
+  // @ts-ignore
+  config.errorContext = errorContext
+  return config
+}
+
 /**
  * @param {object} [opts]
  * @returns {import('axios').AxiosInstance}
@@ -14,8 +38,15 @@ export function axiosBuilder (opts = {}) {
     ...opts
   })
 
+  ax.interceptors.request.use(requestInterceptor)
+
   // shorter stack traces
   ax.interceptors.response.use(response => response, error => {
+    if (!error.response) {
+      if (error.config?.errorContext?.stack) error.stack += '\n' + error.config?.errorContext?.stack
+      return Promise.reject(error)
+    }
+
     if (!error.response) return Promise.reject(error)
     delete error.response.request
     error.response.config = { method: error.response.config.method, url: error.response.config.url, data: error.response.config.data }
@@ -26,7 +57,8 @@ export function axiosBuilder (opts = {}) {
       messageText = typeof error.response.data === 'string' ? error.response.data : JSON.stringify(error.response.data)
     }
     error.response.message = `${error.response.status} - ${messageText}`
-    return Promise.reject(error.response)
+    Object.assign(error.config.errorContext, error.response)
+    return Promise.reject(error.config.errorContext)
   })
   return ax
 }
