@@ -7,6 +7,7 @@
 import { hostname } from 'node:os'
 import { createServer } from 'node:http'
 import { Registry, Counter, register, collectDefaultMetrics } from 'prom-client'
+import eventPromise from '@data-fair/lib/event-promise.js'
 
 // a special registry for metrics that are global
 // not based on this specific process state but instead on the content of db for example
@@ -99,7 +100,7 @@ export const startObserver = async (port = 9090) => {
     }
   })
   server.listen(port)
-  await new Promise(resolve => server.once('listening', resolve))
+  await eventPromise(server, 'listening')
   console.log(`Observer server available on http://localhost:${port}
     GET /metrics -> get prometheus metrics for this instance
     GET /service-metrics -> get prometheus metrics shared accross all instances
