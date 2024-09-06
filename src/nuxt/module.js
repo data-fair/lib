@@ -76,11 +76,12 @@ export default defineNuxtModule({
     if (moduleOptions.session) {
       console.log(resolve('../../types/vue/session.d.ts'))
       addPlugin(resolve('./session/plugin.js'))
-      addImports({
-        name: 'useSession',
-        as: 'useSession',
-        from: '@data-fair/lib/vue/session.js'
-      })
+      for (const composable of ['useSession', 'useSessionAuthenticated']) {
+        addImports({
+          name: composable,
+          from: '@data-fair/lib/vue/session.js'
+        })
+      }
     }
     if (moduleOptions.vuetify) {
       addPlugin(resolve('./vuetify/plugin.js'))
@@ -92,11 +93,12 @@ export default defineNuxtModule({
     }
     if (moduleOptions.reactiveSearchParams) {
       addPlugin(resolve('./reactive-search-params/plugin.js'))
-      addImports({
-        name: 'useReactiveSearchParams',
-        as: 'useReactiveSearchParams',
-        from: '@data-fair/lib/vue/reactive-search-params.js'
-      })
+      for (const composable of ['useReactiveSearchParams', 'useStringSearchParam', 'useBooleanSearchParam', 'useNumberSearchParam', 'useStringsArraySearchParam']) {
+        addImports({
+          name: composable,
+          from: '@data-fair/lib/vue/reactive-search-params.js'
+        })
+      }
     }
     if (moduleOptions.i18n) {
       const i18nModuleOptions = typeof moduleOptions.i18n === 'boolean'
@@ -108,7 +110,6 @@ export default defineNuxtModule({
       addPlugin(resolve('./locale-dayjs/plugin.js'))
       addImports({
         name: 'useLocaleDayjs',
-        as: 'useLocaleDayjs',
         from: '@data-fair/lib/vue/locale-dayjs.js'
       })
     }
@@ -118,5 +119,23 @@ export default defineNuxtModule({
         : { ...defaultEslintModuleOptions, ...moduleOptions.eslint }
       await installModule('@nuxt/eslint', eslintModuleOptions)
     }
+
+    // without this hack the auto imports to our composables do not work
+    // the import paths are relative instead of simply using the module name
+    // and as we use exports and the export paths do not match with the physical file paths
+    // these relative paths do not work
+    nuxt.hook('app:templates', (tpls) => {
+      for (const tpl of tpls.templates) {
+        if (tpl.filename === 'types/imports.d.ts') {
+          if (tpl.getContents) {
+            const originalGetContents = tpl.getContents
+            tpl.getContents = async (data) => {
+              const contents = await originalGetContents(data)
+              return contents.replace(/import\('(\.\.\/\.\.\/\.\.\/node_modules\/@data-fair\/lib)\//g, 'import(\'@data-fair/lib/')
+            }
+          }
+        }
+      }
+    })
   }
 })
