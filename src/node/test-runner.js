@@ -10,6 +10,8 @@ import { readdir } from 'node:fs/promises'
 import path from 'node:path'
 import chalk from 'chalk'
 
+console.warn('Deprecation Warning: @data-fair/lib/node/test-runner.js is deprecated. The problems it solved no longer exist.')
+
 const prefix = (/** @type {number} */nesting) => {
   return new Array(nesting + 1).join('  ')
 }
@@ -58,7 +60,7 @@ export const reporter = () => {
           else if (event.data.details?.error) console.error(event.data.details.error)
           console.log(chalk.red.bold(`${prefix(nesting)}X ${event.data.name}`))
           process.exit(1)
-          break
+        // eslint-disable-next-line no-fallthrough
         case 'test:plan':
           break
         case 'test:diagnostic':
@@ -86,8 +88,8 @@ export const reporter = () => {
  */
 export const run = async (dir, ext = '.js') => {
   process.env.NODE_ENV = 'test'
-  const files = (await readdir(dir, { recursive: true }))
-    .filter(f => f.endsWith(ext) && f !== 'index.js')
+  const files = (await readdir(dir))
+    .filter(f => f.endsWith(ext) && f !== 'index' + ext)
     .map(f => path.join(dir, f))
-  await pipeline([nodeRunTests({ files, only: process.argv.includes('--test-only') }), reporter()])
+  await pipeline([nodeRunTests({ files, only: process.argv.includes('--test-only'), forceExit: true }), reporter()])
 }
