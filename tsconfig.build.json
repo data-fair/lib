@@ -1,4 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "types/**/validate.js", "types/**/stringify.js", "src/*/test"]
+  "exclude": ["node_modules", "types/**/validate.js", "types/**/stringify.js", "src/*/test", "src/nuxt/*/*.js"]
 }
