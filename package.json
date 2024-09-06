@@ -57,7 +57,7 @@
       "types": "./types/express/events-log.d.ts"
     },
     "./express/identities.js": {
-      "default": "./src/express/identities/index.js.js",
+      "default": "./src/express/identities/index.js",
       "types": "./types/express/identities/index.d.ts"
     },
     "./node/axios-auth.js": {
@@ -75,6 +75,14 @@
     "./node/ws.js": {
       "default": "./src/node/ws.js",
       "types": "./types/node/ws.d.ts"
+    },
+    "./node/ws-server.js": {
+      "default": "./src/node/ws-server.js",
+      "types": "./types/node/ws-server.d.ts"
+    },
+    "./node/ws-emitter.js": {
+      "default": "./src/node/ws-emitter.js",
+      "types": "./types/node/ws-emitter.d.ts"
     },
     "./node/mongo.js": {
       "default": "./src/node/mongo.js",
@@ -96,9 +104,9 @@
       "default": "./src/node/observer.js",
       "types": "./types/node/observer.d.ts"
     },
-    "./node/event-promise.js": {
-      "default": "./src/node/event-promise.js",
-      "types": "./types/node/event-promise.d.ts"
+    "./event-promise.js": {
+      "default": "./src/event-promise.js",
+      "types": "./types/event-promise.d.ts"
     },
     "./node/locks.js": {
       "default": "./src/node/locks.js",
@@ -143,6 +151,10 @@
     "./format/bytes.js": {
       "default": "./src/format/bytes.js",
       "types": "./types/format/bytes.d.ts"
+    },
+    "./vue/auto-imports.js": {
+      "default": "./src/vue/auto-imports.js",
+      "types": "./types/vue/auto-imports.d.ts"
     },
     "./vue/session.js": {
       "default": "./src/vue/session.js",
@@ -201,6 +213,10 @@
     "./vuetify/owner-avatar.vue": {
       "default": "./src/vuetify/owner-avatar.vue"
     },
+    "./nuxt.js": {
+      "default": "./src/nuxt/module.js",
+      "types": "./types/nuxt/module.d.ts"
+    },
     "./maps/utils.js": {
       "default": "./src/maps/utils.js",
       "types": "./types/maps/utils.d.ts"
@@ -211,7 +227,15 @@
     },
     "./http-errors.js": {
       "default": "./src/http-errors.js",
-      "types": "./src/http-errors.d.ts"
+      "types": "./types/http-errors.d.ts"
+    },
+    "./clone.js": {
+      "default": "./src/clone.js",
+      "types": "./types/clone.d.ts"
+    },
+    "./json-schema.js": {
+      "default": "./src/json-schema.js",
+      "types": "./types/json-schema.d.ts"
     }
   },
   "repository": {
@@ -348,10 +372,11 @@
   "devDependencies": {
     "@commitlint/cli": "^18.2.0",
     "@commitlint/config-conventional": "^18.1.0",
+    "@nuxt/kit": "^3.13.1",
     "@types/chroma-js": "^2.4.4",
     "@types/cookie": "^0.6.0",
     "@types/debug": "^4.1.10",
-    "@types/node": "^20.12.13",
+    "@types/node": "^22.5.3",
     "@types/ws": "^8.5.8",
     "@vueuse/integrations": "~10.11.0",
     "agentkeepalive": "^4.5.0",
@@ -382,6 +407,7 @@
     "prom-client": "^15.1.0",
     "rimraf": "^5.0.5",
     "semver": "^7.6.2",
+    "vite-plugin-vuetify": "^2.0.4",
     "vue": "^3.3.12",
     "vue-i18n": "^9.13.1",
     "vue-router": "^4.2.5",

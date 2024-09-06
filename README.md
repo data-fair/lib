@@ -157,6 +157,10 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
 ```
 
+## Nuxt
+
+We provide a Nuxt module to help bootstrap a nuxt project with vuetify and our own composables.
+
 ## Express
 
 ### session
@@ -342,3 +346,7 @@ const palette = getColors(colorscheme, data, data.results.length)
 ```
 
 The colorscheme is a standardized object that describes the colorscheme as a json-schema. More info about the structure it must follow can be found here : [`color-scheme/schema.json`](https://github.com/data-fair/lib/blob/main/src/color-scheme/schema.json)
+
+## Prompts
+
+This directory contains example prompts for AI chats (tested with copilot chat).
