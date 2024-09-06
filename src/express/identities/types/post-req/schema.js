@@ -30,7 +30,7 @@ export default {
           type: 'array',
           items: {
             type: 'object',
-            required: ['id', 'name', 'role'],
+            required: ['id', 'role'],
             properties: {
               id: {
                 type: 'string'
