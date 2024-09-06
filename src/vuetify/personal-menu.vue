@@ -15,12 +15,11 @@
     >
       <template #activator="{props: activatorProps}">
         <v-btn
-          text
           class="px-0"
           :title="t('openPersonalMenu')"
           v-bind="activatorProps"
         >
-          <avatar show-account />
+          <user-avatar show-account />
           <v-icon
             v-if="user.pd"
             color="warning"
@@ -39,21 +38,22 @@
         <v-list-item
           disabled
           :style="account.type !== 'user' ? 'padding-left:0' : ''"
+          class="text--secondary"
         >
-          <avatar
-            show-account
-            style="margin-right: 16px;"
-          />
+          <template #prepend>
+            <user-avatar
+              show-account
+              style="margin-right: 16px;"
+            />
+          </template>
 
-          <v-list-item-content class="text--secondary">
-            <v-list-item-title>
-              {{ account.type === 'user' ? t('personalAccount') : account.name }}
-            </v-list-item-title>
-            <v-list-item-subtitle v-if="account.department">
-              {{ account.departmentName || account.department }}
-            </v-list-item-subtitle>
-            <v-list-item-subtitle>{{ user.name }}</v-list-item-subtitle>
-          </v-list-item-content>
+          <v-list-item-title>
+            {{ account.type === 'user' ? t('personalAccount') : account.name }}
+          </v-list-item-title>
+          <v-list-item-subtitle v-if="account.department">
+            {{ account.departmentName || account.department }}
+          </v-list-item-subtitle>
+          <v-list-item-subtitle>{{ user.name }}</v-list-item-subtitle>
         </v-list-item>
 
         <!-- cancel a planned deletion ? -->
@@ -71,7 +71,6 @@
           <v-row class="justify-center ma-0 mb-2">
             <v-btn
               color="warning"
-              text
               @click="session.cancelDeletion"
             >
               {{ t('cancelDeletion') }}
@@ -81,7 +80,7 @@
 
         <!-- account switching (personal account and organizations) -->
         <template v-if="user.organizations.length > 1 || (user.organizations.length === 1 && (!user.ipa || account.type === 'user'))">
-          <v-subheader
+          <v-list-subheader
             v-t="'switchAccount'"
             style="height: 24px"
           />
@@ -90,20 +89,20 @@
             id="toolbar-menu-switch-user"
             @click="session.switchOrganization(null)"
           >
-            <v-list-item-action class=" my-0">
+            <template #prepend>
               <v-avatar :size="28">
                 <img :src="`${session.options.directoryUrl}/api/avatars/user/${user.id}/avatar.png`">
               </v-avatar>
-            </v-list-item-action>
+            </template>
             <v-list-item-title v-t="'personalAccount'" />
           </v-list-item>
           <v-list-item
             v-for="organization in switchableOrganizations"
             :id="'toolbar-menu-switch-orga-' + organization.id"
             :key="organization.id"
-            @click="session.switchOrganization(organization.id + ':' + (organization.department || ''))"
+            @click="session.switchOrganization(organization.id , organization.department)"
           >
-            <v-list-item-action class="my-0">
+            <template #prepend>
               <v-avatar :size="28">
                 <img
                   v-if="organization.department"
@@ -114,15 +113,13 @@
                   :src="`${session.options.directoryUrl}/api/avatars/organization/${organization.id}/avatar.png`"
                 >
               </v-avatar>
-            </v-list-item-action>
-            <v-list-item-content>
-              <v-list-item-title>
-                {{ organization.name }}
-              </v-list-item-title>
-              <v-list-item-subtitle v-if="organization.department">
-                {{ organization.departmentName || organization.department }}
-              </v-list-item-subtitle>
-            </v-list-item-content>
+            </template>
+            <v-list-item-title>
+              {{ organization.name }}
+            </v-list-item-title>
+            <v-list-item-subtitle v-if="organization.department">
+              {{ organization.departmentName || organization.department }}
+            </v-list-item-subtitle>
           </v-list-item>
         </template>
 
@@ -133,15 +130,19 @@
         <!-- toggle admin mode -->
         <v-list-item
           v-if="user.isAdmin"
-          dense
+          density="compact"
+          class="personal-menu-switch-list-item"
         >
-          <v-list-item-action><v-icon>mdi-shield-alert</v-icon></v-list-item-action>
-          <v-list-item-title style="overflow: visible;">
+          <template #prepend>
+            <v-icon>mdi-shield-alert</v-icon>
+          </template>
+          <v-list-item-title>
             <v-switch
               v-model="user.adminMode"
               color="admin"
               hide-details
               class="mt-0"
+              density="compact"
               :label="t('adminMode')"
               @change="session.setAdminMode"
             />
@@ -152,34 +153,45 @@
         <v-list-item
           v-if="user.asAdmin"
           color="admin"
+          density="compact"
           @click="session.asAdmin(null)"
         >
-          <v-list-item-action><v-icon>mdi-account-switch-outline</v-icon></v-list-item-action>
+          <template #prepend>
+            <v-icon>mdi-account-switch-outline</v-icon>
+          </template>
           <v-list-item-title>{{ t('backToAdmin') }}</v-list-item-title>
         </v-list-item>
 
         <!-- switch dark mode -->
         <v-list-item
           v-if="darkModeSwitch"
-          dense
+          density="compact"
+          class="personal-menu-switch-list-item"
         >
-          <v-list-item-action><v-icon>mdi-weather-night</v-icon></v-list-item-action>
-          <v-list-item-title style="overflow: visible;">
+          <template #prepend>
+            <v-icon>mdi-weather-night</v-icon>
+          </template>
+          <v-list-item-title>
             <v-switch
-              :input-value="$vuetify.theme.current.dark"
+              :input-value="session.state.dark"
               hide-details
               class="mt-0"
+              density="compact"
               :label="t('darkMode')"
               color="white"
-              @change="session.switchDark"
+              @change="() => session.switchDark(!session.state.dark)"
             />
           </v-list-item-title>
         </v-list-item>
 
         <!-- logout button -->
         <v-divider />
-        <v-list-item @click="session.logout">
-          <v-list-item-action><v-icon>mdi-logout</v-icon></v-list-item-action>
+        <v-list-item
+          @click="() => session.logout()"
+        >
+          <template #prepend>
+            <v-icon>mdi-logout</v-icon>
+          </template>
           <v-list-item-title v-t="'logout'" />
         </v-list-item>
       </v-list>
@@ -214,30 +226,33 @@ en:
 
 <script setup>
 import { computed, toRefs } from 'vue'
-// @ts-ignore
-import { useI18N } from 'vue-i18n'
+import { useI18n } from 'vue-i18n'
+import { useSession } from '@data-fair/lib/vue/session.js'
+import UserAvatar from './user-avatar.vue'
 
-const props = defineProps({
+const session = useSession()
+
+defineProps({
   darkModeSwitch: {
     type: Boolean,
     default: false
-  },
-  session: {
-    /** @type {import('vue').PropType<import('../vue/session.js').Session>} */
-    type: Object,
-    required: true
   }
 })
 
-const { t } = useI18N({ useScope: 'local' })
-const { user, account } = toRefs(props.session.state)
+const { t } = useI18n({ useScope: 'local' })
+const { user, account } = toRefs(session.state)
 const switchableOrganizations = computed(() => {
-  const { user, account } = props.session.state
+  const { user, account } = session.state
   if (!user || !account) return
   return user.organizations.filter(o => account.type === 'user' || account.id !== o.id || (account.department || null) !== (o.department || null))
 })
 </script>
 
 <style>
-
+.personal-menu-switch-list-item .v-list-item__content {
+  overflow: visible!important;
+}
+.personal-menu-switch-list-item .v-list-item__content .v-list-item-title {
+  overflow: visible!important;
+}
 </style>
