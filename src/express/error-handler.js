@@ -6,7 +6,9 @@ export default function (err, req, res, next) {
   // let the default error handler manage closing the connection
   if (res.headersSent) { next(err); return }
 
-  const status = err.status || err.statusCode || 500
+  // we prevent transmitting error code from an axios error
+  // usually a 401 for example means a badly configured secret and should be returned as a 500 to the user
+  const status = err.name === 'AxiosRequestError' ? 500 : err.status || err.statusCode || 500
   if (status >= 500) {
     internalError('http', 'failure while serving http request', err)
   }
@@ -24,6 +26,6 @@ export default function (err, req, res, next) {
     if (status < 500) res.send(err.message)
     else res.send(err.name || 'internal error')
   } else {
-    res.send(err.stack)
+    res.send(err.stack + '\n')
   }
 }

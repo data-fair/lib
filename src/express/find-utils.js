@@ -1,44 +1,47 @@
-import { httpError } from '@data-fair/lib/http-errors.js'
-import session from '@data-fair/lib/express/session.js'
+// import { httpError } from '@data-fair/lib/http-errors.js'
+// import session from '@data-fair/lib/express/session.js'
 
 // Util functions shared accross the main find (GET on collection) endpoints
 
+// /**
+//  * @param {import('express').Request} req
+//  * @returns {Promise<import('mongodb').Filter<any>>}
+//  */
+// export const mongoQuery = async (req) => {
+//   const query = {}
+//   if (req.query.q && typeof req.query.q === 'string') query.$text = { $search: req.query.q }
+
+//   /*
+//   Object.keys(fieldsMap).filter(name => req.query[name] !== undefined).forEach(name => {
+//     query[fieldsMap[name]] = { $in: req.query[name].split(',') }
+//   })
+//   */
+
+//   const sessionState = await session.reqAuthenticated(req)
+
+//   const showAll = req.query.showAll === 'true'
+//   if (showAll && !sessionState.user.adminMode) {
+//     throw httpError(400, 'Only super admins can override owner filter with showAll parameter')
+//   }
+//   if (!showAll) {
+//     query['owner.type'] = sessionState.account.type
+//     query['owner.id'] = sessionState.account.id
+//   }
+//   return query
+// }
+
 /**
- * @param {import('express').Request} req
- * @returns {Promise<import('mongodb').Filter<any>>}
- */
-export const mongoQuery = async (req) => {
-  const query = {}
-  if (req.query.q && typeof req.query.q === 'string') query.$text = { $search: req.query.q }
-
-  /*
-  Object.keys(fieldsMap).filter(name => req.query[name] !== undefined).forEach(name => {
-    query[fieldsMap[name]] = { $in: req.query[name].split(',') }
-  })
-  */
-
-  const sessionState = await session.reqAuthenticated(req)
-
-  const showAll = req.query.showAll === 'true'
-  if (showAll && !sessionState.user.adminMode) {
-    throw httpError(400, 'Only super admins can override owner filter with showAll parameter')
-  }
-  if (!showAll) {
-    query['owner.type'] = sessionState.account.type
-    query['owner.id'] = sessionState.account.id
-  }
-  return query
-}
-
-/**
- * @param {string} sortStr
+ * @param {any} sortParam
  * @returns {import('mongodb').Sort}
  */
-export const sort = (sortStr) => {
+export const mongoSort = (sortParam) => {
   /** @type {Record<string, import('mongodb').SortDirection>} */
   const sort = {}
-  if (!sortStr) return sort
-  Object.assign(sort, ...sortStr.split(',').map(s => {
+
+  if (typeof sortParam !== 'string') return sort
+
+  if (!sortParam) return sort
+  Object.assign(sort, ...sortParam.split(',').map(s => {
     const toks = s.split(':')
     return {
       [toks[0]]: Number(toks[1])
@@ -51,7 +54,7 @@ export const sort = (sortStr) => {
  * @param {import('express').Request['query']} query
  * @param {number} defaultSize
  */
-export const pagination = (query, defaultSize = 10) => {
+export const mongoPagination = (query, defaultSize = 10) => {
   let size = defaultSize
   if (query && query.size && typeof query.size === 'string' && !isNaN(parseInt(query.size))) {
     size = parseInt(query.size)
@@ -68,19 +71,22 @@ export const pagination = (query, defaultSize = 10) => {
 }
 
 /**
- * @param {string} selectStr
+ * @param {any} selectParam
  * @param {string[]} [exclude]
  * @returns {Record<string, 0 | 1>}
  */
-exports.project = (selectStr, exclude = []) => {
+export const mongoProjection = (selectParam, exclude = []) => {
   /** @type {Record<string, 0 | 1>} */
   const select = { }
-  if (!selectStr) {
+
+  if (typeof selectParam !== 'string') return select
+
+  if (!selectParam) {
     exclude.forEach(e => {
       select[e] = 0
     })
   } else {
-    selectStr.split(',').forEach(s => {
+    selectParam.split(',').forEach(s => {
       select[s] = 1
     })
     Object.assign(select, { owner: 1 })
