@@ -1,7 +1,7 @@
 import { type IncomingMessage } from 'node:http'
 import { type Ref } from 'vue'
 import { type RouteLocation } from 'vue-router'
-import { type $Fetch } from 'ofetch'
+import { type fetch } from 'ofetch'
 import { type SessionState, type SessionStateAuthenticated } from '../shared/session/index.js'
 
 interface Cookies {
@@ -16,7 +16,7 @@ export interface SessionOptions {
   logoutRedirectUrl?: string
   req?: IncomingMessage
   cookies?: Cookies
-  customFetch?: $Fetch
+  customFetch?: typeof fetch
 }
 
 export interface Session {
