@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib",
-  "version": "0.42.0",
+  "version": "0.43.0",
   "description": "A collection of javascript functions, components, types, etc to help work inside the data-fair stack.",
   "scripts": {
     "lint": "eslint --ext .js,.vue,.ts . --fix",
