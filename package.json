@@ -61,6 +61,10 @@
       "default": "./src/express/identities/index.js",
       "types": "./types/express/identities/index.d.ts"
     },
+    "./express/req-origin.js": {
+      "default": "./src/express/req-origin.js",
+      "types": "./types/express/req-origin.d.ts"
+    },
     "./node/axios-auth.js": {
       "default": "./src/node/axios-auth.js",
       "types": "./types/node/axios-auth.d.ts"
@@ -241,6 +245,10 @@
     "./eslint/recommended.js": {
       "default": "./src/eslint/recommended.js",
       "types": "./types/eslint/recommended.d.ts"
+    },
+    "./eslint/nuxt-recommended.js": {
+      "default": "./src/eslint/nuxt-recommended.js",
+      "types": "./types/eslint/nuxt-recommended.d.ts"
     }
   },
   "repository": {
