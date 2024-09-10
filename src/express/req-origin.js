@@ -15,7 +15,7 @@ export const reqOrigin = (req) => {
 
   // detect a situation where host and x-forwarded-host do not match
   const forwardedHost = req.get('x-forwarded-host')
-  if (req.get('x-forwarded-host') && forwardedHost !== host) {
+  if (forwardedHost && forwardedHost !== host) {
     throw new Error(`host header "${host}" does not match x-forwarded-host header "${forwardedHost}"`)
   }
 
