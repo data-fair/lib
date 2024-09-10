@@ -242,6 +242,10 @@
       "default": "./src/json-schema.js",
       "types": "./types/json-schema.d.ts"
     },
+    "./micro-template.js": {
+      "default": "./src/micro-template.js",
+      "types": "./types/micro-template.d.ts"
+    },
     "./eslint/recommended.js": {
       "default": "./src/eslint/recommended.js",
       "types": "./types/eslint/recommended.d.ts"

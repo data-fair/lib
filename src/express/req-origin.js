@@ -3,9 +3,8 @@
 
 /**
  * @param {import('express').Request} req
- * @param {string} [pathPrefix ]
  */
-export const reqOrigin = (req, pathPrefix = '') => {
+export const reqOrigin = (req) => {
   // always use the host standard header sent by http client
   // it is considered safe as it is used by the reverse proxy to perform the routing
   const host = req.get('host')
