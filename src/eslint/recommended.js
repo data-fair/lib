@@ -10,7 +10,7 @@ export const deprecatedModules = [
   { name: 'original-url', message: 'Please use @data-fair/lib/express/req-origin.js' }
 ]
 
-/** @type {import('eslint').ESLint.ConfigData} */
+/** @type {import('eslint').Linter.Config} */
 export default {
   rules: {
     'no-restricted-imports': ['error', ...deprecatedModules],
