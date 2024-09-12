@@ -2,7 +2,7 @@
 // Useful both for functionalities and help respect GDPR rules
 
 import express from 'express'
-import asyncHandler from '@data-fair/lib/express/async-handler.js'
+import { asyncHandler, reqIsInternal, createError } from '@data-fair/lib/express/index.js'
 import * as postReq from './types/post-req/index.js'
 import * as deleteReq from './types/delete-req/index.js'
 
@@ -17,7 +17,10 @@ export const createIdentitiesRouter = (secretKey, onUpdate, onDelete) => {
 
   router.use((req, res, next) => {
     if (!secretKey || secretKey !== req.query.key) {
-      return res.status(403).send('Bad secret in "key" parameter')
+      throw createError(403, 'Bad secret in "key" parameter')
+    }
+    if (!reqIsInternal(req)) {
+      throw createError(403, 'Identities router can only be used from internal request.')
     }
     next()
   })
