@@ -1,0 +1,3 @@
+[submodule "eslint-plugin-vuetify"]
+	path = eslint-plugin-vuetify
+	url = https://github.com/jewpaltz/eslint-plugin-vuetify
