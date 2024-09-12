@@ -1,33 +1,46 @@
-// similar to https://www.npmjs.com/package/original-url without the path part
-// but it is important for us to have tight control over this as it can have some safety implications
+import { isIP } from 'node:net'
 
 /**
+ * similar to https://www.npmjs.com/package/original-url but with these specificities:
+ *  - we don't care for the path
+ *  - only based on the de-facto standard x-forwarded-* headers
+ *  - we make these headers required
+ *  - limiting the accepted headers and making them required removes any ambiguity that could be exploited
  * @param {import('express').Request} req
  */
 export const reqOrigin = (req) => {
-  // always use the host standard header sent by http client
-  // it is considered safe as it is used by the reverse proxy to perform the routing
-  const host = req.get('host')
-
-  // WARNING: in case of multiple layers of reverse proxies the host header might be changed
-  // in this case x-forwarded-host would be more suited, but to use it we have to be sure that is was defined
-  // by the reverse proxy, not by the client
-
-  // detect a situation where host and x-forwarded-host do not match
   const forwardedHost = req.get('x-forwarded-host')
-  if (forwardedHost && forwardedHost !== host) {
-    throw new Error(`host header "${host}" does not match x-forwarded-host header "${forwardedHost}"`)
-  }
+  if (!forwardedHost) throw new Error('The "X-Forwarded-For" header is required, please check the configuration of the reverse-proxy.')
 
-  // other infos are not as critical as host, we do our best with those almost standard headers to build a full origin
-  const proto = req.get('x-forwarded-proto') ?? req.get('x-forwarded-scheme') ?? req.get('x-scheme') ?? 'http'
-  const origin = `${proto}://${host}`
+  const forwardedProto = req.get('x-forwarded-proto')
+  if (!forwardedProto) throw new Error('The "X-Forwarded-Proto" header is required, please check the configuration of the reverse-proxy.')
+
+  const origin = `${forwardedProto}://${forwardedHost}`
   const port = req.get('x-forwarded-port')
-  if (port && !(port === '443' && proto === 'https') && !(port === '80' && proto === 'http')) {
+  if (port && !(port === '443' && forwardedProto === 'https') && !(port === '80' && forwardedProto === 'http')) {
     return origin + ':' + port
   } else {
     return origin
   }
+}
+
+/**
+ * @param {import('express').Request} req
+ */
+export const reqIp = (req) => {
+  const ip = req.get('x-forwarded-for')
+  if (!ip) throw new Error('The "X-Forwarded-For" header is required, please check the configuration of the reverse-proxy.')
+  if (!isIP(ip)) throw new Error(`The "X-Forwarded-For" header should contain an IP. "${ip}" is not valid.`)
+  return ip
+}
+
+/**
+ * @param {import('express').Request} req
+ */
+export const reqIsInternal = (req) => {
+  // when an environment makes service to service calls using public urls this check can be disabled
+  if (process.env.IGNORE_INTERNAL_REQ_CHECK === 'true') return true
+  return !req.get('x-forwarded-host')
 }
 
 export default reqOrigin
