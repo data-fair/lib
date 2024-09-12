@@ -10,7 +10,7 @@ import { isIP } from 'node:net'
  */
 export const reqOrigin = (req) => {
   const forwardedHost = req.get('x-forwarded-host')
-  if (!forwardedHost) throw new Error('The "X-Forwarded-For" header is required, please check the configuration of the reverse-proxy.')
+  if (!forwardedHost) throw new Error('The "X-Forwarded-Host" header is required, please check the configuration of the reverse-proxy.')
 
   const forwardedProto = req.get('x-forwarded-proto')
   if (!forwardedProto) throw new Error('The "X-Forwarded-Proto" header is required, please check the configuration of the reverse-proxy.')
