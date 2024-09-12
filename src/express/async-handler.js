@@ -1,4 +1,6 @@
 // small route wrapper for better use of async/await with express
+// DEPRECATED, use express 5 async support
+
 /**
  * @param {(req: import('express').Request, res: import('express').Response, next: import('express').NextFunction) => Promise<void | import('express').Response>} handler
  * @returns {import('express').RequestHandler}
