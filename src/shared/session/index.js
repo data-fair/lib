@@ -12,13 +12,11 @@ export const isAuthenticated = (sessionState) => {
   return !!sessionState.user
 }
 
-// eslint-disable-next-line jsdoc/valid-types
 /** @type {(sessionState: SessionState) => asserts sessionState is SessionStateAuthenticated} */
 export const assertAuthenticated = (sessionState) => {
   if (!isAuthenticated(sessionState)) throw httpError(401)
 }
 
-// eslint-disable-next-line jsdoc/valid-types
 /** @type {(sessionState: SessionState) => asserts sessionState is SessionStateAuthenticated} */
 export const assertAdminMode = (sessionState) => {
   assertAuthenticated(sessionState)
@@ -74,7 +72,6 @@ export const isValidAccountType = (type) => {
   return ['user', 'organization'].includes(type)
 }
 
-// eslint-disable-next-line jsdoc/valid-types
 /** @type {(type: string) => asserts type is "user" | "organization"} */
 export const assertValidAccountType = (type) => {
   if (!isValidAccountType(type)) throw httpError(400, 'invalid account type')

@@ -41,7 +41,6 @@ export class WsClient extends EventEmitter {
       this._ws = ws
       ws.on('error', (/** @type {any} */err) => {
         debug('WS encountered an error', err.message)
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._reconnect()
         reject(err)
       })

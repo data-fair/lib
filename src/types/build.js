@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable @typescript-eslint/no-floating-promises */
-/* eslint-disable @typescript-eslint/no-var-requires */
 
 import { readFileSync, readdirSync, writeFileSync, existsSync, rmSync, mkdirSync } from 'node:fs'
 import path from 'node:path'

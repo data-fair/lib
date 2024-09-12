@@ -1,6 +1,5 @@
 import { computed } from 'vue'
 
-// eslint-disable-next-line jsdoc/require-returns
 /**
  * @param {Record<string, string>} searchParams
  */

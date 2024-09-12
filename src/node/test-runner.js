@@ -37,7 +37,7 @@ export const reporter = () => {
       switch (event.type) {
         case 'test:dequeue':
           changeNesting(event)
-          // eslint-disable-next-line no-case-declarations
+
           if (!event.data.file || event.data.file.endsWith(event.data.name)) {
             console.log(chalk.bold.underline(`\n${event.data.name}\n`)) // entering a file
           } else {

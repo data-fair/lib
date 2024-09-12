@@ -4,7 +4,6 @@ const locales = {
   en: [[0, 'byte'], [1, 'bytes'], [1000, 'kb'], [1000 * 1000, 'Mb'], [1000 * 1000 * 1000, 'Gb'], [1000 * 1000 * 1000 * 1000, 'Tb'], [1000 * 1000 * 1000 * 1000 * 1000, 'Pb']]
 }
 
-// eslint-disable-next-line jsdoc/require-returns-check
 /**
  * @param {number | string} bytes
  * @param {string} locale

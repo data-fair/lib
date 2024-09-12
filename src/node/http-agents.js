@@ -1,4 +1,3 @@
-/* eslint-disable no-new */
 // use better DNS lookup than nodejs default and try to reduce number of socket openings
 
 import cacheableLookupModule from 'cacheable-lookup'
