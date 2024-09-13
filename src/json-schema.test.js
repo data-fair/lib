@@ -40,7 +40,7 @@ describe('json-schema utility functions', () => {
       }
     }
 
-    assert.deepEqual(jsonSchema(i18nSchema).resolveLocale('fr').schema, {
+    assert.deepEqual(jsonSchema(i18nSchema).resolveXI18n('fr').schema, {
       type: 'object',
       title: 'un objet',
       properties: {
@@ -51,7 +51,7 @@ describe('json-schema utility functions', () => {
       }
     })
 
-    assert.deepEqual(jsonSchema(i18nSchema).resolveLocale('en').schema, {
+    assert.deepEqual(jsonSchema(i18nSchema).resolveXI18n('en').schema, {
       type: 'object',
       title: 'an object',
       properties: {

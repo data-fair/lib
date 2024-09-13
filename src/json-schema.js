@@ -69,8 +69,8 @@ class SchemaWrapper {
    * @param {string} locale
    * @param {string} [defaultLocale]
    */
-  resolveLocale (locale, defaultLocale = 'en') {
-    resolveLocale(this.schema, locale, defaultLocale)
+  resolveXI18n (locale, defaultLocale = 'en') {
+    resolveXI18n(this.schema, locale, defaultLocale)
     return this
   }
 }
@@ -85,7 +85,7 @@ export default jsonSchema
  * @param {string} locale
  * @param {string} [defaultLocale]
  */
-export const resolveLocale = (schema, locale, defaultLocale = 'en') => {
+export const resolveXI18n = (schema, locale, defaultLocale = 'en') => {
   for (const [key, value] of Object.entries(schema)) {
     if (key.startsWith('x-i18n-')) {
       if (typeof value !== 'object') console.error(`i18n property ${key} should be an object`)
@@ -94,10 +94,10 @@ export const resolveLocale = (schema, locale, defaultLocale = 'en') => {
       delete schema[key]
     } else if (Array.isArray(value)) {
       for (const child of value) {
-        resolveLocale(child, locale, defaultLocale)
+        resolveXI18n(child, locale, defaultLocale)
       }
     } if (typeof value === 'object') {
-      resolveLocale(value, locale, defaultLocale)
+      resolveXI18n(value, locale, defaultLocale)
     }
   }
 }
