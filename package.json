@@ -375,6 +375,9 @@
     "semver": {
       "optional": true
     },
+    "universal-cookie": {
+      "optional": true
+    },
     "vue": {
       "optional": true
     },
@@ -401,8 +404,8 @@
     "@types/eslint": "^9.6.1",
     "@types/node": "^22.5.3",
     "@types/semver": "^7.5.8",
+    "@types/universal-cookie": "^2.2.0",
     "@types/ws": "^8.5.8",
-    "@vueuse/integrations": "~10.11.0",
     "agentkeepalive": "^4.5.0",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
@@ -431,6 +434,7 @@
     "prom-client": "^15.1.0",
     "rimraf": "^5.0.5",
     "semver": "^7.6.2",
+    "universal-cookie": "^7.2.0",
     "vite-plugin-vuetify": "^2.0.4",
     "vue": "^3.3.12",
     "vue-i18n": "^9.13.1",
@@ -441,11 +445,5 @@
   "dependencies": {
     "change-case": "^5.4.4",
     "commander": "^12.1.0"
-  },
-  "overrides": {
-    "@vueuse/integrations": {
-      "change-case": "5",
-      "jwt-decode": "4"
-    }
   }
 }

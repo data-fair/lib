@@ -120,7 +120,7 @@ This composable for Vue 3 provides a reactive session state and useful methods (
 Install peer dependencies:
 
 ```sh
-npm i @vueuse/integrations ofetch jwt-decode debug universal-cookie
+npm i ofetch jwt-decode debug universal-cookie
 ```
 
 Use as a nuxt plugin in js (plugins/session.js):

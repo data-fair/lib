@@ -1,10 +1,11 @@
 import { reactive, computed, watch, inject } from 'vue'
-// @vueuse/integrations is not declared in peer dependencies as it triggers many version conflicts
-// TODO: get rid of it ?
-import { useCookies, createCookies } from '@vueuse/integrations/useCookies'
 import { ofetch } from 'ofetch'
 import { jwtDecode } from 'jwt-decode'
+import cookiesModule from 'universal-cookie'
 import Debug from 'debug'
+
+// @ts-ignore
+const Cookies = /** @type {typeof cookiesModule.default} */ (cookiesModule)
 
 /**
  * @typedef {import('./session-types.js').SessionOptions} SessionOptions
@@ -86,7 +87,7 @@ export const getSession = async (initOptions) => {
   const state = reactive({})
 
   // cookies are the source of truth and this information is transformed into the state reactive object
-  const cookies = initOptions?.cookies ?? (options.req ? createCookies(options.req) : useCookies)(['id_token', 'id_token_org'], { doNotParse: true })
+  const cookies = initOptions?.cookies ?? new Cookies(options.req?.headers.cookie)
   const readCookies = () => {
     const darkCookie = cookies.get('theme_dark')
     state.dark = darkCookie === '1' || darkCookie === 'true'
