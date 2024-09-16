@@ -31,8 +31,9 @@ export const axiosAuth = async (opts) => {
     await axiosInstance.get(callbackUrl, { maxRedirects: 0 })
   } catch (/** @type {any} */err) {
     if (err.status !== 302) throw err
-    axiosOpts.headers = axiosOpts.headers || {}
-    axiosOpts.headers.Cookie = err.headers['set-cookie'].map((/** @type {string} */s) => s.split(';')[0]).join(';')
+    axiosOpts.headers = axiosOpts.headers ?? {}
+    axiosOpts.headers.common = axiosOpts.headers.common ?? {}
+    axiosOpts.headers.common.Cookie = err.headers['set-cookie'].map((/** @type {string} */s) => s.split(';')[0]).join(';')
   }
   return axiosBuilder(axiosOpts)
 }

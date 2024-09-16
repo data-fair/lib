@@ -293,6 +293,7 @@
     "ofetch": "1",
     "prom-client": "15",
     "semver": "7",
+    "universal-cookie": "7",
     "vue": "3",
     "vue-i18n": "9",
     "vue-router": "4",
