@@ -1,4 +1,5 @@
 import { isIP } from 'node:net'
+import { httpError } from '@data-fair/lib/http-errors.js'
 
 /**
  * similar to https://www.npmjs.com/package/original-url but with these specificities:
@@ -38,9 +39,16 @@ export const reqIp = (req) => {
  * @param {import('express').Request} req
  */
 export const reqIsInternal = (req) => {
-  // when an environment makes service to service calls using public urls this check can be disabled
-  if (process.env.IGNORE_INTERNAL_REQ_CHECK === 'true') return true
   return !req.get('x-forwarded-host')
+}
+
+/**
+ * @param {import('express').Request} req
+ */
+export const assertReqInternal = (req) => {
+  // when an environment makes service to service calls using public urls this check can be disabled
+  if (process.env.IGNORE_ASSERT_REQ_INTERNAL === 'true' || process.env.IGNORE_ASSERT_REQ_INTERNAL === '1') return
+  if (!reqIsInternal(req)) throw httpError(421, 'This endpoint should only be used internally.')
 }
 
 export default reqOrigin
