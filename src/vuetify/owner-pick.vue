@@ -105,7 +105,7 @@ const getLabel = (owner) => {
 }
 
 watch(owners, () => {
-  if (!model.value && owners.value?.length >= 1) {
+  if (!model.value && owners.value?.length) {
     model.value = owners.value[0]
   }
   if (owners.value) {

@@ -11,7 +11,7 @@
       density="compact"
       border="start"
       class="ma-0"
-      :variant="$vuetify.theme.current.dark ? 'outlined' : 'flat'"
+      :variant="theme.current.value.dark ? 'outlined' : 'flat'"
     >
       <slot>
         <a
@@ -62,6 +62,8 @@ en:
 </i18n>
 
 <script>
+import { useTheme } from 'vuetify';
+
 export default {
   props: {
     id: { type: String, required: true },
@@ -70,6 +72,10 @@ export default {
     html: { type: String, required: false, default: null },
     initial: { type: Boolean, default: true },
     persistent: { type: Boolean, default: false }
+  },
+  setup() {
+    const theme = useTheme()
+    return {theme}
   },
   data: () => ({
     show: false

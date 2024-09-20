@@ -43,11 +43,10 @@ export function axiosBuilder (opts = {}) {
   // shorter stack traces
   ax.interceptors.response.use(response => response, error => {
     if (!error.response) {
-      if (error.config?.errorContext?.stack) error.stack += '\n' + error.config?.errorContext?.stack
+      if (error.config?.errorContext?.stack) error.stack += '\nRequest context:\n' + error.config?.errorContext?.stack
       return Promise.reject(error)
     }
 
-    if (!error.response) return Promise.reject(error)
     delete error.response.request
     error.response.config = { method: error.response.config.method, url: error.response.config.url, data: error.response.config.data }
     if (error.response.config.data && error.response.config.data._writableState) delete error.response.config.data

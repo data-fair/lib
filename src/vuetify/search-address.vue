@@ -15,7 +15,7 @@ const loadingAddresses = ref(false)
 /** @type {import('vue').Ref<any>} */
 const address = ref(null)
 
-const findAdresses = useDebounceFn(async (/** @type {string} */search, /** @type {string} */selectedId) => {
+const findAdressesFn = async (/** @type {string} */search, /** @type {string} */selectedId) => {
   loadingAddresses.value = true
   if (!search || search.length < 3) {
     addressesList.value = address.value ? [address.value] : []
@@ -35,9 +35,12 @@ const findAdresses = useDebounceFn(async (/** @type {string} */search, /** @type
     address.value = addressesList.value.find(a => a.value.id === selectedId)
   }
   loadingAddresses.value = false
-}, 300)
+}
+
+const findAdresses = /** @type {typeof findAdressesFn} */(useDebounceFn(findAdressesFn, 300))
 
 if (model.value && model.value.length) {
+  // @ts-ignore
   findAdresses(...JSON.parse(`[${model.value}]`))
 }
 
@@ -67,9 +70,9 @@ watch(
     hide-details
     label="Adresse"
     placeholder="Saisissez une adresse"
-    :variant="variant"
+    :variant="/** @type {import('vuetify/components').VAutocomplete['variant']} */(variant)"
     density="compact"
     menu-icon=""
-    @update:search="search => findAdresses(search)"
+    @update:search="(/** @type {string} */search) => findAdresses(search)"
   />
 </template>

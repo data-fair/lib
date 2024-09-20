@@ -13,7 +13,9 @@ export function getLocaleDayjs (/** @type {import('vue').Ref<string>?} */_locale
   const locale = _locale ?? ref('fr')
   return {
     locale,
-    dayjs: (/** @type {(string | number | dayjs.Dayjs | Date | null | undefined)?} */date) => dayjs(date).locale(locale.value)
+    dayjs: (/** @type {(string | number | dayjs.Dayjs | Date | null | undefined)?} */date) => {
+      return /** @type {import('./locale-dayjs-types.js').RelativeDayjs } */(dayjs(date).locale(locale.value))
+    }
   }
 }
 

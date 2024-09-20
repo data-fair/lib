@@ -62,7 +62,7 @@
             :value="true"
             type="warning"
             tile
-            :outlined="$vuetify.theme.current.dark"
+            :outlined="theme.current.value.dark"
             style="max-width:440px;"
           >
             {{ t('plannedDeletion', {name: user.name, plannedDeletion: $d(new Date(user.pd))}) }}
@@ -228,8 +228,10 @@ en:
 import { computed, toRefs } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSession } from '@data-fair/lib/vue/session.js'
+import { useTheme } from 'vuetify'
 import UserAvatar from './user-avatar.vue'
 
+const theme = useTheme()
 const session = useSession()
 
 defineProps({

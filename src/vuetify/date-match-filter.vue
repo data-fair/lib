@@ -87,7 +87,6 @@ export default {
        * @param {Date | Date[]} value
        */
       set (value) {
-        console.log('SET', value)
         if (Array.isArray(value)) {
           const dates = value.map(v => getDateTimeParts(v)[0])
           dates.sort()

@@ -4,7 +4,7 @@
   "description": "A collection of javascript functions, components, types, etc to help work inside the data-fair stack.",
   "scripts": {
     "lint": "eslint . --fix",
-    "build": "rimraf ./types && node src/types/build.js ./src/ && tsc -p tsconfig.build.json",
+    "build": "rimraf ./types && node src/types/build.js ./src/ && tsc -p tsconfig.build.json && vue-tsc -p tsconfig.build.json",
     "prepare": "husky install",
     "quality": "eslint . && npm test",
     "prepublishOnly": "npm run quality && npm run build",
@@ -194,34 +194,49 @@
       "default": "./src/vue/ui-notif-global.js",
       "types": "./types/vue/ui-notif-global.d.ts"
     },
+    "./vue/ws.js": {
+      "default": "./src/vue/ws.js",
+      "types": "./types/vue/ws.d.ts"
+    },
     "./vuetify.js": {
       "default": "./src/vuetify/index.js",
       "types": "./types/vuetify/index.d.ts"
     },
     "./vuetivy/personal-menu.vue": {
-      "default": "./src/vuetify/personal-menu.vue"
+      "default": "./src/vuetify/personal-menu.vue",
+      "types": "./types/vuetify/personal-menu.vue.d.ts"
     },
     "./vuetify/search-address.vue": {
-      "default": "./src/vuetify/search-address.vue"
+      "default": "./src/vuetify/search-address.vue",
+      "types": "./types/vuetify/search-address.d.ts"
     },
     "./vuetify/date-range-picker.vue": {
-      "default": "./src/vuetify/date-range-picker.vue"
+      "default": "./src/vuetify/date-range-picker.vue",
+      "types": "./types/vuetify/date-range-picker.d.ts"
     },
     "./vuetify/date-match-filter.vue": {
-      "default": "./src/vuetify/date-match-filter.vue"
+      "default": "./src/vuetify/date-match-filter.vue",
+      "types": "./types/vuetify/date-match-filter.d.ts"
     },
     "./vuetify/tutorial-alert.vue": {
-      "default": "./src/vuetify/tutorial-alert.vue"
+      "default": "./src/vuetify/tutorial-alert.vue",
+      "types": "./types/vuetify/tutorial-alert.d.ts"
     },
     "./vuetify/owner-pick.vue": {
-      "default": "./src/vuetify/owner-pick.vue"
+      "default": "./src/vuetify/owner-pick.vue",
+      "types": "./types/vuetify/owner-picker.d.ts"
     },
     "./vuetify/owner-avatar.vue": {
-      "default": "./src/vuetify/owner-avatar.vue"
+      "default": "./src/vuetify/owner-avatar.vue",
+      "types": "./types/vuetify/owner-avatar.d.ts"
     },
     "./nuxt.js": {
       "default": "./src/nuxt/module.js",
       "types": "./types/nuxt/module.d.ts"
+    },
+    "./nuxt/utils.js": {
+      "default": "./src/nuxt/utils.js",
+      "types": "./types/nuxt/utils.d.ts"
     },
     "./maps/utils.js": {
       "default": "./src/maps/utils.js",
@@ -268,6 +283,8 @@
   "homepage": "https://github.com/data-fair/lib#readme",
   "peerDependencies": {
     "@bcherny/json-schema-ref-parser": "^10.0.5-fork",
+    "@nuxt/eslint": "0.5",
+    "@nuxtjs/i18n": "8",
     "agentkeepalive": "4",
     "ajv": "8",
     "ajv-errors": "3",
@@ -290,10 +307,13 @@
     "jwt-decode": "4",
     "mongodb": "6",
     "nanoid": "5",
+    "nuxt": "3",
     "ofetch": "1",
     "prom-client": "15",
+    "reconnecting-websocket": "4",
     "semver": "7",
     "universal-cookie": "7",
+    "vite-plugin-vuetify": "2",
     "vue": "3",
     "vue-i18n": "9",
     "vue-router": "4",
@@ -302,6 +322,12 @@
   },
   "peerDependenciesMeta": {
     "@bcherny/json-schema-ref-parser": {
+      "optional": true
+    },
+    "@nuxtjs/i18n": {
+      "optional": true
+    },
+    "nuxt/eslint": {
       "optional": true
     },
     "agentkeepalive": {
@@ -370,13 +396,22 @@
     "nanoid": {
       "optional": true
     },
+    "nuxt": {
+      "optional": true
+    },
     "ofetch": {
+      "optional": true
+    },
+    "reconnecting-websocket": {
       "optional": true
     },
     "semver": {
       "optional": true
     },
     "universal-cookie": {
+      "optional": true
+    },
+    "vite-plugin-vuetify": {
       "optional": true
     },
     "vue": {
@@ -398,7 +433,9 @@
   "devDependencies": {
     "@commitlint/cli": "^18.2.0",
     "@commitlint/config-conventional": "^18.1.0",
+    "@nuxt/eslint": "^0.5.7",
     "@nuxt/kit": "^3.13.1",
+    "@nuxtjs/i18n": "^8.5.3",
     "@types/chroma-js": "^2.4.4",
     "@types/cookie": "^0.6.0",
     "@types/debug": "^4.1.10",
@@ -407,6 +444,7 @@
     "@types/semver": "^7.5.8",
     "@types/universal-cookie": "^2.2.0",
     "@types/ws": "^8.5.8",
+    "@vueuse/core": "^11.1.0",
     "agentkeepalive": "^4.5.0",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
@@ -431,8 +469,10 @@
     "mongodb": "^6.5.0",
     "nanoid": "^5.0.7",
     "neostandard": "^0.11.4",
+    "nuxt": "^3.13.2",
     "ofetch": "^1.3.3",
     "prom-client": "^15.1.0",
+    "reconnecting-websocket": "^4.4.0",
     "rimraf": "^5.0.5",
     "semver": "^7.6.2",
     "universal-cookie": "^7.2.0",
@@ -440,7 +480,8 @@
     "vue": "^3.3.12",
     "vue-i18n": "^9.13.1",
     "vue-router": "^4.2.5",
-    "vuetify": "^3.4.7",
+    "vue-tsc": "^2.1.6",
+    "vuetify": "^3.7.2",
     "ws": "^8.16.0"
   },
   "dependencies": {
