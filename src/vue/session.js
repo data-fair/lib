@@ -57,7 +57,7 @@ const goTo = (url) => {
   else topLocation.reload()
 }
 
-const defaultOptions = { directoryUrl: '/simple-directory' }
+const defaultOptions = { directoryUrl: '/simple-directory', sitePath: '' }
 
 /**
  * @param {SessionOptions} [initOptions]
@@ -65,7 +65,8 @@ const defaultOptions = { directoryUrl: '/simple-directory' }
  */
 export const getSession = async (initOptions) => {
   const options = { ...defaultOptions, ...initOptions }
-  debug(`init directoryUrl=${options.directoryUrl}`)
+  const cookiesPath = options.sitePath + '/'
+  debug(`init directoryUrl=${options.directoryUrl}, cookiesPath=${cookiesPath}`)
   const ssr = !!options.req
   if (ssr) debug('run in SSR context')
 
@@ -152,7 +153,7 @@ export const getSession = async (initOptions) => {
     // sessionData is also stored in localStorage as a way to access it in simpler pages that do not require use-session
     // and in order to listen to storage event from other contexts and sync session info accross windows and tabs
     const storageListener = (/** @type {StorageEvent} */event) => {
-      if (event.key === 'sd-session') readCookies()
+      if (event.key === 'sd-session' + options.sitePath) readCookies()
     }
     window.addEventListener('storage', storageListener)
     // we cannot use onUnmounted here or we get warnings "onUnmounted is called when there is no active component instance to be associated with. "
@@ -174,7 +175,7 @@ export const getSession = async (initOptions) => {
     })
     watch(state, (state) => {
       if (!ssr) {
-        window.localStorage.setItem('sd-session', JSON.stringify(state))
+        window.localStorage.setItem('sd-session' + options.sitePath, JSON.stringify(state))
       }
       debug('state changed', state)
     })
@@ -224,9 +225,9 @@ export const getSession = async (initOptions) => {
    * @param {string} [dep]
    */
   const switchOrganization = (org, dep) => {
-    if (org) cookies.set('id_token_org', org, { path: '/' })
+    if (org) cookies.set('id_token_org', org, { path: cookiesPath })
     else cookies.remove('id_token_org')
-    if (dep) cookies.set('id_token_dep', dep, { path: '/' })
+    if (dep) cookies.set('id_token_dep', dep, { path: cookiesPath })
     else cookies.remove('id_token_dep')
     readCookies()
   }
@@ -271,7 +272,7 @@ export const getSession = async (initOptions) => {
    */
   const switchDark = (value) => {
     const maxAge = 60 * 60 * 24 * 365 // 1 year
-    cookies.set('theme_dark', `${value}`, { maxAge, path: '/' })
+    cookies.set('theme_dark', `${value}`, { maxAge, path: cookiesPath })
     readCookies()
   }
 
@@ -280,13 +281,13 @@ export const getSession = async (initOptions) => {
    */
   const switchLang = (value) => {
     const maxAge = 60 * 60 * 24 * 365 // 1 year
-    cookies.set('i18n_lang', value, { maxAge, path: '/' })
+    cookies.set('i18n_lang', value, { maxAge, path: cookiesPath })
     readCookies()
   }
 
   const keepalive = async () => {
     if (state.user == null) return
-    window.localStorage.setItem('sd-keepalive', `${new Date().getTime()}`)
+    window.localStorage.setItem('sd-keepalive' + options.sitePath, `${new Date().getTime()}`)
     await customFetch(`${options.directoryUrl}/api/auth/keepalive`, { method: 'POST' })
     readCookies()
   }
@@ -294,7 +295,7 @@ export const getSession = async (initOptions) => {
   // immediately performs a keepalive, but only on top windows (not iframes or popups)
   // and only if it was not done very recently (maybe from a refreshed page next to this one)
   if (!ssr && window.top === window.self) {
-    const lastKeepalive = window.localStorage.getItem('sd-keepalive')
+    const lastKeepalive = window.localStorage.getItem('sd-keepalive' + options.sitePath)
     if (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) > 10000) {
       await keepalive()
     }
@@ -321,7 +322,10 @@ export const getSession = async (initOptions) => {
 export const sessionKey = Symbol('session')
 export async function createSession (/** @type {SessionOptions} */initOptions) {
   const session = await getSession(initOptions)
-  return { install (/** @type {import('vue').App} */app) { app.provide(sessionKey, session) } }
+  return {
+    install (/** @type {import('vue').App} */app) { app.provide(sessionKey, session) },
+    value: session
+  }
 }
 export function useSession () {
   const session = inject(sessionKey)

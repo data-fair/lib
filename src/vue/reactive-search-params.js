@@ -108,7 +108,10 @@ export const reactiveSearchParamsKey = Symbol('reactiveSearchParams')
  */
 export function createReactiveSearchParams (router) {
   const reactiveSearchParams = getReactiveSearchParams(router)
-  return { install (/** @type {import('vue').App} */app) { app.provide(reactiveSearchParamsKey, reactiveSearchParams) } }
+  return {
+    install (/** @type {import('vue').App} */app) { app.provide(reactiveSearchParamsKey, reactiveSearchParams) },
+    value: reactiveSearchParams
+  }
 }
 export function useReactiveSearchParams () {
   const reactiveSearchParams = inject(reactiveSearchParamsKey)

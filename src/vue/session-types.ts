@@ -11,7 +11,8 @@ interface Cookies {
 }
 
 export interface SessionOptions {
-  route: RouteLocation
+  route?: RouteLocation
+  sitePath?: string
   directoryUrl?: string
   logoutRedirectUrl?: string
   req?: IncomingMessage
