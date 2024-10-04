@@ -6,13 +6,13 @@ const regexp = /\/\/ @test:spy\((.*)\)\n/g
 
 export async function load (url, context, nextLoad) {
   const result = await nextLoad(url, context)
-  if (result.format === 'module') {
+  if (result.format === 'module' || result.format === 'module-typescript') {
     let source = result.source.toString()
     const matches = source.match(regexp)
     if (matches) {
       source = 'import { emit as __emitTestSpy } from "@data-fair/lib/node/test-spies.js"\n' + source
       source = source.replace(regexp, '__emitTestSpy($1)\n')
-      result.source = source
+      result.source = Buffer.from(source, 'utf-8')
     }
   }
   return result
