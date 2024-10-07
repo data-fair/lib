@@ -101,7 +101,6 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     }
 
     code += `
-/** @type {string[]} */
 export const schemaExports = ${JSON.stringify(schemaExports, null, 2)}
 `
     dtsCode += `
@@ -172,10 +171,10 @@ export const resolvedSchema: any
         const validationImport = '@data-fair/lib-node/validation.js'
         writeFileSync(path.join(dir, '.type', 'validate.' + (options.mjs ? 'mjs' : 'js')), '/* eslint-disable */\n// @ts-nocheck\n\n' + validateCode)
         importsCode += `
-// validate function compiled using ajv
 import validate from './validate.${options.mjs ? 'mjs' : 'js'}'
 import { assertValid as assertValidGeneric } from '${validationImport}'`
         code += `
+export { validate } from './validate.js'
 export const assertValid = (data, options) => {
   assertValidGeneric(validate, data, options)
 }
@@ -185,9 +184,9 @@ export const returnValid = (data, options) => {
 }
 `
         dtsCode += `
-export const validate = (data: any) => data is ${mainTypeName}
-export const assertValid = (data: any, options?: import('${validationImport}').AssertValidOptions) => asserts data is ${mainTypeName}
-export const returnValid = (data: any, options?: import('${validationImport}').AssertValidOptions) => ${mainTypeName}
+export const validate: (data: any) => data is ${mainTypeName}
+export const assertValid: (data: any, options?: import('${validationImport}').AssertValidOptions) => asserts data is ${mainTypeName}
+export const returnValid: (data: any, options?: import('${validationImport}').AssertValidOptions) => ${mainTypeName}
       `
       } else if (schemaExport === 'stringify') {
         // TODO: is this really a good idea ? over-optimization ?
