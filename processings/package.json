@@ -1,0 +1,12 @@
+{
+  "name": "@data-fair/lib-processings",
+  "version": "0.0.0",
+  "description": "Utility functions for processings in the data-fair stack.",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}

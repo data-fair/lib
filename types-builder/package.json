@@ -1,0 +1,12 @@
+{
+  "name": "@data-fair/lib-types-builder",
+  "version": "0.0.0",
+  "description": "A tool to process json schemas and produce types, validation functions, etc.",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}

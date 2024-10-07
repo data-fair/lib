@@ -1,0 +1,12 @@
+{
+  "name": "@data-fair/lib-express",
+  "version": "0.0.0",
+  "description": "Middlewares and utility functions related to the use of Express in the data-fair stack.",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@data-fair/lib-vue",
+  "version": "0.0.0",
+  "description": "Composables and other utilities for Vue applications in the data-fair stack.",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}

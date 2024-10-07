@@ -1,0 +1,12 @@
+{
+  "name": "@data-fair/lib-node",
+  "version": "0.0.0",
+  "description": "Small nodejs related utility functions for the data-fair stack.",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}

@@ -12,6 +12,5 @@
     "skipLibCheck": true,
     "rootDir": "src"
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "types/*/validate.js", "types/*/stringify.js", "src/nuxt/*/*.js"]
+  "exclude": ["node_modules"]
 }

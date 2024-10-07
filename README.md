@@ -1,27 +1,37 @@
 # @data-fair/lib
 
-A collection of javascript functions, components, types, etc to help work inside the data-fair stack.
+A collection of npm modules to share functions, types, UI components, etc accross the data-fair stack. Modules are managed in npm workspaces and published inside the namespace @data-fair with the "lib-" prefix.
 
-All dependencies are declared as optional peer dependencies, you should install them yourself as required by your usage.
+## @data-fair/lib-utils
 
-```sh
-npm i @data-fair/lib
-```
+Any standalone piece of code that has no dependency or only very little ones.
 
-- [Types](#types)
-  - [SessionState](#sessionstate)
-  - [build.ts](#buildts)
-- [Vue](#vue)
-  - [useSession](#usesession)
-- [Express](#express)
-  - [session](#session)
-- [Nodejs](#nodejs)
-  - [Observer](#observer)
-  - [Upgrade scripts](#upgrade-scripts)
-- [Processings](#processings)
-  - [tests-utils.js](#tests-utilsjs)
-- [Colors](#colors)
-  - [colors.js](#colorsjs)
+## @data-fair/lib-types-builder
+
+A tool to process json schemas and produce types, validation functions, etc.
+
+## @data-fair/lib-common-types
+
+Shared schemas and built type definitions, etc.
+
+## @data-fair/lib-node
+
+Code meant to be used server-side in a nodejs environment.
+
+## @data-fair/lib-express
+
+Code meant to be used server-side in a Express based Web server.
+
+## @data-fair/lib-vue
+
+Code meant to be used in a Vue application, mostly composables.
+
+## @data-fair/lib-vuetify
+
+Components based on the Vuetify 3 UI lib.
+
+## @data-fair/lib/lib-processing-dev
+
 
 
 ## Types
