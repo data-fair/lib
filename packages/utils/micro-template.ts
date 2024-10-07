@@ -1,6 +1,6 @@
 // Custom micro templating to inject params into textual content with {param} syntax
 
-export const escapeRegExp = (/** @type {string} */str) => str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&')
+export const escapeRegExp = (str: string) => str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&')
 
 const paramRegexCache: Record<string, RegExp> = {}
 

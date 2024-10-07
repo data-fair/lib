@@ -4,10 +4,8 @@
     "module": "nodenext",
     "declaration": true,
     "emitDeclarationOnly": true,
-    "strict": true,
-    "allowJs": true,
-    "checkJs": true,
-    "skipLibCheck": true
+    "strict": true
   },
-  "include": ["packages/utils/**/*.js", "packages/utils/json-schema.js"]
+  "include": ["packages/utils/**/*.js"],
+  "exclude": ["*.test.*"]
 }

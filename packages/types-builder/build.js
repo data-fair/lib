@@ -4,7 +4,7 @@ import { readFileSync, readdirSync, writeFileSync, existsSync, rmSync, mkdirSync
 import path from 'node:path'
 import { pascalCase } from 'change-case'
 import { program } from 'commander'
-import clone from '../clone.js'
+import clone from '@data-fair/lib-utils/clone.js'
 
 /**
  * @param {string} dir
