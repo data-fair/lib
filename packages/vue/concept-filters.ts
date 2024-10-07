@@ -2,12 +2,8 @@
 
 import { reactive, watch } from 'vue'
 
-/**
- * @param {Record<string, string>} reactiveSearchParams
- * @param {string} [datasetId]
- */
-export function useConceptFilters (reactiveSearchParams, datasetId) {
-  const conceptFilters = reactive(/** @type {Record<string, string>} */({}))
+export function useConceptFilters (reactiveSearchParams: Record<string, string>, datasetId?: string) {
+  const conceptFilters = reactive({} as Record<string, string>)
 
   const datasetFiltersPrefix = datasetId && `_d_${datasetId}_`
 

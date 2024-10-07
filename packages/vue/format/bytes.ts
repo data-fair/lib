@@ -1,17 +1,11 @@
-/** @type {{fr: [number, string][], en: [number, string][]}} */
-const locales = {
+const locales: { fr: [number, string][], en: [number, string][] } = {
   fr: [[0, 'octet'], [1, 'octets'], [1000, 'ko'], [1000 * 1000, 'Mo'], [1000 * 1000 * 1000, 'Go'], [1000 * 1000 * 1000 * 1000, 'To'], [1000 * 1000 * 1000 * 1000 * 1000, 'Po']],
   en: [[0, 'byte'], [1, 'bytes'], [1000, 'kb'], [1000 * 1000, 'Mb'], [1000 * 1000 * 1000, 'Gb'], [1000 * 1000 * 1000 * 1000, 'Tb'], [1000 * 1000 * 1000 * 1000 * 1000, 'Pb']]
 }
 
-/**
- * @param {number | string} bytes
- * @param {string} locale
- * @returns {string}
- */
-export function formatBytes (bytes, locale = 'fr') {
+export function formatBytes (bytes: number | string, locale = 'fr'): string {
   const bytesInt = Math.abs(typeof bytes === 'string' ? parseInt(bytes, 10) : bytes)
-  const def = locales[/** @type {'fr' | 'en'} */(locale)] ?? locales.en
+  const def = locales[locale as 'fr' | 'en'] ?? locales.en
   for (let i = 0; i < def.length; i++) {
     const step = def[i][0]
     if (bytesInt < step || i === def.length - 1) {

@@ -1,20 +1,17 @@
 import reconnectingWebSocketModule from 'reconnecting-websocket'
 import { ref, reactive, onScopeDispose } from 'vue'
+import type { Message } from '@data-fair/lib-common-types/ws.js'
 
-// @ts-ignore
-const ReconnectingWebSocket = /** @type {typeof reconnectingWebSocketModule.default} */ (reconnectingWebSocketModule)
+const ReconnectingWebSocket = reconnectingWebSocketModule as unknown as typeof reconnectingWebSocketModule.default
 
-/**
- * @param {string} path
- */
-const getWS = (path) => {
+const getWS = (path: string) => {
   if (!window.WebSocket) return
   // @ts-ignore
   if (import.meta.env?.SSR) return
   const url = (window.location.origin + path).replace('http:', 'ws:').replace('https:', 'wss:')
   const ws = new ReconnectingWebSocket(url)
 
-  const subscriptions = reactive(/** @type {Record<string, ((message: any) => void)[]>} */({}))
+  const subscriptions = reactive({} as Record<string, ((message: any) => void)[]>)
   const opened = ref(false)
 
   ws.addEventListener('open', () => {
@@ -31,9 +28,8 @@ const getWS = (path) => {
   ws.addEventListener('close', () => {
     opened.value = false
   })
-  ws.onmessage = event => {
-    /** @type {import('../node/ws-types.js').Message} */
-    const body = JSON.parse(event.data)
+  ws.onmessage = (event: any) => {
+    const body = JSON.parse(event.data) as Message
     if (body.type === 'message') {
       if (subscriptions[body.channel]?.length) {
         for (const listener of subscriptions[body.channel]) {
@@ -43,12 +39,7 @@ const getWS = (path) => {
     }
   }
 
-  /**
-   * @template T
-   * @param {string} channel
-   * @param {(message: T) => void} listener
-   */
-  const subscribe = (channel, listener) => {
+  function subscribe <T> (channel: string, listener: (message: T) => void) {
     if (!subscriptions[channel]) {
       subscriptions[channel] = []
       if (opened.value) ws.send(JSON.stringify({ type: 'subscribe', channel }))
@@ -60,11 +51,7 @@ const getWS = (path) => {
     })
   }
 
-  /**
-   * @param {string} channel
-   * @param {(message: any) => void} listener
-   */
-  const unsubscribe = (channel, listener) => {
+  const unsubscribe = (channel: string, listener: (message: any) => void) => {
     if (subscriptions[channel]) {
       subscriptions[channel] = subscriptions[channel].filter(l => l !== listener)
       if (subscriptions[channel].length === 0 && opened.value) {
@@ -77,13 +64,9 @@ const getWS = (path) => {
   return { opened, ws, subscribe, unsubscribe }
 }
 
-/** @type {Record<string, ReturnType<typeof getWS>>} */
-const sockets = {}
+const sockets: Record<string, ReturnType<typeof getWS>> = {}
 
-/**
- * @param {string} path
- */
-export function useWS (path) {
+export function useWS (path: string) {
   sockets[path] = sockets[path] ?? getWS(path)
   return sockets[path]
 }

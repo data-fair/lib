@@ -1,16 +1,29 @@
+import type { Ref, App } from 'vue'
 import { ref, inject } from 'vue'
-import inIframe from '../in-iframe.js'
+import inIframe from '@data-fair/lib-utils/in-iframe.js'
 
-/**
- * @typedef {import('./ui-notif-types.js').UiNotif} UiNotif
- * @typedef {import('./ui-notif-types.js').PartialUiNotif} PartialUiNotif
- */
+export type UiNotif = UiNotifBase | UiNotifError
 
-/**
- * @param {PartialUiNotif | string} notif
- * @returns {UiNotif}
- */
-function getFullNotif (notif) {
+export interface PartialUiNotif {
+  type?: 'default' | 'info' | 'success' | 'warning' | 'error'
+  msg: string
+  error?: any
+  errorMsg?: string
+}
+
+interface UiNotifBase {
+  type?: 'default' | 'info' | 'success' | 'warning'
+  msg: string
+}
+
+interface UiNotifError {
+  type: 'error'
+  msg: string
+  error: any
+  errorMsg: string
+}
+
+function getFullNotif (notif: PartialUiNotif | string): UiNotif {
   if (typeof notif === 'string') return { msg: notif, type: 'default' }
   if (notif.error) {
     notif.type = 'error'
@@ -26,10 +39,9 @@ function getFullNotif (notif) {
 }
 
 export const getUiNotif = () => {
-  /** @type {import('vue').Ref<null | UiNotif>} */
-  const current = ref(null)
+  const current = ref(null as null | UiNotif)
 
-  const send = (/** @type {PartialUiNotif} */partialNotif) => {
+  const send = (partialNotif: PartialUiNotif) => {
     current.value = getFullNotif(partialNotif)
   }
   return { current, send }
@@ -39,11 +51,11 @@ export const getUiNotif = () => {
 export const uiNotifKey = Symbol('uiNotif')
 export function createUiNotif () {
   const uiNotif = getUiNotif()
-  return { install (/** @type {import('vue').App} */app) { app.provide(uiNotifKey, uiNotif) } }
+  return { install (app: App) { app.provide(uiNotifKey, uiNotif) } }
 }
 export function useUiNotif () {
   const session = inject(uiNotifKey)
   if (!session) throw new Error('useUiNotif requires using the plugin createUiNotif')
-  return /** @type {ReturnType<typeof getUiNotif>} */(session)
+  return session as ReturnType<typeof getUiNotif>
 }
 export default useUiNotif

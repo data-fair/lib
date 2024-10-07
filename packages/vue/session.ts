@@ -1,26 +1,56 @@
+import { type IncomingMessage } from 'node:http'
+import { type Ref, App } from 'vue'
+import { type RouteLocation } from 'vue-router'
+import { type fetch } from 'ofetch'
+import { type SessionState, type SessionStateAuthenticated, type User } from '@data-fair/lib-common-types/session/index.js'
 import { reactive, computed, watch, inject } from 'vue'
 import { ofetch } from 'ofetch'
 import { jwtDecode } from 'jwt-decode'
 import cookiesModule from 'universal-cookie'
 import Debug from 'debug'
 
-// @ts-ignore
-const Cookies = /** @type {typeof cookiesModule.default} */ (cookiesModule)
+const Cookies = cookiesModule as unknown as typeof cookiesModule.default
 
-/**
- * @typedef {import('./session-types.js').SessionOptions} SessionOptions
- * @typedef {import('./session-types.js').Session} Session
- * @typedef {import('./session-types.js').SessionAuthenticated} SessionAuthenticated
- */
+interface GenericCookies {
+  get: (key: string) => string | undefined
+  set: (key: string, value: string, options?: Record<string, any>) => void
+  remove: (key: string) => void
+}
+
+export interface SessionOptions {
+  route?: RouteLocation
+  sitePath?: string
+  directoryUrl?: string
+  logoutRedirectUrl?: string
+  req?: IncomingMessage
+  cookies?: GenericCookies
+  customFetch?: typeof fetch
+}
+
+export interface Session {
+  state: SessionState
+  loginUrl: (redirect?: string, extraParams?: Record<string, string>, immediateRedirect?: true) => string
+  login: (redirect?: string, extraParams?: Record<string, string>, immediateRedirect?: true) => void
+  logout: (redirect?: string) => Promise<void>
+  switchOrganization: (org: string | null, dep?: string) => void
+  setAdminMode: (adminMode: boolean, redirect?: string) => Promise<void>
+  asAdmin: (user: any | null) => Promise<void>
+  cancelDeletion: () => Promise<void>
+  keepalive: () => Promise<void>
+  switchDark: (value: boolean) => void
+  switchLang: (value: string) => void
+  topLocation: Ref<Location | undefined>
+  options: SessionOptions
+}
+
+export type SessionAuthenticated = Session & {
+  state: SessionStateAuthenticated
+}
 
 const debug = Debug('session')
 debug.log = console.log.bind(console)
 
-/**
- * @param {string | null} jwt
- * @returns {import('../shared/session/index.js').User | undefined}
- */
-const jwtDecodeAlive = (jwt) => {
+function jwtDecodeAlive (jwt: string | null): User | undefined {
   if (!jwt) return
   const decoded = /** @type {any} */(jwtDecode(jwt))
   if (!decoded) return
@@ -34,7 +64,7 @@ const jwtDecodeAlive = (jwt) => {
     // do not return null here, this is probably a false flag due to a slightly mismatched clock
     // return null
   }
-  return /** @type {import('../shared/session/index.js').User} */(decoded)
+  return decoded as User
 }
 
 const getTopLocation = () => {
@@ -45,10 +75,7 @@ const getTopLocation = () => {
   }
 }
 
-/**
- * @param {string | null} url
- */
-const goTo = (url) => {
+const goTo = (url: string | null) => {
   const topLocation = getTopLocation()
   if (topLocation == null) {
     throw new TypeError('session.goTo was called without access to the window object or its location')
@@ -59,11 +86,7 @@ const goTo = (url) => {
 
 const defaultOptions = { directoryUrl: '/simple-directory', sitePath: '' }
 
-/**
- * @param {SessionOptions} [initOptions]
- * @returns {Promise<Session>}
- */
-export const getSession = async (initOptions) => {
+export async function getSession (initOptions: SessionOptions): Promise<Session> {
   const options = { ...defaultOptions, ...initOptions }
   const cookiesPath = options.sitePath + '/'
   debug(`init directoryUrl=${options.directoryUrl}, cookiesPath=${cookiesPath}`)
@@ -76,16 +99,15 @@ export const getSession = async (initOptions) => {
   // top page if we are in iframe context
   const topLocation = computed(() => {
     if (ssr) return undefined
-    // eslint-disable-next-line no-unused-expressions
-    options.route?.fullPath // adds reactivity
+
+    if (options.route?.fullPath) { /* empty */ } // adds reactivity
     const location = getTopLocation()
     debug('update location based on route change', location)
     return location
   })
 
   // the core state of the session that is filled by reading cookies
-  /** @type {import('../shared/session/index.js').SessionState} */
-  const state = reactive({})
+  const state = reactive({} as SessionState)
 
   // cookies are the source of truth and this information is transformed into the state reactive object
   const cookies = initOptions?.cookies ?? new Cookies(options.req?.headers.cookie)
@@ -152,7 +174,7 @@ export const getSession = async (initOptions) => {
   if (!ssr) {
     // sessionData is also stored in localStorage as a way to access it in simpler pages that do not require use-session
     // and in order to listen to storage event from other contexts and sync session info accross windows and tabs
-    const storageListener = (/** @type {StorageEvent} */event) => {
+    const storageListener = (event: StorageEvent) => {
       if (event.key === 'sd-session' + options.sitePath) readCookies()
     }
     window.addEventListener('storage', storageListener)
@@ -182,13 +204,7 @@ export const getSession = async (initOptions) => {
   }
 
   // login can be performed as a simple link (please use target=top) or as a function
-  /**
-   * @param {string} [redirect]
-   * @param {Record<string, string>} [extraParams]
-   * @param {boolean} [immediateRedirect ]
-   * @returns {string}
-   */
-  const loginUrl = (redirect, extraParams = {}, immediateRedirect = true) => {
+  function loginUrl (redirect?: string, extraParams: Record<string, string> = {}, immediateRedirect = true): string {
     // login can also be used to redirect user immediately if he is already logged
     if (redirect && state.user && immediateRedirect) return redirect
     if (!redirect && topLocation.value) redirect = topLocation.value.href
@@ -198,18 +214,10 @@ export const getSession = async (initOptions) => {
     })
     return url
   }
-  /**
-   * @param {string} [redirect]
-   * @param {Record<string, string>} [extraParams]
-   * @param {boolean} [immediateRedirect ]
-   */
-  const login = (redirect, extraParams = {}, immediateRedirect) => {
+  const login = (redirect?: string, extraParams: Record<string, string> = {}, immediateRedirect = true) => {
     goTo(loginUrl(redirect, extraParams, immediateRedirect))
   }
-  /**
-   * @param {string} [redirect]
-   */
-  const logout = async (redirect) => {
+  const logout = async (redirect?: string) => {
     await customFetch(`${options.directoryUrl}/api/auth`, { method: 'DELETE' })
     // sometimes server side cookie deletion is not applied immediately in browser local js context
     // so we do it here to
@@ -219,12 +227,7 @@ export const getSession = async (initOptions) => {
     goTo(redirect ?? options.logoutRedirectUrl ?? null)
   }
 
-  /**
-   *
-   * @param {string | null} org
-   * @param {string} [dep]
-   */
-  const switchOrganization = (org, dep) => {
+  const switchOrganization = (org: string | null, dep?: string) => {
     if (org) cookies.set('id_token_org', org, { path: cookiesPath })
     else cookies.remove('id_token_org')
     if (dep) cookies.set('id_token_dep', dep, { path: cookiesPath })
@@ -232,14 +235,9 @@ export const getSession = async (initOptions) => {
     readCookies()
   }
 
-  /**
-   * @param {boolean} adminMode
-   * @param {string} [redirect]
-   */
-  const setAdminMode = async (adminMode, redirect) => {
+  const setAdminMode = async (adminMode: boolean, redirect?: string) => {
     if (adminMode) {
-      /** @type {Record<string, string> } */
-      const params = { adminMode: 'true' }
+      const params: Record<string, string> = { adminMode: 'true' }
       if (state.user != null) params.email = state.user.email
       const url = loginUrl(redirect, params, true)
       goTo(url)
@@ -249,10 +247,7 @@ export const getSession = async (initOptions) => {
     }
   }
 
-  /**
-   * @param {any | null} user
-   */
-  const asAdmin = async (user) => {
+  const asAdmin = async (user: any | null) => {
     if (user) {
       await customFetch(`${options.directoryUrl}/api/auth/asadmin`, { method: 'POST', body: user })
     } else {
@@ -263,23 +258,17 @@ export const getSession = async (initOptions) => {
 
   const cancelDeletion = async () => {
     if (state.user == null) return
-    await customFetch(`${options.directoryUrl}/api/users/${state.user.id}`, { method: 'PATCH', body: /** @type {any} */({ plannedDeletion: null }) })
+    await customFetch(`${options.directoryUrl}/api/users/${state.user.id}`, { method: 'PATCH', body: ({ plannedDeletion: null }) as any })
     readCookies()
   }
 
-  /**
-   * @param {boolean} value
-   */
-  const switchDark = (value) => {
+  const switchDark = (value: boolean) => {
     const maxAge = 60 * 60 * 24 * 365 // 1 year
     cookies.set('theme_dark', `${value}`, { maxAge, path: cookiesPath })
     readCookies()
   }
 
-  /**
-   * @param {string} value
-   */
-  const switchLang = (value) => {
+  const switchLang = (value: string) => {
     const maxAge = 60 * 60 * 24 * 365 // 1 year
     cookies.set('i18n_lang', value, { maxAge, path: cookiesPath })
     readCookies()
@@ -320,27 +309,24 @@ export const getSession = async (initOptions) => {
 
 // uses pattern for SSR friendly plugin/composable, cf https://antfu.me/posts/composable-vue-vueday-2021#shared-state-ssr-friendly
 export const sessionKey = Symbol('session')
-export async function createSession (/** @type {SessionOptions} */initOptions) {
+export async function createSession (initOptions: SessionOptions) {
   const session = await getSession(initOptions)
   return {
-    install (/** @type {import('vue').App} */app) { app.provide(sessionKey, session) },
+    install (app: App) { app.provide(sessionKey, session) },
     value: session
   }
 }
 export function useSession () {
   const session = inject(sessionKey)
   if (!session) throw new Error('useSession requires using the plugin createSession')
-  return /** @type {Session} */(session)
+  return session as Session
 }
-/**
- * @param {() => any} [errorBuilder]
- */
-export function useSessionAuthenticated (errorBuilder) {
+export function useSessionAuthenticated (errorBuilder?: () => any) {
   const session = useSession()
   if (!session.state.user) {
     if (errorBuilder) throw errorBuilder()
     else throw new Error('useSessionAuthenticated requires a logged in user')
   }
-  return /** @type {SessionAuthenticated} */(session)
+  return session as SessionAuthenticated
 }
 export default useSession

@@ -1,17 +1,15 @@
 // inspired by useUrlSearchParams (https://github.com/vueuse/vueuse/blob/main/packages/core/useUrlSearchParams/index.ts)
 // but even simpler, without array values, always in history mode, and shared in a app plugin
 
+import type { App } from 'vue'
+import type { Router } from 'vue-router'
 import { reactive, watch, inject, computed } from 'vue'
 import Debug from 'debug'
 
 const debug = Debug('reactive-search-params')
 debug.log = console.log.bind(console)
 
-/**
- * @param {Record<string, string>} state
- * @param {Record<string, string | null | (string | null)[]>} queryParams
- */
-const applySearchParams = (state, queryParams) => {
+const applySearchParams = (state: Record<string, string>, queryParams: Record<string, string | null | (string | null)[]>) => {
   const unusedKeys = new Set(Object.keys(state))
   for (const key of Object.keys(queryParams)) {
     const value = queryParams[key]
@@ -32,17 +30,13 @@ const applySearchParams = (state, queryParams) => {
   }
 }
 
-/**
- * @param {import('vue-router').Router} [router]
- * @returns {Record<string, string>}
- */
-export function getReactiveSearchParams (router) {
+export function getReactiveSearchParams (router?: Router): Record<string, string> {
   // @ts-ignore
   if (!import.meta.env?.SSR && !router) {
     try {
       // nuxt 3 way of reading router
       // @ts-ignore
-      // eslint-disable-next-line no-undef
+
       router = __unctx__.get('nuxt-app').use().$router
       debug('using nuxt 3 router implicitly')
     } catch (e) {
@@ -50,7 +44,7 @@ export function getReactiveSearchParams (router) {
     }
   }
 
-  const state = reactive(/** @type {Record<string, string>} */({}))
+  const state = reactive({} as Record<string, string>)
 
   // 2 modes, 1 based on vue router, 1 based on window.location.search
   if (router) {
@@ -103,27 +97,20 @@ export function getReactiveSearchParams (router) {
 // uses pattern for SSR friendly plugin/composable, cf https://antfu.me/posts/composable-vue-vueday-2021#shared-state-ssr-friendly
 export const reactiveSearchParamsKey = Symbol('reactiveSearchParams')
 
-/**
- * @param {import('vue-router').Router} [router]
- */
-export function createReactiveSearchParams (router) {
+export function createReactiveSearchParams (router?: Router) {
   const reactiveSearchParams = getReactiveSearchParams(router)
   return {
-    install (/** @type {import('vue').App} */app) { app.provide(reactiveSearchParamsKey, reactiveSearchParams) },
+    install (app: App) { app.provide(reactiveSearchParamsKey, reactiveSearchParams) },
     value: reactiveSearchParams
   }
 }
 export function useReactiveSearchParams () {
   const reactiveSearchParams = inject(reactiveSearchParamsKey)
   if (!reactiveSearchParams) throw new Error('useReactiveSearchParams requires using the plugin createReactiveSearchParams')
-  return /** @type {ReturnType<typeof getReactiveSearchParams>} */(reactiveSearchParams)
+  return reactiveSearchParams as ReturnType<typeof getReactiveSearchParams>
 }
 
-/**
- * @param {string} key
- * @param {string | {default?: string}} options
- */
-export const useStringSearchParam = (key, options = {}) => {
+export const useStringSearchParam = (key: string, options: string | { default?: string } = {}) => {
   const reactiveSearchParams = useReactiveSearchParams()
   const defaultValue = typeof options === 'string' ? options : (options.default ?? '')
   return computed({
@@ -135,11 +122,7 @@ export const useStringSearchParam = (key, options = {}) => {
   })
 }
 
-/**
- * @param {string} key
- * @param {boolean | {default?: boolean, strings?: [string, string]}} options
- */
-export const useBooleanSearchParam = (key, options = {}) => {
+export const useBooleanSearchParam = (key: string, options: boolean | { default?: boolean, strings?: [string, string] } = {}) => {
   const reactiveSearchParams = useReactiveSearchParams()
   const defaultValue = typeof options === 'boolean' ? options : (options.default ?? false)
   const strings = (typeof options !== 'boolean' && options.strings) || ['1', '0']
@@ -152,10 +135,7 @@ export const useBooleanSearchParam = (key, options = {}) => {
   })
 }
 
-/**
- * @param {string} key
- */
-export const useNumberSearchParam = (key) => {
+export const useNumberSearchParam = (key: string) => {
   const reactiveSearchParams = useReactiveSearchParams()
   return computed({
     get: () => {
@@ -172,11 +152,7 @@ export const useNumberSearchParam = (key) => {
   })
 }
 
-/**
- * @param {string} key
- * @param {'csv' | {style?: 'csv'}} options
- */
-export const useStringsArraySearchParam = (key, options = {}) => {
+export const useStringsArraySearchParam = (key: string, options: 'csv' | { style?: 'csv' } = {}) => {
   const reactiveSearchParams = useReactiveSearchParams()
   // const style = typeof options === 'string' ? options : (options.style ?? 'csv')
   return computed({

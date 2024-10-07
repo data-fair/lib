@@ -1,12 +1,8 @@
 // TODO: use locale-dayjs for localization of date formats
 import dayjs from 'dayjs'
+import type { Field } from '@data-fair/lib-common-types/application/index.js'
 
-/**
- * @param {Record<string, string | null | undefined | number | boolean>} item
- * @param {import('../shared/application/index.js').Field} field
- * @returns {string}
- */
-export function formatField (item, field) {
+export function formatField (item: Record<string, string | null | undefined | number | boolean>, field: Field): string {
   const value = item[field.key]
   if (value === undefined || value === null || value === '') return ''
   if (field['x-labels']?.['' + item[field.key]]) return field['x-labels']['' + item[field.key]]
@@ -26,10 +22,6 @@ export function formatField (item, field) {
   return '' + value
 }
 
-/**
- * @param {import('../shared/application/index.js').Field} field
- * @returns {string}
- */
-export const getFieldLabel = (field) => {
+export function getFieldLabel (field: Field): string {
   return field.title || field['x-originalName'] || field.key
 }
