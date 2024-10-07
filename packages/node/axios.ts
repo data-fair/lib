@@ -1,5 +1,6 @@
 // prepare an axios instance with improved error management and some performance tuning for nodejs usage
 
+import type { InternalAxiosRequestConfig, AxiosInstance } from 'axios'
 import axios from 'axios'
 import { httpAgent, httpsAgent } from './http-agents.js'
 
@@ -12,10 +13,7 @@ class AxiosRequestError extends Error {
   }
 }
 
-/**
- * @param {import('axios').InternalAxiosRequestConfig} config
- */
-const requestInterceptor = (config) => {
+const requestInterceptor = (config: InternalAxiosRequestConfig) => {
   // better stack traces
   // see https://github.com/axios/axios/issues/2387#issuecomment-652242713
   Error.stackTraceLimit = 0
@@ -27,11 +25,7 @@ const requestInterceptor = (config) => {
   return config
 }
 
-/**
- * @param {object} [opts]
- * @returns {import('axios').AxiosInstance}
- */
-export function axiosBuilder (opts = {}) {
+export function axiosBuilder (opts: object = {}): AxiosInstance {
   const ax = axios.create({
     httpAgent,
     httpsAgent,
@@ -62,7 +56,6 @@ export function axiosBuilder (opts = {}) {
   return ax
 }
 
-/** @type {import('axios').AxiosInstance} */
 export const axiosInstance = axiosBuilder()
 
 export default axiosInstance

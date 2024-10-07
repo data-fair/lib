@@ -43,12 +43,12 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
 
   const schemas: Record<string, any> = {}
   if (!inLib) {
-    /* const { schema: sessionStateSchema } = await import('@data-fair/lib-common-types/session/.type/index.js')
+    const { schema: sessionStateSchema } = await import('@data-fair/lib-common-types/session/.type/index.js')
     schemas[sessionStateSchema.$id] = sessionStateSchema
     const { schema: accountSchema } = await import('@data-fair/lib-common-types/account/.type/index.js')
     schemas[accountSchema.$id] = accountSchema
     const { schema: appSchema } = await import('@data-fair/lib-common-types/application/.type/index.js')
-    schemas[appSchema.$id] = appSchema */
+    schemas[appSchema.$id] = appSchema
   }
 
   for (const [dir, key, fileName] of dirs) {

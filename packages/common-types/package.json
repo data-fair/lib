@@ -1,12 +1,13 @@
 {
   "name": "@data-fair/lib-common-types",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Shared schemas and built type definitions in the data-fair stack.",
   "main": "index.js",
   "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts"
+  ],
   "author": "",
   "license": "MIT",
   "type": "module"

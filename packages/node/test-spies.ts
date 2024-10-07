@@ -4,16 +4,10 @@ export function registerModuleHooks () {
   register('@data-fair/lib/node/test-module-hooks.js', { parentURL: import.meta.url })
 }
 
-/** @type {Record<string, {resolve: (data: any) => void, id: number}[]>} */
-const pendingPromises = {}
+const pendingPromises: Record<string, { resolve: (data: any) => void, id: number }[]> = {}
 let i = 0
 
-/**
- * @param {string} eventName
- * @param {number} timeout
- * @returns {Promise<any>}
- */
-export function waitFor (eventName, timeout = 2000) {
+export function waitFor (eventName: string, timeout = 2000) {
   i++
   const id = i
   const p = new Promise((resolve, reject) => {
@@ -28,11 +22,7 @@ export function waitFor (eventName, timeout = 2000) {
   return p
 }
 
-/**
- * @param {string} eventName
- * @param {any} data
- */
-export function emit (eventName, data) {
+export function emit (eventName: string, data: any) {
   if (!pendingPromises[eventName]) return
   for (const p of pendingPromises[eventName]) {
     p.resolve(data)

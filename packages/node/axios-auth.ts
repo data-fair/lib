@@ -1,20 +1,22 @@
 // build axios instances with sessions on a simple-directory instance
 // used for integration testing
 
+import type { AxiosInstance } from 'axios'
 import { Agent } from 'node:http'
 import { axiosBuilder, axiosInstance } from './axios.js'
 
-/**
- * @typedef {import('./axios-auth-types.js').AxiosAuthOpts} AxiosAuthOpts
- */
+export interface AxiosAuthOptions {
+  email: string
+  password: string
+  org?: string
+  dep?: string
+  adminMode?: boolean
+  directoryUrl?: string
+  axiosOpts?: any
+}
 
-/**
- * @param {AxiosAuthOpts} opts
- * @returns {Promise<import('axios').AxiosInstance>}
- */
-export const axiosAuth = async (opts) => {
-  /** @type {any} */
-  const body = { email: opts.email, password: opts.password }
+export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosInstance> {
+  const body: any = { email: opts.email, password: opts.password }
   if (opts.org) body.org = opts.org
   if (opts.dep) body.dep = opts.dep
   if (opts.adminMode) body.adminMode = opts.adminMode
@@ -37,4 +39,5 @@ export const axiosAuth = async (opts) => {
   }
   return axiosBuilder(axiosOpts)
 }
+
 export default axiosAuth

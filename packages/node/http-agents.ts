@@ -1,11 +1,8 @@
 // use better DNS lookup than nodejs default and try to reduce number of socket openings
 
-import cacheableLookupModule from 'cacheable-lookup'
+import CacheableLookup from 'cacheable-lookup'
 import HttpAgent, { HttpsAgent } from 'agentkeepalive'
 import { Counter, Gauge } from 'prom-client'
-
-// @ts-ignore
-const CacheableLookup = /** @type {typeof cacheableLookupModule.default} */ (cacheableLookupModule)
 
 // not very high number of sockets but we don't want to saturate our reverse proxies
 // if a higher number is needed the service should probably be scaled anyway

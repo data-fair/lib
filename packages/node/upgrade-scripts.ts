@@ -1,3 +1,5 @@
+import type { Db } from 'mongodb'
+import type { Debugger } from 'debug'
 import semver from 'semver'
 import path from 'path'
 import { readdirSync, readFileSync } from 'fs'
@@ -6,16 +8,13 @@ import { acquire, release } from './locks.js'
 
 const debug = Debug('upgrade')
 
-/**
- * @typedef {import('./upgrade-scripts-types.js').UpgradeScript} UpgradeScript
- */
+export interface UpgradeScript {
+  description: string
+  exec: (db: Db, debug: Debugger) => Promise<void>
+}
 
-/**
- * chose the proper scripts to execute, then run them
- * @param {import('mongodb').Db} db
- * @param {string} basePath
- */
-export default async function (db, basePath = './') {
+// chose the proper scripts to execute, then run them
+export default async function (db: Db, basePath = './') {
   const ack = await acquire('upgrade')
   if (!ack) {
     console.warn('upgrade scripts lock is already acquired, skip them')
@@ -30,12 +29,7 @@ export default async function (db, basePath = './') {
   }
 }
 
-/**
- * chose the proper scripts to execute, then run them
- * @param {import('mongodb').Db} db
- * @param {string} basePath
- */
-async function runScripts (db, basePath) {
+async function runScripts (db: Db, basePath: string) {
   const dir = path.resolve(basePath)
   const pjsonPath = path.join(dir, 'package.json')
   debug('read service info from ' + pjsonPath)
@@ -75,10 +69,7 @@ async function runScripts (db, basePath) {
 }
 
 // Walk the scripts directories
-/**
- * @param {string} scriptsRoot
- */
-async function listScripts (scriptsRoot) {
+async function listScripts (scriptsRoot: string) {
   const dirs = readdirSync(scriptsRoot).sort()
   return dirs.map(dir => {
     return {

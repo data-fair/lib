@@ -9,6 +9,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@data-fair/lib-utils": "0.1.0",
     "agentkeepalive": "^4.5.0",
     "ajv-i18n": "^4.2.0",
     "axios": "^1.7.7",

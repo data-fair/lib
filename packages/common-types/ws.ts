@@ -1,4 +1,4 @@
-import { type Account } from '../shared/session/index.js'
+import { type Account } from '@data-fair/lib-common-types/session/index.js'
 
 type logFn = (msg: string, ...args: any[]) => void
 

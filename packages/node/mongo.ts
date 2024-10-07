@@ -1,17 +1,10 @@
+import type { IndexSpecification, CreateIndexesOptions, MongoClientOptions } from 'mongodb'
 import { MongoClient, MongoError } from 'mongodb'
 
-// const debug = Debug('db')
-
-/**
- * @typedef {import('./mongo-types.js').IndexDefinitions} IndexDefinitions
- */
+export type IndexDefinitions = Record<string, Record<string, IndexSpecification | [IndexSpecification, CreateIndexesOptions]>>
 
 export class Mongo {
-  /**
-   * @type {import('mongodb').MongoClient | undefined}
-   * @private
-   */
-  _client
+  private _client: MongoClient | undefined
 
   get client () {
     if (!this._client) throw new Error('db was not connected')
@@ -22,11 +15,7 @@ export class Mongo {
     return this.client.db()
   }
 
-  /**
-   * @param {string} mongoUrl
-   * @param {import('mongodb').MongoClientOptions} options
-   */
-  connect = async (mongoUrl, options = {}) => {
+  connect = async (mongoUrl: string, options: MongoClientOptions = {}) => {
     if (this._client) {
       console.warn('db already connected')
       return
@@ -36,13 +25,8 @@ export class Mongo {
     console.log('...ok')
   }
 
-  /**
-   * Create an index if it does not exist and manage overwriting existing and conflicting index definitions
-   * @param {string} collection
-   * @param {import('mongodb').IndexSpecification} key
-   * @param {import('mongodb').CreateIndexesOptions} options
-   */
-  ensureIndex = async (collection, key, options = {}) => {
+  // Create an index if it does not exist and manage overwriting existing and conflicting index definitions
+  ensureIndex = async (collection: string, key: IndexSpecification, options: CreateIndexesOptions = {}) => {
     try {
       await this.db.collection(collection).createIndex(key, options)
     } catch (err) {
@@ -61,14 +45,13 @@ export class Mongo {
   /**
    * create a bunch of indexes and overtwrite previous definitions
    * the structure forces giving names to indexes which is better for managing them properly
-   * @param {IndexDefinitions} indexDefinitions
    */
-  configure = async (indexDefinitions) => {
+  configure = async (indexDefinitions: IndexDefinitions) => {
     for (const collectionName in indexDefinitions) {
       for (const indexName in indexDefinitions[collectionName]) {
         let key, options
         if (Array.isArray(indexDefinitions[collectionName][indexName])) {
-          [key, options] = /** @type {[import('mongodb').IndexSpecification, import('mongodb').CreateIndexesOptions]} */(indexDefinitions[collectionName][indexName])
+          [key, options] = indexDefinitions[collectionName][indexName] as [import('mongodb').IndexSpecification, import('mongodb').CreateIndexesOptions]
           if (options.name && options.name !== indexName) throw new Error(`inconsistent index name ${indexName} or ${options.name}`)
           options.name = indexName
         } else {

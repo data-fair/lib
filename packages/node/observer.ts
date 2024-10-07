@@ -4,10 +4,11 @@
 // /metrics serves container/process/pod specific metrics while /global-metrics
 // serves metrics for the whole service installation no matter the scaling
 
+import type { Server, ServerResponse } from 'node:http'
 import { hostname } from 'node:os'
 import { createServer } from 'node:http'
 import { Registry, Counter, register, collectDefaultMetrics } from 'prom-client'
-import eventPromise from '@data-fair/lib/event-promise.js'
+import eventPromise from '@data-fair/lib-utils/event-promise.js'
 
 // a special registry for metrics that are global
 // not based on this specific process state but instead on the content of db for example
@@ -22,12 +23,7 @@ const internalErrorCounter = new Counter({
   labelNames: ['errorCode']
 })
 
-/**
- * @param {string} errorCode
- * @param {any} error
- * @param  {...any} optionalParams
- */
-export const internalError = (errorCode, error, ...optionalParams) => {
+export const internalError = (errorCode: string, error: any, ...optionalParams: any) => {
   internalErrorCounter.inc({ errorCode })
   const message = error.message || error
   console.error(`[${errorCode}] ${message}`, ...optionalParams)
@@ -38,17 +34,13 @@ export const internalError = (errorCode, error, ...optionalParams) => {
  * @param {import('node:http').ServerResponse} res
  * @param {any} err
  */
-const httpErrorHandler = (res, err) => {
+const httpErrorHandler = (res: ServerResponse, err: any) => {
   console.error('failed to server prometheus /metrics', err)
   res.writeHead(500)
   res.end()
 }
 
-/**
- * @param {import('node:http').ServerResponse} res
- * @param {Registry} registry
- */
-const serveRegistry = async (res, registry) => {
+const serveRegistry = async (res: ServerResponse, registry: Registry) => {
   const metrics = await registry.metrics()
   res.setHeader('Content-Type', registry.contentType)
   res.writeHead(200)
@@ -56,12 +48,8 @@ const serveRegistry = async (res, registry) => {
   res.end()
 }
 
-/**
- * live CPU performance inspection
- * @param {import('node:http').ServerResponse} res
- * @param {number} duration
- */
-const serveCPUProfile = async (res, duration = 2000) => {
+// live CPU performance inspection
+const serveCPUProfile = async (res: ServerResponse, duration = 2000) => {
   // @ts-ignore
   const { Session } = await import('node:inspector/promises')
   const session = new Session()
@@ -77,14 +65,8 @@ const serveCPUProfile = async (res, duration = 2000) => {
   res.end()
 }
 
-/**
- * @type {import('node:http').Server}
- */
-let server
+let server: Server
 
-/**
- * @param {number} [port]
- */
 export const startObserver = async (port = 9090) => {
   server = createServer((req, res) => {
     if (req.method === 'GET' && req.url === '/metrics') {
