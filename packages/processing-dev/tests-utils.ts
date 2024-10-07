@@ -1,3 +1,5 @@
+import type { Account } from '@data-fair/lib-common-types/session/index.js'
+import type { ProcessingContext } from '@data-fair/lib-common-types/processings.js'
 import chalk from 'chalk'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat.js'
@@ -5,13 +7,22 @@ import axios from 'axios'
 import { DataFairWsClient } from '../node/ws.js'
 import draftlog from 'draftlog'
 
+export interface ProcessingTestConfig {
+  dataFairAPIKey: string
+  dataFairUrl: string
+  adminMode: boolean
+  account: Account
+};
+
+export interface ProcessingTestContext extends ProcessingContext {
+  cleanup: () => Promise<void>
+  log: Required<ProcessingContext['log']>
+}
+
 draftlog.into(console).addLineListener(process.stdin)
 dayjs.extend(localizedFormat)
 
-/**
- * @type {{[key: string]: any}}
- */
-const tasksDraftLog = {}
+const tasksDraftLog: { [key: string]: any } = {}
 
 /**
  * Inspect an object in a dense way.

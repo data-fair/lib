@@ -6,6 +6,6 @@
     "emitDeclarationOnly": true,
     "strict": true
   },
-  "include": ["packages/utils", "packages/types-builder", "packages/common-types", "packages/node", "packages/express"],
+  "include": ["packages/utils", "packages/types-builder", "packages/common-types", "packages/node", "packages/express", "packages/processing-dev"],
   "exclude": ["*.test.*"]
 }

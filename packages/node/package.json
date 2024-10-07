@@ -3,9 +3,7 @@
   "version": "0.0.0",
   "description": "Small nodejs related utility functions for the data-fair stack.",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "files": ["**/*.js", "**/*.d.ts"],
   "author": "",
   "license": "MIT",
   "dependencies": {
