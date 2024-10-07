@@ -6,6 +6,6 @@
     "emitDeclarationOnly": true,
     "strict": true
   },
-  "include": ["packages/utils/**/*.js"],
+  "include": ["packages/utils"],
   "exclude": ["*.test.*"]
 }
