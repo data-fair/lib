@@ -1,8 +1,4 @@
-/**
- * @param {[number, number, number, number]} bbox
- * @returns {number}
- */
-export const bbox2zoom = (bbox) => {
+export function bbox2zoom (bbox: [number, number, number, number]): number {
   const latDiff = bbox[3] - bbox[1]
   const lngDiff = bbox[2] - bbox[0]
   const maxDiff = (lngDiff > latDiff) ? lngDiff : latDiff
@@ -20,7 +16,7 @@ export const bbox2zoom = (bbox) => {
  * @param {string} svgStr
  * @returns {string}
  */
-export const svgToDataURL = svgStr => {
+export function svgToDataURL (svgStr: string) : string {
   const encoded = encodeURIComponent(svgStr)
     .replace(/'/g, '%27')
     .replace(/"/g, '%22')

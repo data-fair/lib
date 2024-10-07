@@ -1,12 +1,13 @@
 {
-  "name": "@data-fair/lib-utils",
+  "name": "@data-fair/lib-common-types",
   "version": "0.0.0",
-  "description": "Small dependency-less or dependency-light utility functions for the data-fair stack.",
+  "description": "Shared schemas and built type definitions in the data-fair stack.",
   "main": "index.js",
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "type": "module"
 }

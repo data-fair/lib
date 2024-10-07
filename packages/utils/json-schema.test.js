@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
-import jsonSchema from './json-schema.js'
+import jsonSchema from '@data-fair/lib-utils/json-schema.js'
 
 describe('json-schema utility functions', () => {
   it('should remove properties', async () => {

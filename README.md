@@ -10,6 +10,10 @@ Any standalone piece of code that has no dependency or only very little ones.
 
 A tool to process json schemas and produce types, validation functions, etc.
 
+## @data-fair/lib-validation
+
+Functions related to the application of validation functions to data.
+
 ## @data-fair/lib-common-types
 
 Shared schemas and built type definitions, etc.
@@ -32,7 +36,7 @@ Components based on the Vuetify 3 UI lib.
 
 ## @data-fair/lib/lib-processing-dev
 
-
+Code meant to be used in the development environment of a processing.
 
 ## Types
 

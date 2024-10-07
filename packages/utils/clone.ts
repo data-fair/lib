@@ -1,7 +1,7 @@
 // a copy of https://github.com/davidmarkclements/rfdc/blob/master/index.js
 // but lighter and with ESM export
 
-function copyBuffer (/** @type { ArrayBufferView} */cur) {
+function copyBuffer (cur: ArrayBufferView) {
   if (cur instanceof Buffer) {
     return Buffer.from(cur)
   }
@@ -10,47 +10,32 @@ function copyBuffer (/** @type { ArrayBufferView} */cur) {
   return new cur.constructor(cur.buffer.slice(), cur.byteOffset, cur.length)
 }
 
-function cloneArray (/** @type {any[]} */a) {
+function cloneArray (a: any[]) {
   const keys = Object.keys(a)
   const a2 = new Array(keys.length)
   for (let i = 0; i < keys.length; i++) {
-    const k = keys[i]
-    // @ts-ignore
+    const k = keys[i] as unknown as number
     const cur = a[k]
     if (typeof cur !== 'object' || cur === null) {
-      // @ts-ignore
       a2[k] = cur
     } else if (cur instanceof Date) {
-      // @ts-ignore
       a2[k] = new Date(cur)
     } else if (ArrayBuffer.isView(cur)) {
-      // @ts-ignore
       a2[k] = copyBuffer(cur)
     } else {
-      // @ts-ignore
       a2[k] = clone(cur)
     }
   }
   return a2
 }
 
-/**
- * @template T
- * @param {T} o
- * @returns {T}
- */
-export default function clone (o) {
+export default function clone<T> (o: T): T {
   if (typeof o !== 'object' || o === null) return o
-  // @ts-ignore
-  if (o instanceof Date) return new Date(o)
-  // @ts-ignore
-  if (Array.isArray(o)) return cloneArray(o)
-  // @ts-ignore
-  if (o instanceof Map) return new Map(cloneArray(Array.from(o)))
-  // @ts-ignore
-  if (o instanceof Set) return new Set(cloneArray(Array.from(o)))
-  /** @type {Record<string, any>} */
-  const o2 = {}
+  if (o instanceof Date) return new Date(o) as T
+  if (Array.isArray(o)) return cloneArray(o) as T
+  if (o instanceof Map) return new Map(cloneArray(Array.from(o))) as T
+  if (o instanceof Set) return new Set(cloneArray(Array.from(o))) as T
+  const o2: any = {}
   for (const k in o) {
     if (Object.hasOwnProperty.call(o, k) === false) continue
     const cur = o[k]
@@ -68,6 +53,5 @@ export default function clone (o) {
       o2[k] = clone(cur)
     }
   }
-  // @ts-ignore
-  return o2
+  return o2 as T
 }

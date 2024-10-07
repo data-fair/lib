@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "agentkeepalive": "^4.5.0",
+    "ajv-i18n": "^4.2.0",
     "axios": "^1.7.7",
     "cacheable-lookup": "^7.0.0",
     "semver": "^7.6.3"
@@ -29,5 +30,6 @@
     "ws": {
       "optional": true
     }
-  }
+  },
+  "type": "module"
 }

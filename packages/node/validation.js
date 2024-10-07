@@ -40,7 +40,6 @@ export const errorsText = (errors, varName = 'data') => {
 
 /** @typedef {{lang?: string, name?: string, internal?: boolean}} AssertValidOptions */
 
-// eslint-disable-next-line jsdoc/valid-types
 /** @type {<Type>(validate: import('ajv').ValidateFunction, data: any, options?: AssertValidOptions) => asserts data is Type} */
 export const assertValid = (validate, data, options = {}) => {
   const lang = options.lang ?? 'fr'

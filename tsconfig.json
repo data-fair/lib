@@ -4,13 +4,10 @@
     "module": "nodenext",
     "declaration": true,
     "emitDeclarationOnly": true,
-    "declarationMap": true,
     "strict": true,
     "allowJs": true,
     "checkJs": true,
-    "outDir": "types",
-    "skipLibCheck": true,
-    "rootDir": "src"
+    "skipLibCheck": true
   },
-  "exclude": ["node_modules"]
+  "include": ["packages/utils/**/*.js", "packages/utils/json-schema.js"]
 }

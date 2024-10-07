@@ -1,22 +1,16 @@
 // a few utility functions to manipulate json schemas
 
+import type { SchemaObject } from 'ajv'
 import clone from './clone.js'
 
 class SchemaWrapper {
-  /** @type {import('ajv').SchemaObject} */
-  schema
+  schema: SchemaObject
 
-  /**
-   * @param {import('ajv').SchemaObject} schema
-   */
-  constructor (schema) {
+  constructor (schema: SchemaObject) {
     this.schema = clone(schema)
   }
 
-  /**
-   * @param {string | string[]} properties
-   */
-  removeProperties (properties) {
+  removeProperties (properties: string | string[]) {
     if (typeof properties === 'string') properties = [properties]
     if (this.schema.properties) {
       for (const p of properties) {
@@ -30,21 +24,17 @@ class SchemaWrapper {
   }
 
   removeReadonlyProperties () {
-    /** @type {string[]} */
-    const roProperties = []
+    const roProperties: string[] = []
     if (this.schema.properties) {
       for (const [key, property] of Object.entries(this.schema.properties)) {
-        if (property.readOnly) roProperties.push(key)
+        if ((property as any).readOnly) roProperties.push(key)
       }
     }
     this.removeProperties(roProperties)
     return this
   }
 
-  /**
-   * @param {string | string[]} properties
-   */
-  removeFromRequired (properties) {
+  removeFromRequired (properties: string | string[]) {
     if (this.schema?.required && Array.isArray(this.schema.required)) {
       this.schema.required = this.schema.required.filter((/** @type {any} */r) => !properties.includes(r))
     }
@@ -56,36 +46,26 @@ class SchemaWrapper {
     return this
   }
 
-  /**
-   * @param {string} append
-   */
-  appendTitle (append) {
+  appendTitle (append: string) {
     if (this.schema.title) this.schema.title = this.schema.title + append
     else this.schema.title = append
     return this
   }
 
-  /**
-   * @param {string} locale
-   * @param {string} [defaultLocale]
-   */
-  resolveXI18n (locale, defaultLocale = 'en') {
+  resolveXI18n (locale: string, defaultLocale = 'en') {
     resolveXI18n(this.schema, locale, defaultLocale)
     return this
   }
 }
 
-export const jsonSchema = (/** @type {import('ajv').SchemaObject} */schema) => new SchemaWrapper(schema)
+export const jsonSchema = (schema: SchemaObject) => new SchemaWrapper(schema)
 export default jsonSchema
 
 /**
  * A very simple implementation of some x-i18n-* annotations
  * WARNING: this is a naive implementation that will also apply to const values, examples, etc
- * @param {Record<string, any>} schema
- * @param {string} locale
- * @param {string} [defaultLocale]
  */
-export const resolveXI18n = (schema, locale, defaultLocale = 'en') => {
+export const resolveXI18n = (schema: Record<string, any>, locale: string, defaultLocale = 'en') => {
   for (const [key, value] of Object.entries(schema)) {
     if (key.startsWith('x-i18n-')) {
       if (typeof value !== 'object') console.error(`i18n property ${key} should be an object`)

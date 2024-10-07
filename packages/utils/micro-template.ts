@@ -2,23 +2,14 @@
 
 export const escapeRegExp = (/** @type {string} */str) => str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&')
 
-/** @type {Record<string, RegExp>} */
-const paramRegexCache = {}
+const paramRegexCache: Record<string, RegExp> = {}
 
-/**
- * @param {string} key
- */
-const getParamRegexp = (key) => {
+const getParamRegexp = (key: string) => {
   if (!paramRegexCache[key]) paramRegexCache[key] = new RegExp(escapeRegExp(`{${key}}`), 'g')
   return paramRegexCache[key]
 }
 
-/**
- *
- * @param {string} txt
- * @param {Record<string, string>} params
- */
-export function microTemplate (txt, params) {
+export function microTemplate (txt: string, params: Record<string, string>) {
   for (const [key, value] of Object.entries(params)) {
     txt = txt.replace(getParamRegexp(key), value)
   }

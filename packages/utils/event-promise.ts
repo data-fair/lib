@@ -1,16 +1,12 @@
-/**
- * @template T
- * @param {import('node:events').EventEmitter} emitter
- * @param {string} event
- * @param {{timeout: number}} [options]
- * @returns {Promise<T>}
- */
-export const eventPromise = (emitter, event, options) => {
+import type { EventEmitter } from 'node:events'
+
+type EventPromiseOptions = { timeout?: number }
+
+export function eventPromise <T> (emitter: EventEmitter, event: string, options?: EventPromiseOptions): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeout = options?.timeout ?? 60000
 
-    /** @type {ReturnType<setTimeout>} */
-    let timeoutRef
+    let timeoutRef: ReturnType<typeof setTimeout>
     if (timeout > 0) {
       timeoutRef = setTimeout(() => {
         emitter.off(event, callback)
@@ -19,12 +15,12 @@ export const eventPromise = (emitter, event, options) => {
       }, timeout)
     }
 
-    const callback = (/** @type {any} */ data) => {
+    const callback = (data: T) => {
       if (timeoutRef) clearTimeout(timeoutRef)
       emitter.off('error', errorCallback)
       resolve(data)
     }
-    const errorCallback = (/** @type {Error} */ error) => {
+    const errorCallback = (error: Error) => {
       if (timeoutRef) clearTimeout(timeoutRef)
       emitter.off(event, callback)
       reject(error)

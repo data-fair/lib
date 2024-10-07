@@ -16,5 +16,6 @@
     "change-case": "^5.4.4",
     "commander": "^12.1.0",
     "json-schema-to-typescript": "^15.0.2"
-  }
+  },
+  "type": "module"
 }

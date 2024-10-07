@@ -2,26 +2,15 @@ const { stackTraceLimit } = Error
 const prodNodeJS = typeof process !== 'undefined' && process.env?.NODE_ENV === 'production'
 
 export class HttpError extends Error {
-  /** @type {number} */
-  status
+  status: number
 
-  /**
-   * @param {number} status
-   * @param {string} [message]
-   */
-  constructor (status, message) {
+  constructor (status: number, message?: string) {
     super(message)
     this.status = status
   }
 }
 
-/**
- *
- * @param {number} status
- * @param {string} [message]
- * @returns {HttpError}
- */
-export function httpError (status, message) {
+export function httpError (status: number, message?: string): HttpError {
   // capturing stack traces is costly, usually not needed on http errors that concern mostly the client
   Error.stackTraceLimit = 0
   const error = new HttpError(status, message)
