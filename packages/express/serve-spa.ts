@@ -1,15 +1,10 @@
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
-import microTemplate from '@data-fair/lib/micro-template.js'
+import microTemplate from '@data-fair/lib-utils/micro-template.js'
 import { static as expressStatic } from 'express'
-import { reqSitePath } from '@data-fair/lib/express/index.js'
+import { reqSitePath } from '@data-fair/lib-express'
 
-/**
- * @param {string} directory
- * @param {any} uiConfig
- * @returns {Promise<import('express').RequestHandler>}
- */
-const createHtmlMiddleware = async (directory, uiConfig) => {
+async function createHtmlMiddleware (directory: string, uiConfig: any): Promise<import('express').RequestHandler> {
   const uiConfigStr = JSON.stringify(uiConfig)
   const html = await readFile(join(directory, 'index.html'), 'utf8')
   const lastModified = (new Date()).toUTCString()
@@ -25,11 +20,7 @@ const createHtmlMiddleware = async (directory, uiConfig) => {
   }
 }
 
-/**
- * @param {string} directory
- * @returns {import('express').RequestHandler}
- */
-const createStaticMiddleware = (directory) => {
+function createStaticMiddleware (directory: string): import('express').RequestHandler {
   // source code should always be hashed, a long cache duration is ok
   const sourceMaxAge = 60 * 60 * 24 // 1 day
   // static assets, images, etc are generally not hashed but a short cache is still ok
@@ -47,11 +38,8 @@ const createStaticMiddleware = (directory) => {
 
 /**
  * serve a built SPA from a directory
- * @param {string} directory
- * @param {any} uiConfig
- * @returns {Promise<import('express').RequestHandler>}
  */
-export const createSpaMiddleware = async (directory, uiConfig) => {
+export async function createSpaMiddleware (directory: string, uiConfig: any): Promise<import('express').RequestHandler> {
   const staticMiddleware = createStaticMiddleware(directory)
   const htmlMiddleware = await createHtmlMiddleware(directory, uiConfig)
   return (req, res, next) => {

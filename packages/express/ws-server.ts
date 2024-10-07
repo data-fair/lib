@@ -14,30 +14,28 @@ Downstream examples:
 {type: 'error', data: {...}}
 */
 
+import type { Server } from 'node:http'
+import type { Db, Collection } from 'mongodb'
+import type { SessionState } from '@data-fair/lib-common-types/session/index.js'
+import type { Message } from '@data-fair/lib-common-types/ws.js'
 import { nanoid } from 'nanoid'
 import { WebSocketServer } from 'ws'
-import { session } from '@data-fair/lib/express/index.js'
-import { internalError } from '@data-fair/lib/node/observer.js'
-import { initMessagesCollection } from './ws-emitter.js'
+import { session } from '@data-fair/lib-express'
+import { internalError } from '@data-fair/lib-node/observer.js'
+import { initMessagesCollection } from '@data-fair/lib-node/ws-emitter.js'
 
-/** @type {any} */
-let cursor
-/** @type {WebSocketServer} */
-let wss
-/** @type {Record<string, Set<string>>} */
-const subscribers = {}
-/** @type {Record<string, import('ws').WebSocket>} */
-const clients = {}
+let cursor: any
+let wss: WebSocketServer
+const subscribers: Record<string, Set<string>> = {}
+const clients: Record<string, import('ws').WebSocket> = {}
 
 const isAlive = Symbol('isActive')
 
 let stopped = false
-/**
- * @param {import('node:http').Server} server
- * @param {import('mongodb').Db} db
- * @param {(channel: string, sessionState: import('@data-fair/lib/shared/session.js').SessionState) => Promise<boolean>} canSubscribe
- */
-export const start = async (server, db, canSubscribe) => {
+export const start = async (
+  server: Server,
+  db: Db,
+  canSubscribe: (channel: string, sessionState: SessionState) => Promise<boolean>) => {
   const messagesCollection = await initMessagesCollection(db)
   wss = new WebSocketServer({ server })
   wss.on('connection', async (ws, req) => {
@@ -52,7 +50,7 @@ export const start = async (server, db, canSubscribe) => {
       let message
       try {
         message = JSON.parse(str.toString())
-      } catch (/** @type {any} */ err) {
+      } catch (err: any) {
         const errorMessage = { type: 'error', status: 400, data: err.message ?? err, channel: message.channel }
         return ws.send(JSON.stringify(errorMessage))
       }
@@ -77,9 +75,8 @@ export const start = async (server, db, canSubscribe) => {
           subscribers[message.channel].delete(clientId)
           return ws.send(JSON.stringify({ type: 'unsubscribe-confirm', channel: message.channel }))
         }
-      } catch (/** @type {any} */ err) {
-        /** @type {import('./ws-types.js').Message} */
-        const errorMessage = { type: 'error', status: 500, data: err.message ?? err, channel: message.channel }
+      } catch (err: any) {
+        const errorMessage: Message = { type: 'error', status: 500, data: err.message ?? err, channel: message.channel }
         internalError('ws-error', err)
         return ws.send(JSON.stringify(errorMessage))
       }
@@ -126,11 +123,7 @@ export const stop = async () => {
 
 // Listen to pubsub channel based on mongodb to support scaling on multiple processes
 
-/**
- * @param {import('mongodb').Db} db
- * @param {import('mongodb').Collection} messagesCollection
- */
-const initCursor = async (db, messagesCollection) => {
+const initCursor = async (db: Db, messagesCollection: Collection) => {
   let nbCursors = 0
   while (true) {
     if (stopped) break
@@ -148,7 +141,7 @@ const initCursor = async (db, messagesCollection) => {
           }
         }
       }
-    } catch (/** @type {any} */err) {
+    } catch (err: any) {
       if (stopped) break
       console.log('WS tailable cursor was interrupted, reinit it', err && err.message)
     }

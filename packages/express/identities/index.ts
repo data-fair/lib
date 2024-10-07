@@ -1,19 +1,19 @@
 // Define a few routes to be used to synchronize data with the users/organizations directory
 // Useful both for functionalities and help respect GDPR rules
 
-import express from 'express'
-import { asyncHandler, assertReqInternal, httpError } from '@data-fair/lib/express/index.js'
+import type { PostIdentityReq } from './types/post-req/index.js'
+import type { DeleteIdentityReq } from './types/delete-req/index.js'
+import { Router } from 'express'
+import { asyncHandler, assertReqInternal, httpError } from '@data-fair/lib-express'
 import * as postReq from './types/post-req/index.js'
 import * as deleteReq from './types/delete-req/index.js'
 
-/**
- * @param {string | null | undefined} secretKey
- * @param {(identityUpdate: import('./types/post-req/index.js').PostIdentityReq['params'] & import('./types/post-req/index.js').PostIdentityReq['body']) => Promise<void>} [onUpdate]
- * @param {(identityUpdate: import('./types/delete-req/index.js').DeleteIdentityReq['params'] & import('./types/delete-req/index.js').DeleteIdentityReq['body']) => Promise<void>} [onDelete]
- * @returns {import('express').Router}
- */
-export const createIdentitiesRouter = (secretKey, onUpdate, onDelete) => {
-  const router = express.Router()
+export function createIdentitiesRouter (
+  secretKey: string | null | undefined,
+  onUpdate: (identityUpdate: PostIdentityReq['params'] & PostIdentityReq['body']) => Promise<void>,
+  onDelete: (identityDelete: DeleteIdentityReq['params'] & DeleteIdentityReq['body']) => Promise<void>
+): Router {
+  const router = Router()
 
   router.use((req, res, next) => {
     assertReqInternal(req)

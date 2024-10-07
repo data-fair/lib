@@ -1,4 +1,7 @@
-export * from './session/index.js'
+// we include all the small stuff that is pretty common for all services
+// but not heavier optional stuff like websocket support
+
+export * from './session.js'
 export { default as asyncHandler } from './async-handler.js'
 export { default as errorHandler } from './error-handler.js'
 export * from './events-log.js'

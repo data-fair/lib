@@ -1,3 +1,4 @@
+import type { Request, Response, NextFunction } from 'express'
 import { Histogram } from 'prom-client'
 import Debug from 'debug'
 
@@ -12,21 +13,12 @@ const reqStepHistogram = new Histogram({
 
 const reqObserveKey = Symbol('reqObserveKey')
 
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express').NextFunction} next
- */
-export const reqPerfMiddleware = (req, res, next) => {
+export const reqPerfMiddleware = (req: Request, res: Response, next: NextFunction) => {
   reqPerfWrap(req, res)
   next()
 }
 
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-export const reqPerfWrap = (req, res) => {
+export const reqPerfWrap = (req: Request, res: Response) => {
   const start = Date.now()
   // @ts-ignore
   req[reqObserveKey] = { start, step: start }
@@ -36,20 +28,12 @@ export const reqPerfWrap = (req, res) => {
   })
 }
 
-/**
- * @param {import('express').Request} req
- * @param {string} routeName
- */
-export const reqPerfRouteName = (req, routeName) => {
+export const reqPerfRouteName = (req: Request, routeName: string) => {
   // @ts-ignore
   req[reqObserveKey].routeName = routeName
 }
 
-/**
- * @param {import('express').Request} req
- * @param {string} stepName
- */
-export const reqPerfStep = (req, stepName) => {
+export const reqPerfStep = (req: Request, stepName: string) => {
   /** @type {{start: number, step: number, routeName?: string}} */
   // @ts-ignore
   const reqObserve = req[reqObserveKey]

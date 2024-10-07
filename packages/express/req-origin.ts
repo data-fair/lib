@@ -1,5 +1,6 @@
+import type { Request } from 'express'
 import { isIP } from 'node:net'
-import { httpError } from '@data-fair/lib/http-errors.js'
+import { httpError } from '@data-fair/lib-utils/http-errors.js'
 
 /**
  * similar to https://www.npmjs.com/package/original-url but with these specificities:
@@ -7,9 +8,8 @@ import { httpError } from '@data-fair/lib/http-errors.js'
  *  - only based on the de-facto standard x-forwarded-* headers
  *  - we make these headers required
  *  - limiting the accepted headers and making them required removes any ambiguity that could be exploited
- * @param {import('express').Request} req
  */
-export const reqOrigin = (req) => {
+export const reqOrigin = (req: Request) => {
   const forwardedHost = req.get('x-forwarded-host')
   if (!forwardedHost) throw new Error('The "X-Forwarded-Host" header is required, please check the configuration of the reverse-proxy.')
 
@@ -25,27 +25,18 @@ export const reqOrigin = (req) => {
   }
 }
 
-/**
- * @param {import('express').Request} req
- */
-export const reqIp = (req) => {
+export const reqIp = (req: Request) => {
   const ip = req.get('x-forwarded-for')
   if (!ip) throw new Error('The "X-Forwarded-For" header is required, please check the configuration of the reverse-proxy.')
   if (!isIP(ip)) throw new Error(`The "X-Forwarded-For" header should contain an IP. "${ip}" is not valid.`)
   return ip
 }
 
-/**
- * @param {import('express').Request} req
- */
-export const reqIsInternal = (req) => {
+export const reqIsInternal = (req: Request) => {
   return !req.get('x-forwarded-host')
 }
 
-/**
- * @param {import('express').Request} req
- */
-export const assertReqInternal = (req) => {
+export const assertReqInternal = (req: Request) => {
   // when an environment makes service to service calls using public urls this check can be disabled
   if (process.env.IGNORE_ASSERT_REQ_INTERNAL === 'true' || process.env.IGNORE_ASSERT_REQ_INTERNAL === '1') return
   if (!reqIsInternal(req)) throw httpError(421, 'This endpoint should only be used internally.')

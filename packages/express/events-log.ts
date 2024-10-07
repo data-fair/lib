@@ -6,18 +6,41 @@
 // account events might be sent to a an organization's security officer
 // global events are only for hosting superadmins
 
+import { type Account, type UserRef } from '@data-fair/lib-common-types/session/index.js'
+import { type Request } from 'express'
 import { hostname as getHostname } from 'os'
 import { Counter } from 'prom-client'
 import session from './session/index.js'
 import { internalError } from '../node/observer.js'
 
+export type EventLogLevel = 'info' | 'warn' | 'alert'
+
+export interface EventLog {
+  time: string
+  code: string
+  message: string
+  level: EventLogLevel
+  hostname: string
+  accountKey?: string
+  accountDep?: string
+  accountName?: string
+  userId?: string
+  userName?: string
+  ip?: string
+  host: string
+}
+
+export interface EventLogContext {
+  req?: Request
+  account?: Account
+  user?: UserRef
+  ip?: string
+  host?: string
+}
+
 const level = process.env.EVENTS_LOG_LEVEL || 'info'
 const levels = ['silent', 'alert', 'warn', 'info']
 const activeLevels = levels.slice(0, levels.indexOf(level) + 1)
-
-/**
- * @typedef {import('./events-log-types.js').EventLogContext} EventLogContext
- */
 
 const hostname = getHostname()
 
@@ -27,20 +50,13 @@ export const eventsLogCounter = new Counter({
   labelNames: ['level', 'code', 'host']
 })
 
-/** @type {{service?: string}} */
-const globalInfo = {}
+const globalInfo: { service?: string } = {}
 
-/**
- * @param {string} service
- */
-export function init (service) {
+export function init (service: string) {
   globalInfo.service = service
 }
 
-/**
- * @param {import('./events-log-types.js').EventLog} event
- */
-export function logEvent (event) {
+export function logEvent (event: EventLog) {
   event.hostname = hostname
   eventsLogCounter.inc({ level: event.level, code: event.code, host: event.host })
   if (activeLevels.includes(event.level)) {
@@ -48,13 +64,7 @@ export function logEvent (event) {
   }
 }
 
-/**
- * @param {import('./events-log-types.js').EventLogLevel} level
- * @param {string} code
- * @param {string} message
- * @param {import('./events-log-types.js').EventLogContext} [context]
- */
-async function log (level, code, message, context = {}) {
+async function log (level: EventLogLevel, code: string, message: string, context: EventLogContext = {}) {
   // looking into req.user and req.user.activeAccount for retro-compatibility with older session management
 
   /** @type {import('../shared/session/index.js').UserRef | undefined} */
@@ -96,32 +106,17 @@ async function log (level, code, message, context = {}) {
   logEvent(event)
 }
 
-/**
- * @param {string} code
- * @param {string} message
- * @param {import('./events-log-types.js').EventLogContext} [context]
- */
-function info (code, message, context) {
+function info (code: string, message: string, context: EventLogContext) {
   log('info', code, message, context)
     .catch(err => internalError('event-log-fail', err))
 }
 
-/**
- * @param {string} code
- * @param {string} message
- * @param {import('./events-log-types.js').EventLogContext} [context]
- */
-function warn (code, message, context) {
+function warn (code: string, message: string, context: EventLogContext) {
   log('warn', code, message, context)
     .catch(err => internalError('event-log-fail', err))
 }
 
-/**
- * @param {string} code
- * @param {string} message
- * @param {import('./events-log-types.js').EventLogContext} [context]
- */
-function alert (code, message, context) {
+function alert (code: string, message: string, context: EventLogContext) {
   log('alert', code, message, context)
     .catch(err => internalError('event-log-fail', err))
 }

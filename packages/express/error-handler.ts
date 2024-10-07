@@ -1,8 +1,8 @@
+import type { ErrorRequestHandler } from 'express'
 import { internalError } from '../node/observer.js'
 import eventsLog from './events-log.js'
 
-/** @type {import('express').ErrorRequestHandler} */
-export default function (err, req, res, next) {
+const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // let the default error handler manage closing the connection
   if (res.headersSent) { next(err); return }
 
@@ -29,3 +29,5 @@ export default function (err, req, res, next) {
     res.send(err.stack + '\n')
   }
 }
+
+export default errorHandler

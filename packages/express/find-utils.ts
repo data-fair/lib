@@ -30,11 +30,10 @@
 //   return query
 // }
 
-/**
- * @param {any} sortParam
- * @returns {import('mongodb').Sort}
- */
-export const mongoSort = (sortParam) => {
+import type { Sort } from 'mongodb'
+import type { Request } from 'express'
+
+export function mongoSort (sortParam: any): Sort {
   /** @type {Record<string, import('mongodb').SortDirection>} */
   const sort = {}
 
@@ -50,11 +49,7 @@ export const mongoSort = (sortParam) => {
   return sort
 }
 
-/**
- * @param {import('express').Request['query']} query
- * @param {number} defaultSize
- */
-export const mongoPagination = (query, defaultSize = 10) => {
+export function mongoPagination (query: Request['query'], defaultSize = 10) {
   let size = defaultSize
   if (query && query.size && typeof query.size === 'string' && !isNaN(parseInt(query.size))) {
     size = parseInt(query.size)
@@ -70,14 +65,8 @@ export const mongoPagination = (query, defaultSize = 10) => {
   return { skip, size }
 }
 
-/**
- * @param {any} selectParam
- * @param {string[]} [exclude]
- * @returns {Record<string, 0 | 1>}
- */
-export const mongoProjection = (selectParam, exclude = []) => {
-  /** @type {Record<string, 0 | 1>} */
-  const select = { }
+export function mongoProjection (selectParam: any, exclude: string[] = []): Record<string, 0 | 1> {
+  const select: Record<string, 0 | 1> = { }
 
   if (typeof selectParam !== 'string') return select
 
