@@ -289,12 +289,6 @@
     "flatstr": "1",
     "json-schema-to-typescript": "11",
     "jsonwebtoken": "9",
-    "jwks-rsa": "3",
-    "jwt-decode": "4",
-    "mongodb": "6",
-    "nanoid": "5",
-    "ofetch": "1",
-    "prom-client": "15",
     "reconnecting-websocket": "4",
     "semver": "7",
     "universal-cookie": "7",
@@ -358,24 +352,6 @@
     "json-schema-to-typescript": {
       "optional": true
     },
-    "jsonwebtoken": {
-      "optional": true
-    },
-    "jwks-rsa": {
-      "optional": true
-    },
-    "jwt-decode": {
-      "optional": true
-    },
-    "mongodb": {
-      "optional": true
-    },
-    "nanoid": {
-      "optional": true
-    },
-    "ofetch": {
-      "optional": true
-    },
     "reconnecting-websocket": {
       "optional": true
     },
@@ -401,7 +377,6 @@
   "devDependencies": {
     "@commitlint/cli": "^18.2.0",
     "@commitlint/config-conventional": "^18.1.0",
-    "@types/chroma-js": "^2.4.4",
     "@types/cookie": "^0.6.0",
     "@types/debug": "^4.1.10",
     "@types/eslint": "^9.6.1",
@@ -410,46 +385,15 @@
     "@types/universal-cookie": "^2.2.0",
     "@types/ws": "^8.5.8",
     "@vueuse/core": "^11.1.0",
-    "agentkeepalive": "^4.5.0",
     "ajv": "^8.17.1",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",
     "ajv-i18n": "^4.2.0",
-    "axios": "^1.6.1",
-    "cacheable-lookup": "^7.0.0",
-    "chalk": "^5.3.0",
-    "chroma-js": "^2.4.2",
-    "cookie": "^0.6.0",
-    "dayjs": "^1.11.10",
-    "draftlog": "^1.0.13",
     "eslint": "^9.10.0",
     "eslint-plugin-jsdoc": "^50.2.2",
-    "express": "^5.0.0",
-    "fast-json-stringify": "^5.9.1",
-    "flatstr": "^1.0.12",
     "husky": "^8.0.3",
-    "json-schema-to-typescript": "^13.1.1",
-    "jsonwebtoken": "^9.0.2",
-    "jwks-rsa": "^3.1.0",
-    "jwt-decode": "^4.0.0",
-    "mongodb": "^6.5.0",
-    "nanoid": "^5.0.7",
     "neostandard": "^0.11.4",
-    "ofetch": "^1.3.3",
-    "prom-client": "^15.1.0",
-    "reconnecting-websocket": "^4.4.0",
-    "semver": "^7.6.2",
-    "universal-cookie": "^7.2.0",
-    "vue": "^3.3.12",
-    "vue-i18n": "^10.0.3",
-    "vue-router": "^4.2.5",
-    "vue-tsc": "^2.1.6",
-    "vuetify": "^3.7.2",
-    "ws": "^8.16.0"
-  },
-  "dependencies": {
-    "change-case": "^5.4.4",
-    "commander": "^12.1.0"
+    "vue-tsc": "^2.1.6"
   },
   "workspaces": [
     "utils",

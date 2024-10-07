@@ -208,31 +208,33 @@ export const returnValid = (data, options) => {
 }
 `
       } else if (schemaExport === 'stringify') {
-        const fastJsonStringify = (await import('fast-json-stringify')).default
-        const stringifyCode = fastJsonStringify(schema, { mode: 'standalone', schema: schemas })
-          .replace('module.exports = ', 'export default (')
-          .replace('const { dependencies } = require(\'fast-json-stringify/lib/standalone\')', 'import {dependencies} from \'fast-json-stringify/lib/standalone.js\'') +
-          ')'
+        // TODO: is this really a good idea ? over-optimization ?
+        throw new Error('stringify export is not supported')
+        //         const fastJsonStringify = (await import('fast-json-stringify')).default
+        //         const stringifyCode = fastJsonStringify(schema, { mode: 'standalone', schema: schemas })
+        //           .replace('module.exports = ', 'export default (')
+        //           .replace('const { dependencies } = require(\'fast-json-stringify/lib/standalone\')', 'import {dependencies} from \'fast-json-stringify/lib/standalone.js\'') +
+        //           ')'
 
-        writeFileSync(path.join(dir, '.type', 'stringify.' + (options.mjs ? 'mjs' : 'js')), '/* eslint-disable */\n// @ts-nocheck\n\n' + stringifyCode)
-        importsCode += `
-// stringify function compiled using fast-json-stringify
-// @ts-ignore
-import stringifyUnsafe from './stringify.${options.mjs ? 'mjs' : 'js'}'
-// @ts-ignore
-import flatstr from 'flatstr'
-`
-        code += `
-/**
- * @param {import('./types.js').${mainTypeName}} data
- * @returns {string}
- */
-export const stringify = (data) => {
-  const str = stringifyUnsafe(data)
-  flatstr(str)
-  return str
-}
-`
+        //         writeFileSync(path.join(dir, '.type', 'stringify.' + (options.mjs ? 'mjs' : 'js')), '/* eslint-disable */\n// @ts-nocheck\n\n' + stringifyCode)
+        //         importsCode += `
+        // // stringify function compiled using fast-json-stringify
+        // // @ts-ignore
+        // import stringifyUnsafe from './stringify.${options.mjs ? 'mjs' : 'js'}'
+        // // @ts-ignore
+        // import flatstr from 'flatstr'
+        // `
+        //         code += `
+        // /**
+        //  * @param {import('./types.js').${mainTypeName}} data
+        //  * @returns {string}
+        //  */
+        // export const stringify = (data) => {
+        //   const str = stringifyUnsafe(data)
+        //   flatstr(str)
+        //   return str
+        // }
+        // `
       } else {
         throw new Error(`unsupported export ${schemaExport}`)
       }

@@ -3,10 +3,30 @@
   "version": "0.0.0",
   "description": "Composables and other utilities for Vue applications in the data-fair stack.",
   "main": "index.js",
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "peerDependencies": {
+    "dayjs": "^1.11.13",
+    "ofetch": "^1.4.0",
+    "reconnecting-websocket": "^4.4.0",
+    "vue": "^3.5.11"
+  },
+  "peerDependenciesMeta": {
+    "reconnecting-websocket": {
+      "optional": true
+    },
+    "dayjs": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "jwt-decode": "^4.0.0",
+    "universal-cookie": "^7.2.0"
+  },
+  "devDependencies": {
+    "vue-router": "^4.4.5"
+  }
 }

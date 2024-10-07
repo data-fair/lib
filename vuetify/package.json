@@ -3,10 +3,14 @@
   "version": "0.0.0",
   "description": "Components based on the Vuetify 3 UI lib for the data-fair stack.",
   "main": "index.js",
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "peerDependencies": {
+    "ofetch": "^1.4.0",
+    "vue-i18n": "^10.0.4",
+    "vuetify": "^3.7.2"
+  }
 }
