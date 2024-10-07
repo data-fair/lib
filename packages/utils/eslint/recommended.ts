@@ -1,3 +1,5 @@
+import type { Linter } from 'eslint'
+
 export const deprecatedModules = [
   { name: 'event-to-promise', message: 'Please use @data-fair/lib/event-promise.js' },
   { name: '@koumoul/sd-vue', message: 'Please use @data-fair/lib/vue/session.js' },
@@ -13,10 +15,11 @@ export const deprecatedModules = [
   { name: 'original-url', message: 'Please use @data-fair/lib/express/req-origin.js' }
 ]
 
-/** @type {import('eslint').Linter.Config[]} */
-export default [{
+const config: Linter.Config[] = [{
   rules: {
     'no-restricted-imports': ['error', ...deprecatedModules],
     'no-restricted-modules': ['error', ...deprecatedModules.filter(dm => !dm.importNames)]
   }
 }]
+
+export default config

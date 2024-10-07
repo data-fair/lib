@@ -4,11 +4,11 @@
   "description": "A collection of javascript functions, components, types, etc to help work inside the data-fair stack.",
   "scripts": {
     "lint": "eslint . --fix",
-    "build": "find ./ -name '*.d.ts' -not -path '*/node_modules/*' -delete && tsc -p tsconfig.build.json && vue-tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && vue-tsc -p tsconfig.build.json",
     "prepare": "husky install",
     "quality": "eslint . && npm test",
     "prepublishOnly": "npm run quality && npm run build",
-    "pre-test": "cd packages/types-builder/test && node ../build.js",
+    "pre-test": "cd packages/types-builder/test && node --experimental-strip-types ../build.ts",
     "test": "npm run pre-test && node --experimental-strip-types --test **/*.test.ts",
     "test-only": "npm run pre-test && node --experimental-strip-types --test --test-only"
   },
@@ -21,9 +21,6 @@
   ],
   "engines": {
     "node": ">=20.0.0"
-  },
-  "bin": {
-    "df-build-types": "./src/types/build.js"
   },
   "repository": {
     "type": "git",

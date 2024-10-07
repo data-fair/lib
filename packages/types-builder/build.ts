@@ -6,11 +6,11 @@ import { pascalCase } from 'change-case'
 import { program } from 'commander'
 import clone from '@data-fair/lib-utils/clone.js'
 
-/**
- * @param {string} dir
- * @param {{mjs: boolean}} options
- */
-const main = async (dir, options) => {
+type TypesBuilderOptions = { mjs: boolean }
+type FileRef = { url: string }
+type SchemaExport = ('types' | 'validate' | 'stringify' | 'schema' | 'resolvedSchema' | 'resolvedSchemaJson')
+
+const main = async (dir: string, options: TypesBuilderOptions) => {
   let pJsonName
   try {
     const pJson = JSON.parse(readFileSync('./package.json', 'utf8'))
@@ -23,16 +23,15 @@ const main = async (dir, options) => {
     pJsonName = pJson.name
   }
   const inLib = pJsonName === '@data-fair/lib'
-  const inTest = pJsonName === '@data-fair/lib-test'
 
   const rootDir = path.resolve(dir)
 
-  console.log(`scan dir ${dir} looking for pattern */schema.{json|js}`)
+  console.log(`scan dir ${dir} looking for pattern */schema.{json|js|ts}`)
   const dirs = []
-  for (const _file of readdirSync(rootDir, { recursive: true })) {
-    const file = /** @type {string} */(_file)
+  for (const file of readdirSync(rootDir, { recursive: true })) {
+    if (typeof file !== 'string') continue
     const fileName = path.basename(file)
-    if (!['schema.json', 'schema.js'].includes(fileName)) continue
+    if (!['schema.json', 'schema.js', 'schema.ts'].includes(fileName)) continue
     const filePath = path.resolve(rootDir, file.toString())
     const parts = filePath.split(path.sep)
     if (parts.includes('node_modules')) continue
@@ -42,17 +41,14 @@ const main = async (dir, options) => {
   }
   console.log(`found ${dirs.length} types to compile`)
 
-  /** @type {Record<string, any>} */
-  const schemas = {}
+  const schemas: Record<string, any> = {}
   if (!inLib) {
-    const { schema: sessionStateSchema } = await import('../shared/session/.type/index.js')
+    /* const { schema: sessionStateSchema } = await import('@data-fair/lib-common-types/session/.type/index.js')
     schemas[sessionStateSchema.$id] = sessionStateSchema
-    const { schema: accountSchema } = await import('../shared/account/.type/index.js')
+    const { schema: accountSchema } = await import('@data-fair/lib-common-types/account/.type/index.js')
     schemas[accountSchema.$id] = accountSchema
-    const { schema: appSchema } = await import('../shared/application/.type/index.js')
-    schemas[appSchema.$id] = appSchema
-    const { schema: colorsSchema } = await import('../color-scheme/.type/index.js')
-    schemas[colorsSchema.$id] = colorsSchema
+    const { schema: appSchema } = await import('@data-fair/lib-common-types/application/.type/index.js')
+    schemas[appSchema.$id] = appSchema */
   }
 
   for (const [dir, key, fileName] of dirs) {
@@ -67,21 +63,13 @@ const main = async (dir, options) => {
 
   const localResolver = {
     order: 1,
-    /**
-     * @param {{ url: string }} file
-     * @returns {boolean}
-     */
-    canRead (file) {
+    canRead (file: FileRef): boolean {
       if (file.url.startsWith('https://github.com/data-fair/') && !schemas[file.url]) {
         throw new Error(`the $ref ${file.url} should probably be resolved locally but was not found`)
       }
       return !!schemas[file.url]
     },
-    /**
-     * @param {{ url: string }} file
-     * @param {(err: any, doc?: any) => void} callback
-     */
-    async read (/** @type {{ url: string }} */file, callback) {
+    async read (file: FileRef, callback: (err: any, doc?: any) => void) {
       const clonedSchema = clone(schemas[file.url])
       delete clonedSchema.$id
       callback(null, clonedSchema)
@@ -96,11 +84,11 @@ const main = async (dir, options) => {
     else schema = clone((await import(filePath)).default)
     if (schema.$id) console.log(`  $id: ${JSON.stringify(schema.$id)}`)
     const mainTypeName = pascalCase(schema.title || key)
-    /** @type {('types' | 'validate' | 'stringify' | 'schema' | resolvedSchema | 'resolvedSchemaJson')[]} */
-    const schemaExports = schema['x-exports'] || ['types', 'validate', 'stringify', 'schema']
+    const schemaExports: SchemaExport[] = schema['x-exports'] || ['types', 'validate', 'schema']
     console.log(`  exports: ${JSON.stringify(schemaExports)}`)
     let importsCode = '/* eslint-disable */\n\n'
     let code = ''
+    let dtsCode = ''
     if (existsSync(path.join(dir, '.type'))) rmSync(path.join(dir, '.type'), { recursive: true })
     mkdirSync(path.join(dir, '.type'))
 
@@ -108,7 +96,7 @@ const main = async (dir, options) => {
     let resolvedSchema
     if (schemaExports.includes('resolvedSchema') || schemaExports.includes('resolvedSchemaJson')) {
       const refParser = await import('@bcherny/json-schema-ref-parser')
-      resolvedSchema = /** @type {any} */(await refParser.dereference(schema, $refOptions))
+      resolvedSchema = (await refParser.dereference(schema, $refOptions)) as any
       if (resolvedSchema.$id) resolvedSchema.$id += '-resolved'
     }
 
@@ -116,33 +104,33 @@ const main = async (dir, options) => {
 /** @type {string[]} */
 export const schemaExports = ${JSON.stringify(schemaExports, null, 2)}
 `
+    dtsCode += `
+export const schemaExports: string[]
+`
 
     for (const schemaExport of schemaExports) {
       if (schemaExport === 'types') {
         const compileTs = (await import('json-schema-to-typescript')).compile
         const typesCode = await compileTs(clone(schema), schema.$id || key,
           { bannerComment: '', unreachableDefinitions: true, $refOptions })
-        writeFileSync(path.join(dir, '.type', 'types.ts'), '/* eslint-disable */\n\n' + typesCode)
-        const importedTypes = [mainTypeName]
-        if (schema.$defs) {
-          for (const key of Object.keys(schema.$defs)) {
-            importedTypes.push(pascalCase(schema.$defs[key].title ?? key))
-          }
-        }
-        code += '\n// see https://github.com/bcherny/json-schema-to-typescript/issues/439 if some types are not exported\n'
-        code += '/**'
-        for (const importedType of importedTypes) {
-          code += `\n * @typedef {import('./types.js').${importedType}} ${importedType}`
-        }
-        code += '\n */\n'
+        dtsCode += `
+// see https://github.com/bcherny/json-schema-to-typescript/issues/439 if some types are not exported
+${typesCode}
+`
       } else if (schemaExport === 'schema') {
         code += `
 export const schema = ${JSON.stringify(schema, null, 2)}
 `
+        dtsCode += `
+export const schema: any
+        `
       } else if (schemaExport === 'resolvedSchema') {
         code += `
 export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
 `
+        dtsCode += `
+export const resolvedSchema: any
+        `
       } else if (schemaExport === 'resolvedSchemaJson') {
         delete resolvedSchema['x-exports']
         writeFileSync(path.join(dir, '.type', 'resolved-schema.json'), JSON.stringify(resolvedSchema, null, 2))
@@ -181,32 +169,26 @@ export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
           validateCode = validateCode.replace(/require\("ajv\/dist\/runtime\/ucs2length"\)/g, 'ucs2length')
         }
 
-        let validationImport = '@data-fair/lib/types/validation.js'
-        if (inLib) validationImport = '#lib/types/validation.js'
-        if (inTest) validationImport = '../../../../validation.js'
+        const validationImport = '@data-fair/lib-node/validation.js'
         writeFileSync(path.join(dir, '.type', 'validate.' + (options.mjs ? 'mjs' : 'js')), '/* eslint-disable */\n// @ts-nocheck\n\n' + validateCode)
         importsCode += `
 // validate function compiled using ajv
-// @ts-ignore
-import validateUnsafe from './validate.${options.mjs ? 'mjs' : 'js'}'
+import validate from './validate.${options.mjs ? 'mjs' : 'js'}'
 import { assertValid as assertValidGeneric } from '${validationImport}'`
         code += `
-/** @type {{errors?: import('ajv').ErrorObject[] | null | undefined} & ((data: any) => data is ${mainTypeName})} */
-export const validate = /** @type {import('ajv').ValidateFunction} */(validateUnsafe)
-/** @type {(data: any, options?: import('${validationImport}').AssertValidOptions) => asserts data is ${mainTypeName}} */
 export const assertValid = (data, options) => {
-  assertValidGeneric(/** @type {import('ajv').ValidateFunction} */(validateUnsafe), data, options)
+  assertValidGeneric(validate, data, options)
 }
-/**
- * @param {any} data
- * @param {import('${validationImport}').AssertValidOptions} [options]
- * @return {${mainTypeName}}
-*/
 export const returnValid = (data, options) => {
   assertValid(data, options)
   return data
 }
 `
+        dtsCode += `
+export const validate = (data: any) => data is ${mainTypeName}
+export const assertValid = (data: any, options?: import('${validationImport}').AssertValidOptions) => asserts data is ${mainTypeName}
+export const returnValid = (data: any, options?: import('${validationImport}').AssertValidOptions) => ${mainTypeName}
+      `
       } else if (schemaExport === 'stringify') {
         // TODO: is this really a good idea ? over-optimization ?
         throw new Error('stringify export is not supported')
@@ -240,6 +222,7 @@ export const returnValid = (data, options) => {
       }
     }
     writeFileSync(path.join(dir, '.type', 'index.' + (options.mjs ? 'mjs' : 'js')), importsCode + '\n' + code)
+    writeFileSync(path.join(dir, '.type', 'index.d.ts'), dtsCode)
 
     const indexFilePath = path.join(dir, 'index.' + (options.mjs ? 'mjs' : 'js'))
     if (!existsSync(indexFilePath)) writeFileSync(indexFilePath, `export * from './.type/index.${options.mjs ? 'mjs' : 'js'}'\n`)

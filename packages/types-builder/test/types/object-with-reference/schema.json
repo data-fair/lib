@@ -2,7 +2,7 @@
   "$id": "https://github.com/data-fair/lib-test/object-with-reference",
   "title": "object with reference",
   "type": "object",
-  "x-exports": ["types", "validate", "stringify", "resolvedSchema"],
+  "x-exports": ["types", "validate", "resolvedSchema"],
   "properties": {
     "str": {"$ref": "https://github.com/data-fair/lib-test/simple-object#/definitions/str3"},
     "str4": {"$ref": "https://github.com/data-fair/lib-test/simple-object#/properties/str4"}

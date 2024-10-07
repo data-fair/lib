@@ -6,6 +6,6 @@
     "emitDeclarationOnly": true,
     "strict": true
   },
-  "include": ["packages/utils"],
+  "include": ["packages/utils", "packages/types-builder"],
   "exclude": ["*.test.*"]
 }

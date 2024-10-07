@@ -2,14 +2,11 @@
   "name": "@data-fair/lib-types-builder",
   "version": "0.0.0",
   "description": "A tool to process json schemas and produce types, validation functions, etc.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@data-fair/lib-utils": "^0.0.0",
+    "@bcherny/json-schema-ref-parser": "^10.0.5-fork",
+    "@data-fair/lib-utils": "^0.1.0",
     "ajv": "^8.17.1",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",
@@ -18,5 +15,8 @@
     "commander": "^12.1.0",
     "json-schema-to-typescript": "^15.0.2"
   },
-  "type": "module"
+  "type": "module",
+  "bin": {
+    "df-build-types": "./build.js"
+  }
 }
