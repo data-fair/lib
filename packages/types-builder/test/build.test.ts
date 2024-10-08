@@ -27,7 +27,7 @@ describe('build.js script', () => {
       $id: 'https://github.com/data-fair/lib-test/object-with-reference-resolved',
       title: 'object with reference',
       type: 'object',
-      'x-exports': ['types', 'validate', 'stringify', 'resolvedSchema'],
+      'x-exports': ['types', 'validate', 'resolvedSchema'],
       properties: {
         str: { type: 'string', default: 'val1' },
         str4: { type: 'string', const: 'Str 4' }

@@ -4,7 +4,7 @@
   "description": "A collection of javascript functions, components, types, etc to help work inside the data-fair stack.",
   "scripts": {
     "lint": "eslint . --fix",
-    "build": "npm run build-types && rm packages/*/*.d.ts && vue-tsc -p tsconfig.build.json",
+    "build": "npm run build-types && rm packages/*/*.d.ts && tsc -p tsconfig.build.json && vue-tsc -p tsconfig.build-vue.json",
     "build-types": "node --experimental-strip-types packages/types-builder/build.ts",
     "prepare": "husky install",
     "quality": "eslint . && npm test",
