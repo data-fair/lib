@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib-express",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Middlewares and utility functions related to the use of Express in the data-fair stack.",
   "main": "index.js",
   "types": "index.d.ts",
@@ -23,8 +23,8 @@
     }
   },
   "dependencies": {
-    "@data-fair/lib-common-types": "^1.0.0",
-    "@data-fair/lib-node": "^0.2.0",
+    "@data-fair/lib-common-types": "^1.1.0",
+    "@data-fair/lib-node": "^1.0.0",
     "cookie": "^0.7.2",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.1.0",
