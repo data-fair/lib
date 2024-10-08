@@ -7,10 +7,10 @@ export function registerModuleHooks () {
 const pendingPromises: Record<string, { resolve: (data: any) => void, id: number }[]> = {}
 let i = 0
 
-export function waitFor (eventName: string, timeout = 2000) {
+export function waitFor <T> (eventName: string, timeout = 2000) {
   i++
   const id = i
-  const p = new Promise((resolve, reject) => {
+  const p = new Promise<T>((resolve, reject) => {
     pendingPromises[eventName] = pendingPromises[eventName] ?? []
     pendingPromises[eventName].push({ resolve, id })
     setTimeout(() => reject(new Error(`Timeout waiting for test spy ${eventName}`)), timeout)
