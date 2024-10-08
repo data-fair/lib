@@ -1,28 +1,25 @@
-<script setup>
+<script setup lang="ts">
+import { VAutocomplete } from 'vuetify/components/VAutocomplete'
 import { ref, watch } from 'vue'
 import { ofetch } from 'ofetch'
 import { useDebounceFn } from '@vueuse/core'
 
-defineProps({
-  variant: { type: String, default: undefined }
-})
+defineProps<{variant?: VAutocomplete['variant']}>()
 const emit = defineEmits(['selected'])
 const model = defineModel({ type: String })
 
-/** @type {import('vue').Ref<any[]>} */
-const addressesList = ref([])
+const addressesList = ref([] as any[])
 const loadingAddresses = ref(false)
-/** @type {import('vue').Ref<any>} */
-const address = ref(null)
+const address = ref(null as any)
 
-const findAdressesFn = async (/** @type {string} */search, /** @type {string} */selectedId) => {
+const findAdressesFn = async (search: string, selectedId?: string) => {
   loadingAddresses.value = true
   if (!search || search.length < 3) {
     addressesList.value = address.value ? [address.value] : []
   } else {
     const params = { q: search }
     const result = (await ofetch('https://api-adresse.data.gouv.fr/search/', { params }))
-    addressesList.value = result.features.map((/** @type {any} */f) => ({
+    addressesList.value = result.features.map((f: any) => ({
       title: f.properties.label,
       value: {
         lat: f.geometry.coordinates[1],
@@ -37,7 +34,7 @@ const findAdressesFn = async (/** @type {string} */search, /** @type {string} */
   loadingAddresses.value = false
 }
 
-const findAdresses = /** @type {typeof findAdressesFn} */(useDebounceFn(findAdressesFn, 300))
+const findAdresses = useDebounceFn(findAdressesFn, 300) as typeof findAdressesFn
 
 if (model.value && model.value.length) {
   // @ts-ignore
@@ -70,9 +67,9 @@ watch(
     hide-details
     label="Adresse"
     placeholder="Saisissez une adresse"
-    :variant="/** @type {import('vuetify/components').VAutocomplete['variant']} */(variant)"
+    :variant="variant"
     density="compact"
     menu-icon=""
-    @update:search="(/** @type {string} */search) => findAdresses(search)"
+    @update:search="(search: string) => findAdresses(search)"
   />
 </template>
