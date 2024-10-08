@@ -5,7 +5,8 @@
   "author": "",
   "license": "MIT",
   "scripts": {
-    "prepublishOnly": "cd .. && npm run prepublishOnly"
+    "prepublishOnly": "cd .. && npm run prepublishOnly",
+    "build": "cd .. && npm run build"
   },
   "dependencies": {
     "@bcherny/json-schema-ref-parser": "^10.0.5-fork",

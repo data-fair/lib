@@ -1,7 +1,7 @@
 import { register } from 'node:module'
 
 export function registerModuleHooks () {
-  register('@data-fair/lib/node/test-module-hooks.js', { parentURL: import.meta.url })
+  register('@data-fair/lib-node/test-module-hooks.js', { parentURL: import.meta.url })
 }
 
 const pendingPromises: Record<string, { resolve: (data: any) => void, id: number }[]> = {}

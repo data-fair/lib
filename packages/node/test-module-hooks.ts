@@ -10,7 +10,7 @@ export async function load (url, context, nextLoad) {
     let source = result.source.toString()
     const matches = source.match(regexp)
     if (matches) {
-      source = 'import { emit as __emitTestSpy } from "@data-fair/lib/node/test-spies.js"\n' + source
+      source = 'import { emit as __emitTestSpy } from "@data-fair/lib-node/test-spies.js"\n' + source
       source = source.replace(regexp, '__emitTestSpy($1)\n')
       result.source = Buffer.from(source, 'utf-8')
     }

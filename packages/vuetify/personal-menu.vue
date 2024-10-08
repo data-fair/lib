@@ -224,10 +224,10 @@ en:
   cancelDeletion: Cancel the deletion of the user
 </i18n>
 
-<script setup>
+<script setup lang="ts">
 import { computed, toRefs } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useSession } from '@data-fair/lib/vue/session.js'
+import { useSession } from '@data-fair/lib-vue/session.js'
 import { useTheme } from 'vuetify'
 import UserAvatar from './user-avatar.vue'
 

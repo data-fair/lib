@@ -9,6 +9,8 @@ import { jwtDecode } from 'jwt-decode'
 import cookiesModule from 'universal-cookie'
 import Debug from 'debug'
 
+export type { SessionState, SessionStateAuthenticated, User, Account } from '@data-fair/lib-common-types/session/index.js'
+
 const Cookies = cookiesModule as unknown as typeof cookiesModule.default
 
 interface GenericCookies {

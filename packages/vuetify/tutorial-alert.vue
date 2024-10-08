@@ -61,7 +61,7 @@ en:
   readDoc: Read the documentation
 </i18n>
 
-<script>
+<script lang="ts">
 import { useTheme } from 'vuetify';
 
 export default {

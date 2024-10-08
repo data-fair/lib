@@ -4,7 +4,8 @@
   "description": "Small dependency-less or dependency-light utility functions for the data-fair stack.",
   "main": "index.js",
   "scripts": {
-    "prepublishOnly": "cd .. && npm run prepublishOnly"
+    "prepublishOnly": "cd .. && npm run prepublishOnly",
+    "build": "cd .. && npm run build"
   },
   "devDependencies": {},
   "files": [

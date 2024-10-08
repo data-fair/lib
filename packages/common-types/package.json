@@ -4,7 +4,8 @@
   "description": "Shared schemas and built type definitions in the data-fair stack.",
   "main": "index.js",
   "scripts": {
-    "prepublishOnly": "cd .. && npm run prepublishOnly"
+    "prepublishOnly": "cd .. && npm run prepublishOnly",
+    "build": "cd .. && npm run build"
   },
   "devDependencies": {},
   "files": [

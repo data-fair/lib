@@ -37,12 +37,12 @@ en:
   message: Choisissez un propriétaire
 </i18n>
 
-<script setup>
+<script setup lang="ts">
 import { watch, computed } from 'vue'
 import { computedAsync } from '@vueuse/core'
 import { ofetch } from 'ofetch'
 import { useI18n } from 'vue-i18n'
-import { useSessionAuthenticated } from '@data-fair/lib/vue/session.js'
+import { useSessionAuthenticated, type Account } from '@data-fair/lib-vue/session.js'
 
 const { t } = useI18n({ useScope: 'local' })
 
@@ -60,8 +60,7 @@ const session = useSessionAuthenticated()
 const owners = computedAsync(async () => {
   const user = session.state.user
 
-  /** @type {import('@data-fair/lib-common-types/session').Account[]} */
-  const owners = []
+  const owners: Account[] = []
   if (props.otherAccounts || session.state.account.type === 'user') {
     owners.push({ type: 'user', id: user.id, name: user.name })
   }
@@ -92,10 +91,7 @@ const owners = computedAsync(async () => {
   return owners
 })
 
-/**
- * @param {import('@data-fair/lib-common-types/session').Account} owner
- */
-const getLabel = (owner) => {
+const getLabel = (owner: Account) => {
   if (owner.type === 'user' && owner.id === session.state.user?.id) return t('yourself')
   if (owner.type === 'organization') {
     if (owner.department) return `${t('org')} ${owner.name} / ${owner.departmentName || owner.department}`

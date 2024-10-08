@@ -10,12 +10,14 @@
   "author": "",
   "license": "MIT",
   "scripts": {
-    "prepublishOnly": "cd .. && npm run prepublishOnly"
+    "prepublishOnly": "cd .. && npm run prepublishOnly",
+    "build": "cd .. && npm run build"
   },
   "dependencies": {
     "@data-fair/lib-common-types": "^1.1.0",
     "@data-fair/lib-utils": "1.0.0",
     "agentkeepalive": "^4.5.0",
+    "ajv-formats": "^3.0.1",
     "ajv-i18n": "^4.2.0",
     "axios": "^1.7.7",
     "cacheable-lookup": "^7.0.0",

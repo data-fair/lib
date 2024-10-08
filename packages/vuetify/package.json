@@ -11,12 +11,14 @@
   "author": "",
   "license": "MIT",
   "scripts": {
-    "prepublishOnly": "cd .. && npm run prepublishOnly"
+    "prepublishOnly": "cd .. && npm run prepublishOnly",
+    "build": "cd .. && npm run build"
   },
   "peerDependencies": {
-    "ofetch": "^1.4.0",
-    "vue-i18n": "^10.0.4",
-    "vuetify": "^3.7.2"
+    "@data-fair/lib-vue": "1",
+    "ofetch": "1",
+    "vue-i18n": "10",
+    "vuetify": "3"
   },
   "type": "module",
   "dependencies": {

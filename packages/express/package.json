@@ -11,11 +11,13 @@
   "author": "",
   "license": "MIT",
   "scripts": {
-    "prepublishOnly": "cd .. && npm run prepublishOnly"
+    "prepublishOnly": "cd .. && npm run prepublishOnly",
+    "build": "cd .. && npm run build"
   },
   "peerDependencies": {
-    "express": "^5.0.0",
-    "ws": "^8.18.0"
+    "@data-fair/lib-node": "1",
+    "express": "5",
+    "ws": "8"
   },
   "peerDependenciesMeta": {
     "ws": {
@@ -24,7 +26,6 @@
   },
   "dependencies": {
     "@data-fair/lib-common-types": "^1.1.0",
-    "@data-fair/lib-node": "^1.0.0",
     "cookie": "^0.7.2",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.1.0",

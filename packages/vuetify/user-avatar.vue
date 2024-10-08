@@ -39,9 +39,9 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { useSession } from '@data-fair/lib/vue/session.js'
+import { useSession } from '@data-fair/lib-vue/session.js'
 
 const props = defineProps({
   showAccount: { type: Boolean, default: false }
