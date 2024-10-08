@@ -1,10 +1,13 @@
 {
   "name": "@data-fair/lib-utils",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Small dependency-less or dependency-light utility functions for the data-fair stack.",
   "main": "index.js",
   "devDependencies": {},
-  "files": ["**/*.js", "**/*.d.ts"],
+  "files": [
+    "**/*.js",
+    "**/*.d.ts"
+  ],
   "author": "",
   "license": "MIT",
   "type": "module"
