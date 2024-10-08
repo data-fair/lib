@@ -224,7 +224,12 @@ export const returnValid: (data: any, options?: import('${validationImport}').As
     writeFileSync(path.join(dir, '.type', 'index.d.ts'), dtsCode)
 
     const indexFilePath = path.join(dir, 'index.' + (options.mjs ? 'mjs' : 'js'))
-    if (!existsSync(indexFilePath)) writeFileSync(indexFilePath, `export * from './.type/index.${options.mjs ? 'mjs' : 'js'}'\n`)
+    const tsIndexFilePath = path.join(dir, 'index.ts')
+    const dtsIndexFilePath = path.join(dir, 'index.d.ts')
+    if (!existsSync(indexFilePath) && !existsSync(tsIndexFilePath) && !existsSync(dtsIndexFilePath)) {
+      writeFileSync(indexFilePath, `export * from './.type/index.${options.mjs ? 'mjs' : 'js'}'\n`)
+      writeFileSync(dtsIndexFilePath, `export * from './.type/index.${options.mjs ? 'mjs' : 'js'}'\n`)
+    }
   }
 }
 

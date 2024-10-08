@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "description": "Composables and other utilities for Vue applications in the data-fair stack.",
   "main": "index.js",
-  "files": ["**/*.js", "**/*.d.ts"],
+  "files": [
+    "**/*.js",
+    "**/*.d.ts"
+  ],
   "author": "",
   "license": "MIT",
   "peerDependencies": {
@@ -21,6 +24,7 @@
     }
   },
   "dependencies": {
+    "@data-fair/lib-common-types": "0.1.0",
     "jwt-decode": "^4.0.0",
     "universal-cookie": "^7.2.0"
   },

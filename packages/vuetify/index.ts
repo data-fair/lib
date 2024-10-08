@@ -1,3 +1,4 @@
+import { VuetifyOptions } from 'vuetify'
 import { fr, en } from 'vuetify/locale'
 
 const baseColors = {
@@ -15,16 +16,10 @@ const baseDarkColors = {
   success: '#00E676' // green.accent3
 }
 
-/**
- * @param {Record<string, string>} [searchParams]
- * @param {boolean} [darkCookie]
- * @returns {import('vuetify').VuetifyOptions}
- */
-export const defaultOptions = (searchParams, darkCookie = false) => {
+export function defaultOptions (searchParams: Record<string, string>, darkCookie = false):VuetifyOptions {
   const dark = searchParams?.dark ? searchParams.dark === 'true' : darkCookie
 
-  /** @type {Record<string, string>} */
-  const searchParamsColors = {}
+  const searchParamsColors: Record<string, string> = {}
   for (const colorCode of ['primary', 'secondary']) {
     if (searchParams?.[colorCode]) searchParamsColors[colorCode] = searchParams[colorCode]
   }
