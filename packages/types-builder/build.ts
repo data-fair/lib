@@ -27,7 +27,7 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
   const rootDir = path.resolve(dir)
 
   console.log(`scan dir ${dir} looking for pattern */schema.{json|js|ts}`)
-  const dirs = []
+  const dirs: [string, string, string][] = []
   for (const file of readdirSync(rootDir, { recursive: true })) {
     if (typeof file !== 'string') continue
     const fileName = path.basename(file)
@@ -35,9 +35,11 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     const filePath = path.resolve(rootDir, file.toString())
     const parts = filePath.split(path.sep)
     if (parts.includes('node_modules')) continue
+    const dir = path.dirname(filePath)
+    if (dirs.some(d => d[0] === dir)) continue
     const lastParts = parts.slice(-3)
     if (lastParts[1] === 'type' || lastParts[1] === 'types') dirs.push([path.dirname(filePath), lastParts[0], fileName])
-    else dirs.push([path.dirname(filePath), lastParts[1], fileName])
+    else dirs.push([dir, lastParts[1], fileName])
   }
   console.log(`found ${dirs.length} types to compile`)
 

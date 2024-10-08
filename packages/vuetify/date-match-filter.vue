@@ -45,16 +45,16 @@
   </v-menu>
 </template>
 
-<script>
+<script lang="ts">
 // 1 => 01, 12 => 12
-const padTimeComponent = (/** @type {number} */val) => {
+const padTimeComponent = (val: number) => {
   const s = '' + val
   return s.length === 1 ? '0' + s : s
 }
 
 // get the the date and short time components expected by date-time picker from a full date
 // 2020-04-03T21:07:43+02:00 => ['2020-04-03', '19:07']
-const getDateTimeParts = (/** @type {Date} */date) => {
+const getDateTimeParts = (date: Date) => {
   return [`${date.getFullYear()}-${padTimeComponent(date.getMonth() + 1)}-${padTimeComponent(date.getDate())}`, `${padTimeComponent(date.getHours())}:${padTimeComponent(date.getMinutes())}`]
 }
 
@@ -75,18 +75,12 @@ export default {
   }),
   computed: {
     date: {
-      /**
-       * @returns {Date | Date[] | null}
-       */
-      get () {
+      get (): Date | Date[] | null {
         if (!this.modelValue) return null
         if (this.rangeMode) return this.modelValue.split(',').map(v => new Date(v))
         return this.modelValue ? new Date(this.modelValue) : null
       },
-      /**
-       * @param {Date | Date[]} value
-       */
-      set (value) {
+      set (value: Date | Date[]) {
         if (Array.isArray(value)) {
           const dates = value.map(v => getDateTimeParts(v)[0])
           dates.sort()
