@@ -39,6 +39,6 @@ export function createLocaleDayjs (locale: Ref<string>) {
 export function useLocaleDayjs () {
   const localeDayjs = inject(localeDayjsKey)
   if (!localeDayjs) throw new Error('useLocaleDayjs requires using the plugin createLocaleDayjs')
-  return /** @type {ReturnType<typeof getLocaleDayjs>} */(localeDayjs)
+  return localeDayjs as ReturnType<typeof getLocaleDayjs>
 }
 export default useLocaleDayjs

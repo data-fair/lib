@@ -30,12 +30,11 @@
 //   return query
 // }
 
-import type { Sort } from 'mongodb'
+import type { Sort, SortDirection } from 'mongodb'
 import type { Request } from 'express'
 
 export function mongoSort (sortParam: any): Sort {
-  /** @type {Record<string, import('mongodb').SortDirection>} */
-  const sort = {}
+  const sort: Record<string, SortDirection> = {}
 
   if (typeof sortParam !== 'string') return sort
 

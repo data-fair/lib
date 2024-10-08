@@ -10,8 +10,8 @@ import { type Account, type UserRef } from '@data-fair/lib-common-types/session/
 import { type Request } from 'express'
 import { hostname as getHostname } from 'os'
 import { Counter } from 'prom-client'
-import session from './session/index.js'
-import { internalError } from '../node/observer.js'
+import session from './session.js'
+import { internalError } from '@data-fair/lib-node/observer.js'
 
 export type EventLogLevel = 'info' | 'warn' | 'alert'
 
@@ -66,13 +66,8 @@ export function logEvent (event: EventLog) {
 
 async function log (level: EventLogLevel, code: string, message: string, context: EventLogContext = {}) {
   // looking into req.user and req.user.activeAccount for retro-compatibility with older session management
-
-  /** @type {import('../shared/session/index.js').UserRef | undefined} */
-  // @ts-ignore
-  let user = context.user ?? context.req?.user
-  /** @type {import('../shared/session/index.js').Account | undefined} */
-  // @ts-ignore
-  let account = context.account ?? user?.activeAccount
+  let user: UserRef | undefined = context.user ?? (context.req as unknown as any)?.user
+  let account: Account | undefined = context.account ?? (user as unknown as any)?.activeAccount
 
   // new session management
   if (!user && context.req) {
@@ -80,7 +75,7 @@ async function log (level: EventLogLevel, code: string, message: string, context
       const sessionState = await session.req(context.req)
       user = sessionState.user
       account = sessionState.account
-    } catch (/** @type {any} */err) {
+    } catch (err: any) {
       internalError('event-log-session', err)
     }
   }
@@ -88,8 +83,7 @@ async function log (level: EventLogLevel, code: string, message: string, context
   let host = context.host ?? context.req?.get('Host')
   if (!host || host.startsWith('localhost') || host.endsWith(':8080')) host = '-'
 
-  /** @type {import('./events-log-types.js').EventLog} */
-  const event = {
+  const event: EventLog = {
     time: new Date().toISOString(),
     level,
     code,

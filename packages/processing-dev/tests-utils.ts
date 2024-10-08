@@ -1,10 +1,11 @@
 import type { Account } from '@data-fair/lib-common-types/session/index.js'
-import type { ProcessingContext } from '@data-fair/lib-common-types/processings.js'
+import type { ProcessingContext, LogFunctions } from '@data-fair/lib-common-types/processings.js'
+import type { AxiosInstance } from 'axios'
 import chalk from 'chalk'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat.js'
 import axios from 'axios'
-import { DataFairWsClient } from '../node/ws.js'
+import { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
 import draftlog from 'draftlog'
 
 export interface ProcessingTestConfig {
@@ -24,12 +25,7 @@ dayjs.extend(localizedFormat)
 
 const tasksDraftLog: { [key: string]: any } = {}
 
-/**
- * Inspect an object in a dense way.
- * @param {any} arg - Object to inspect.
- * @returns {string} Inspected object.
- */
-const denseInspect = (arg) => {
+function denseInspect (arg: any): string {
   if (arg === undefined) return ''
   if (typeof arg === 'object') {
     try {
@@ -42,13 +38,7 @@ const denseInspect = (arg) => {
   return arg
 }
 
-/**
- * Create log functions.
- * @param {boolean} [debug] - Enable debug logging.
- * @param {boolean} [testDebug] - Enable test debug logging.
- * @returns {import('./types.js').LogFunctions} Log functions.
- */
-const prepareLog = (debug, testDebug) => {
+function prepareLog (debug?: boolean, testDebug?: boolean): LogFunctions {
   return {
     step: async (msg) => console.log(chalk.blueBright.bold.underline(`[${dayjs().format('LTS')}] ${msg}`)),
     error: async (msg, extra) => console.log(chalk.red.bold(`[${dayjs().format('LTS')}] ${msg}`), denseInspect(extra)),
@@ -61,7 +51,7 @@ const prepareLog = (debug, testDebug) => {
       tasksDraftLog[name] = console.draft()
       tasksDraftLog[name](chalk.yellow(name))
     },
-    progress: async (taskName, /** @type {number} */ progress, /** @type {number} */ total) => {
+    progress: async (taskName: string, progress: number, total: number) => {
       const msg = `[${dayjs().format('LTS')}][task] ${taskName} - ${progress} / ${total}`
       if (progress === 0) tasksDraftLog[taskName](chalk.yellow(msg))
       else if (progress >= total) tasksDraftLog[taskName](chalk.greenBright(msg))
@@ -72,12 +62,7 @@ const prepareLog = (debug, testDebug) => {
   }
 }
 
-/**
- * Create an Axios instance.
- * @param {import('./tests-utils-types.ts').ProcessingTestConfig} config - Configuration.
- * @returns {import('axios').AxiosInstance} Axios instance.
- */
-const axiosInstance = (config) => {
+function axiosInstance (config: ProcessingTestConfig): AxiosInstance {
   const headers = { 'x-apiKey': config.dataFairAPIKey }
   const axiosInstance = axios.create({
     // this is necessary to prevent excessive memory usage during large file uploads, see https://github.com/axios/axios/issues/1045
@@ -96,7 +81,7 @@ const axiosInstance = (config) => {
   axiosInstance.interceptors.response.use(response => response, error => {
     if (!error.response) return Promise.reject(error)
     delete error.response.request
-    const headers = {}
+    const headers: any = {}
     if (error.response.headers.location) headers.location = error.response.headers.location
     error.response.headers = headers
     error.response.config = { method: error.response.config.method, url: error.response.config.url, data: error.response.config.data }
@@ -107,13 +92,7 @@ const axiosInstance = (config) => {
   return axiosInstance
 }
 
-/**
- * Create a WebSocket instance.
- * @param {import('./tests-utils-types.ts').ProcessingTestConfig} config - Configuration.
- * @param {import('./types.js').LogFunctions} log - Log functions.
- * @returns {DataFairWsClient} WebSocket instance.
- */
-const wsInstance = (config, log) => {
+function wsInstance (config: ProcessingTestConfig, log: LogFunctions): DataFairWsClient {
   return new DataFairWsClient({
     url: config.dataFairUrl,
     apiKey: config.dataFairAPIKey,
@@ -123,22 +102,12 @@ const wsInstance = (config, log) => {
   })
 }
 
-/**
- * Create a context instance.
- * @param {any} initialContext - Initial context.
- * @param {import('./tests-utils-types.ts').ProcessingTestConfig} config - Configuration.
- * @param {boolean} [debug] - Enable debug logging.
- * @param {boolean} [testDebug] - Enable test debug logging.
- * @returns {import('./tests-utils-types.js').ProcessingTestContext} Context instance.
- */
-export const context = (initialContext, config, debug, testDebug) => {
-  /** @type {{ id: string; }} */
-  let createdDataset
+export function context (initialContext: any, config: ProcessingTestConfig, debug?: boolean, testDebug?: boolean): ProcessingTestContext {
+  let createdDataset: { id: string }
 
   const log = prepareLog(debug, testDebug)
 
-  /** @type {import('./tests-utils-types.js').ProcessingTestContext} */
-  const processingContext = {
+  const processingContext: ProcessingTestContext = {
     ...initialContext,
     processingConfig: initialContext.processingConfig || {},
     pluginConfig: initialContext.pluginConfig || {},
@@ -149,14 +118,14 @@ export const context = (initialContext, config, debug, testDebug) => {
     patchConfig: async () => {},
     cleanup: async () => {}
   }
-  processingContext.sendMail = async (/** @type {string} */ mail) => processingContext.log.testInfo('send email', mail)
-  processingContext.patchConfig = async (/** @type {{ datasetMode: string; dataset: any; }} */ patch) => {
+  processingContext.sendMail = async (mail: string) => processingContext.log.testInfo('send email', mail)
+  processingContext.patchConfig = async (patch: { datasetMode: string; dataset: any; }) => {
     processingContext.log.testInfo('received config patch', patch)
     if (patch.datasetMode === 'update' && patch.dataset) createdDataset = patch.dataset
     Object.assign(processingContext.processingConfig, patch)
   }
   processingContext.cleanup = async () => {
-    if (processingContext.ws._ws) processingContext.ws.close()
+    processingContext.ws.close()
     if (createdDataset) {
       processingContext.log.testInfo('delete test dataset', createdDataset)
       await processingContext.axios.delete('api/v1/datasets/' + createdDataset.id)

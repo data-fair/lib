@@ -60,7 +60,7 @@ const session = useSessionAuthenticated()
 const owners = computedAsync(async () => {
   const user = session.state.user
 
-  /** @type {import('../shared/session').Account[]} */
+  /** @type {import('@data-fair/lib-common-types/session').Account[]} */
   const owners = []
   if (props.otherAccounts || session.state.account.type === 'user') {
     owners.push({ type: 'user', id: user.id, name: user.name })
@@ -93,7 +93,7 @@ const owners = computedAsync(async () => {
 })
 
 /**
- * @param {import('../shared/session').Account} owner
+ * @param {import('@data-fair/lib-common-types/session').Account} owner
  */
 const getLabel = (owner) => {
   if (owner.type === 'user' && owner.id === session.state.user?.id) return t('yourself')

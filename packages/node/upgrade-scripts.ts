@@ -53,8 +53,7 @@ async function runScripts (db: Db, basePath: string) {
   for (const scriptDef of scripts) {
     if (semver.gte(scriptDef.version, version)) {
       for (const scriptName of scriptDef.names) {
-        /** @type {UpgradeScript} */
-        const script = (await import(path.join(scriptsRoot, scriptDef.version, scriptName))).default
+        const script: UpgradeScript = (await import(path.join(scriptsRoot, scriptDef.version, scriptName))).default
         debug('Apply script %s/%s : %s', scriptDef.version, scriptName, script.description)
         await script.exec(db, Debug(`upgrade:${scriptDef.version}:${scriptName}`))
       }

@@ -29,14 +29,11 @@ export const reqPerfWrap = (req: Request, res: Response) => {
 }
 
 export const reqPerfRouteName = (req: Request, routeName: string) => {
-  // @ts-ignore
-  req[reqObserveKey].routeName = routeName
+  (req as unknown as any)[reqObserveKey].routeName = routeName
 }
 
 export const reqPerfStep = (req: Request, stepName: string) => {
-  /** @type {{start: number, step: number, routeName?: string}} */
-  // @ts-ignore
-  const reqObserve = req[reqObserveKey]
+  const reqObserve: { start: number, step: number, routeName?: string } = (req as unknown as any)[reqObserveKey]
 
   if (!reqObserve) {
     console.warn('reqStep was called on a request that was not initialized for observation')
@@ -44,7 +41,6 @@ export const reqPerfStep = (req: Request, stepName: string) => {
   }
 
   if (!reqObserve.routeName) {
-    // @ts-ignore
     reqObserve.routeName = req.route?.path
   }
   if (!reqObserve.routeName) {

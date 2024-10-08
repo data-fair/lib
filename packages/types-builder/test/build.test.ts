@@ -5,7 +5,7 @@ import * as objectWithReference from './types/object-with-reference/index.js'
 
 describe('build.js script', () => {
   it('should build a simple schema and expose validation function', async () => {
-    const obj = /** @type {any} */({ str2: 'Str 2' })
+    const obj = { str2: 'Str 2' }
     if (simpleObject.validate(obj)) {
       // here obj is typed as SimpleObject
     }
@@ -14,7 +14,7 @@ describe('build.js script', () => {
   })
 
   it('should build a simple schema and expose a type assertion function', async () => {
-    const obj = /** @type {any} */({ str2: 'Str 2' })
+    const obj = { str2: 'Str 2' }
     simpleObject.assertValid(obj)
     // here obj is typed as SimpleObject
 

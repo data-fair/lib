@@ -55,7 +55,7 @@ export class Mongo {
           if (options.name && options.name !== indexName) throw new Error(`inconsistent index name ${indexName} or ${options.name}`)
           options.name = indexName
         } else {
-          key = /** @type {import('mongodb').IndexSpecification} */(indexDefinitions[collectionName][indexName])
+          key = indexDefinitions[collectionName][indexName] as IndexSpecification
           options = { name: indexName }
         }
         await this.ensureIndex(collectionName, key, options)

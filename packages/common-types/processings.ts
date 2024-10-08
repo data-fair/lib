@@ -1,5 +1,5 @@
 import type { AxiosInstance } from 'axios'
-import type { DataFairWsClient } from '../node/ws.js'
+import type { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
 
 /**
  * Processing context.

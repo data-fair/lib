@@ -52,7 +52,7 @@ debug.log = console.log.bind(console)
 
 function jwtDecodeAlive (jwt: string | null): User | undefined {
   if (!jwt) return
-  const decoded = /** @type {any} */(jwtDecode(jwt))
+  const decoded = jwtDecode(jwt) as any
   if (!decoded) return
   const now = Math.ceil(Date.now().valueOf() / 1000)
   if (typeof decoded.exp !== 'undefined' && decoded.exp < now) {
@@ -290,7 +290,7 @@ export async function getSession (initOptions: SessionOptions): Promise<Session>
     }
   }
 
-  return /** @type {Session} */({
+  const session: Session = {
     state,
     loginUrl,
     login,
@@ -304,7 +304,9 @@ export async function getSession (initOptions: SessionOptions): Promise<Session>
     switchLang,
     topLocation,
     options
-  })
+  }
+
+  return session
 }
 
 // uses pattern for SSR friendly plugin/composable, cf https://antfu.me/posts/composable-vue-vueday-2021#shared-state-ssr-friendly

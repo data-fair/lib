@@ -1,5 +1,5 @@
 import type { ErrorRequestHandler } from 'express'
-import { internalError } from '../node/observer.js'
+import { internalError } from '@data-fair/lib-node/observer.js'
 import eventsLog from './events-log.js'
 
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {

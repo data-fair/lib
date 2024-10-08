@@ -18,7 +18,7 @@ class SchemaWrapper {
       }
     }
     if (this.schema?.required && Array.isArray(this.schema.required)) {
-      this.schema.required = this.schema.required.filter((/** @type {any} */r) => !properties.includes(r))
+      this.schema.required = this.schema.required.filter((r: any) => !properties.includes(r))
     }
     return this
   }
@@ -36,7 +36,7 @@ class SchemaWrapper {
 
   removeFromRequired (properties: string | string[]) {
     if (this.schema?.required && Array.isArray(this.schema.required)) {
-      this.schema.required = this.schema.required.filter((/** @type {any} */r) => !properties.includes(r))
+      this.schema.required = this.schema.required.filter((r: any) => !properties.includes(r))
     }
     return this
   }

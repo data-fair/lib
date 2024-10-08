@@ -46,7 +46,7 @@ const requestCounter = new Counter({
 
 setInterval(() => {
   for (const _protocol of ['http', 'https']) {
-    const protocol = /** @type {'http' | 'https'} */(_protocol)
+    const protocol = _protocol as 'http' | 'https'
     const agentStatus = agents[protocol].getCurrentStatus()
     for (const host in agentStatus.sockets) {
       socketsGauge.set({ protocol, host }, agentStatus.sockets[host])
