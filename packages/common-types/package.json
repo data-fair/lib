@@ -5,6 +5,7 @@
   "main": "index.js",
   "devDependencies": {},
   "files": [
+    "**/schema.json",
     "**/*.js",
     "**/*.d.ts"
   ],
