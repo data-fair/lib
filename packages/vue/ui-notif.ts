@@ -1,4 +1,4 @@
-import type { Ref, App } from 'vue'
+import type { App } from 'vue'
 import { ref, inject } from 'vue'
 import inIframe from '@data-fair/lib-utils/in-iframe.js'
 

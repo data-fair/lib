@@ -1,4 +1,5 @@
 *.d.ts
+*.js.map
 node_modules
 .type
 packages/**/*.js
