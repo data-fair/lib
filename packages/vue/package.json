@@ -9,6 +9,9 @@
   ],
   "author": "",
   "license": "MIT",
+  "scripts": {
+    "prepublishOnly": "cd .. && npm run prepublishOnly"
+  },
   "peerDependencies": {
     "dayjs": "^1.11.13",
     "ofetch": "^1.4.0",
@@ -24,7 +27,7 @@
     }
   },
   "dependencies": {
-    "@data-fair/lib-common-types": "^0.2.0",
+    "@data-fair/lib-common-types": "^1.0.0",
     "@data-fair/lib-utils": "^0.2.0",
     "jwt-decode": "^4.0.0",
     "universal-cookie": "^7.2.0"

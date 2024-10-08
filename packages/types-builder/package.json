@@ -1,13 +1,16 @@
 {
   "name": "@data-fair/lib-types-builder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A tool to process json schemas and produce types, validation functions, etc.",
   "author": "",
   "license": "MIT",
+  "scripts": {
+    "prepublishOnly": "cd .. && npm run prepublishOnly"
+  },
   "dependencies": {
     "@bcherny/json-schema-ref-parser": "^10.0.5-fork",
     "@data-fair/lib-utils": "^0.2.0",
-    "@data-fair/lib-common-types": "^0.2.0",
+    "@data-fair/lib-common-types": "^1.0.0",
     "ajv": "^8.17.1",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",

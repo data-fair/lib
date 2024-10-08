@@ -10,6 +10,9 @@
   ],
   "author": "",
   "license": "MIT",
+  "scripts": {
+    "prepublishOnly": "cd .. && npm run prepublishOnly"
+  },
   "peerDependencies": {
     "express": "^5.0.0",
     "ws": "^8.18.0"
@@ -20,7 +23,7 @@
     }
   },
   "dependencies": {
-    "@data-fair/lib-common-types": "^0.2.0",
+    "@data-fair/lib-common-types": "^1.0.0",
     "@data-fair/lib-node": "^0.2.0",
     "cookie": "^0.7.2",
     "jsonwebtoken": "^9.0.2",

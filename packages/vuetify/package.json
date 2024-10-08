@@ -10,6 +10,9 @@
   ],
   "author": "",
   "license": "MIT",
+  "scripts": {
+    "prepublishOnly": "cd .. && npm run prepublishOnly"
+  },
   "peerDependencies": {
     "ofetch": "^1.4.0",
     "vue-i18n": "^10.0.4",
@@ -17,6 +20,6 @@
   },
   "type": "module",
   "dependencies": {
-    "@data-fair/lib-common-types": "^0.2.0"
+    "@data-fair/lib-common-types": "^1.0.0"
   }
 }

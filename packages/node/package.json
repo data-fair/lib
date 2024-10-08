@@ -9,8 +9,11 @@
   ],
   "author": "",
   "license": "MIT",
+  "scripts": {
+    "prepublishOnly": "cd .. && npm run prepublishOnly"
+  },
   "dependencies": {
-    "@data-fair/lib-common-types": "^0.2.0",
+    "@data-fair/lib-common-types": "^1.0.0",
     "@data-fair/lib-utils": "0.2.0",
     "agentkeepalive": "^4.5.0",
     "ajv-i18n": "^4.2.0",

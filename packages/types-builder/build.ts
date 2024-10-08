@@ -45,11 +45,11 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
 
   const schemas: Record<string, any> = {}
   if (!inLib) {
-    const { schema: sessionStateSchema } = await import('@data-fair/lib-common-types/session/.type/index.js')
+    const sessionStateSchema = (await import('@data-fair/lib-common-types/session/schema.js')).default
     schemas[sessionStateSchema.$id] = sessionStateSchema
-    const { schema: accountSchema } = await import('@data-fair/lib-common-types/account/.type/index.js')
+    const accountSchema = (await import('@data-fair/lib-common-types/account/schema.js')).default
     schemas[accountSchema.$id] = accountSchema
-    const { schema: appSchema } = await import('@data-fair/lib-common-types/application/.type/index.js')
+    const appSchema = (await import('@data-fair/lib-common-types/application/schema.js')).default
     schemas[appSchema.$id] = appSchema
   }
 
@@ -86,7 +86,7 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     else schema = clone((await import(filePath)).default)
     if (schema.$id) console.log(`  $id: ${JSON.stringify(schema.$id)}`)
     const mainTypeName = pascalCase(schema.title || key)
-    const schemaExports: SchemaExport[] = schema['x-exports'] || ['types', 'validate', 'schema']
+    const schemaExports: SchemaExport[] = schema['x-exports'] || ['types', 'validate']
     console.log(`  exports: ${JSON.stringify(schemaExports)}`)
     let importsCode = '/* eslint-disable */\n\n'
     let code = ''

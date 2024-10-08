@@ -3,6 +3,9 @@
   "version": "0.2.0",
   "description": "Small dependency-less or dependency-light utility functions for the data-fair stack.",
   "main": "index.js",
+  "scripts": {
+    "prepublishOnly": "cd .. && npm run prepublishOnly"
+  },
   "devDependencies": {},
   "files": [
     "**/*.js",
