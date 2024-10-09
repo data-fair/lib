@@ -13,7 +13,7 @@ async function createHtmlMiddleware (directory: string, uiConfig: any): Promise<
     const sitePath = reqSitePath(req)
     htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(html, { SITE_PATH: sitePath, UI_CONFIG: uiConfigStr })
     res.type('html')
-    res.set('Cache-Control', 'no-cache')
+    res.set('Cache-Control', 'public, max-age=0, must-revalidate')
     res.send(htmlCache[sitePath])
   }
 }
