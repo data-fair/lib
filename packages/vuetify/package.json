@@ -6,7 +6,8 @@
   "files": [
     "**/*.js",
     "**/*.d.ts",
-    "**/*.vue"
+    "**/*.vue",
+    "**/*.scss"
   ],
   "author": "",
   "license": "MIT",
