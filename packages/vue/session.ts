@@ -313,7 +313,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
 
 // uses pattern for SSR friendly plugin/composable, cf https://antfu.me/posts/composable-vue-vueday-2021#shared-state-ssr-friendly
 export const sessionKey = Symbol('session')
-export async function createSession (initOptions: SessionOptions) {
+export async function createSession (initOptions: Partial<SessionOptions>) {
   const session = await getSession(initOptions)
   return {
     ...session,
