@@ -16,7 +16,7 @@ const baseDarkColors = {
   success: '#00E676' // green.accent3
 }
 
-export function defaultOptions (searchParams: Record<string, string>, darkCookie = false):VuetifyOptions {
+export function defaultOptions (searchParams: Record<string, string>, darkCookie = false, locale: 'fr' | 'en' = 'fr'):VuetifyOptions {
   const dark = searchParams?.dark ? searchParams.dark === 'true' : darkCookie
 
   const searchParamsColors: Record<string, string> = {}
@@ -32,9 +32,9 @@ export function defaultOptions (searchParams: Record<string, string>, darkCookie
   return {
     ssr: false,
     locale: {
-      locale: 'fr',
+      locale,
       messages: { fr, en }
-    }, // TODO: sync this with the i18n locale
+    },
     theme: {
       defaultTheme,
       themes: {
