@@ -316,8 +316,8 @@ export const sessionKey = Symbol('session')
 export async function createSession (initOptions: SessionOptions) {
   const session = await getSession(initOptions)
   return {
+    ...session,
     install (app: App) { app.provide(sessionKey, session) },
-    value: session
   }
 }
 export function useSession () {
