@@ -123,14 +123,14 @@ ${typesCode}
 export const schema = ${JSON.stringify(schema, null, 2)}
 `
         dtsCode += `
-export const schema: any
+export declare const schema: any
         `
       } else if (schemaExport === 'resolvedSchema') {
         code += `
 export const resolvedSchema = ${JSON.stringify(resolvedSchema, null, 2)}
 `
         dtsCode += `
-export const resolvedSchema: any
+export declare const resolvedSchema: any
         `
       } else if (schemaExport === 'resolvedSchemaJson') {
         delete resolvedSchema['x-exports']
@@ -186,9 +186,9 @@ export function returnValid(data, options) {
 }
 `
         dtsCode += `
-export function validate(data: any): data is ${mainTypeName}
-export function assertValid(data: any, options?: import('${validationImport}').AssertValidOptions): asserts data is ${mainTypeName}
-export function returnValid(data: any, options?: import('${validationImport}').AssertValidOptions): ${mainTypeName}
+export declare function validate(data: any): data is ${mainTypeName}
+export declare function assertValid(data: any, options?: import('${validationImport}').AssertValidOptions): asserts data is ${mainTypeName}
+export declare function returnValid(data: any, options?: import('${validationImport}').AssertValidOptions): ${mainTypeName}
       `
       } else if (schemaExport === 'stringify') {
         // TODO: is this really a good idea ? over-optimization ?
