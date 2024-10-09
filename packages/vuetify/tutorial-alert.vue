@@ -18,7 +18,7 @@
           v-if="href"
           :href="href"
           target="_blank"
-        >{{ text || $t('readDoc') }}</a>
+        >{{ text || t('readDoc') }}</a>
         <template v-else>
           <span
             v-if="text"
@@ -37,15 +37,11 @@
       icon
       density="compact"
       color="success"
-      :title="show ? $t('closeHelp') : $t('readHelp')"
+      :title="show ? t('closeHelp') : t('readHelp')"
       @click="show = !show"
     >
-      <v-icon v-if="show">
-        mdi-close-circle
-      </v-icon>
-      <v-icon v-else>
-        mdi-information
-      </v-icon>
+      <v-icon v-if="show":icon="mdiCloseCircle" />
+      <v-icon v-else :icon="mdiInformation" />
     </v-btn>
   </div>
 </template>
@@ -63,6 +59,8 @@ en:
 
 <script lang="ts">
 import { useTheme } from 'vuetify'
+import { useI18n } from 'vue-i18n'
+import { mdiCloseCircle, mdiInformation } from '@mdi/js'
 
 export default {
   props: {
@@ -75,10 +73,13 @@ export default {
   },
   setup () {
     const theme = useTheme()
-    return { theme }
+    const { t } = useI18n({ useScope: 'local' })
+    return { theme, t }
   },
   data: () => ({
-    show: false
+    show: false,
+    mdiCloseCircle,
+    mdiInformation
   }),
   computed: {
     showBtn () {
