@@ -1,11 +1,17 @@
+// simple composable to display store a UI notification
+// this will be transmitted to frame parent if available (compatible with v-iframe uiNotification message type)
+// or can be displayed locally by @data-fair/lib-vuetify/ui-notif.vue
+
 import type { App } from 'vue'
 import { ref, inject } from 'vue'
 import inIframe from '@data-fair/lib-utils/in-iframe.js'
 
 export type UiNotif = UiNotifBase | UiNotifError
 
-export interface PartialUiNotif {
-  type?: 'default' | 'info' | 'success' | 'warning' | 'error'
+type NotifType = 'default' | 'info' | 'success' | 'warning' | 'error'
+
+export type PartialUiNotif = string | {
+  type?: NotifType
   msg: string
   error?: any
   errorMsg?: string
@@ -23,28 +29,56 @@ interface UiNotifError {
   errorMsg: string
 }
 
-function getFullNotif (notif: PartialUiNotif | string): UiNotif {
-  if (typeof notif === 'string') return { msg: notif, type: 'default' }
+function getErrorMsg (error: any): string {
+  if (typeof error === 'string') return error
+  if (typeof error.data === 'string') return error.data
+  if (typeof error.response?.data === 'string') return error.response.data
+  if (typeof error.statusText === 'string') return error.statusText
+  if (typeof error.response?.statusText === 'string') return error.response?.statusText
+  if (error.message) return error.message
+  return 'unknown error'
+}
+
+function getFullNotif (notif: PartialUiNotif, defaultType: UiNotifBase['type'] = 'default'): UiNotif {
+  if (typeof notif === 'string') return { msg: notif, type: defaultType }
   if (notif.error) {
-    notif.type = 'error'
-    notif.errorMsg = (notif.error.response && (notif.error.response.data || notif.error.response.status)) || notif.error.message || notif.error
+    console.log('ERROR', notif.error)
+    return {
+      ...notif,
+      type: 'error',
+      errorMsg: getErrorMsg(notif.error)
+    } as UiNotifError
   }
-  notif.type = notif.type || 'default'
-  if (inIframe) {
-    window.top?.postMessage({ vIframe: true, uiNotification: notif }, '*')
-  } else {
-    console.log('notification', notif)
-  }
-  throw new Error('invalid UI notification')
+  return {
+    ...notif,
+    type: notif.type ?? defaultType
+  } as UiNotifBase
 }
 
 export const getUiNotif = () => {
-  const current = ref(null as null | UiNotif)
+  const notification = ref(null as null | UiNotif)
 
-  const send = (partialNotif: PartialUiNotif) => {
-    current.value = getFullNotif(partialNotif)
+  const sendUiNotif = (partialNotif: PartialUiNotif) => {
+    const notif = notification.value = getFullNotif(partialNotif)
+    if (inIframe) {
+      window.top?.postMessage({ vIframe: true, uiNotification: notif }, '*')
+    } else {
+      console.log('iframe notification', notif)
+    }
   }
-  return { current, send }
+
+  function withUiNotif<F extends (...args: any[]) => Promise<any>> (fn: F, errorMsg: string, successNotif?: PartialUiNotif): F {
+    return <F> async function (...args: any[]) {
+      try {
+        const result = await fn(...args)
+        if (successNotif) sendUiNotif(getFullNotif(successNotif, 'success'))
+        return result
+      } catch (error) {
+        sendUiNotif({ msg: errorMsg, error })
+      }
+    }
+  }
+  return { notification, sendUiNotif, withUiNotif }
 }
 
 // uses pattern for SSR friendly plugin/composable, cf https://antfu.me/posts/composable-vue-vueday-2021#shared-state-ssr-friendly
@@ -54,8 +88,8 @@ export function createUiNotif () {
   return { install (app: App) { app.provide(uiNotifKey, uiNotif) } }
 }
 export function useUiNotif () {
-  const session = inject(uiNotifKey)
-  if (!session) throw new Error('useUiNotif requires using the plugin createUiNotif')
-  return session as ReturnType<typeof getUiNotif>
+  const uiNotif = inject(uiNotifKey)
+  if (!uiNotif) throw new Error('useUiNotif requires using the plugin createUiNotif')
+  return uiNotif as ReturnType<typeof getUiNotif>
 }
 export default useUiNotif

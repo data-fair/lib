@@ -7,4 +7,6 @@ if (import.meta.env?.SSR) {
   throw new Error('this module uses a module level singleton, it cannot be used in SSR mode')
 }
 
+console.error('ui-notif-global is deprecated, please use create + use')
+
 export default getUiNotif()

@@ -20,9 +20,9 @@ interface GenericCookies {
 }
 
 export interface SessionOptions {
+  sitePath: string
+  directoryUrl: string
   route?: RouteLocation
-  sitePath?: string
-  directoryUrl?: string
   logoutRedirectUrl?: string
   req?: IncomingMessage
   cookies?: GenericCookies
@@ -88,7 +88,7 @@ const goTo = (url: string | null) => {
 
 const defaultOptions = { directoryUrl: '/simple-directory', sitePath: '' }
 
-export async function getSession (initOptions: SessionOptions): Promise<Session> {
+export async function getSession (initOptions: Partial<SessionOptions>): Promise<Session> {
   const options = { ...defaultOptions, ...initOptions }
   const cookiesPath = options.sitePath + '/'
   debug(`init directoryUrl=${options.directoryUrl}, cookiesPath=${cookiesPath}`)
