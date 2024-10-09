@@ -62,7 +62,7 @@ en:
 </i18n>
 
 <script lang="ts">
-import { useTheme } from 'vuetify';
+import { useTheme } from 'vuetify'
 
 export default {
   props: {
@@ -73,9 +73,9 @@ export default {
     initial: { type: Boolean, default: true },
     persistent: { type: Boolean, default: false }
   },
-  setup() {
+  setup () {
     const theme = useTheme()
-    return {theme}
+    return { theme }
   },
   data: () => ({
     show: false

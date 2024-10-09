@@ -48,10 +48,10 @@ const props = defineProps({
 })
 
 const session = useSession()
-const userAvatarUrl = computed(() => session.state.user && `/simple-directory/api/avatars/user/${session.state.user.id}/avatar.png`)
+const userAvatarUrl = computed(() => session.state.user && `${session.options.directoryUrl}/api/avatars/user/${session.state.user.id}/avatar.png`)
 const accountAvatarUrl = computed(() => {
   if (!session.state.account) return
-  let url = `/simple-directory/api/avatars/${session.state.account.type}/${session.state.account.id}`
+  let url = `${session.options.directoryUrl}/api/avatars/${session.state.account.type}/${session.state.account.id}`
   if (session.state.account.department) url += `/${session.state.account.department}`
   url += '/avatar.png'
   return url
