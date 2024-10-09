@@ -101,7 +101,7 @@ export function createReactiveSearchParams (router?: Router) {
   const reactiveSearchParams = getReactiveSearchParams(router)
   return {
     install (app: App) { app.provide(reactiveSearchParamsKey, reactiveSearchParams) },
-    value: reactiveSearchParams
+    state: reactiveSearchParams
   }
 }
 export function useReactiveSearchParams () {
