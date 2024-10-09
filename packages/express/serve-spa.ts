@@ -4,19 +4,17 @@ import microTemplate from '@data-fair/lib-utils/micro-template.js'
 import { static as expressStatic } from 'express'
 import { reqSitePath } from '@data-fair/lib-express'
 
+const htmlCache: Record<string, string> = {}
+
 async function createHtmlMiddleware (directory: string, uiConfig: any): Promise<import('express').RequestHandler> {
   const uiConfigStr = JSON.stringify(uiConfig)
   const html = await readFile(join(directory, 'index.html'), 'utf8')
-  const lastModified = (new Date()).toUTCString()
   return (req, res, next) => {
-    // using last-modified instead of the automatic etag is slightly faster
-    // no need to run microTemplate when cache is revalidated
-    if (req.get('If-Modified-Since') === lastModified) return res.status(304).send()
-
+    const sitePath = reqSitePath(req)
+    htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(html, { SITE_PATH: sitePath, UI_CONFIG: uiConfigStr })
     res.type('html')
     res.set('Cache-Control', 'no-cache')
-    res.set('Last-Modified', lastModified)
-    res.send(microTemplate(html, { SITE_PATH: reqSitePath(req), UI_CONFIG: uiConfigStr }))
+    res.send(htmlCache[sitePath])
   }
 }
 
