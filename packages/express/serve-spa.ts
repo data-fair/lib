@@ -13,7 +13,7 @@ async function createHtmlMiddleware (directory: string, uiConfig: any): Promise<
     const sitePath = reqSitePath(req)
     htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(html, { SITE_PATH: sitePath, UI_CONFIG: uiConfigStr })
     res.type('html')
-    res.set('Cache-Control', 'no-cache')
+    res.set('Cache-Control', 'public, max-age=0, must-revalidate')
     res.send(htmlCache[sitePath])
   }
 }
@@ -41,6 +41,9 @@ export async function createSpaMiddleware (directory: string, uiConfig: any): Pr
   const staticMiddleware = createStaticMiddleware(directory)
   const htmlMiddleware = await createHtmlMiddleware(directory, uiConfig)
   return (req, res, next) => {
+    // force buffering, necessary for caching of source files in the reverse proxy
+    res.setHeader('X-Accel-Buffering', 'yes')
+
     if (req.url.startsWith('/index.html')) {
       htmlMiddleware(req, res, next)
     } else {
