@@ -1,0 +1,35 @@
+{
+  "name": "@data-fair/lib-express",
+  "version": "1.0.0",
+  "description": "Middlewares and utility functions related to the use of Express in the data-fair stack.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "**/*.js",
+    "**/*.d.ts"
+  ],
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "prepublishOnly": "cd .. && npm run prepublishOnly",
+    "build": "cd .. && npm run build"
+  },
+  "peerDependencies": {
+    "@data-fair/lib-node": "1",
+    "express": "5",
+    "ws": "8"
+  },
+  "peerDependenciesMeta": {
+    "ws": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@data-fair/lib-common-types": "^1.1.0",
+    "cookie": "^0.7.2",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.1.0",
+    "nanoid": "^5.0.7"
+  },
+  "type": "module"
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@data-fair/lib-processing-dev",
+  "version": "0.1.0",
+  "description": "Utilities for the development environment of a processing in the data-fair stack.",
+  "main": "index.js",
+  "files": [
+    "**/*.js",
+    "**/*.d.ts"
+  ],
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "prepublishOnly": "cd .. && npm run prepublishOnly",
+    "build": "cd .. && npm run build"
+  },
+  "dependencies": {
+    "@data-fair/lib-common-types": "^1.0.0",
+    "@data-fair/lib-node": "^0.2.0",
+    "axios": "^1.7.7",
+    "chalk": "^5.3.0",
+    "dayjs": "^1.11.13",
+    "draftlog": "^1.0.13"
+  },
+  "type": "module"
+}
