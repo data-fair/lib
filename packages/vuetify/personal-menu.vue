@@ -24,9 +24,8 @@
             v-if="user.pd"
             color="warning"
             style="position:absolute;"
-          >
-            mdi-alert
-          </v-icon>
+            :icon="mdiAlert"
+          />
         </v-btn>
       </template>
 
@@ -134,7 +133,7 @@
           class="personal-menu-switch-list-item"
         >
           <template #prepend>
-            <v-icon>mdi-shield-alert</v-icon>
+            <v-icon :icon="mdiShieldAlert" />
           </template>
           <v-list-item-title>
             <v-switch
@@ -157,7 +156,7 @@
           @click="session.asAdmin(null)"
         >
           <template #prepend>
-            <v-icon>mdi-account-switch-outline</v-icon>
+            <v-icon :icon="mdiAccountSwitchOutline" />
           </template>
           <v-list-item-title>{{ t('backToAdmin') }}</v-list-item-title>
         </v-list-item>
@@ -169,7 +168,7 @@
           class="personal-menu-switch-list-item"
         >
           <template #prepend>
-            <v-icon>mdi-weather-night</v-icon>
+            <v-icon :icon="mdiWeatherNight" />
           </template>
           <v-list-item-title>
             <v-switch
@@ -190,7 +189,7 @@
           @click="() => session.logout()"
         >
           <template #prepend>
-            <v-icon>mdi-logout</v-icon>
+            <v-icon :icon="mdiLogout" />
           </template>
           <v-list-item-title v-t="'logout'" />
         </v-list-item>
@@ -230,6 +229,7 @@ import { useI18n } from 'vue-i18n'
 import { useSession } from '@data-fair/lib-vue/session.js'
 import { useTheme } from 'vuetify'
 import UserAvatar from './user-avatar.vue'
+import { mdiAlert, mdiShieldAlert, mdiLogout, mdiAccountSwitchOutline, mdiWeatherNight } from '@mdi/js'
 
 const theme = useTheme()
 const session = useSession()
