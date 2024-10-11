@@ -42,7 +42,6 @@ function getErrorMsg (error: any): string {
 function getFullNotif (notif: PartialUiNotif, defaultType: UiNotifBase['type'] = 'default'): UiNotif {
   if (typeof notif === 'string') return { msg: notif, type: defaultType }
   if (notif.error) {
-    console.log('ERROR', notif.error)
     return {
       ...notif,
       type: 'error',
@@ -57,8 +56,7 @@ function getFullNotif (notif: PartialUiNotif, defaultType: UiNotifBase['type'] =
 
 export const getUiNotif = () => {
   const notification = ref(null as null | UiNotif)
-
-  const sendUiNotif = (partialNotif: PartialUiNotif) => {
+  function sendUiNotif (partialNotif: PartialUiNotif) {
     const notif = notification.value = getFullNotif(partialNotif)
     if (inIframe) {
       window.top?.postMessage({ vIframe: true, uiNotification: notif }, '*')
@@ -66,19 +64,7 @@ export const getUiNotif = () => {
       console.log('iframe notification', notif)
     }
   }
-
-  function withUiNotif<F extends (...args: any[]) => Promise<any>> (fn: F, errorMsg: string, successNotif?: PartialUiNotif): F {
-    return <F> async function (...args: any[]) {
-      try {
-        const result = await fn(...args)
-        if (successNotif) sendUiNotif(getFullNotif(successNotif, 'success'))
-        return result
-      } catch (error) {
-        sendUiNotif({ msg: errorMsg, error })
-      }
-    }
-  }
-  return { notification, sendUiNotif, withUiNotif }
+  return { notification, sendUiNotif }
 }
 
 // uses pattern for SSR friendly plugin/composable, cf https://antfu.me/posts/composable-vue-vueday-2021#shared-state-ssr-friendly
@@ -93,3 +79,16 @@ export function useUiNotif () {
   return uiNotif as ReturnType<typeof getUiNotif>
 }
 export default useUiNotif
+
+export function withUiNotif<F extends (...args: any[]) => Promise<any>> (fn: F, errorMsg?: string, successNotif?: PartialUiNotif): F {
+  const { sendUiNotif } = useUiNotif()
+  return <F> async function (...args: any[]) {
+    try {
+      const result = await fn(...args)
+      if (successNotif) sendUiNotif(getFullNotif(successNotif, 'success'))
+      return result
+    } catch (error) {
+      sendUiNotif({ msg: errorMsg ?? '', error })
+    }
+  }
+}

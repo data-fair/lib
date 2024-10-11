@@ -10,7 +10,7 @@
     <p
       v-if="notification.type === 'error'"
       class="ml-3"
-      v-html="notification.errorMsg"
+      v-text="notification.errorMsg"
     />
 
     <template #actions>
