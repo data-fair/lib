@@ -31,12 +31,12 @@ interface UiNotifError {
 
 function getErrorMsg (error: any): string {
   if (typeof error === 'string') return error
-  if (typeof error.data === 'string') return error.data
-  if (typeof error.response?.data === 'string') return error.response.data
+  if (error.data && typeof error.data === 'string') return error.data
+  if (error.response?.data && typeof error.response.data === 'string') return error.response.data
   if (typeof error.statusText === 'string') return error.statusText
   if (typeof error.response?.statusText === 'string') return error.response?.statusText
   if (error.message) return error.message
-  return 'unknown error'
+  return 'erreur inconnu'
 }
 
 function getFullNotif (notif: PartialUiNotif, defaultType: UiNotifBase['type'] = 'default'): UiNotif {
