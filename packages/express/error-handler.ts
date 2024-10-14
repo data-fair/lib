@@ -24,7 +24,7 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   res.type('text/plain')
   if (process.env.NODE_ENV === 'production') {
     if (status < 500) res.send(err.message)
-    else res.send(err.name || 'internal error')
+    else res.send() // server errors are mostly unplanned and could contain confidential information, only return error code
   } else {
     res.send(err.stack + '\n')
   }

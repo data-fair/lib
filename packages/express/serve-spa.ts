@@ -1,3 +1,5 @@
+// TODO: use sirv https://www.npmjs.com/package/sirv ?
+
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import microTemplate from '@data-fair/lib-utils/micro-template.js'
@@ -20,13 +22,13 @@ async function createHtmlMiddleware (directory: string, uiConfig: any): Promise<
 
 function createStaticMiddleware (directory: string): import('express').RequestHandler {
   // source code should always be hashed, a long cache duration is ok
-  const sourceMaxAge = 60 * 60 * 24 // 1 day
+  const sourceMaxAge = 60 * 60 * 24 * 10 // 10 days
   // static assets, images, etc are generally not hashed but a short cache is still ok
   const fileMaxAge = 60 * 5 // 5 minutes
   return expressStatic(directory, {
     setHeaders: (res, path) => {
       if (path.endsWith('.js') || path.endsWith('.css')) {
-        res.setHeader('Cache-Control', 'public, max-age=' + sourceMaxAge)
+        res.setHeader('Cache-Control', `public, max-age=${sourceMaxAge}, immutable`)
       } else {
         res.setHeader('Cache-Control', 'public, max-age=' + fileMaxAge)
       }
