@@ -43,6 +43,7 @@ export async function createSpaMiddleware (directory: string, uiConfig: any): Pr
   const staticMiddleware = createStaticMiddleware(directory)
   const htmlMiddleware = await createHtmlMiddleware(directory, uiConfig)
   return (req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(404).send()
     // force buffering, necessary for caching of source files in the reverse proxy
     res.setHeader('X-Accel-Buffering', 'yes')
 

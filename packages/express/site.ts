@@ -1,7 +1,7 @@
 import type { RequestHandler, Request } from 'express'
 import { escapeRegExp } from '@data-fair/lib-utils/micro-template.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
-import { reqOrigin } from '@data-fair/lib-express'
+import { reqOrigin, reqIsInternal } from '@data-fair/lib-express'
 
 export const createPrefixRegexp = (servicePathPart: string) => new RegExp(`(.*?)\\/${escapeRegExp(servicePathPart)}(\\/|$)`)
 
@@ -14,7 +14,11 @@ export function createSiteMiddleware (servicePathPart: string): RequestHandler {
   const prefixRegexp = createPrefixRegexp(servicePathPart)
   return (req, res, next) => {
     const match = req.url.match(prefixRegexp)
-    if (!match) throw httpError(404, 'URL path does not contain service prefix')
+    if (!match) {
+      if (reqIsInternal(req)) return next()
+      throw httpError(404, 'URL path does not contain service prefix')
+    }
+
     // @ts-ignore
     req[reqSitePathKey] = match[1]
 
@@ -26,7 +30,7 @@ export function createSiteMiddleware (servicePathPart: string): RequestHandler {
 export function reqSitePath (req: Request): string {
   // @ts-ignore
   const sitePath = req[reqSitePathKey]
-  if (sitePath === undefined) throw httpError(500, 'reqSitePath was not set, please use createSiteMiddleware')
+  if (sitePath === undefined) throw httpError(500, 'reqSitePath was not set, either createSiteMiddleware was not called ot this HTTP request is internal')
   return sitePath
 }
 
