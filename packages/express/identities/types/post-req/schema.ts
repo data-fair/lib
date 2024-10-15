@@ -2,6 +2,7 @@ export default {
   $id: 'https://github.com/data-fair/lib/express/identities/post-req',
   title: 'Post identity req',
   'x-exports': ['validate', 'types'],
+  'x-jstt': { additionalProperties: false },
   type: 'object',
   required: ['params', 'body'],
   properties: {
