@@ -111,9 +111,11 @@ export const schemaExports: string[]
 
     for (const schemaExport of schemaExports) {
       if (schemaExport === 'types') {
+        const schemaJSTTOpts = schema['x-jstt'] || {}
+        console.log(`  json-schema-to-typescript options: ${JSON.stringify(schemaJSTTOpts)}`)
         const compileTs = (await import('json-schema-to-typescript')).compile
         const typesCode = await compileTs(clone(schema), schema.$id || key,
-          { bannerComment: '', unreachableDefinitions: true, $refOptions })
+          { bannerComment: '', unreachableDefinitions: true, ...schemaJSTTOpts, $refOptions })
         dtsCode += `
 // see https://github.com/bcherny/json-schema-to-typescript/issues/439 if some types are not exported
 ${typesCode}
