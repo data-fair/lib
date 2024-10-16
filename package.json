@@ -5,7 +5,7 @@
   "scripts": {
     "lint": "eslint . --fix",
     "build": "npm run build-types && rm packages/*/*.d.ts && tsc -p tsconfig.build.json && vue-tsc -p tsconfig.build-vue.json && eslint . --fix",
-    "build-types": "node --experimental-strip-types packages/types-builder/build.ts",
+    "build-types": "tsc -p tsconfig.build-schemas.json && node --experimental-strip-types packages/types-builder/build.ts",
     "prepare": "husky install",
     "quality": "eslint . && npm test",
     "prepublishOnly": "npm run quality && npm run build",
