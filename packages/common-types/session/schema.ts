@@ -50,7 +50,8 @@ export default {
           type: 'string'
         },
         dflt: {
-          type: 'boolean'
+          type: 'integer',
+          enum: [1]
         }
       }
     },
@@ -98,17 +99,11 @@ export default {
         },
         isAdmin: {
           type: 'integer',
-          enum: [
-            0,
-            1
-          ]
+          enum: [1]
         },
         adminMode: {
           type: 'integer',
-          enum: [
-            0,
-            1
-          ]
+          enum: [1]
         },
         asAdmin: {
           $ref: '#/$defs/userRef'
@@ -119,10 +114,18 @@ export default {
         },
         ipa: {
           type: 'integer',
-          enum: [
-            0,
-            1
-          ]
+          title: 'short for ignorePersonalAccount',
+          enum: [1]
+        },
+        idp: {
+          type: 'integer',
+          title: 'Is the user coming from a core ID provider ?',
+          enum: [1]
+        },
+        os: {
+          type: 'integer',
+          title: 'short for orgStorage',
+          enum: [1]
         }
       }
     },
