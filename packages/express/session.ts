@@ -14,6 +14,7 @@ export type ReqSession = Request & { session?: SessionState }
 export type IncomingMessageSession = IncomingMessage & { session?: SessionState }
 
 const sessionKey = Symbol('session')
+const sessionMiddlewareKey = Symbol('session-middleware')
 
 export class Session {
   private _jwksClient: JwksClient.JwksClient | undefined
@@ -107,6 +108,8 @@ export class Session {
 
   middleware (options: { required?: boolean, adminOnly?: boolean } = {}): RequestHandler {
     return asyncHandler(async (req, res, next) => {
+      // @ts-ignore
+      req[sessionMiddlewareKey] = true
       const sessionState = await this.req(req)
       if (options.required || options.adminOnly) {
         if (!sessionState.user) {
@@ -127,3 +130,12 @@ export class Session {
 
 export const session = new Session()
 export default session
+
+// some "sync" accessors that will only work if the middleware was applied
+export function reqSession (req: Request | IncomingMessage): SessionState {
+  // @ts-ignore
+  if (!req[sessionMiddlewareKey]) throw new Error('session middleware was not applied')
+  // @ts-ignore
+  return req[sessionKey]
+}
+export function reqUser (req: Request | IncomingMessage): SessionState['user'] { return reqSession(req).user }
