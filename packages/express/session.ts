@@ -6,6 +6,7 @@ import JwksClient from 'jwks-rsa'
 import cookie from 'cookie'
 import asyncHandler from './async-handler.js'
 import { validate, assertAdminMode, assertAuthenticated } from '@data-fair/lib-common-types/session/index.js'
+import { httpError, type Account } from '@data-fair/lib-express'
 
 export type * from '@data-fair/lib-common-types/session/index.js'
 
@@ -144,3 +145,12 @@ export function reqSession (req: Request | IncomingMessage): SessionState {
   return req[sessionKey]
 }
 export function reqUser (req: Request | IncomingMessage): SessionState['user'] { return reqSession(req).user }
+
+export function assertAccountRole (session: SessionState, account: Account, roles: string | string[]) {
+  if (typeof roles === 'string') roles = [roles]
+  assertAuthenticated(session)
+  if (session.account.type !== account.type || session.account.id !== account.id) throw httpError(403)
+  // a role at the root of org is valid inside a department too
+  if (session.account.department && session.account.department !== account.department) throw httpError(403)
+  if (!roles.includes(session.accountRole)) throw httpError(403)
+}
