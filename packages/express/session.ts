@@ -7,7 +7,7 @@ import cookie from 'cookie'
 import asyncHandler from './async-handler.js'
 import { validate, assertAdminMode, assertAuthenticated } from '@data-fair/lib-common-types/session/index.js'
 
-export type * from '@data-fair/lib-common-types/session/index.js'
+export * from '@data-fair/lib-common-types/session/index.js'
 
 export type ReqSession = Request & { session?: SessionState }
 
