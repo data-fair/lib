@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib-express",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Middlewares and utility functions related to the use of Express in the data-fair stack.",
   "main": "index.js",
   "types": "index.d.ts",
