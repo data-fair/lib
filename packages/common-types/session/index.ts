@@ -20,30 +20,38 @@ export function assertAdminMode (sessionState: SessionState): asserts sessionSta
   if (!sessionState.user.adminMode) throw httpError(403, 'super admin only')
 }
 
-function matchAccount (userAccount: AccountKeys, resourceAccount: AccountKeys): boolean {
+function matchAccount (userAccount: AccountKeys, resourceAccount: AccountKeys, acceptDepAsRoot = false): boolean {
   if (userAccount.type !== resourceAccount.type) return false
   if (userAccount.id !== resourceAccount.id) return false
-  if (userAccount.department && userAccount.department !== resourceAccount.department) return false
+  if (!acceptDepAsRoot) {
+    if (userAccount.department && userAccount.department !== resourceAccount.department) return false
+  }
   return true
 }
 
-export function getAccountRole (sessionState: SessionState, account: AccountKeys, onlyActiveAccount = true): string | null {
+type AssertRoleOptions = {
+  allAccounts?: boolean,
+  acceptDepAsRoot?: boolean
+}
+
+export function getAccountRole (sessionState: SessionState, account: AccountKeys, options: AssertRoleOptions = {}): string | null {
   if (!isAuthenticated(sessionState)) return null
   if (sessionState.user.adminMode) return 'admin'
-  if (onlyActiveAccount) {
-    if (matchAccount(sessionState.account, account)) return sessionState.accountRole
-  } else {
+  if (options.allAccounts) {
     if (account.type === 'user' && sessionState.user.id === account.id) return 'admin'
     for (const org of sessionState.user.organizations) {
-      if (matchAccount({ type: 'organization', id: org.id, department: org.department }, account)) return org.role
+      if (matchAccount({ type: 'organization', id: org.id, department: org.department }, account, options.acceptDepAsRoot)) return org.role
     }
+  } else {
+    if (matchAccount(sessionState.account, account, options.acceptDepAsRoot)) return sessionState.accountRole
   }
   return null
 }
 
-export function assertAccountRole (sessionState: SessionState, account: AccountKeys, role: string, onlyActiveAccount = true) {
-  const accountRole = getAccountRole(sessionState, account, onlyActiveAccount)
-  if (accountRole !== role) throw httpError(403, `requires ${role} role`)
+export function assertAccountRole (sessionState: SessionState, account: AccountKeys, roles: string | string[], options: AssertRoleOptions = {}) {
+  if (typeof roles === 'string') roles = [roles]
+  const accountRole = getAccountRole(sessionState, account, options)
+  if (!accountRole || !roles.includes(accountRole)) throw httpError(403, `requires ${roles.join(', ')} role(s)`)
 }
 
 export function isValidAccountType (type: string): type is 'user' | 'organization' {
