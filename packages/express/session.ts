@@ -50,6 +50,14 @@ export class Session {
     return sessionState
   }
 
+  // used for the main session token, but can also be used to use the jwks to verify other types of tokens
+  async verifyToken (token: string): Promise<any> {
+    const decoded = jwt.decode(token, { complete: true })
+    if (!decoded) throw new Error('failed to decode token')
+    const signingKey = await this.jwksClient.getSigningKey(decoded.header.kid)
+    return jwt.verify(token, signingKey.getPublicKey())
+  }
+
   async readState (req: Request | IncomingMessage): Promise<SessionState> {
     const session: SessionState = {}
     const cookieStr = req.headers.cookie
@@ -60,10 +68,7 @@ export class Session {
 
     if (!cookies.id_token || !cookies.id_token_sign) return session
     const token = cookies.id_token + '.' + cookies.id_token_sign
-    const decoded = jwt.decode(token, { complete: true })
-    if (!decoded) return session
-    const signingKey = await this.jwksClient.getSigningKey(decoded.header.kid)
-    const user = jwt.verify(token, signingKey.getPublicKey()) as User
+    const user = await this.verifyToken(token) as User
     if (!user) return session
 
     // this is to prevent null values that are put by SD versions that do not strictly respect their schema
