@@ -2,6 +2,12 @@ import type { Request } from 'express'
 import { isIP } from 'node:net'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 
+export const reqHost = (req: Request) => {
+  const forwardedHost = req.get('x-forwarded-host')
+  if (!forwardedHost) throw new Error('The "X-Forwarded-Host" header is required, please check the configuration of the reverse-proxy.')
+  return forwardedHost
+}
+
 /**
  * similar to https://www.npmjs.com/package/original-url but with these specificities:
  *  - we don't care for the path
@@ -10,13 +16,12 @@ import { httpError } from '@data-fair/lib-utils/http-errors.js'
  *  - limiting the accepted headers and making them required removes any ambiguity that could be exploited
  */
 export const reqOrigin = (req: Request) => {
-  const forwardedHost = req.get('x-forwarded-host')
-  if (!forwardedHost) throw new Error('The "X-Forwarded-Host" header is required, please check the configuration of the reverse-proxy.')
+  const host = reqHost(req)
 
   const forwardedProto = req.get('x-forwarded-proto')
   if (!forwardedProto) throw new Error('The "X-Forwarded-Proto" header is required, please check the configuration of the reverse-proxy.')
 
-  const origin = `${forwardedProto}://${forwardedHost}`
+  const origin = `${forwardedProto}://${host}`
   const port = req.get('x-forwarded-port')
   if (port && !(port === '443' && forwardedProto === 'https') && !(port === '80' && forwardedProto === 'http')) {
     return origin + ':' + port
