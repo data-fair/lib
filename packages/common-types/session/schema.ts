@@ -126,6 +126,9 @@ export default {
           type: 'integer',
           title: 'short for orgStorage',
           enum: [1]
+        },
+        rememberMe: {
+          type: 'boolean'
         }
       }
     },
