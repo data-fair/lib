@@ -143,4 +143,13 @@ export function reqSession (req: Request | IncomingMessage): SessionState {
   // @ts-ignore
   return req[sessionKey]
 }
-export function reqUser (req: Request | IncomingMessage): SessionState['user'] { return reqSession(req).user }
+export function reqSessionAuthenticated (req: Request | IncomingMessage): SessionStateAuthenticated {
+  // @ts-ignore
+  if (!req[sessionMiddlewareKey]) throw new Error('session middleware was not applied')
+  // @ts-ignore
+  const sessionState = req[sessionKey] as SessionState
+  assertAuthenticated(sessionState)
+  return sessionState
+}
+export function reqUser (req: Request | IncomingMessage): SessionState['user'] | undefined { return reqSession(req).user }
+export function reqUserAuthenticated (req: Request | IncomingMessage): SessionState['user'] { return reqSessionAuthenticated(req).user }
