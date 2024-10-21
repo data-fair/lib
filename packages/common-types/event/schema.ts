@@ -85,7 +85,6 @@ export default {
         },
         role: {
           type: 'string',
-          deprecated: true,
           description: 'If this is set and owner is an organization, this restrict ownership to users of this organization having this role or admin role'
         },
         department: {
