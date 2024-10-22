@@ -151,5 +151,5 @@ export function reqSessionAuthenticated (req: Request | IncomingMessage): Sessio
   assertAuthenticated(sessionState)
   return sessionState
 }
-export function reqUser (req: Request | IncomingMessage): SessionState['user'] | undefined { return reqSession(req).user }
-export function reqUserAuthenticated (req: Request | IncomingMessage): SessionState['user'] { return reqSessionAuthenticated(req).user }
+export function reqUser (req: Request | IncomingMessage): User | undefined { return reqSession(req).user }
+export function reqUserAuthenticated (req: Request | IncomingMessage): User { return reqSessionAuthenticated(req).user }
