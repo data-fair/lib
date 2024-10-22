@@ -23,6 +23,18 @@ class SchemaWrapper {
     return this
   }
 
+  pickProperties (properties: string | string[]) {
+    if (typeof properties === 'string') properties = [properties]
+    const removedProperties: string[] = []
+    if (this.schema.properties) {
+      for (const key of Object.keys(this.schema.properties)) {
+        if (!properties.includes(key)) removedProperties.push(key)
+      }
+    }
+    this.removeProperties(removedProperties)
+    return this
+  }
+
   removeReadonlyProperties () {
     const roProperties: string[] = []
     if (this.schema.properties) {
