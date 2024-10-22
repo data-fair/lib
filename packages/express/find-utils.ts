@@ -41,8 +41,15 @@ export function mongoSort (sortParam: any): Sort {
   if (!sortParam) return sort
   Object.assign(sort, ...sortParam.split(',').map(s => {
     const toks = s.split(':')
-    return {
-      [toks[0]]: Number(toks[1])
+    const key = toks[0]
+    const val = toks[1]
+    if (val !== undefined) {
+      return { [key]: Number(toks[1] ?? 1) }
+    }
+    if (key.startsWith('-')) {
+      return { [key.slice(1)]: -1 }
+    } else {
+      return { [s]: 1 }
     }
   }))
   return sort
