@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-import { readFileSync, readdirSync, writeFileSync, existsSync, rmSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, rmSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { pascalCase } from 'change-case'
 import { program } from 'commander'
 import clone from '@data-fair/lib-utils/clone.js'
+import { fdir as Fdir } from 'fdir'
 
 type TypesBuilderOptions = { mjs: boolean }
 type FileRef = { url: string }
@@ -28,18 +29,18 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
 
   console.log(`scan dir ${dir} looking for pattern */schema.{json|js|ts}`)
   const dirs: [string, string, string][] = []
-  for (const file of readdirSync(rootDir, { recursive: true })) {
-    if (typeof file !== 'string') continue
+  const crawler = (new Fdir())
+    .exclude((dirName) => ['node_modules', 'data'].includes(dirName) || dirName.startsWith('.'))
+    .filter((file, isDirectory) => {
+      return (!isDirectory && ['schema.json', 'schema.js', 'schema.ts'].includes(path.basename(file)))
+    })
+    .withFullPaths()
+  const files = crawler.crawl(rootDir).sync()
+  for (const file of files) {
     const fileName = path.basename(file)
-    if (!['schema.json', 'schema.js', 'schema.ts'].includes(fileName)) continue
-    const filePath = path.resolve(rootDir, file.toString())
-    const parts = filePath.split(path.sep)
-    if (parts.includes('node_modules')) continue
-    const dir = path.dirname(filePath)
+    const dir = path.dirname(file)
     if (dirs.some(d => d[0] === dir)) continue
-    const lastParts = parts.slice(-3)
-    if (lastParts[1] === 'type' || lastParts[1] === 'types') dirs.push([path.dirname(filePath), lastParts[0], fileName])
-    else dirs.push([dir, lastParts[1], fileName])
+    dirs.push([dir, path.basename(dir), fileName])
   }
   console.log(`found ${dirs.length} types to compile`)
 

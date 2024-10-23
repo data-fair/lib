@@ -128,7 +128,8 @@ export default {
           enum: [1]
         },
         rememberMe: {
-          type: 'boolean'
+          type: 'integer',
+          enum: [1]
         }
       }
     },

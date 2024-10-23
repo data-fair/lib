@@ -7,6 +7,7 @@ describe('site management util function', () => {
     assert.ok(!'/other-service'.match(createPrefixRegexp('service')))
     assert.ok(!'/service-other'.match(createPrefixRegexp('service')))
     assert.equal('/service'.match(createPrefixRegexp('service'))?.[1], '')
+    assert.equal('/a-service'.match(createPrefixRegexp('a-service'))?.[1], '')
     assert.equal('/service/'.match(createPrefixRegexp('service'))?.[1], '')
     assert.equal('/site/service'.match(createPrefixRegexp('service'))?.[1], '/site')
     assert.equal('/site/service/api'.match(createPrefixRegexp('service'))?.[1], '/site')
