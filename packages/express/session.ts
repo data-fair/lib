@@ -153,3 +153,17 @@ export function reqSessionAuthenticated (req: Request | IncomingMessage): Sessio
 }
 export function reqUser (req: Request | IncomingMessage): User | undefined { return reqSession(req).user }
 export function reqUserAuthenticated (req: Request | IncomingMessage): User { return reqSessionAuthenticated(req).user }
+
+export function setReqUser (req: Request, user: User) {
+  const sessionState: SessionStateAuthenticated = {
+    user,
+    accountRole: 'admin',
+    account: {
+      type: 'user',
+      id: user.id,
+      name: user.name
+    }
+  }
+  // @ts-ignore
+  req[sessionKey] = sessionState
+}
