@@ -1,6 +1,6 @@
 // prepare an axios instance with improved error management and some performance tuning for nodejs usage
 
-import type { InternalAxiosRequestConfig, AxiosInstance } from 'axios'
+import type { InternalAxiosRequestConfig, AxiosInstance, CreateAxiosDefaults } from 'axios'
 import axios from 'axios'
 import { httpAgent, httpsAgent } from './http-agents.js'
 
@@ -25,12 +25,14 @@ const requestInterceptor = (config: InternalAxiosRequestConfig) => {
   return config
 }
 
-export function axiosBuilder (opts: object = {}): AxiosInstance {
+export function axiosBuilder (opts: CreateAxiosDefaults = {}, beforeInterceptors?: (ax: AxiosInstance) => void): AxiosInstance {
   const ax = axios.create({
     httpAgent,
     httpsAgent,
     ...opts
   })
+
+  if (beforeInterceptors) beforeInterceptors(ax)
 
   ax.interceptors.request.use(requestInterceptor)
 
