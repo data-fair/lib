@@ -13,6 +13,7 @@ export interface AxiosAuthOptions {
   adminMode?: boolean
   directoryUrl?: string
   axiosOpts?: any
+  orgStorage?: boolean
 }
 
 export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosInstance> {
@@ -20,6 +21,7 @@ export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosInstance>
   if (opts.org) body.org = opts.org
   if (opts.dep) body.dep = opts.dep
   if (opts.adminMode) body.adminMode = opts.adminMode
+  if (opts.orgStorage) body.orgStorage = opts.orgStorage
   const axiosOpts = {
     httpAgent: new Agent({ keepAlive: false }),
     ...opts.axiosOpts
