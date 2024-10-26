@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 import JwksClient from 'jwks-rsa'
 import cookie from 'cookie'
 import asyncHandler from './async-handler.js'
+import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { validate, assertAdminMode, assertAuthenticated } from '@data-fair/lib-common-types/session/index.js'
 
 export * from '@data-fair/lib-common-types/session/index.js'
@@ -68,7 +69,13 @@ export class Session {
 
     if (!cookies.id_token || !cookies.id_token_sign) return session
     const token = cookies.id_token + '.' + cookies.id_token_sign
-    const user = await this.verifyToken(token) as User
+    let user: User
+    try {
+      user = await this.verifyToken(token)
+    } catch (err) {
+      console.warn(err)
+      throw httpError(401)
+    }
     if (!user) return session
 
     // this is to prevent null values that are put by SD versions that do not strictly respect their schema
