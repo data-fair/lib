@@ -1,4 +1,5 @@
 import { type Event } from '@data-fair/lib-common-types/event/index.js'
+import { type Notification } from '@data-fair/lib-common-types/notification/index.js'
 import { internalError } from '@data-fair/lib-node/observer.js'
 import axios from './axios.js'
 
@@ -12,7 +13,8 @@ const options = () => {
   return _options
 }
 
-let queue: Event[] = []
+let eventsQueue: Event[] = []
+let notificationsQueue: Notification[] = []
 let stopped = false
 let currentDrainPromise: Promise<void> | undefined
 
@@ -31,10 +33,18 @@ const loop = async () => {
 }
 
 const drain = async () => {
-  if (queue.length === 0) return
-  const events = queue
-  queue = []
-  await axios.post(options().eventsUrl + '/api/events', events, { headers: { 'x-secret-key': options().eventsSecret } })
+  if (eventsQueue.length) {
+    const events = eventsQueue
+    eventsQueue = []
+    await axios.post(options().eventsUrl + '/api/events', events, { headers: { 'x-secret-key': options().eventsSecret } })
+  }
+  if (notificationsQueue.length) {
+    const notifications = notificationsQueue
+    notificationsQueue = []
+    for (const notification of notifications) {
+      await axios.post(options().eventsUrl + '/api/notifications', notification, { headers: { 'x-secret-key': options().eventsSecret } })
+    }
+  }
 }
 
 export const start = async (options: EventsQueueOptions) => {
@@ -49,7 +59,13 @@ export const stop = async () => {
 }
 
 export const pushEvent = (event: Omit<Event, 'date'>) => {
-  if (stopped) throw new Error('events queue as been stopped')
-  queue.push(event as Event);
+  if (stopped) throw new Error('events queue has been stopped');
   (event as Event).date = new Date().toISOString()
+  eventsQueue.push(event as Event)
+}
+
+export const pushNotification = (notification: Omit<Notification, 'date'>) => {
+  if (stopped) throw new Error('notifications queue has been stopped');
+  (notification as Notification).date = new Date().toISOString()
+  notificationsQueue.push(notification as Notification)
 }
