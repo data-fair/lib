@@ -51,7 +51,6 @@
     "packages/common-types",
     "packages/express",
     "packages/node",
-    "packages/node",
     "packages/processing-dev",
     "packages/types-builder",
     "packages/utils",
