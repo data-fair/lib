@@ -7,6 +7,7 @@ import { useUiNotif } from '@data-fair/lib-vue/ui-notif.js'
 
 type UseFetchOptions = {
   query?: QueryObject | Ref<QueryObject>,
+  watch?: Boolean
 }
 
 export function useFetch<T> (url: string | Ref<string>, options: UseFetchOptions = {}) {
@@ -21,19 +22,29 @@ export function useFetch<T> (url: string | Ref<string>, options: UseFetchOptions
   const data = ref<T | null>(null)
   const loading = ref(false)
 
+  let abortController: AbortController | undefined
   const refresh = async () => {
+    if (abortController) abortController.abort()
     loading.value = true
+    abortController = new AbortController()
     try {
-      data.value = await ofetch(fullUrl.value)
+      data.value = await ofetch(fullUrl.value, { signal: abortController.signal })
     } catch (error: any) {
-      sendUiNotif({ msg: '', error })
+      if (error.name !== 'AbortError') sendUiNotif({ msg: '', error })
     }
     loading.value = false
   }
 
-  watch(fullUrl, refresh, { immediate: true })
+  const initialFetch = async () => {
+    if (loading.value || data.value) return
+    await refresh()
+  }
 
-  return { data, loading, refresh }
+  if (options.watch !== false) {
+    watch(fullUrl, refresh, { immediate: true })
+  }
+
+  return { data, loading, refresh, initialFetch }
 }
 
 export default useFetch

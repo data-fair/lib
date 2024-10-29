@@ -53,6 +53,9 @@ export interface Session {
 
 export type SessionAuthenticated = Session & {
   state: SessionStateAuthenticated
+  user: ComputedRef<SessionStateAuthenticated['user']>
+  account: ComputedRef<SessionStateAuthenticated['account']>
+  accountRole: ComputedRef<SessionStateAuthenticated['accountRole']>
 }
 
 const debug = Debug('session')
