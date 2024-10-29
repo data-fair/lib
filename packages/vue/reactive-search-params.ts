@@ -127,7 +127,7 @@ export const useBooleanSearchParam = (key: string, options: boolean | { default?
   const defaultValue = typeof options === 'boolean' ? options : (options.default ?? false)
   const strings = (typeof options !== 'boolean' && options.strings) || ['1', '0']
   return computed({
-    get: () => key in reactiveSearchParams ? reactiveSearchParams[key] === strings[0] : defaultValue,
+    get: () => key in reactiveSearchParams ? (reactiveSearchParams[key] === strings[0] || reactiveSearchParams[key] === 'true') : defaultValue,
     set: (value) => {
       if (value === defaultValue) delete reactiveSearchParams[key]
       else reactiveSearchParams[key] = value ? strings[0] : strings[1]

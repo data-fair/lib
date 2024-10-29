@@ -1,5 +1,5 @@
 import { type IncomingMessage } from 'node:http'
-import { type Ref, App } from 'vue'
+import { type Ref, type ComputedRef, type App } from 'vue'
 import { type RouteLocation } from 'vue-router'
 import { type fetch } from 'ofetch'
 import { type SessionState, type SessionStateAuthenticated, type User } from '@data-fair/lib-common-types/session/index.js'
@@ -31,6 +31,12 @@ export interface SessionOptions {
 
 export interface Session {
   state: SessionState
+  user: ComputedRef<SessionState['user']>
+  organization: ComputedRef<SessionState['organization']>
+  account: ComputedRef<SessionState['account']>
+  accountRole: ComputedRef<SessionState['accountRole']>
+  lang: ComputedRef<SessionState['lang']>
+  dark: ComputedRef<SessionState['dark']>
   loginUrl: (redirect?: string, extraParams?: Record<string, string>, immediateRedirect?: true) => string
   login: (redirect?: string, extraParams?: Record<string, string>, immediateRedirect?: true) => void
   logout: (redirect?: string) => Promise<void>
@@ -294,6 +300,12 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
 
   const session: Session = {
     state,
+    organization: computed(() => state.organization),
+    user: computed(() => state.user),
+    account: computed(() => state.account),
+    accountRole: computed(() => state.accountRole),
+    dark: computed(() => state.dark),
+    lang: computed(() => state.lang),
     loginUrl,
     login,
     logout,
@@ -333,4 +345,5 @@ export function useSessionAuthenticated (errorBuilder?: () => any) {
   }
   return session as SessionAuthenticated
 }
+
 export default useSession
