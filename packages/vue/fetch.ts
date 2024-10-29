@@ -10,8 +10,10 @@ type UseFetchOptions = {
   watch?: Boolean
 }
 
-export function useFetch<T> (url: string | Ref<string>, options: UseFetchOptions = {}) {
+export function useFetch<T> (url: string | Ref<string> | (() => string), options: UseFetchOptions = {}) {
   const { sendUiNotif } = useUiNotif()
+
+  if (typeof url === 'function') url = computed(url)
   const fullUrl = computed(() => {
     let fullUrl = isRef(url) ? url.value : url
     const query = isRef(options.query) ? options.query.value : options.query
