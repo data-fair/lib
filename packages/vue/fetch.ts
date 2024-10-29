@@ -8,9 +8,10 @@ import { useUiNotif } from '@data-fair/lib-vue/ui-notif.js'
 type UseFetchOptions = {
   query?: QueryObject | Ref<QueryObject>,
   watch?: Boolean
+  notifError?: Boolean
 }
 
-export function useFetch<T> (url: string | Ref<string> | (() => string), options: UseFetchOptions = {}) {
+export function useFetch<T> (url: string | Ref<string> | (() => string), options: UseFetchOptions = {}): { data: Ref<T | null>, loading: Ref<boolean>, initialized: Ref<boolean>, error: Ref<any>, refresh: (() => Promise<T | null>) } {
   const { sendUiNotif } = useUiNotif()
 
   if (typeof url === 'function') url = computed(url)
@@ -21,32 +22,37 @@ export function useFetch<T> (url: string | Ref<string> | (() => string), options
     return fullUrl
   })
 
-  const data = ref<T | null>(null)
+  const data = ref(null) as Ref<T | null>
   const loading = ref(false)
+  const initialized = ref(false)
+  const error = ref<any>(null)
 
   let abortController: AbortController | undefined
   const refresh = async () => {
+    initialized.value = true
+    error.value = null
     if (abortController) abortController.abort()
     loading.value = true
     abortController = new AbortController()
     try {
-      data.value = await ofetch(fullUrl.value, { signal: abortController.signal })
-    } catch (error: any) {
-      if (error.name !== 'AbortError') sendUiNotif({ msg: '', error })
+      data.value = await ofetch<T>(fullUrl.value, { signal: abortController.signal })
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        error.value = err
+        if (options.notifError !== false) {
+          sendUiNotif({ msg: '', error: err })
+        }
+      }
     }
     loading.value = false
-  }
-
-  const initialFetch = async () => {
-    if (loading.value || data.value) return
-    await refresh()
+    return data.value
   }
 
   if (options.watch !== false) {
     watch(fullUrl, refresh, { immediate: true })
   }
 
-  return { data, loading, refresh, initialFetch }
+  return { initialized, data, loading, refresh, error }
 }
 
 export default useFetch
