@@ -3,7 +3,7 @@ import { type Ref, type ComputedRef, type App } from 'vue'
 import { type RouteLocation } from 'vue-router'
 import { type fetch } from 'ofetch'
 import { type SessionState, type SessionStateAuthenticated, type User } from '@data-fair/lib-common-types/session/index.js'
-import { reactive, computed, watch, inject } from 'vue'
+import { reactive, computed, watch, inject, ref } from 'vue'
 import { ofetch } from 'ofetch'
 import { jwtDecode } from 'jwt-decode'
 import cookiesModule from 'universal-cookie'
@@ -27,6 +27,21 @@ export interface SessionOptions {
   req?: IncomingMessage
   cookies?: GenericCookies
   customFetch?: typeof fetch
+  siteInfo?: boolean
+}
+
+export interface Theme {
+  primaryColor: string
+}
+
+export interface SiteInfo {
+  theme: Theme
+  logo?: string
+}
+
+interface SiteInfoStorage {
+  info: SiteInfo | null
+  updatedAt: number
 }
 
 export interface Session {
@@ -37,6 +52,7 @@ export interface Session {
   accountRole: ComputedRef<SessionState['accountRole']>
   lang: ComputedRef<SessionState['lang']>
   dark: ComputedRef<SessionState['dark']>
+  site: Ref<SiteInfo | null>
   loginUrl: (redirect?: string, extraParams?: Record<string, string>, immediateRedirect?: true) => string
   login: (redirect?: string, extraParams?: Record<string, string>, immediateRedirect?: true) => void
   logout: (redirect?: string) => Promise<void>
@@ -45,6 +61,7 @@ export interface Session {
   asAdmin: (user: any | null) => Promise<void>
   cancelDeletion: () => Promise<void>
   keepalive: () => Promise<void>
+  refreshSiteInfo: () => Promise<void>
   switchDark: (value: boolean) => void
   switchLang: (value: string) => void
   topLocation: Ref<Location | undefined>
@@ -119,10 +136,11 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
 
   // the core state of the session that is filled by reading cookies
   const state = reactive({} as SessionState)
+  const site = ref<SiteInfo | null>(null)
 
   // cookies are the source of truth and this information is transformed into the state reactive object
   const cookies = initOptions?.cookies ?? new Cookies(options.req?.headers.cookie)
-  const readCookies = () => {
+  const readState = () => {
     const darkCookie = cookies.get('theme_dark')
     state.dark = darkCookie === '1' || darkCookie === 'true'
 
@@ -178,17 +196,25 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
       }
       state.accountRole = 'admin'
     }
+
+    if (!ssr) {
+      const siteInfoStorage = getSiteInfoStorage()
+      site.value = siteInfoStorage ? siteInfoStorage.info : null
+    }
   }
-  readCookies()
+  readState()
   debug('initial state', state)
 
   if (!ssr) {
     // sessionData is also stored in localStorage as a way to access it in simpler pages that do not require use-session
     // and in order to listen to storage event from other contexts and sync session info accross windows and tabs
-    const storageListener = (event: StorageEvent) => {
-      if (event.key === 'sd-session' + options.sitePath) readCookies()
+    if (!ssr) {
+      const storageListener = (event: StorageEvent) => {
+        if (event.key === 'sd-session' + options.sitePath) readState()
+      }
+      window.addEventListener('storage', storageListener)
     }
-    window.addEventListener('storage', storageListener)
+
     // we cannot use onUnmounted here or we get warnings "onUnmounted is called when there is no active component instance to be associated with. "
     // TODO: should we have another cleanup mechanism ?
     // onUnmounted(() => { window.removeEventListener('storage', storageListener) })
@@ -243,7 +269,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     else cookies.remove('id_token_org')
     if (dep) cookies.set('id_token_dep', dep, { path: cookiesPath })
     else cookies.remove('id_token_dep')
-    readCookies()
+    readState()
   }
 
   const setAdminMode = async (adminMode: boolean, redirect?: string) => {
@@ -264,41 +290,77 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     } else {
       await customFetch(`${options.directoryUrl}/api/auth/asadmin`, { method: 'DELETE' })
     }
-    readCookies()
+    readState()
   }
 
   const cancelDeletion = async () => {
     if (state.user == null) return
     await customFetch(`${options.directoryUrl}/api/users/${state.user.id}`, { method: 'PATCH', body: ({ plannedDeletion: null }) as any })
-    readCookies()
+    readState()
   }
 
   const switchDark = (value: boolean) => {
     const maxAge = 60 * 60 * 24 * 365 // 1 year
     cookies.set('theme_dark', `${value}`, { maxAge, path: cookiesPath })
-    readCookies()
+    readState()
   }
 
   const switchLang = (value: string) => {
     const maxAge = 60 * 60 * 24 * 365 // 1 year
     cookies.set('i18n_lang', value, { maxAge, path: cookiesPath })
-    readCookies()
+    readState()
   }
 
   const keepalive = async () => {
     if (state.user == null) return
-    window.localStorage.setItem('sd-keepalive' + options.sitePath, `${new Date().getTime()}`)
+    if (!ssr) {
+      window.localStorage.setItem('sd-keepalive' + options.sitePath, `${new Date().getTime()}`)
+    }
     await customFetch(`${options.directoryUrl}/api/auth/keepalive`, { method: 'POST' })
-    readCookies()
+    readState()
+  }
+
+  const getSiteInfoStorage = () => {
+    const siteInfoStorageStr = window.localStorage.getItem('sd-site-info' + options.sitePath)
+    return siteInfoStorageStr ? JSON.parse(siteInfoStorageStr) as SiteInfoStorage : null
+  }
+
+  const setSiteInfoStorage = (siteInfo: SiteInfo | null) => {
+    const siteInfoStorage: SiteInfoStorage = { info: siteInfo, updatedAt: new Date().getTime() }
+    window.localStorage.setItem('sd-site-info' + options.sitePath, JSON.stringify(siteInfoStorage))
+  }
+
+  const refreshSiteInfo = async () => {
+    const siteInfo = await customFetch(`${options.directoryUrl}/api/sites/_public`) ?? null
+    site.value = siteInfo
+    if (!ssr) {
+      setSiteInfoStorage(siteInfo)
+    }
   }
 
   // immediately performs a keepalive, but only on top windows (not iframes or popups)
   // and only if it was not done very recently (maybe from a refreshed page next to this one)
+  // also run an auto-refresh loop
   if (!ssr && window.top === window.self) {
     const lastKeepalive = window.localStorage.getItem('sd-keepalive' + options.sitePath)
     if (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) > 10000) {
       await keepalive()
     }
+
+    if (options.siteInfo) {
+      const lastSiteInfoStorage = getSiteInfoStorage()
+      if (!lastSiteInfoStorage || (new Date().getTime() - Number(lastSiteInfoStorage.updatedAt)) > 10000) {
+        await refreshSiteInfo()
+      }
+    }
+
+    const refreshLoopDelay = 10 * 60 * 1000 // 10 minutes
+    setInterval(() => {
+      const lastKeepalive = window.localStorage.getItem('sd-keepalive' + options.sitePath)
+      if (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) > refreshLoopDelay / 2) {
+        keepalive().catch(err => console.error(err))
+      }
+    }, refreshLoopDelay)
   }
 
   const session: Session = {
@@ -309,6 +371,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     accountRole: computed(() => state.accountRole),
     dark: computed(() => state.dark),
     lang: computed(() => state.lang),
+    site,
     loginUrl,
     login,
     logout,
@@ -317,6 +380,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     asAdmin,
     cancelDeletion,
     keepalive,
+    refreshSiteInfo,
     switchDark,
     switchLang,
     topLocation,
