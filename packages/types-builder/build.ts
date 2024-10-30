@@ -117,8 +117,14 @@ export const schemaExports: string[]
         const schemaJSTTOpts = schema['x-jstt'] || {}
         console.log(`  json-schema-to-typescript options: ${JSON.stringify(schemaJSTTOpts)}`)
         const compileTs = (await import('json-schema-to-typescript')).compile
-        const typesCode = await compileTs(clone(schema), schema.$id || key,
+        let typesCode = await compileTs(clone(schema), schema.$id || key,
           { bannerComment: '', unreachableDefinitions: true, ...schemaJSTTOpts, $refOptions })
+
+        // types are better because of this problem with index definitions https://github.com/microsoft/TypeScript/issues/15300
+        // but see the discussion here https://github.com/bcherny/json-schema-to-typescript/issues/461 for why
+        // json-schema-to-typescript uses interfaces, maybe we will have to make this replace optional
+        typesCode = typesCode.replace(/export interface (.*) {/g, 'export type $1 = {')
+
         dtsCode += `
 // see https://github.com/bcherny/json-schema-to-typescript/issues/439 if some types are not exported
 ${typesCode}
