@@ -22,6 +22,7 @@ interface GenericCookies {
 export interface SessionOptions {
   sitePath: string
   directoryUrl: string
+  defaultLang: string
   route?: RouteLocation
   logoutRedirectUrl?: string
   req?: IncomingMessage
@@ -112,7 +113,7 @@ const goTo = (url: string | null) => {
   else topLocation.reload()
 }
 
-const defaultOptions = { directoryUrl: '/simple-directory', sitePath: '' }
+const defaultOptions = { directoryUrl: '/simple-directory', sitePath: '', defaultLang: 'fr' }
 
 export async function getSession (initOptions: Partial<SessionOptions>): Promise<Session> {
   const options = { ...defaultOptions, ...initOptions }
@@ -145,8 +146,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     state.dark = darkCookie === '1' || darkCookie === 'true'
 
     const langCookie = cookies.get('i18n_lang')
-    if (langCookie) state.lang = langCookie
-    else delete state.lang
+    state.lang = langCookie ?? options.defaultLang
 
     const idToken = cookies.get('id_token')
     const user = jwtDecodeAlive(idToken)

@@ -4,6 +4,7 @@ export default {
   type: 'object',
   title: 'session state',
   additionalProperties: false,
+  required: ['lang'],
   properties: {
     user: {
       $ref: '#/$defs/user'

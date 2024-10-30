@@ -19,14 +19,16 @@ const sessionMiddlewareKey = Symbol('session-middleware')
 
 export class Session {
   private _jwksClient: JwksClient.JwksClient | undefined
+  private defaultLang: string = 'fr'
 
   get jwksClient () {
     if (!this._jwksClient) throw new Error('session management was not initialized')
     return this._jwksClient
   }
 
-  init (directoryUrl = 'http://simple-directory:8080') {
+  init (directoryUrl = 'http://simple-directory:8080', defaultLang?: string) {
     this._jwksClient = JwksClient({ jwksUri: directoryUrl + '/.well-known/jwks.json' })
+    if (defaultLang) this.defaultLang = defaultLang
   }
 
   async req (req: Request | IncomingMessage): Promise<SessionState> {
@@ -60,7 +62,7 @@ export class Session {
   }
 
   async readState (req: Request | IncomingMessage): Promise<SessionState> {
-    const session: SessionState = {}
+    const session: SessionState = { lang: this.defaultLang }
     const cookieStr = req.headers.cookie
     if (!cookieStr) return session
     const cookies = cookie.parse(cookieStr)
@@ -161,7 +163,7 @@ export function reqSessionAuthenticated (req: Request | IncomingMessage): Sessio
 export function reqUser (req: Request | IncomingMessage): User | undefined { return reqSession(req).user }
 export function reqUserAuthenticated (req: Request | IncomingMessage): User { return reqSessionAuthenticated(req).user }
 
-export function setReqUser (req: Request, user: User) {
+export function setReqUser (req: Request, user: User, lang = 'fr') {
   const sessionState: SessionStateAuthenticated = {
     user,
     accountRole: 'admin',
@@ -169,7 +171,8 @@ export function setReqUser (req: Request, user: User) {
       type: 'user',
       id: user.id,
       name: user.name
-    }
+    },
+    lang
   }
   // @ts-ignore
   req[sessionKey] = sessionState
