@@ -1,6 +1,8 @@
-import type { AccountKeys } from '../account/index.js'
-import { type SessionState } from './.type/index.js'
+import { type SessionState, type Account } from './.type/index.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
+
+// same as account, but only the parts necessary in filters, etc
+export type AccountKeys = Pick<Account, 'type' | 'id' | 'department'>
 
 export type SessionStateAuthenticated = SessionState & Required<Pick<SessionState, 'user' | 'account' | 'accountRole'>>
 

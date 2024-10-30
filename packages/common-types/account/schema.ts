@@ -1,3 +1,5 @@
+// TODO: remove this, duplicate of session/schema.ts
+
 export default {
   $id: 'https://github.com/data-fair/lib/account',
   'x-exports': ['types', 'validate'],
