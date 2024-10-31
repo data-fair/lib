@@ -17,12 +17,12 @@ const baseDarkColors = {
   success: '#00E676' // green.accent3
 }
 
-export function vuetifySessionOptions (session: Session) {
+export function vuetifySessionOptions (session: Session): VuetifyOptions {
   const colors = { ...baseColors, ...session.site.value?.colors }
   return {
     ssr: false,
     locale: {
-      locale: session.lang,
+      locale: session.lang.value,
       messages: { fr, en }
     },
     theme: {
