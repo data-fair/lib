@@ -124,6 +124,11 @@ const goTo = (url: string | null) => {
   else topLocation.reload()
 }
 
+const getSiteInfoStorage = (sitePath: string) => {
+  const siteInfoStorageStr = window.localStorage.getItem('sd-site-info' + sitePath)
+  return siteInfoStorageStr ? JSON.parse(siteInfoStorageStr) as SiteInfoStorage : null
+}
+
 const defaultOptions = { directoryUrl: '/simple-directory', sitePath: '', defaultLang: 'fr' }
 
 export async function getSession (initOptions: Partial<SessionOptions>): Promise<Session> {
@@ -209,7 +214,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     }
 
     if (!ssr) {
-      const siteInfoStorage = getSiteInfoStorage()
+      const siteInfoStorage = getSiteInfoStorage(options.sitePath)
       site.value = siteInfoStorage ? siteInfoStorage.info : null
     }
   }
@@ -331,11 +336,6 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     readState()
   }
 
-  const getSiteInfoStorage = () => {
-    const siteInfoStorageStr = window.localStorage.getItem('sd-site-info' + options.sitePath)
-    return siteInfoStorageStr ? JSON.parse(siteInfoStorageStr) as SiteInfoStorage : null
-  }
-
   const setSiteInfoStorage = (siteInfo: SiteInfo | null) => {
     const siteInfoStorage: SiteInfoStorage = { info: siteInfo, updatedAt: new Date().getTime() }
     window.localStorage.setItem('sd-site-info' + options.sitePath, JSON.stringify(siteInfoStorage))
@@ -359,7 +359,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     }
 
     if (options.siteInfo) {
-      const lastSiteInfoStorage = getSiteInfoStorage()
+      const lastSiteInfoStorage = getSiteInfoStorage(options.sitePath)
       if (!lastSiteInfoStorage || (new Date().getTime() - Number(lastSiteInfoStorage.updatedAt)) > 10000) {
         await refreshSiteInfo()
       }
