@@ -1,9 +1,10 @@
-function inIframe () {
+// check if we are in an iframe either cross or same domain
+export const inIframe = (() => {
   try {
-    return window.self !== window.top
+    return window.top !== window.self
   } catch (e) {
-    return false
+    return true
   }
-}
+})()
 
-export default inIframe()
+export default inIframe

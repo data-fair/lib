@@ -1,3 +1,4 @@
+import { type Session } from '@data-fair/lib-vue/session.js'
 import { VuetifyOptions } from 'vuetify'
 import { fr, en } from 'vuetify/locale'
 
@@ -16,7 +17,38 @@ const baseDarkColors = {
   success: '#00E676' // green.accent3
 }
 
-export function defaultOptions (searchParams: Record<string, string>, darkCookie = false, locale: 'fr' | 'en' = 'fr'):VuetifyOptions {
+export function vuetifySessionOptions (session: Session) {
+  const colors = { ...baseColors, ...session.site.value?.colors }
+  return {
+    ssr: false,
+    locale: {
+      locale: session.lang,
+      messages: { fr, en }
+    },
+    theme: {
+      defaultTheme: 'light',
+      themes: {
+        light: {
+          dark: false,
+          colors
+        }
+      }
+    },
+    defaults: {
+      VCard: {
+        // grey outlined card by default
+        variant: 'outlined',
+        // TODO: replace this with a cleaner border-opacity prop https://vuetifyjs.com/en/styles/borders/#theme-colors ?
+        style: 'border-color: rgba(var(--v-theme-on-surface), var(--v-focus-opacity)) !important;'
+      }
+    }
+  }
+}
+
+// TODO: deprecate this in favor of sessionVuetifyOptions
+export function defaultOptions (searchParams: Record<string, string>, darkCookie = false, locale: string = 'fr'):VuetifyOptions {
+  console.warn('vuetify.defaultOptions is deprecated, use sessionVuetifyOptions')
+
   const dark = searchParams?.dark ? searchParams.dark === 'true' : darkCookie
 
   const searchParamsColors: Record<string, string> = {}

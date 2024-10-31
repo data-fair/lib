@@ -22,6 +22,7 @@ export default {
       type: 'string'
     },
     dark: {
+      deprecated: true,
       type: 'boolean'
     }
   },

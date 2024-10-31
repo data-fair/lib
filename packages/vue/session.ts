@@ -8,6 +8,7 @@ import { ofetch } from 'ofetch'
 import { jwtDecode } from 'jwt-decode'
 import cookiesModule from 'universal-cookie'
 import Debug from 'debug'
+import inIframe from '@data-fair/lib-utils/in-iframe.js'
 
 export type { SessionState, SessionStateAuthenticated, User, Account } from '@data-fair/lib-common-types/session/index.js'
 
@@ -31,13 +32,23 @@ export interface SessionOptions {
   siteInfo?: boolean
 }
 
-export interface Theme {
-  primaryColor: string
+export interface Colors {
+  background: string
+  surface: string
+  primary: string
+  secondary: string
+  accent: string
+  error: string
+  info: string
+  success: string
+  warning: string
+  admin: string
 }
 
 export interface SiteInfo {
-  theme: Theme
+  main?: boolean
   logo?: string
+  colors: Colors
 }
 
 interface SiteInfoStorage {
@@ -341,9 +352,9 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   // immediately performs a keepalive, but only on top windows (not iframes or popups)
   // and only if it was not done very recently (maybe from a refreshed page next to this one)
   // also run an auto-refresh loop
-  if (!ssr && window.top === window.self) {
+  if (!ssr && !inIframe) {
     const lastKeepalive = window.localStorage.getItem('sd-keepalive' + options.sitePath)
-    if (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) > 10000) {
+    if (state.user && (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) > 10000)) {
       await keepalive()
     }
 
