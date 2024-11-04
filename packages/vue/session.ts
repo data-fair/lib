@@ -80,7 +80,7 @@ export interface Session {
   options: SessionOptions
 }
 
-export type SessionAuthenticated = Session & {
+export type SessionAuthenticated = Omit<Session, 'state' | 'user' | 'account' | 'accountRole'> & {
   state: SessionStateAuthenticated
   user: ComputedRef<SessionStateAuthenticated['user']>
   account: ComputedRef<SessionStateAuthenticated['account']>
