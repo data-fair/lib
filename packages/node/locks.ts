@@ -24,6 +24,7 @@ export class Locks {
   }
 
   start = async (db: Db, ttl = 60) => {
+    this._db = db
     await this.collection.createIndex({ pid: 1 })
     try {
       await this.collection.createIndex({ updatedAt: 1 }, { expireAfterSeconds: ttl })
