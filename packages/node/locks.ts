@@ -5,71 +5,75 @@ import Debug from 'debug'
 
 const debug = Debug('locks')
 
-const pid = randomBytes(8).toString('hex')
-
-debug('locks with pid', pid)
-
-let interval: ReturnType<typeof setInterval>
-
-let _db: Db | undefined
-
-const collection = () => {
-  if (!_db) throw new Error('locks utils was not initialized')
-  return _db?.collection<{ _id: string, pid: string, origin?: string, hostname: string, createdAt: Date }>('locks')
-}
-
-export const init = async (db: Db, ttl = 60) => {
-  _db = db
-  const locks = collection()
-  await locks.createIndex({ pid: 1 })
-  try {
-    await locks.createIndex({ updatedAt: 1 }, { expireAfterSeconds: ttl })
-  } catch (err) {
-    console.log('Failure to create TTL index. Probably because the value changed. Try to update it.')
-    db.command({ collMod: 'locks', index: { keyPattern: { updatedAt: 1 }, expireAfterSeconds: ttl } })
+export class Locks {
+  pid: string
+  private interval: ReturnType<typeof setInterval> | undefined
+  private _db: Db | undefined
+  get db () {
+    if (!this._db) throw new Error('locks utils was not initialized')
+    return this._db
   }
 
-  // prolongate lock acquired by this process while it is still active
-  interval = setInterval(() => {
-    locks.updateMany({ pid }, { $currentDate: { updatedAt: true } })
-  }, (ttl / 2) * 1000)
-}
+  get collection () {
+    return this.db.collection<{ _id: string, pid: string, origin?: string, hostname: string, createdAt: Date }>('locks')
+  }
 
-export const stop = async () => {
-  clearInterval(interval)
-  if (_db) await collection().deleteMany({ pid })
-}
+  constructor () {
+    this.pid = randomBytes(8).toString('hex')
+    debug('locks with pid', this.pid)
+  }
 
-export async function acquire (_id: string, origin?: string): Promise<boolean> {
-  if (!_db) throw new Error('locks not initialized')
-  debug('acquire', _id, origin)
-  const locks = collection()
-  try {
-    await locks.insertOne({ _id, pid, origin, hostname: hostname(), createdAt: new Date() })
+  start = async (db: Db, ttl = 60) => {
+    await this.collection.createIndex({ pid: 1 })
     try {
-      await locks.updateOne({ _id }, { $currentDate: { updatedAt: true } })
+      await this.collection.createIndex({ updatedAt: 1 }, { expireAfterSeconds: ttl })
     } catch (err) {
-      await locks.deleteOne({ _id, pid })
-      throw err
+      console.log('Failure to create TTL index. Probably because the value changed. Try to update it.')
+      db.command({ collMod: 'locks', index: { keyPattern: { updatedAt: 1 }, expireAfterSeconds: ttl } })
     }
-    debug('acquire ok', _id)
-    return true
-  } catch (err: any) {
-    if (err.code !== 11000) throw err
-    // duplicate means the lock was already acquired
-    debug('acquire ko', _id)
-    return false
+
+    // prolongate lock acquired by this process while it is still active
+    this.interval = setInterval(() => {
+      this.collection.updateMany({ pid: this.pid }, { $currentDate: { updatedAt: true } })
+    }, (ttl / 2) * 1000)
+  }
+
+  stop = async () => {
+    clearInterval(this.interval)
+    if (this._db) await this.collection.deleteMany({ pid: this.pid })
+  }
+
+  acquire = async (_id: string, origin?: string): Promise<boolean> => {
+    debug('acquire', _id, origin)
+    try {
+      await this.collection.insertOne({ _id, pid: this.pid, origin, hostname: hostname(), createdAt: new Date() })
+      try {
+        await this.collection.updateOne({ _id }, { $currentDate: { updatedAt: true } })
+      } catch (err) {
+        await this.collection.deleteOne({ _id, pid: this.pid })
+        throw err
+      }
+      debug('acquire ok', _id)
+      return true
+    } catch (err: any) {
+      if (err.code !== 11000) throw err
+      // duplicate means the lock was already acquired
+      debug('acquire ko', _id)
+      return false
+    }
+  }
+
+  release = async (_id: string, delay = 0) => {
+    debug('release', _id)
+    if (delay) {
+      const date = new Date((new Date()).getTime() + delay)
+      await this.collection.updateOne({ _id, pid: this.pid }, { $unset: { pid: 1 }, $set: { delayed: true, updatedAt: date } })
+    } else {
+      await this.collection.deleteOne({ _id, pid: this.pid })
+    }
   }
 }
 
-export const release = async (_id: string, delay = 0) => {
-  if (!_db) throw new Error('locks not initialized')
-  debug('release', _id)
-  const locks = collection()
-  if (delay) {
-    const date = new Date((new Date()).getTime() + delay)
-    await locks.updateOne({ _id, pid }, { $unset: { pid: 1 }, $set: { delayed: true, updatedAt: date } })
-  } else {
-    await locks.deleteOne({ _id, pid })
-  }
-}
+const locks = new Locks()
+
+export default locks

@@ -4,7 +4,7 @@ import semver from 'semver'
 import path from 'path'
 import { readdirSync, readFileSync } from 'fs'
 import Debug from 'debug'
-import { acquire, release } from './locks.js'
+import type { Locks } from './locks.js'
 
 const debug = Debug('upgrade')
 
@@ -14,8 +14,8 @@ export interface UpgradeScript {
 }
 
 // chose the proper scripts to execute, then run them
-export default async function (db: Db, basePath = './') {
-  const ack = await acquire('upgrade')
+export default async function (db: Db, locks: Locks, basePath = './') {
+  const ack = await locks.acquire('upgrade')
   if (!ack) {
     console.warn('upgrade scripts lock is already acquired, skip them')
     // IMPORTANT: this behaviour of running the process when the upgrade scripts are still running on another one
@@ -25,7 +25,7 @@ export default async function (db: Db, basePath = './') {
     // are not considered "up" and the previous versions keep running in the mean time
   } else {
     await runScripts(db, basePath)
-    await release('upgrade')
+    await locks.release('upgrade')
   }
 }
 
