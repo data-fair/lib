@@ -236,7 +236,9 @@ export declare function returnValid(data: any, options?: import('${validationImp
         } else {
           const vjsfDir = path.resolve(options.vjsfDir)
           const compileVjsf = (await import('@koumoul/vjsf-compiler')).compile
-          const vjsfCode = await compileVjsf(schema, { ajvOptions: { schemas } })
+          const otherSchemas = { ...schemas }
+          if (schema.$id) delete otherSchemas[schema.$id]
+          const vjsfCode = await compileVjsf(schema, { ajvOptions: { schemas: otherSchemas } })
           const vjsfFilePath = path.join(vjsfDir, `vjsf-${key}.vue`)
           console.log('  vjsf component path : ' + vjsfFilePath)
           writeFileSync(vjsfFilePath, vjsfCode)
