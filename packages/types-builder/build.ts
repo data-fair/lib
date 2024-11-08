@@ -7,11 +7,12 @@ import { program } from 'commander'
 import clone from '@data-fair/lib-utils/clone.js'
 import { fdir as Fdir } from 'fdir'
 
-type TypesBuilderOptions = { mjs: boolean }
+type TypesBuilderOptions = { mjs: boolean, vjsfDir?: string }
 type FileRef = { url: string }
-type SchemaExport = ('types' | 'validate' | 'stringify' | 'schema' | 'resolvedSchema' | 'resolvedSchemaJson')
+type SchemaExport = ('types' | 'validate' | 'stringify' | 'schema' | 'resolvedSchema' | 'resolvedSchemaJson' | 'vjsf')
 
 const main = async (dir: string, options: TypesBuilderOptions) => {
+  console.log('OPTIONS', options)
   let pJsonName
   try {
     const pJson = JSON.parse(readFileSync('./package.json', 'utf8'))
@@ -229,6 +230,17 @@ export declare function returnValid(data: any, options?: import('${validationImp
         //   return str
         // }
         // `
+      } else if (schemaExport === 'vjsf') {
+        if (!options.vjsfDir) {
+          console.error('vjsf exports requires the vjsf-dir option')
+        } else {
+          const vjsfDir = path.resolve(options.vjsfDir)
+          const compileVjsf = (await import('@koumoul/vjsf-compiler')).compile
+          const vjsfCode = await compileVjsf(schema, { ajvOptions: { schemas } })
+          const vjsfFilePath = path.join(vjsfDir, `vjsf-${key}.vue`)
+          console.log('  vjsf component path : ' + vjsfFilePath)
+          writeFileSync(vjsfFilePath, vjsfCode)
+        }
       } else {
         throw new Error(`unsupported export ${schemaExport}`)
       }
@@ -249,5 +261,6 @@ export declare function returnValid(data: any, options?: import('${validationImp
 program
   .argument('[dir]', 'root directory to scan for schema.json files', './')
   .option('--mjs', 'produce mjs files', false)
+  .option('--vjsf-dir <dir>', 'the directory where built vjsf components will be writtent')
   .action(main)
   .parseAsync()
