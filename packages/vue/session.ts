@@ -61,11 +61,6 @@ export interface SiteInfo {
   colors: Colors
 }
 
-interface SiteInfoStorage {
-  info: SiteInfo | null
-  updatedAt: number
-}
-
 export interface Session {
   state: SessionState
   user: ComputedRef<SessionState['user']>
@@ -132,11 +127,6 @@ const goTo = (url: string | null) => {
   }
   if (url) topLocation.href = url
   else topLocation.reload()
-}
-
-const getSiteInfoStorage = (sitePath: string) => {
-  const siteInfoStorageStr = window.localStorage.getItem('sd-site-info' + sitePath)
-  return siteInfoStorageStr ? JSON.parse(siteInfoStorageStr) as SiteInfoStorage : null
 }
 
 const defaultOptions = { directoryUrl: '/simple-directory', sitePath: '', defaultLang: 'fr' }
@@ -221,11 +211,6 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
         name: state.user.name
       }
       state.accountRole = 'admin'
-    }
-
-    if (!ssr) {
-      const siteInfoStorage = getSiteInfoStorage(options.sitePath)
-      site.value = siteInfoStorage ? siteInfoStorage.info : null
     }
   }
   readState()
@@ -346,18 +331,12 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     readState()
   }
 
-  const setSiteInfoStorage = (siteInfo: SiteInfo | null) => {
-    const siteInfoStorage: SiteInfoStorage = { info: siteInfo, updatedAt: new Date().getTime() }
-    window.localStorage.setItem('sd-site-info' + options.sitePath, JSON.stringify(siteInfoStorage))
-  }
-
   const refreshSiteInfo = async () => {
     const siteInfo = await customFetch(`${options.directoryUrl}/api/sites/_public`) ?? null
     site.value = siteInfo
-    if (!ssr) {
-      setSiteInfoStorage(siteInfo)
-    }
   }
+
+  if (options.siteInfo) await refreshSiteInfo()
 
   // immediately performs a keepalive, but only on top windows (not iframes or popups)
   // and only if it was not done very recently (maybe from a refreshed page next to this one)
@@ -366,13 +345,6 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     const lastKeepalive = window.localStorage.getItem('sd-keepalive' + options.sitePath)
     if (state.user && (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) > 10000)) {
       await keepalive()
-    }
-
-    if (options.siteInfo) {
-      const lastSiteInfoStorage = getSiteInfoStorage(options.sitePath)
-      if (!lastSiteInfoStorage || (new Date().getTime() - Number(lastSiteInfoStorage.updatedAt)) > 10000) {
-        await refreshSiteInfo()
-      }
     }
 
     const refreshLoopDelay = 10 * 60 * 1000 // 10 minutes
