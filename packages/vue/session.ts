@@ -34,15 +34,25 @@ export interface SessionOptions {
 
 export interface Colors {
   background: string
+  'on-background': string
   surface: string
+  'on-surface': string
   primary: string
+  'on-primary': string
+  'text-primary': string
   secondary: string
-  accent: string
+  'on-secondary': string
+  'text-secondary': string
   error: string
+  'on-error': string
   info: string
+  'on-info': string
   success: string
+  'on-success': string
   warning: string
+  'on-warning': string
   admin: string
+  'on-admin': string
 }
 
 export interface SiteInfo {

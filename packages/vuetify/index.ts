@@ -18,6 +18,7 @@ const baseDarkColors = {
 }
 
 export function vuetifySessionOptions (session: Session): VuetifyOptions {
+  if (!session.site.value) throw new Error('vuetifySessionOptions requires fething site info in session util')
   const colors = { ...baseColors, ...session.site.value?.colors }
   return {
     ssr: false,
@@ -30,19 +31,37 @@ export function vuetifySessionOptions (session: Session): VuetifyOptions {
       themes: {
         light: {
           dark: false,
-          colors
+          colors,
+          variables: {
+            // deactivate automatic partial transparencies
+            // best to control colors precisely and ensure sufficient contrast for readability
+            'high-emphasis-opacity': 1,
+            'medium-emphasis-opacity': 1
+          }
         }
       }
     },
     defaults: {
       VCard: {
-        // grey outlined card by default
-        variant: 'outlined',
-        // TODO: replace this with a cleaner border-opacity prop https://vuetifyjs.com/en/styles/borders/#theme-colors ?
-        style: 'border-color: rgba(var(--v-theme-on-surface), var(--v-focus-opacity)) !important;'
+        // white card with light grey border by default
+        variant: 'elevated',
+        elevation: 0,
+        border: 'sm'
       }
     }
   }
+}
+
+export function vuetifySessionStyle (session: Session) {
+  if (!session.site.value) throw new Error('vuetifySectionStyle requires fething site info in session util')
+  return `
+.v-application .text-primary!important {
+  color: ${session.site.value.colors['text-primary']};
+}
+.v-application .text-secondary!important {
+  color: ${session.site.value.colors['text-secondary']};
+}
+  `
 }
 
 // TODO: deprecate this in favor of sessionVuetifyOptions
