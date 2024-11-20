@@ -42,10 +42,6 @@ export function vuetifySessionOptions (session: Session): VuetifyOptions {
       }
     },
     defaults: {
-      global: {
-        // the default density is way too low
-        density: 'comfortable'
-      },
       VCard: {
         // white card with light grey border by default
         variant: 'elevated',
