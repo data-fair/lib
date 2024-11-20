@@ -8,33 +8,33 @@
       class="primary-avatar"
       :size="36"
     >
-      <img
+      <v-img
         :src="userAvatarUrl"
         aria-hidden
         alt=""
-      >
+      />
     </v-avatar>
     <v-avatar
       v-else
       class="primary-avatar"
       :size="36"
     >
-      <img
+      <v-img
         :src="accountAvatarUrl"
         aria-hidden
         alt=""
-      >
+      />
     </v-avatar>
     <v-avatar
       v-if="showSecondAvatar"
       class="secondary-avatar"
       :size="28"
     >
-      <img
+      <v-img
         :src="userAvatarUrl"
         aria-hidden
         alt=""
-      >
+      />
     </v-avatar>
   </div>
 </template>
