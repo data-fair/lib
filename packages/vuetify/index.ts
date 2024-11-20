@@ -36,12 +36,16 @@ export function vuetifySessionOptions (session: Session): VuetifyOptions {
             // deactivate automatic partial transparencies
             // best to control colors precisely and ensure sufficient contrast for readability
             'high-emphasis-opacity': 1,
-            'medium-emphasis-opacity': 1
+            'medium-emphasis-opacity': 0.87
           }
         }
       }
     },
     defaults: {
+      global: {
+        // the default density is way too low
+        density: 'comfortable'
+      },
       VCard: {
         // white card with light grey border by default
         variant: 'elevated',
@@ -66,7 +70,7 @@ export function vuetifySessionStyle (session: Session) {
 
 // TODO: deprecate this in favor of sessionVuetifyOptions
 export function defaultOptions (searchParams: Record<string, string>, darkCookie = false, locale: string = 'fr'):VuetifyOptions {
-  console.warn('vuetify.defaultOptions is deprecated, use sessionVuetifyOptions')
+  // console.warn('vuetify.defaultOptions is deprecated, use vuetifySessionOptions')
 
   const dark = searchParams?.dark ? searchParams.dark === 'true' : darkCookie
 
