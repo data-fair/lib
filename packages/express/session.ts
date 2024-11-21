@@ -1,12 +1,13 @@
-import type { IncomingMessage } from 'node:http'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { SessionState, SessionStateAuthenticated, User } from '@data-fair/lib-common-types/session/index.js'
-import type { Request, RequestHandler } from 'express'
+import type { Request, Response, RequestHandler } from 'express'
 import jwt from 'jsonwebtoken'
 import JwksClient from 'jwks-rsa'
 import cookie from 'cookie'
 import asyncHandler from './async-handler.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { validate, assertAdminMode, assertAuthenticated } from '@data-fair/lib-common-types/session/index.js'
+import { reqSitePathSafe } from '@data-fair/lib-express'
 
 export * from '@data-fair/lib-common-types/session/index.js'
 
@@ -31,10 +32,10 @@ export class Session {
     if (defaultLang) this.defaultLang = defaultLang
   }
 
-  async req (req: Request | IncomingMessage): Promise<SessionState> {
+  async req (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
     // @ts-ignore
     if (req[sessionKey]) return req[sessionKey]
-    const sessionState = await this.readState(req)
+    const sessionState = await this.readState(req, res)
     validate(sessionState)
     // @ts-ignore
     req[sessionKey] = sessionState
@@ -61,7 +62,17 @@ export class Session {
     return jwt.verify(token, signingKey.getPublicKey())
   }
 
-  async readState (req: Request | IncomingMessage): Promise<SessionState> {
+  unsetCookies (req: Request | IncomingMessage, res: Response | ServerResponse) {
+    const opts = { path: reqSitePathSafe(req) + '/', expires: new Date(0) }
+    res.setHeader('Set-Cookie', [
+      cookie.serialize('id_token', '', opts),
+      cookie.serialize('id_token_sign', '', opts),
+      cookie.serialize('id_token_org', '', opts),
+      cookie.serialize('id_token_dep', '', opts)
+    ])
+  }
+
+  async readState (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
     const session: SessionState = { lang: this.defaultLang }
     const cookieStr = req.headers.cookie
     if (!cookieStr) return session
@@ -74,9 +85,16 @@ export class Session {
     let user: User
     try {
       user = await this.verifyToken(token)
-    } catch (err) {
-      console.warn(err)
-      throw httpError(401)
+    } catch (err: any) {
+      if (err.name === 'JwksError') {
+        // happens in case of temporary unavailability if SD
+        // better not to disconnect user in this case
+        console.warn(err)
+        throw httpError(500, 'Session token public keys not initialized')
+      } else {
+        if (res) this.unsetCookies(req, res)
+        throw httpError(401)
+      }
     }
     if (!user) return session
 
@@ -124,7 +142,7 @@ export class Session {
     return asyncHandler(async (req, res, next) => {
       // @ts-ignore
       req[sessionMiddlewareKey] = true
-      const sessionState = await this.req(req)
+      const sessionState = await this.req(req, res)
       if (options.required || options.adminOnly) {
         if (!sessionState.user) {
           res.status(401).send()

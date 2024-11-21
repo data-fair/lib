@@ -1,3 +1,4 @@
+import type { IncomingMessage } from 'node:http'
 import type { RequestHandler, Request } from 'express'
 import { escapeRegExp } from '@data-fair/lib-utils/micro-template.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
@@ -27,11 +28,16 @@ export function createSiteMiddleware (servicePathPart: string): RequestHandler {
   }
 }
 
-export function reqSitePath (req: Request): string {
+export function reqSitePath (req: Request | IncomingMessage): string {
   // @ts-ignore
   const sitePath = req[reqSitePathKey]
   if (sitePath === undefined) throw httpError(500, 'reqSitePath was not set, either createSiteMiddleware was not called ot this HTTP request is internal')
   return sitePath
+}
+
+export function reqSitePathSafe (req: Request | IncomingMessage): string {
+  // @ts-ignore
+  return req[reqSitePathKey] ?? ''
 }
 
 export function reqSiteUrl (req: Request): string {
