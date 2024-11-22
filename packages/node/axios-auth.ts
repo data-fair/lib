@@ -51,7 +51,8 @@ export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosAuthInsta
   }
   const ax = axiosBuilder(axiosOpts, (ax) => {
     ax.interceptors.request.use(async (config) => {
-      config.headers.Cookie = await cookieJar.getCookies(origin)
+      const url = (config.baseURL && config.url?.startsWith('/')) ? (config.baseURL + config.url) : config.url
+      config.headers.Cookie = await cookieJar.getCookies(url ?? origin)
       return config
     })
     ax.interceptors.response.use(async (res) => {
