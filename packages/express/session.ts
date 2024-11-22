@@ -21,15 +21,17 @@ const sessionMiddlewareKey = Symbol('session-middleware')
 export class Session {
   private _jwksClient: JwksClient.JwksClient | undefined
   private defaultLang: string = 'fr'
+  private onlyDecode?: (req: Request | IncomingMessage) => boolean
 
   get jwksClient () {
     if (!this._jwksClient) throw new Error('session management was not initialized')
     return this._jwksClient
   }
 
-  init (directoryUrl = 'http://simple-directory:8080', defaultLang?: string) {
+  init (directoryUrl = 'http://simple-directory:8080', defaultLang?: string, onlyDecode?: (req: Request | IncomingMessage) => boolean) {
     this._jwksClient = JwksClient({ jwksUri: directoryUrl + '/.well-known/jwks.json' })
     if (defaultLang) this.defaultLang = defaultLang
+    this.onlyDecode = onlyDecode
   }
 
   async req (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
@@ -83,17 +85,21 @@ export class Session {
     if (!cookies.id_token || !cookies.id_token_sign) return session
     const token = cookies.id_token + '.' + cookies.id_token_sign
     let user: User
-    try {
-      user = await this.verifyToken(token)
-    } catch (err: any) {
-      if (err.name === 'JwksError') {
+    if (this.onlyDecode?.(req)) {
+      user = jwt.decode(token) as User
+    } else {
+      try {
+        user = await this.verifyToken(token)
+      } catch (err: any) {
+        if (err.name === 'JwksError') {
         // happens in case of temporary unavailability if SD
         // better not to disconnect user in this case
-        console.warn(err)
-        throw httpError(500, 'Session token public keys not initialized')
-      } else {
-        if (res) this.unsetCookies(req, res)
-        throw httpError(401)
+          console.warn(err)
+          throw httpError(500, 'Session token public keys not initialized')
+        } else {
+          if (res) this.unsetCookies(req, res)
+          throw httpError(401)
+        }
       }
     }
     if (!user) return session
