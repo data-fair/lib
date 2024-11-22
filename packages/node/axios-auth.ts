@@ -47,7 +47,7 @@ export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosAuthInsta
     const redirectUrl = new URL(err.headers.location)
     const redirectError = redirectUrl.searchParams.get('error')
     if (redirectError) throw new Error(redirectError)
-    for (const cookie of err.headers['set-cookie']) cookieJar.setCookie(cookie, origin)
+    for (const cookie of err.headers['set-cookie'] ?? []) cookieJar.setCookie(cookie, origin)
   }
   const ax = axiosBuilder(axiosOpts, (ax) => {
     ax.interceptors.request.use(async (config) => {
