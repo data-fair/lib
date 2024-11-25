@@ -40,13 +40,13 @@ export function getLocaleDayjs (locale?: string) {
   locale = locale ?? 'fr'
   return {
     locale,
-    duration: (() => {
+    duration: ((...args) => {
       // @ts-ignore
-      return dayjs.duration.apply(null, arguments).locale(locale)
+      return dayjs.duration(...args).locale(locale)
     }) as CreateDurationType,
-    dayjs: (() => {
+    dayjs: ((...args) => {
       // @ts-ignore
-      return dayjs.apply(null, arguments).locale(locale)
+      return dayjs(...args).locale(locale)
     }) as typeof dayjs
   }
 }
