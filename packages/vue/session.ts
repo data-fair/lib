@@ -1,7 +1,7 @@
 import { type IncomingMessage } from 'node:http'
 import { type Ref, type ComputedRef, type App } from 'vue'
 import { type RouteLocation } from 'vue-router'
-import { type fetch } from 'ofetch'
+import { FetchError, type fetch } from 'ofetch'
 import { type SessionState, type SessionStateAuthenticated, type User } from '@data-fair/lib-common-types/session/index.js'
 import { reactive, computed, watch, inject, ref } from 'vue'
 import { ofetch } from 'ofetch'
@@ -327,8 +327,16 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     if (!ssr) {
       window.localStorage.setItem('sd-keepalive' + options.sitePath, `${new Date().getTime()}`)
     }
-    await customFetch(`${options.directoryUrl}/api/auth/keepalive`, { method: 'POST' })
-    readState()
+    try {
+      await customFetch(`${options.directoryUrl}/api/auth/keepalive`, { method: 'POST' })
+    } catch (err) {
+      if (err instanceof FetchError && err.statusCode === 401) {
+        // this is expected if the session was deleted server side
+      } else {
+        throw err
+      }
+      readState()
+    }
   }
 
   const refreshSiteInfo = async () => {
