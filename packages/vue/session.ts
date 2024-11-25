@@ -101,13 +101,12 @@ function jwtDecodeAlive (jwt: string | null): User | undefined {
   if (!decoded) return
   const now = Math.ceil(Date.now().valueOf() / 1000)
   if (typeof decoded.exp !== 'undefined' && decoded.exp < now) {
-    console.error(`token expired: ${decoded.exp}<${now},  ${JSON.stringify(decoded)}`)
+    // token expired
     return
   }
   if (typeof decoded.nbf !== 'undefined' && decoded.nbf > now) {
     console.warn(`token not yet valid: ${decoded.nbf}>${now}, ${JSON.stringify(decoded)}`)
-    // do not return null here, this is probably a false flag due to a slightly mismatched clock
-    // return null
+    // do not return here, this is probably a false flag due to a slightly mismatched clock
   }
   return decoded as User
 }
@@ -331,7 +330,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
       await customFetch(`${options.directoryUrl}/api/auth/keepalive`, { method: 'POST' })
     } catch (err) {
       if (err instanceof FetchError && err.statusCode === 401) {
-        // this is expected if the session was deleted server side
+        console.warn('session was expired or deleted server side')
       } else {
         throw err
       }
@@ -351,7 +350,8 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   // also run an auto-refresh loop
   if (!ssr && !inIframe) {
     const lastKeepalive = window.localStorage.getItem('sd-keepalive' + options.sitePath)
-    if (state.user && (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) > 10000)) {
+    // check cookies.get('id_token') not state.user so that we do a keepalive on expired id tokens
+    if (cookies.get('id_token') && (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) > 10000)) {
       await keepalive()
     }
 
