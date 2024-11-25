@@ -1,7 +1,9 @@
-import type { IndexSpecification, CreateIndexesOptions, MongoClientOptions } from 'mongodb'
+import type { IndexSpecification, CreateIndexesOptions, MongoClientOptions, IndexDirection } from 'mongodb'
 import { MongoClient, MongoError } from 'mongodb'
 
-export type IndexDefinitions = Record<string, Record<string, IndexSpecification | [IndexSpecification, CreateIndexesOptions]>>
+type IndexDirections = Record<string, IndexDirection>
+
+export type IndexDefinitions = Record<string, Record<string, null | IndexDirections | [IndexDirections, CreateIndexesOptions]>>
 
 export class Mongo {
   private _client: MongoClient | undefined
@@ -49,13 +51,17 @@ export class Mongo {
   configure = async (indexDefinitions: IndexDefinitions) => {
     for (const collectionName in indexDefinitions) {
       for (const indexName in indexDefinitions[collectionName]) {
-        let key, options
-        if (Array.isArray(indexDefinitions[collectionName][indexName])) {
-          [key, options] = indexDefinitions[collectionName][indexName] as [import('mongodb').IndexSpecification, import('mongodb').CreateIndexesOptions]
+        let key: IndexDirections, options: CreateIndexesOptions
+        const indexDefinition = indexDefinitions[collectionName][indexName]
+        if (indexDefinition === null) {
+          await this.db.collection(collectionName).dropIndex(indexName)
+          continue
+        } else if (Array.isArray(indexDefinition)) {
+          [key, options] = indexDefinition
           if (options.name && options.name !== indexName) throw new Error(`inconsistent index name ${indexName} or ${options.name}`)
           options.name = indexName
         } else {
-          key = indexDefinitions[collectionName][indexName] as IndexSpecification
+          key = indexDefinition
           options = { name: indexName }
         }
         await this.ensureIndex(collectionName, key, options)
