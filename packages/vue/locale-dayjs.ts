@@ -6,7 +6,7 @@ import 'dayjs/locale/fr'
 import 'dayjs/locale/en'
 import localizedFormat from 'dayjs/plugin/localizedFormat.js'
 import relativeTime from 'dayjs/plugin/relativeTime.js'
-import duration from 'dayjs/plugin/duration.js'
+import duration, { CreateDurationType } from 'dayjs/plugin/duration.js'
 
 export type { ConfigType as DayjsConfigType } from 'dayjs'
 
@@ -40,12 +40,14 @@ export function getLocaleDayjs (locale?: string) {
   locale = locale ?? 'fr'
   return {
     locale,
-    duration: (dur: duration.DurationUnitsObjectType) => {
-      return dayjs.duration(dur).locale(locale)
-    },
-    dayjs: (date?: string | number | dayjs.Dayjs | Date | null | undefined) => {
-      return dayjs(date).locale(locale)
-    }
+    duration: (() => {
+      // @ts-ignore
+      return dayjs.duration.apply(null, arguments).locale(locale)
+    }) as CreateDurationType,
+    dayjs: (() => {
+      // @ts-ignore
+      return dayjs.apply(null, arguments).locale(locale)
+    }) as typeof dayjs
   }
 }
 
