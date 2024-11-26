@@ -44,9 +44,11 @@ export function vuetifySessionOptions (session: Session): VuetifyOptions {
     defaults: {
       VCard: {
         // white card with light grey border by default
-        variant: 'elevated',
-        elevation: 0,
+        variant: 'flat',
         border: 'sm'
+      },
+      global: {
+        rounded: 'pill'
       }
     }
   }

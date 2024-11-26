@@ -27,25 +27,37 @@ interface UiNotifError {
   msg: string
   error: any
   errorMsg: string
+  clientError?: boolean
 }
 
-function getErrorMsg (error: any): string {
+export function getErrorCode (error: any): number {
+  if (typeof error === 'string') return 500
+  if (typeof error.statusCode === 'number') return error.statusCode
+  if (typeof error.response?.statusCode === 'number') return error.response?.statusCode
+  if (typeof error.code === 'number') return error.code
+  if (typeof error.response?.code === 'number') return error.response?.code
+  return 500
+}
+
+export function getErrorMsg (error: any): string {
   if (typeof error === 'string') return error
   if (error.data && typeof error.data === 'string') return error.data
   if (error.response?.data && typeof error.response.data === 'string') return error.response.data
   if (typeof error.statusText === 'string') return error.statusText
   if (typeof error.response?.statusText === 'string') return error.response?.statusText
   if (error.message) return error.message
-  return 'erreur inconnu'
+  return 'erreur inconnue'
 }
 
-function getFullNotif (notif: PartialUiNotif, defaultType: UiNotifBase['type'] = 'default'): UiNotif {
+export function getFullNotif (notif: PartialUiNotif, defaultType: UiNotifBase['type'] = 'default'): UiNotif {
   if (typeof notif === 'string') return { msg: notif, type: defaultType }
   if (notif.error) {
+    const code = getErrorCode(notif.error)
     return {
       ...notif,
       type: 'error',
-      errorMsg: getErrorMsg(notif.error)
+      errorMsg: getErrorMsg(notif.error),
+      clientError: code < 500
     } as UiNotifError
   }
   return {

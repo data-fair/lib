@@ -3,13 +3,13 @@
     v-if="notification"
     ref="notificationSnackbar"
     v-model="showNotification"
-    class="ui-notification"
+    class="ui-notif"
     v-bind="fullSnackbarProps"
   >
-    <p>{{ notification.msg }}</p>
+    <p v-if="notification.msg">{{ notification.msg }}</p>
     <p
       v-if="notification.type === 'error'"
-      class="ml-3"
+      :class="notification.msg ? 'ml-3' : ''"
       v-text="notification.errorMsg"
     />
 
@@ -55,8 +55,13 @@ const { snackbarProps } = defineProps({
 const fullSnackbarProps = computed(() => {
   const props = { ...snackbarProps }
   if (!notification.value) return props
-  if (notification.value.type === 'error') props.timeout = -1
-  props.color = notification.value.type
+  if (notification.value.type === 'error') {
+    props.timeout = -1
+    props.color = notification.value.clientError ? 'warning' : 'error'
+  } else {
+    props.color = notification.value.type
+  }
+  
   return props
 })
 

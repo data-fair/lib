@@ -12,5 +12,6 @@ export const autoImports = [
     '@data-fair/lib-vue/ui-notif.js': ['useUiNotif', 'withUiNotif'],
     '@data-fair/lib-vue/fetch.js': ['useFetch'],
     '@data-fair/lib-vue/ws.js': ['useWS'],
+    '@data-fair/lib-vue/async-action.js': ['asyncAction'],
   }
 ]
