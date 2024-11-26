@@ -46,9 +46,6 @@ export function vuetifySessionOptions (session: Session): VuetifyOptions {
         // white card with light grey border by default
         variant: 'flat',
         border: 'sm'
-      },
-      global: {
-        rounded: 'pill'
       }
     }
   }

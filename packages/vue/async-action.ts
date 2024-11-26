@@ -9,7 +9,7 @@ type AsyncActionOptions = {
   catch?: 'error' | 'success' | 'all'
 }
 
-export function asyncAction<F extends (...args: any[]) => Promise<any>> (fn: F, options?: AsyncActionOptions): { execute: F, notif: Ref<UiNotif | undefined>, loading: Ref<boolean>, error: Ref<string | undefined> } {
+export function useAsyncAction<F extends (...args: any[]) => Promise<any>> (fn: F, options?: AsyncActionOptions): { execute: F, notif: Ref<UiNotif | undefined>, loading: Ref<boolean>, error: Ref<string | undefined> } {
   const { sendUiNotif } = useUiNotif()
   const notif = ref<UiNotif>()
   const loading = ref(false)
@@ -41,3 +41,5 @@ export function asyncAction<F extends (...args: any[]) => Promise<any>> (fn: F, 
 
   return { execute, notif, loading, error }
 }
+
+export default useAsyncAction
