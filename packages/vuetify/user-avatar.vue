@@ -2,40 +2,26 @@
   <div
     class="sd-avatar"
     :class="{'has-secondary-avatar': showSecondAvatar}"
+    aria-hidden
   >
     <v-avatar
       v-if="showAccount && session.state.account && session.state.account.type === 'user'"
       class="primary-avatar"
       :size="36"
-    >
-      <v-img
-        :src="userAvatarUrl"
-        aria-hidden
-        alt=""
-      />
-    </v-avatar>
+      :image="userAvatarUrl"
+    />
     <v-avatar
       v-else
       class="primary-avatar"
       :size="36"
-    >
-      <v-img
-        :src="accountAvatarUrl"
-        aria-hidden
-        alt=""
-      />
-    </v-avatar>
+      :image="accountAvatarUrl"
+    />
     <v-avatar
       v-if="showSecondAvatar"
       class="secondary-avatar"
       :size="28"
-    >
-      <v-img
-        :src="userAvatarUrl"
-        aria-hidden
-        alt=""
-      />
-    </v-avatar>
+      :image="userAvatarUrl"
+    />
   </div>
 </template>
 

@@ -89,9 +89,10 @@
             @click="session.switchOrganization(null)"
           >
             <template #prepend>
-              <v-avatar :size="28">
-                <img :src="`${session.options.directoryUrl}/api/avatars/user/${user.id}/avatar.png`">
-              </v-avatar>
+              <v-avatar
+                :size="28"
+                :image="`${session.options.directoryUrl}/api/avatars/user/${user.id}/avatar.png`"
+              />
             </template>
             <v-list-item-title v-t="'personalAccount'" />
           </v-list-item>
@@ -102,16 +103,10 @@
             @click="session.switchOrganization(organization.id , organization.department)"
           >
             <template #prepend>
-              <v-avatar :size="28">
-                <img
-                  v-if="organization.department"
-                  :src="`${session.options.directoryUrl}/api/avatars/organization/${organization.id}/${organization.department}/avatar.png`"
-                >
-                <img
-                  v-else
-                  :src="`${session.options.directoryUrl}/api/avatars/organization/${organization.id}/avatar.png`"
-                >
-              </v-avatar>
+              <v-avatar
+                :size="28"
+                :image="organization.department ? `${session.options.directoryUrl}/api/avatars/organization/${organization.id}/${organization.department}/avatar.png` : `${session.options.directoryUrl}/api/avatars/organization/${organization.id}/avatar.png`"
+              />
             </template>
             <v-list-item-title>
               {{ organization.name }}

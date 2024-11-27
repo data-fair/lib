@@ -5,12 +5,7 @@
         v-bind="props"
         class="text-body-2"
       >
-        <v-avatar :size="28">
-          <img
-            :src="avatarUrl"
-            style="object-fit: cover; width: 100%; height: 100%;"
-          >
-        </v-avatar>
+        <v-avatar :size="28" :image="avatarUrl" />
       </span>
     </template>
     {{ label }}
