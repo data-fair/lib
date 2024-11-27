@@ -275,10 +275,11 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   }
 
   const switchOrganization = (org: string | null, dep?: string) => {
-    if (org) cookies.set('id_token_org', org, { path: cookiesPath })
-    else cookies.remove('id_token_org')
-    if (dep) cookies.set('id_token_dep', dep, { path: cookiesPath })
-    else cookies.remove('id_token_dep')
+    const cookieOpts = { path: cookiesPath }
+    if (org) cookies.set('id_token_org', org, cookieOpts)
+    else cookies.remove('id_token_org', cookieOpts)
+    if (dep) cookies.set('id_token_dep', dep, cookieOpts)
+    else cookies.remove('id_token_dep', cookieOpts)
     readState()
   }
 
