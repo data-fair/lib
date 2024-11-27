@@ -128,17 +128,17 @@
           class="personal-menu-switch-list-item"
         >
           <template #prepend>
-            <v-icon :icon="mdiShieldAlert" />
+            <v-icon :icon="mdiShieldAlert" color="admin" />
           </template>
           <v-list-item-title>
             <v-switch
-              v-model="user.adminMode"
+              :model-value="!!user.adminMode"
               color="admin"
               hide-details
               class="mt-0"
               density="compact"
               :label="t('adminMode')"
-              @change="session.setAdminMode"
+              @change="session.setAdminMode(!user.adminMode)"
             />
           </v-list-item-title>
         </v-list-item>
