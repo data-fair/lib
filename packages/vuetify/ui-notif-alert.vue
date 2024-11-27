@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { type UiNotif, useUiNotif } from '@data-fair/lib-vue/ui-notif.js'
+import { type UiNotif } from '@data-fair/lib-vue/ui-notif.js'
 
 const {notif, alertProps} = defineProps({
   notif: {

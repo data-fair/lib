@@ -25,10 +25,8 @@
   </template>
   
   <script lang="ts" setup>
-  import { useI18n } from 'vue-i18n'
   import useSession from '@data-fair/lib-vue/session.js'
   
-  const i18n = useI18n()
   const session = useSession()
   
   const {locales} = defineProps({
