@@ -26,7 +26,7 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     if (status < 500) res.send(err.message)
     else res.send() // server errors are mostly unplanned and could contain confidential information, only return error code
   } else {
-    res.send(err.stack + '\n')
+    res.send(status + ' - ' + err.stack + '\n')
   }
 }
 
