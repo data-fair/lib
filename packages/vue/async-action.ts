@@ -27,6 +27,7 @@ export function useAsyncAction<F extends (...args: any[]) => Promise<any>> (fn: 
           sendUiNotif(successNotif)
         }
       }
+      loading.value = false
       return result
     } catch (err) {
       error.value = getErrorMsg(err)
@@ -35,8 +36,8 @@ export function useAsyncAction<F extends (...args: any[]) => Promise<any>> (fn: 
       if (options?.catch !== 'error' && options?.catch !== 'all') {
         sendUiNotif(errorNotif)
       }
+      loading.value = false
     }
-    loading.value = false
   }
 
   return { execute, notif, loading, error }
