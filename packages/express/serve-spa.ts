@@ -47,7 +47,7 @@ export async function createSpaMiddleware (directory: string, uiConfig: any): Pr
     // force buffering, necessary for caching of source files in the reverse proxy
     res.setHeader('X-Accel-Buffering', 'yes')
 
-    if (req.url.startsWith('/index.html')) {
+    if (req.url.startsWith('/index.html') || req.url === '' || req.url === '/') {
       htmlMiddleware(req, res, next)
     } else {
       staticMiddleware(req, res, (err) => {
