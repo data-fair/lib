@@ -18,8 +18,6 @@ import selectNode from '@koumoul/vjsf/components/nodes/select.vue'
 
 import listNode from '@koumoul/vjsf/components/nodes/list.vue'
 
-import oneofselectNode from '@koumoul/vjsf/components/nodes/one-of-select.vue'
-
 
 import localizeErrors from "ajv-i18n/localize/en/index.js";
 const schema33 = {"$id":"export0","$ref":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0"};
@@ -1492,16 +1490,16 @@ validate28.errors = vErrors;
 return errors === 0;
 }
 validate28.evaluated = {"props":true,"dynamicProps":false,"dynamicItems":false};
-function expression0(data,value,options,context,display,layout,validates
+function expression0(data,value,options,context,display,layout,readOnly,summary,validates
 ) {
 return (layout.defaultData)
-}function expression1(data,value,options,context,display,layout,validates
+}function expression1(data,value,options,context,display,layout,readOnly,summary,validates
 ) {
 return (layout.options)
-}function expression2(data,value,options,context,display,layout,validates
+}function expression2(data,value,options,context,display,layout,readOnly,summary,validates
 ) {
 return ([{"const":"onlyLocal","title":"uniquement sur le site lui même","key":"onlyLocal","value":"onlyLocal"},{"const":"onlyBackOffice","title":"uniquement sur le back-office","key":"onlyBackOffice","value":"onlyBackOffice"},{"const":"ssoBackOffice","title":"sur le site et sur le back-office par SSO","key":"ssoBackOffice","value":"ssoBackOffice"}])
-}function expression3(data,value,options,context,display,layout,validates
+}function expression3(data,value,options,context,display,layout,readOnly,summary,validates
 ) {
 return (layout.constData)
 }
@@ -1512,17 +1510,20 @@ const compiledLayout = {
   skeletonTrees: {
     "https://github.com/data-fair/simple-directory/site-patch-resolved#": {
       title: "main",
-      root: "https://github.com/data-fair/simple-directory/site-patch-resolved#"
+      root: "https://github.com/data-fair/simple-directory/site-patch-resolved#",
+      refPointer: "https://github.com/data-fair/simple-directory/site-patch-resolved#"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items": {
       title: undefined,
-      root: "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items"
+      root: "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items",
+      refPointer: "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0": {
       title: "OpenID Connect",
-      root: "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0"
+      root: "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0",
+      refPointer: "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0"
     }
   },
 
@@ -1723,7 +1724,6 @@ const compiledLayout = {
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/_id": {
       comp: "text-field",
-      label: "_id",
 
       options: {
         readOnly: true
@@ -1740,7 +1740,6 @@ const compiledLayout = {
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authMode": {
       comp: "select",
-      label: "Mode d'authentification",
 
       getItems: {
         pure: true,
@@ -1797,22 +1796,31 @@ const compiledLayout = {
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/title": {
-      comp: "text-field",
-      label: "Nom"
+      comp: "text-field"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/color": {
-      comp: "text-field",
-      label: "Couleur"
+      comp: "text-field"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/img": {
-      comp: "text-field",
-      label: "Lien vers logo (petite taille)"
+      comp: "text-field"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf": {
-      comp: "one-of-select"
+      comp: "section",
+
+      children: [{
+        key: "title"
+      }, {
+        key: "color"
+      }, {
+        key: "img"
+      }, {
+        key: "$oneOf"
+      }],
+
+      title: null
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0": {
@@ -1852,9 +1860,7 @@ const compiledLayout = {
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/discovery": {
-      comp: "text-field",
-      label: "URL de découverte OICD",
-      help: "<p>probablement de la forme <a href=\"http://mon-fournisseur/.well-known/openid-configuration\">http://mon-fournisseur/.well-known/openid-configuration</a></p>"
+      comp: "text-field"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client": {
@@ -1879,13 +1885,11 @@ const compiledLayout = {
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/id": {
-      comp: "text-field",
-      label: "Identifiant du client"
+      comp: "text-field"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/secret": {
-      comp: "text-field",
-      label: "Secret"
+      comp: "text-field"
     }
   },
 
@@ -1916,7 +1920,7 @@ const compiledLayout = {
     mdeImg1: "![](",
     mdeImg2: "image url)",
     mdeTable1: "",
-    mdeTable2: "\n\n| Column 1 | Column 2 | ColoColumnnne 3 |\n| -------- | -------- | -------- |\n| Text     | Text     | Text     |\n\n",
+    mdeTable2: "\n\n| Column 1 | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n| Text     | Text     | Text     |\n\n",
     bold: "Bold",
     italic: "Italic",
     heading: "Title",
@@ -1956,10 +1960,6 @@ const compiledLayout = {
       name: "list"
     },
 
-    "one-of-select": {
-      name: "one-of-select"
-    },
-
     none: {
       name: "none"
     }
@@ -1977,8 +1977,6 @@ const nodeComponents = {
   "select": selectNode,
   
   "list": listNode,
-  
-  "one-of-select": oneofselectNode,
     
 }
 
