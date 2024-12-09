@@ -39,8 +39,9 @@ type AssertRoleOptions = {
 export function getAccountRole (sessionState: SessionState, account: AccountKeys, options: AssertRoleOptions = {}): string | null {
   if (!isAuthenticated(sessionState)) return null
   if (sessionState.user.adminMode) return 'admin'
+  // user is always admin of themself even if currently switched in an orga
+  if (account.type === 'user' && sessionState.user.id === account.id) return 'admin'
   if (options.allAccounts) {
-    if (account.type === 'user' && sessionState.user.id === account.id) return 'admin'
     for (const org of sessionState.user.organizations) {
       if (matchAccount({ type: 'organization', id: org.id, department: org.department }, account, options.acceptDepAsRoot)) return org.role
     }
