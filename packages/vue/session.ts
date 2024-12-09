@@ -301,7 +301,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     } else {
       await customFetch(`${options.directoryUrl}/api/auth/asadmin`, { method: 'DELETE' })
     }
-    readState()
+    goTo(null)
   }
 
   const cancelDeletion = async () => {
