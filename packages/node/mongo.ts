@@ -54,7 +54,9 @@ export class Mongo {
         let key: IndexDirections, options: CreateIndexesOptions
         const indexDefinition = indexDefinitions[collectionName][indexName]
         if (indexDefinition === null) {
-          await this.db.collection(collectionName).dropIndex(indexName)
+          if (await this.db.collection(collectionName).indexExists(indexName)) {
+            await this.db.collection(collectionName).dropIndex(indexName)
+          }
           continue
         } else if (Array.isArray(indexDefinition)) {
           [key, options] = indexDefinition
