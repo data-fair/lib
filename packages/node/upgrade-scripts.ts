@@ -24,8 +24,11 @@ export default async function (db: Db, locks: Locks, basePath = './') {
     // containers for the scripts that are running in only 1 (while loop on "acquire" ?) and a healthcheck
     // are not considered "up" and the previous versions keep running in the mean time
   } else {
-    await runScripts(db, basePath)
-    await locks.release('upgrade')
+    try {
+      await runScripts(db, basePath)
+    } finally {
+      await locks.release('upgrade')
+    }
   }
 }
 
