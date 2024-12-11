@@ -50,6 +50,11 @@ export class Mongo {
    */
   configure = async (indexDefinitions: IndexDefinitions) => {
     for (const collectionName in indexDefinitions) {
+      try {
+        await this.db.createCollection(collectionName)
+      } catch (err) {
+        // nothing TODO
+      }
       for (const indexName in indexDefinitions[collectionName]) {
         let key: IndexDirections, options: CreateIndexesOptions
         const indexDefinition = indexDefinitions[collectionName][indexName]
