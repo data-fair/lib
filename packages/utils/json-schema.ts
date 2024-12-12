@@ -53,6 +53,16 @@ class SchemaWrapper {
     return this
   }
 
+  makeNullable (properties: string | string []) {
+    if (typeof properties === 'string') properties = [properties]
+    for (const p of properties) {
+      if (this.schema.properties?.[p]) {
+        this.schema.properties[p] = { anyOf: [this.schema.properties[p], { type: 'null' }] }
+      }
+    }
+    return this
+  }
+
   removeId () {
     delete this.schema.$id
     return this
