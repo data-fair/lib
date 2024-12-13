@@ -47,4 +47,14 @@ export const assertReqInternal = (req: Request) => {
   if (!reqIsInternal(req)) throw httpError(421, 'This endpoint should only be used internally.')
 }
 
+export const assertReqInternalSecret = (req: Request, expectedSecretKey: string) => {
+  assertReqInternal(req)
+  let secretKey = req.get('x-secret-key')
+  if (!secretKey && typeof req.query.key === 'string') {
+    console.warn('passing internal secret key through query parameter is not recommended, use x-secret-key header')
+    secretKey = req.query.key
+  }
+  if (!secretKey || expectedSecretKey !== secretKey) throw httpError(401, 'Bad secret key')
+}
+
 export default reqOrigin
