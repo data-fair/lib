@@ -37,7 +37,7 @@ export function useFetch<T> (url: string | Ref<string> | (() => string), options
     try {
       data.value = await ofetch<T>(fullUrl.value, { signal: abortController.signal })
     } catch (err: any) {
-      if (err.name !== 'AbortError') {
+      if (err.name !== 'AbortError' && err.cause?.name !== 'AbortError') {
         error.value = err
         if (options.notifError !== false) {
           sendUiNotif({ msg: '', error: err })
