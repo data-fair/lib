@@ -6,9 +6,15 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // let the default error handler manage closing the connection
   if (res.headersSent) { next(err); return }
 
+  let status = err.status || err.statusCode || 500
+
   // we prevent transmitting error code from an axios error
   // usually a 401 for example means a badly configured secret and should be returned as a 500 to the user
-  const status = err.name === 'AxiosRequestError' ? 500 : err.status || err.statusCode || 500
+  if (err.name === 'AxiosRequestError') status = 500
+
+  // a mongodb conflict on an index should usually be returned as a 409
+  if (err.name === 'MongoServerError' && err.code === 11000) status = 409
+
   if (status >= 500) {
     internalError('http', 'failure while serving http request', err)
   }
