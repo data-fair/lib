@@ -197,7 +197,7 @@ en:
 </i18n>
 
 <script setup lang="ts">
-import { computed, toRefs, ref } from 'vue'
+import { computed, toRefs } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSession } from '@data-fair/lib-vue/session.js'
 import { useTheme } from 'vuetify'
