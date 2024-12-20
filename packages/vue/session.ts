@@ -55,11 +55,26 @@ export interface Colors {
   'on-admin': string
 }
 
+interface FullSiteInfo {
+  main?: boolean
+  theme: {
+    logo?: string
+    colors: Colors
+    dark: boolean
+    darkColors?: Colors
+    hc: boolean
+    hcColors?: Colors
+  }
+}
+
 export interface SiteInfo {
   main?: boolean
   logo?: string
+  dark?: boolean
   colors: Colors
 }
+
+type Theme = 'default' | 'dark' | 'hc'
 
 export interface Session {
   state: SessionState
@@ -68,8 +83,9 @@ export interface Session {
   account: ComputedRef<SessionState['account']>
   accountRole: ComputedRef<SessionState['accountRole']>
   lang: ComputedRef<SessionState['lang']>
-  dark: ComputedRef<SessionState['dark']>
+  theme: Ref<null | Theme>
   site: Ref<SiteInfo | null>
+  fullSite: Ref<FullSiteInfo | null>
   loginUrl: (redirect?: string, extraParams?: Record<string, string>, immediateRedirect?: true) => string
   login: (redirect?: string, extraParams?: Record<string, string>, immediateRedirect?: true) => void
   logout: (redirect?: string) => Promise<void>
@@ -79,7 +95,7 @@ export interface Session {
   cancelDeletion: () => Promise<void>
   keepalive: () => Promise<void>
   refreshSiteInfo: () => Promise<void>
-  switchDark: (value: boolean) => void
+  switchTheme: (value: Theme) => void
   switchLang: (value: string) => void
   topLocation: Ref<Location | undefined>
   options: SessionOptions
@@ -94,6 +110,17 @@ export type SessionAuthenticated = Omit<Session, 'state' | 'user' | 'account' | 
 
 const debug = Debug('session')
 debug.log = console.log.bind(console)
+
+function getDefaultTheme (site: FullSiteInfo): Theme {
+  // see https://www.scottohara.me/blog/2021/10/01/detect-high-contrast-and-dark-modes.html
+  if (site.theme.hc) {
+    if (window.matchMedia && window.matchMedia('(forced-colors: active)').matches) return 'hc'
+  }
+  if (site.theme.dark) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark'
+  }
+  return 'default'
+}
 
 function jwtDecodeAlive (jwt: string | null): User | undefined {
   if (!jwt) return
@@ -152,13 +179,14 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
 
   // the core state of the session that is filled by reading cookies
   const state = reactive({} as SessionState)
+  const fullSite = ref<FullSiteInfo | null>(null)
   const site = ref<SiteInfo | null>(null)
+  const theme = ref<Theme | null>(null)
 
   // cookies are the source of truth and this information is transformed into the state reactive object
   const cookies = initOptions?.cookies ?? new Cookies(options.req?.headers.cookie)
   const readState = () => {
-    const darkCookie = cookies.get('theme_dark')
-    state.dark = darkCookie === '1' || darkCookie === 'true'
+    theme.value = cookies.get('theme') ?? 'default'
 
     const langCookie = cookies.get('i18n_lang')
     state.lang = langCookie ?? options.defaultLang
@@ -310,16 +338,16 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     readState()
   }
 
-  const switchDark = (value: boolean) => {
-    const maxAge = 60 * 60 * 24 * 365 // 1 year
-    cookies.set('theme_dark', `${value}`, { maxAge, path: cookiesPath })
-    readState()
-  }
-
   const switchLang = (value: string) => {
     const maxAge = 60 * 60 * 24 * 365 // 1 year
     cookies.set('i18n_lang', value, { maxAge, path: cookiesPath })
-    readState()
+    goTo(null)
+  }
+
+  const switchTheme = (value: 'default' | 'dark' | 'hc') => {
+    const maxAge = 60 * 60 * 24 * 365 // 1 year
+    cookies.set('theme', value, { maxAge, path: cookiesPath })
+    goTo(null)
   }
 
   const keepalive = async () => {
@@ -341,7 +369,23 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
 
   const refreshSiteInfo = async () => {
     const siteInfo = await customFetch(`${options.directoryUrl}/api/sites/_public`) ?? null
-    site.value = siteInfo
+    if (siteInfo.theme) {
+      fullSite.value = siteInfo
+      const partialSite: SiteInfo = {
+        main: siteInfo.main,
+        logo: siteInfo.theme.logo,
+        colors: siteInfo.theme.colors
+      }
+      if (theme.value == null) theme.value = getDefaultTheme(siteInfo)
+      if (theme.value === 'hc') partialSite.colors = siteInfo.theme.hcColors
+      if (theme.value === 'dark') {
+        partialSite.colors = siteInfo.theme.darkColors
+        partialSite.dark = true
+      }
+      site.value = partialSite
+    } else {
+      site.value = siteInfo
+    }
   }
 
   if (options.siteInfo) await refreshSiteInfo()
@@ -371,9 +415,10 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     user: computed(() => state.user),
     account: computed(() => state.account),
     accountRole: computed(() => state.accountRole),
-    dark: computed(() => state.dark),
     lang: computed(() => state.lang),
+    theme,
     site,
+    fullSite,
     loginUrl,
     login,
     logout,
@@ -383,7 +428,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     cancelDeletion,
     keepalive,
     refreshSiteInfo,
-    switchDark,
+    switchTheme,
     switchLang,
     topLocation,
     options

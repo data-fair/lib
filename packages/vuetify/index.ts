@@ -27,10 +27,10 @@ export function vuetifySessionOptions (session: Session): VuetifyOptions {
       messages: { fr, en }
     },
     theme: {
-      defaultTheme: 'light',
+      defaultTheme: 'site',
       themes: {
-        light: {
-          dark: false,
+        site: {
+          dark: session.site.value?.dark,
           colors,
           variables: {
             // deactivate automatic partial transparencies

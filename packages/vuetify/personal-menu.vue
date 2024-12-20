@@ -31,7 +31,7 @@
 
       <v-list
         outlined
-        class="py-0"
+        class="py-0 border-sm"
       >
         <!-- current account, not actionable -->
         <v-list-item
@@ -156,28 +156,6 @@
           <v-list-item-title>{{ t('backToAdmin') }}</v-list-item-title>
         </v-list-item>
 
-        <!-- switch dark mode -->
-        <v-list-item
-          v-if="darkModeSwitch"
-          density="compact"
-          class="personal-menu-switch-list-item"
-        >
-          <template #prepend>
-            <v-icon :icon="mdiWeatherNight" />
-          </template>
-          <v-list-item-title>
-            <v-switch
-              :input-value="session.state.dark"
-              hide-details
-              class="mt-0"
-              density="compact"
-              :label="t('darkMode')"
-              color="white"
-              @change="() => session.switchDark(!session.state.dark)"
-            />
-          </v-list-item-title>
-        </v-list-item>
-
         <!-- logout button -->
         <v-divider />
         <v-list-item
@@ -219,22 +197,15 @@ en:
 </i18n>
 
 <script setup lang="ts">
-import { computed, toRefs } from 'vue'
+import { computed, toRefs, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSession } from '@data-fair/lib-vue/session.js'
 import { useTheme } from 'vuetify'
 import UserAvatar from './user-avatar.vue'
-import { mdiAlert, mdiShieldAlert, mdiLogout, mdiAccountSwitchOutline, mdiWeatherNight } from '@mdi/js'
+import { mdiAlert, mdiShieldAlert, mdiLogout, mdiAccountSwitchOutline } from '@mdi/js'
 
 const theme = useTheme()
 const session = useSession()
-
-defineProps({
-  darkModeSwitch: {
-    type: Boolean,
-    default: false
-  }
-})
 
 const { t } = useI18n({ useScope: 'local' })
 const { user, account } = toRefs(session.state)
