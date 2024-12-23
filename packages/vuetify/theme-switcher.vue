@@ -1,5 +1,5 @@
 <template>
-  <v-toolbar-items class="theme-switcher" v-if="session.fullSite.value?.theme.dark || session.fullSite.value?.theme.hc">
+  <v-toolbar-items class="theme-switcher" v-if="session.fullSite.value?.theme.dark || session.fullSite.value?.theme.hc || session.fullSite.value?.theme.hcDark">
     <v-menu
       offset-y
       nudge-left
@@ -21,11 +21,12 @@
             color="primary"
             hide-details
             :label="t('themeSwitch')"
-            @update:modelValue="value => session.switchTheme(value as 'default' | 'dark' | 'hc')"
+            @update:modelValue="value => session.switchTheme(value as 'default' | 'dark' | 'hc' | 'hc-dark')"
           >
             <v-radio :label="t('theme.default')" value="default"></v-radio>
-            <v-radio :label="t('theme.dark')" value="dark"></v-radio>
-            <v-radio :label="t('theme.hc')" value="hc"></v-radio>
+            <v-radio v-if="session.fullSite.value?.theme.dark" :label="t('theme.dark')" value="dark"></v-radio>
+            <v-radio v-if="session.fullSite.value?.theme.hc":label="t('theme.hc')" value="hc"></v-radio>
+            <v-radio v-if="session.fullSite.value?.theme.hcDark" :label="t('theme.hcDark')" value="hc-dark"></v-radio>
           </v-radio-group>
         </v-list-item>
       </v-list>
@@ -40,12 +41,14 @@ fr:
     default: par défaut
     dark: sombre
     hc: contraste élevé
+    hcDark: sombre et contraste élevé
 en:
   themeSwitch: Change theme
   theme:
     default: default
     dark: dark
     hc: high contrast
+    hcDark: dark and high contrast
 </i18n>
 
 <script setup lang="ts">

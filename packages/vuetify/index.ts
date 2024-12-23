@@ -27,9 +27,9 @@ export function vuetifySessionOptions (session: Session): VuetifyOptions {
       messages: { fr, en }
     },
     theme: {
-      defaultTheme: 'site',
+      defaultTheme: session.theme.value ?? 'default',
       themes: {
-        site: {
+        [session.theme.value ?? 'default']: {
           dark: session.site.value?.dark,
           colors,
           variables: {
@@ -49,18 +49,6 @@ export function vuetifySessionOptions (session: Session): VuetifyOptions {
       }
     }
   }
-}
-
-export function vuetifySessionStyle (session: Session) {
-  if (!session.site.value) throw new Error('vuetifySectionStyle requires fething site info in session util')
-  return `
-.v-application .text-primary!important {
-  color: ${session.site.value.colors['text-primary']};
-}
-.v-application .text-secondary!important {
-  color: ${session.site.value.colors['text-secondary']};
-}
-  `
 }
 
 // TODO: deprecate this in favor of sessionVuetifyOptions

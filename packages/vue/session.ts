@@ -64,6 +64,8 @@ interface FullSiteInfo {
     darkColors?: Colors
     hc: boolean
     hcColors?: Colors
+    hcDark: boolean
+    hcDarkColors?: Colors
   }
 }
 
@@ -74,7 +76,7 @@ export interface SiteInfo {
   colors: Colors
 }
 
-type Theme = 'default' | 'dark' | 'hc'
+type Theme = 'default' | 'dark' | 'hc' | 'hc-dark'
 
 export interface Session {
   state: SessionState
@@ -113,12 +115,11 @@ debug.log = console.log.bind(console)
 
 function getDefaultTheme (site: FullSiteInfo): Theme {
   // see https://www.scottohara.me/blog/2021/10/01/detect-high-contrast-and-dark-modes.html
-  if (site.theme.hc) {
-    if (window.matchMedia && window.matchMedia('(forced-colors: active)').matches) return 'hc'
-  }
-  if (site.theme.dark) {
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark'
-  }
+  const preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  const preferHC = window.matchMedia && window.matchMedia('(forced-colors: active)').matches
+  if (site.theme.hcDark && preferDark && preferHC) return 'hc-dark'
+  if (site.theme.hc && preferHC) return 'hc'
+  if (site.theme.dark && preferDark) return 'dark'
   return 'default'
 }
 
@@ -186,7 +187,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   // cookies are the source of truth and this information is transformed into the state reactive object
   const cookies = initOptions?.cookies ?? new Cookies(options.req?.headers.cookie)
   const readState = () => {
-    theme.value = cookies.get('theme') ?? 'default'
+    theme.value = cookies.get('theme') ?? null
 
     const langCookie = cookies.get('i18n_lang')
     state.lang = langCookie ?? options.defaultLang
@@ -344,7 +345,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     goTo(null)
   }
 
-  const switchTheme = (value: 'default' | 'dark' | 'hc') => {
+  const switchTheme = (value: Theme) => {
     const maxAge = 60 * 60 * 24 * 365 // 1 year
     cookies.set('theme', value, { maxAge, path: cookiesPath })
     goTo(null)
@@ -380,6 +381,10 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
       if (theme.value === 'hc') partialSite.colors = siteInfo.theme.hcColors
       if (theme.value === 'dark') {
         partialSite.colors = siteInfo.theme.darkColors
+        partialSite.dark = true
+      }
+      if (theme.value === 'hc-dark') {
+        partialSite.colors = siteInfo.theme.hcDarkColors
         partialSite.dark = true
       }
       site.value = partialSite
