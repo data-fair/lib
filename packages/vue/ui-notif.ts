@@ -43,8 +43,8 @@ export function getErrorMsg (error: any): string {
   if (typeof error === 'string') return error
   if (error.data && typeof error.data === 'string') return error.data
   if (error.response?.data && typeof error.response.data === 'string') return error.response.data
-  if (typeof error.statusText === 'string') return error.statusText
-  if (typeof error.response?.statusText === 'string') return error.response?.statusText
+  if (error.statusText && typeof error.statusText === 'string') return error.statusText
+  if (error.response?.statusText && typeof error.response?.statusText === 'string') return error.response?.statusText
   if (error.message) return error.message
   return 'erreur inconnue'
 }
