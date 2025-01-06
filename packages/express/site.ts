@@ -14,11 +14,15 @@ const reqSitePathKey = Symbol('reqSitePath')
 export function createSiteMiddleware (servicePathPart: string): RequestHandler {
   const prefixRegexp = createPrefixRegexp(servicePathPart)
   return (req, res, next) => {
-    const match = req.url.match(prefixRegexp)
-    if (!match) {
-      if (reqIsInternal(req)) return next()
-      throw httpError(404, 'URL path does not contain service prefix')
+    if (reqIsInternal(req)) {
+      if (req.url.startsWith('/' + servicePathPart + '/')) {
+        req.url = req.url.slice(servicePathPart.length + 1)
+      }
+      return next()
     }
+
+    const match = req.url.match(prefixRegexp)
+    if (!match) throw httpError(404, 'URL path does not contain service prefix')
 
     // @ts-ignore
     req[reqSitePathKey] = match[1]
