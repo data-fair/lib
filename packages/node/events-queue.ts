@@ -10,71 +10,78 @@ type EventsQueueOptions = {
   eventsUrl: string,
   eventsSecret: string
 }
-let _options: EventsQueueOptions | undefined
-const options = () => {
-  if (!_options) throw new Error('events queue was not initialized')
-  return _options
-}
 
-let eventsQueue: Event[] = []
-let notificationsQueue: Notification[] = []
-let stopped = false
-let currentDrainPromise: Promise<void> | undefined
+export class EventsQueue {
+  _options: EventsQueueOptions | undefined
+  eventsQueue: Event[] = []
+  notificationsQueue: Notification[] = []
+  stopped = false
+  currentDrainPromise: Promise<void> | undefined
 
-const loop = async () => {
-  // eslint-disable-next-line no-unmodified-loop-condition
-  while (!stopped) {
-    await new Promise(resolve => setTimeout(resolve, 3000))
-    try {
-      currentDrainPromise = drain()
-      await currentDrainPromise
-      currentDrainPromise = undefined
-    } catch (err) {
-      internalError('events-queue-drain', err)
+  options () {
+    if (!this._options) throw new Error('events queue was not initialized')
+    return this._options
+  }
+
+  start = async (options: EventsQueueOptions) => {
+    if (this._options) throw new Error('events queue was already initialized')
+    this._options = options
+    this.loop()
+  }
+
+  stop = async () => {
+    this.stopped = true
+    if (this.currentDrainPromise) await this.currentDrainPromise
+    await this.drain()
+  }
+
+  async loop () {
+    while (!this.stopped) {
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      try {
+        this.currentDrainPromise = this.drain()
+        await this.currentDrainPromise
+        this.currentDrainPromise = undefined
+      } catch (err) {
+        internalError('events-queue-drain', err)
+      }
     }
   }
-}
 
-const drain = async () => {
-  if (eventsQueue.length) {
-    const events = eventsQueue
-    eventsQueue = []
-    debug('drain events', events.length)
-    await axios.post(options().eventsUrl + '/api/events', events, { headers: { 'x-secret-key': options().eventsSecret } })
-  }
-  if (notificationsQueue.length) {
-    const notifications = notificationsQueue
-    notificationsQueue = []
-    debug('drain notifications', notifications.length)
-    for (const notification of notifications) {
-      await axios.post(options().eventsUrl + '/api/notifications', notification, { headers: { 'x-secret-key': options().eventsSecret } })
+  async drain () {
+    if (this.eventsQueue.length) {
+      const events = this.eventsQueue
+      this.eventsQueue = []
+      debug('drain events', events.length)
+      await axios.post(this.options().eventsUrl + '/api/events', events, { headers: { 'x-secret-key': this.options().eventsSecret } })
+    }
+    if (this.notificationsQueue.length) {
+      const notifications = this.notificationsQueue
+      this.notificationsQueue = []
+      debug('drain notifications', notifications.length)
+      for (const notification of notifications) {
+        await axios.post(this.options().eventsUrl + '/api/notifications', notification, { headers: { 'x-secret-key': this.options().eventsSecret } })
+      }
     }
   }
+
+  pushEvent (event: Omit<Event, 'date'>) {
+    this.options()
+    if (this.stopped) throw new Error('events queue has been stopped');
+    (event as Event).date = new Date().toISOString()
+    debug('pushEvent', event)
+    this.eventsQueue.push(event as Event)
+  }
+
+  pushNotification (notification: Omit<Notification, 'date'>) {
+    this.options()
+    if (this.stopped) throw new Error('notifications queue has been stopped');
+    (notification as Notification).date = new Date().toISOString()
+    debug('pushNotification', notification)
+    this.notificationsQueue.push(notification as Notification)
+  }
 }
 
-export const start = async (options: EventsQueueOptions) => {
-  _options = options
-  loop()
-}
+const eventsQueue = new EventsQueue()
 
-export const stop = async () => {
-  stopped = true
-  if (currentDrainPromise) await currentDrainPromise
-  await drain()
-}
-
-export const pushEvent = (event: Omit<Event, 'date'>) => {
-  options()
-  if (stopped) throw new Error('events queue has been stopped');
-  (event as Event).date = new Date().toISOString()
-  debug('pushEvent', event)
-  eventsQueue.push(event as Event)
-}
-
-export const pushNotification = (notification: Omit<Notification, 'date'>) => {
-  options()
-  if (stopped) throw new Error('notifications queue has been stopped');
-  (notification as Notification).date = new Date().toISOString()
-  debug('pushNotification', notification)
-  notificationsQueue.push(notification as Notification)
-}
+export default eventsQueue

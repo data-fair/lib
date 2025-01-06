@@ -24,6 +24,7 @@ export class Locks {
   }
 
   start = async (db: Db, ttl = 60) => {
+    if (this._db) throw new Error('locks utils was already initialized')
     this._db = db
     await this.collection.createIndex({ pid: 1 })
     try {
