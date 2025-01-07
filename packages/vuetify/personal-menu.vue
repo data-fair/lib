@@ -56,6 +56,7 @@
         </v-list-item>
 
         <!-- cancel a planned deletion ? -->
+        <!-- not really necessary as it is handled by SD directly after login
         <template v-if="user.pd">
           <v-alert
             :value="true"
@@ -76,6 +77,7 @@
             </v-btn>
           </v-row>
         </template>
+        -->
 
         <!-- account switching (personal account and organizations) -->
         <template v-if="user.organizations.length > 1 || (user.organizations.length === 1 && (!user.ipa || account.type === 'user'))">
