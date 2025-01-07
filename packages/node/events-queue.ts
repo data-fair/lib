@@ -38,13 +38,9 @@ export class EventsQueue {
   async loop () {
     while (!this.stopped) {
       await new Promise(resolve => setTimeout(resolve, 3000))
-      try {
-        this.currentDrainPromise = this.drain()
-        await this.currentDrainPromise
-        this.currentDrainPromise = undefined
-      } catch (err) {
-        internalError('events-queue-drain', err)
-      }
+      this.currentDrainPromise = this.drain()
+      await this.currentDrainPromise
+      this.currentDrainPromise = undefined
     }
   }
 
@@ -53,14 +49,28 @@ export class EventsQueue {
       const events = this.eventsQueue
       this.eventsQueue = []
       debug('drain events', events.length)
-      await axios.post(this.options().eventsUrl + '/api/events', events, { headers: { 'x-secret-key': this.options().eventsSecret } })
+      try {
+        await axios.post(this.options().eventsUrl + '/api/events', events, { headers: { 'x-secret-key': this.options().eventsSecret } })
+      } catch (err: any) {
+        internalError('events-queue-push-event', err)
+        // retry later
+        if (err.status >= 500 && events.length < 1000) this.eventsQueue = events.concat(this.eventsQueue)
+      }
     }
     if (this.notificationsQueue.length) {
       const notifications = this.notificationsQueue
       this.notificationsQueue = []
       debug('drain notifications', notifications.length)
       for (const notification of notifications) {
-        await axios.post(this.options().eventsUrl + '/api/notifications', notification, { headers: { 'x-secret-key': this.options().eventsSecret } })
+        try {
+          await axios.post(this.options().eventsUrl + '/api/notifications', notification, { headers: { 'x-secret-key': this.options().eventsSecret } })
+        } catch (err: any) {
+          internalError('events-queue-push-notif', err)
+          // retry later
+          if (err.status >= 500 && (notifications.length + this.notificationsQueue.length) < 1000) {
+            this.notificationsQueue.unshift()
+          }
+        }
       }
     }
   }
