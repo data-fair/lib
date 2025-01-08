@@ -91,7 +91,7 @@ export interface Session {
   loginUrl: (redirect?: string, extraParams?: Record<string, string>, immediateRedirect?: true) => string
   login: (redirect?: string, extraParams?: Record<string, string>, immediateRedirect?: true) => void
   logout: (redirect?: string) => Promise<void>
-  switchOrganization: (org: string | null, dep?: string) => void
+  switchOrganization: (org: string | null, dep?: string, updateState?: boolean) => void
   setAdminMode: (adminMode: boolean, redirect?: string) => Promise<void>
   asAdmin: (user: any | null) => Promise<void>
   cancelDeletion: () => Promise<void>
