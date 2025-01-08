@@ -303,13 +303,13 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     goTo(redirect ?? options.logoutRedirectUrl ?? null)
   }
 
-  const switchOrganization = (org: string | null, dep?: string) => {
+  const switchOrganization = (org: string | null, dep?: string, updateState = true) => {
     const cookieOpts = { path: cookiesPath }
     if (org) cookies.set('id_token_org', org, cookieOpts)
     else cookies.remove('id_token_org', cookieOpts)
     if (dep) cookies.set('id_token_dep', dep, cookieOpts)
     else cookies.remove('id_token_dep', cookieOpts)
-    readState()
+    if (updateState) readState()
   }
 
   const setAdminMode = async (adminMode: boolean, redirect?: string) => {
