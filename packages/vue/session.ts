@@ -398,7 +398,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   // immediately performs a keepalive, but only on top windows (not iframes or popups)
   // and only if it was not done very recently (maybe from a refreshed page next to this one)
   // also run an auto-refresh loop
-  if (!ssr && !inIframe) {
+  if (!ssr && !inIframe && !('triggerCapture' in window)) {
     const lastKeepalive = window.localStorage.getItem('sd-keepalive' + options.sitePath)
     // check cookies.get('id_token') not state.user so that we do a keepalive on expired id tokens
     if (cookies.get('id_token') && (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) > 10000)) {
