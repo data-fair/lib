@@ -25,7 +25,7 @@ interface UiNotifBase {
 interface UiNotifError {
   type: 'error'
   msg: string
-  error: any
+  error?: any
   errorMsg: string
   clientError?: boolean
 }
@@ -71,6 +71,7 @@ export const getUiNotif = () => {
   function sendUiNotif (partialNotif: PartialUiNotif) {
     const notif = notification.value = getFullNotif(partialNotif)
     if (inIframe) {
+      if (notif.type === 'error') delete notif.error
       window.top?.postMessage({ vIframe: true, uiNotification: notif }, '*')
     } else {
       console.log('iframe notification', notif)
