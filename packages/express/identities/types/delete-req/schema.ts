@@ -3,7 +3,7 @@ export default {
   title: 'Delete identity req',
   'x-exports': ['validate', 'types'],
   type: 'object',
-  required: ['params', 'body'],
+  required: ['params'],
   properties: {
     params: {
       type: 'object',
@@ -15,15 +15,6 @@ export default {
           enum: ['user', 'organization']
         },
         id: {
-          type: 'string'
-        }
-      }
-    },
-    body: {
-      type: 'object',
-      required: ['name'],
-      properties: {
-        name: {
           type: 'string'
         }
       }

@@ -11,7 +11,7 @@ import * as deleteReq from './types/delete-req/index.js'
 export function createIdentitiesRouter (
   secretKey: string | null | undefined,
   onUpdate: (identityUpdate: PostIdentityReq['params'] & PostIdentityReq['body']) => Promise<void>,
-  onDelete: (identityDelete: DeleteIdentityReq['params'] & DeleteIdentityReq['body']) => Promise<void>
+  onDelete: (identityDelete: DeleteIdentityReq['params']) => Promise<void>
 ): Router {
   const router = Router()
 
@@ -33,8 +33,8 @@ export function createIdentitiesRouter (
 
   // Remove resources owned, permissions and anonymize created and updated
   router.delete('/:type/:id', asyncHandler(async (req, res) => {
-    const { params, body } = deleteReq.returnValid(req)
-    await onDelete?.({ ...params, ...body })
+    const { params } = deleteReq.returnValid(req)
+    await onDelete?.(params)
     res.send()
   }))
 
