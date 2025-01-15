@@ -12,7 +12,6 @@ type FileRef = { url: string }
 type SchemaExport = ('types' | 'validate' | 'stringify' | 'schema' | 'resolvedSchema' | 'resolvedSchemaJson' | 'vjsf')
 
 const main = async (dir: string, options: TypesBuilderOptions) => {
-  console.log('OPTIONS', options)
   let pJsonName
   try {
     const pJson = JSON.parse(readFileSync('./package.json', 'utf8'))

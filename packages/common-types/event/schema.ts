@@ -68,7 +68,7 @@ export default {
       type: 'object',
       title: 'Emitter',
       additionalProperties: false,
-      required: ['type', 'id', 'name'],
+      required: ['type', 'id'],
       properties: {
         type: {
           type: 'string',
