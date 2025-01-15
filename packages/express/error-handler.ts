@@ -1,6 +1,9 @@
 import type { ErrorRequestHandler } from 'express'
 import { internalError } from '@data-fair/lib-node/observer.js'
 import eventsLog from './events-log.js'
+import debugModule from 'debug'
+
+const debug = debugModule('http-errors')
 
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // let the default error handler manage closing the connection
@@ -28,6 +31,9 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   res.set('Expires', '-1')
   res.status(status)
   res.type('text/plain')
+
+  debug('express error handler', status, err)
+
   if (process.env.NODE_ENV === 'production') {
     if (status < 500) res.send(err.message)
     else res.send() // server errors are mostly unplanned and could contain confidential information, only return error code
