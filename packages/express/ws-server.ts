@@ -35,7 +35,8 @@ let stopped = false
 export const start = async (
   server: Server,
   db: Db,
-  canSubscribe: (channel: string, sessionState: SessionState) => Promise<boolean>) => {
+  canSubscribe: (channel: string, sessionState: SessionState, message: any) => Promise<boolean>
+) => {
   const messagesCollection = await initMessagesCollection(db)
   wss = new WebSocketServer({ server })
   wss.on('connection', async (ws, req) => {
@@ -63,7 +64,7 @@ export const start = async (
         }
         if (message.type === 'subscribe') {
           const sessionState = await session.reqAuthenticated(req)
-          if (!await canSubscribe(message.channel, sessionState)) {
+          if (!await canSubscribe(message.channel, sessionState, message)) {
             return ws.send(JSON.stringify({ type: 'error', channel: message.channel, status: 403, data: 'Permission manquante.' }))
           }
           subscribers[message.channel] = subscribers[message.channel] || new Set()
