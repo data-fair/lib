@@ -18,3 +18,5 @@ export function httpError (status: number, message?: string): HttpError {
   if (!prodNodeJS || status >= 500) Error.captureStackTrace(error, httpError)
   return error
 }
+
+export default httpError
