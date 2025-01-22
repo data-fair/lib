@@ -52,11 +52,11 @@ export const start = async (
       try {
         message = JSON.parse(str.toString())
       } catch (err: any) {
-        const errorMessage = { type: 'error', status: 400, data: err.message ?? err, channel: message.channel }
+        const errorMessage = { type: 'error', status: 400, data: err.message ?? err }
         return ws.send(JSON.stringify(errorMessage))
       }
       try {
-        if (!message.channel) {
+        if (typeof message !== 'object' || !message.channel) {
           return ws.send(JSON.stringify({ type: 'error', status: 400, data: '"channel" is required' }))
         }
         if (!message.type || ['subscribe', 'unsubscribe'].indexOf(message.type) === -1) {
