@@ -25,7 +25,7 @@ import { internalError } from '@data-fair/lib-node/observer.js'
 import { initMessagesCollection } from '@data-fair/lib-node/ws-emitter.js'
 
 let cursor: any
-let wss: WebSocketServer
+let wss: WebSocketServer | undefined
 const subscribers: Record<string, Set<string>> = {}
 const clients: Record<string, import('ws').WebSocket> = {}
 
@@ -63,7 +63,7 @@ export const start = async (
           return ws.send(JSON.stringify({ type: 'error', channel: message.channel, status: 400, data: 'type should be "subscribe" or "unsubscribe"' }))
         }
         if (message.type === 'subscribe') {
-          const sessionState = await session.reqAuthenticated(req)
+          const sessionState = await session.req(req)
           if (!await canSubscribe(message.channel, sessionState, message)) {
             return ws.send(JSON.stringify({ type: 'error', channel: message.channel, status: 403, data: 'Permission manquante.' }))
           }
@@ -102,7 +102,7 @@ export const start = async (
 
   // standard ping/pong used to detect lost connections
   setInterval(function ping () {
-    if (stopped) return
+    if (stopped || !wss) return
     for (const ws of wss.clients) {
       // @ts-ignore
       if (ws[isAlive] === false) return ws.terminate()
@@ -117,7 +117,7 @@ export const start = async (
 }
 
 export const stop = async () => {
-  wss.close()
+  if (wss) wss.close()
   stopped = true
   if (cursor) await cursor.close()
 }
