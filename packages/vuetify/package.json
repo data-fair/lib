@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib-vuetify",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Components based on the Vuetify 3 UI lib for the data-fair stack.",
   "main": "index.js",
   "files": [
