@@ -202,11 +202,9 @@ en:
 import { computed, toRefs } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSession } from '@data-fair/lib-vue/session.js'
-import { useTheme } from 'vuetify'
 import UserAvatar from './user-avatar.vue'
 import { mdiAlert, mdiShieldAlert, mdiLogout, mdiAccountSwitchOutline } from '@mdi/js'
 
-const theme = useTheme()
 const session = useSession()
 
 const { t } = useI18n({ useScope: 'local' })
