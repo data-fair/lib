@@ -1,0 +1,5 @@
+@use 'vuetify/settings' with (
+  // make disabled button style less dependant on theme colors
+  $button-colored-disabled: false,
+  $button-disabled-opacity: 0.8
+);

@@ -9,3 +9,5 @@ export const autoImports = [
     '@data-fair/lib-vuetify/user-avatar.vue': [['default', 'dfUserAvatar']]
   }
 ]
+
+export const settingsPath = new URL(import.meta.resolve('@data-fair/lib-vuetify/style/settings.scss')).pathname
