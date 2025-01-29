@@ -14,7 +14,7 @@ export interface UpgradeScript {
 }
 
 // chose the proper scripts to execute, then run them
-export default async function (db: Db, locks: Locks, basePath = './', bootstrap?: () => Promise<undefined | string>) {
+export default async function (db: Db, locks: Locks, basePath = './', isFresh?: () => Promise<boolean>) {
   const ack = await locks.acquire('upgrade')
   if (!ack) {
     console.warn('upgrade scripts lock is already acquired, skip them')
@@ -25,14 +25,14 @@ export default async function (db: Db, locks: Locks, basePath = './', bootstrap?
     // are not considered "up" and the previous versions keep running in the mean time
   } else {
     try {
-      await runScripts(db, basePath, bootstrap)
+      await runScripts(db, basePath, isFresh)
     } finally {
       await locks.release('upgrade')
     }
   }
 }
 
-async function runScripts (db: Db, basePath: string, bootstrap?: () => Promise<undefined | string>) {
+async function runScripts (db: Db, basePath: string, isFresh?: () => Promise<boolean>) {
   const dir = path.resolve(basePath)
   const pjsonPath = path.join(dir, 'package.json')
   debug('read service info from ' + pjsonPath)
@@ -50,15 +50,15 @@ async function runScripts (db: Db, basePath: string, bootstrap?: () => Promise<u
   } else {
     debug('No service version found in database, this is the first time the upgrade system is run')
     scripts = scripts.filter(scriptDef => scriptDef.version === 'init')
-    if (bootstrap) {
-      previousPersion = await bootstrap()
-      if (previousPersion) {
-        debug('Bootstrap function returned version %s', previousPersion)
+    if (isFresh) {
+      if (await isFresh()) {
+        debug('isFresh function returned true, this is fresh install, do not run any script')
       } else {
-        debug('Bootstrap function returned no version, this is fresh install, do not run any script')
+        debug('isFresh function returned false, this is not fresh install, run all init scripts')
+        previousPersion = '0.0.0'
       }
     } else {
-      debug('No bootstrap function, it could be a fresh install, do not run any script')
+      debug('No isFresh function, it could be a fresh install, do not run any script')
     }
   }
 
