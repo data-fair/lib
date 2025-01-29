@@ -14,7 +14,7 @@ export interface UpgradeScript {
 }
 
 // chose the proper scripts to execute, then run them
-export default async function (db: Db, locks: Locks, basePath = './') {
+export default async function (db: Db, locks: Locks, basePath = './', bootstrap?: () => Promise<undefined | string>) {
   const ack = await locks.acquire('upgrade')
   if (!ack) {
     console.warn('upgrade scripts lock is already acquired, skip them')
@@ -25,14 +25,14 @@ export default async function (db: Db, locks: Locks, basePath = './') {
     // are not considered "up" and the previous versions keep running in the mean time
   } else {
     try {
-      await runScripts(db, basePath)
+      await runScripts(db, basePath, bootstrap)
     } finally {
       await locks.release('upgrade')
     }
   }
 }
 
-async function runScripts (db: Db, basePath: string) {
+async function runScripts (db: Db, basePath: string, bootstrap?: () => Promise<undefined | string>) {
   const dir = path.resolve(basePath)
   const pjsonPath = path.join(dir, 'package.json')
   debug('read service info from ' + pjsonPath)
@@ -40,25 +40,36 @@ async function runScripts (db: Db, basePath: string) {
   const scriptsRoot = path.join(dir, 'upgrade')
   debug(`service=${pjson.name} version=${pjson.version}`)
 
-  const services = db.collection('services')
+  const services = db.collection<{ id: string, version: string }>('services')
   const service = await services.findOne({ id: pjson.name })
-  const version = service?.version
+  let previousPersion = service?.version
   debug('list scripts from ' + scriptsRoot)
   let scripts = await listScripts(scriptsRoot)
-  if (!version) {
-    debug('No service version found in database, this is probably a fresh install')
-    scripts = scripts.filter(scriptDef => scriptDef.version === 'init')
+  if (previousPersion) {
+    debug(`Current service version from database : ${previousPersion}`)
   } else {
-    debug(`Current service version from database : ${version}`)
-    scripts = scripts.filter(scriptDef => scriptDef.version !== 'init')
+    debug('No service version found in database, this is the first time the upgrade system is run')
+    scripts = scripts.filter(scriptDef => scriptDef.version === 'init')
+    if (bootstrap) {
+      previousPersion = await bootstrap()
+      if (previousPersion) {
+        debug('Bootstrap function returned version %s', previousPersion)
+      } else {
+        debug('Bootstrap function returned no version, this is fresh install, do not run any script')
+      }
+    } else {
+      debug('No bootstrap function, it could be a fresh install, do not run any script')
+    }
   }
 
-  for (const scriptDef of scripts) {
-    if (semver.gte(scriptDef.version, version)) {
-      for (const scriptName of scriptDef.names) {
-        const script: UpgradeScript = (await import(path.join(scriptsRoot, scriptDef.version, scriptName))).default
-        debug('Apply script %s/%s : %s', scriptDef.version, scriptName, script.description)
-        await script.exec(db, Debug(`upgrade:${scriptDef.version}:${scriptName}`))
+  if (previousPersion) {
+    for (const scriptDef of scripts) {
+      if (semver.gte(scriptDef.version, previousPersion)) {
+        for (const scriptName of scriptDef.names) {
+          const script: UpgradeScript = (await import(path.join(scriptsRoot, scriptDef.version, scriptName))).default
+          debug('Apply script %s/%s : %s', scriptDef.version, scriptName, script.description)
+          await script.exec(db, Debug(`upgrade:${scriptDef.version}:${scriptName}`))
+        }
       }
     }
   }
