@@ -2,7 +2,7 @@ import type { Db } from 'mongodb'
 import type { Debugger } from 'debug'
 import semver from 'semver'
 import path from 'path'
-import { readdirSync, readFileSync } from 'fs'
+import { readdirSync, readFileSync, statSync } from 'fs'
 import Debug from 'debug'
 import type { Locks } from './locks.js'
 
@@ -52,9 +52,9 @@ async function runScripts (db: Db, basePath: string, isFresh?: () => Promise<boo
     scripts = scripts.filter(scriptDef => scriptDef.version === 'init')
     if (isFresh) {
       if (await isFresh()) {
-        debug('isFresh function returned true, this is fresh install, do not run any script')
+        debug('isFresh function returned true, this is a fresh install, do not run any script')
       } else {
-        debug('isFresh function returned false, this is not fresh install, run all init scripts')
+        debug('isFresh function returned false, this is not a fresh install, run all init scripts')
         previousPersion = '0.0.0'
       }
     } else {
@@ -83,7 +83,9 @@ async function runScripts (db: Db, basePath: string, isFresh?: () => Promise<boo
 
 // Walk the scripts directories
 async function listScripts (scriptsRoot: string) {
-  const dirs = readdirSync(scriptsRoot).sort()
+  const dirs = readdirSync(scriptsRoot)
+    .filter(dir => statSync(path.join(scriptsRoot, dir)).isDirectory())
+    .sort()
   return dirs.map(dir => {
     return {
       version: dir,
