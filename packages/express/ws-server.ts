@@ -64,7 +64,7 @@ export const start = async (
         }
         if (message.type === 'subscribe') {
           const sessionState = await session.req(req)
-          if (!await canSubscribe(message.channel, sessionState, message)) {
+          if (!sessionState.user?.adminMode && !await canSubscribe(message.channel, sessionState, message)) {
             return ws.send(JSON.stringify({ type: 'error', channel: message.channel, status: 403, data: 'Permission manquante.' }))
           }
           subscribers[message.channel] = subscribers[message.channel] || new Set()
