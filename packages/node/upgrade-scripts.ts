@@ -46,9 +46,9 @@ async function runScripts (db: Db, basePath: string, isFresh?: () => Promise<boo
   debug('list scripts from ' + scriptsRoot)
   let scripts = await listScripts(scriptsRoot)
   if (previousPersion) {
-    debug(`Current service version from database : ${previousPersion}`)
+    debug(`current service version from database : ${previousPersion}`)
   } else {
-    debug('No service version found in database, this is the first time the upgrade system is run')
+    debug('no service version found in database, this is the first time the upgrade system is run')
     scripts = scripts.filter(scriptDef => scriptDef.version === 'init')
     if (isFresh) {
       if (await isFresh()) {
@@ -58,7 +58,7 @@ async function runScripts (db: Db, basePath: string, isFresh?: () => Promise<boo
         previousPersion = '0.0.0'
       }
     } else {
-      debug('No isFresh function, it could be a fresh install, do not run any script')
+      debug('no isFresh function, it could be a fresh install, do not run any script')
     }
   }
 
@@ -67,7 +67,7 @@ async function runScripts (db: Db, basePath: string, isFresh?: () => Promise<boo
       if (semver.gte(scriptDef.version, previousPersion)) {
         for (const scriptName of scriptDef.names) {
           const script: UpgradeScript = (await import(path.join(scriptsRoot, scriptDef.version, scriptName))).default
-          debug('Apply script %s/%s : %s', scriptDef.version, scriptName, script.description)
+          debug('apply script %s/%s : %s', scriptDef.version, scriptName, script.description)
           await script.exec(db, Debug(`upgrade:${scriptDef.version}:${scriptName}`))
         }
       }
@@ -77,7 +77,7 @@ async function runScripts (db: Db, basePath: string, isFresh?: () => Promise<boo
   const coercedVersion = semver.coerce(pjson.version)
   if (!coercedVersion) throw new Error(`Invalid version number in package.json ${pjson.version}`)
   const newService = { id: pjson.name, version: coercedVersion.version }
-  debug(`Upgrade scripts are over, save current version number ${newService.version}`)
+  debug(`upgrade scripts are over, save current version number ${newService.version}`)
   await services.updateOne({ id: pjson.name }, { $set: newService }, { upsert: true })
 }
 
