@@ -8,11 +8,13 @@ import { reqSitePath } from '@data-fair/lib-express'
 
 const htmlCache: Record<string, string> = {}
 
-async function createHtmlMiddleware (directory: string, uiConfig: any): Promise<import('express').RequestHandler> {
+type ServeSpaOptions = { ignoreSitePath?: boolean }
+
+async function createHtmlMiddleware (directory: string, uiConfig: any, options?: ServeSpaOptions): Promise<import('express').RequestHandler> {
   const uiConfigStr = JSON.stringify(uiConfig)
   const html = await readFile(join(directory, 'index.html'), 'utf8')
   return (req, res, next) => {
-    const sitePath = reqSitePath(req)
+    const sitePath = options?.ignoreSitePath ? '' : reqSitePath(req)
     htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(html, { SITE_PATH: sitePath, UI_CONFIG: uiConfigStr })
     res.type('html')
     res.set('Cache-Control', 'public, max-age=0, must-revalidate')
@@ -39,9 +41,9 @@ function createStaticMiddleware (directory: string): import('express').RequestHa
 /**
  * serve a built SPA from a directory
  */
-export async function createSpaMiddleware (directory: string, uiConfig: any): Promise<import('express').RequestHandler> {
+export async function createSpaMiddleware (directory: string, uiConfig: any, options?: ServeSpaOptions): Promise<import('express').RequestHandler> {
   const staticMiddleware = createStaticMiddleware(directory)
-  const htmlMiddleware = await createHtmlMiddleware(directory, uiConfig)
+  const htmlMiddleware = await createHtmlMiddleware(directory, uiConfig, options)
   return (req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(404).send()
     // force buffering, necessary for caching of source files in the reverse proxy
