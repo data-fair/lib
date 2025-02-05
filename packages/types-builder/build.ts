@@ -181,7 +181,7 @@ export declare const resolvedSchema: any
           validateCode = validateCode.replace(/require\("ajv\/dist\/runtime\/ucs2length"\)/g, 'ucs2length')
         }
 
-        const validationImport = '@data-fair/lib-node/validation.js'
+        const validationImport = '@data-fair/lib-validation'
         writeFileSync(path.join(dir, '.type', 'validate.' + (options.mjs ? 'mjs' : 'js')), '/* eslint-disable */\n// @ts-nocheck\n\n' + validateCode)
         importsCode += `
 import validate from './validate.${options.mjs ? 'mjs' : 'js'}'

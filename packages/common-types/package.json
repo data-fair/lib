@@ -8,7 +8,7 @@
     "build": "cd .. && npm run build"
   },
   "dependencies": {
-    "@data-fair/lib-validation": "^0.0.0"
+    "@data-fair/lib-validation": "^1.0.0"
   },
   "devDependencies": {},
   "files": [

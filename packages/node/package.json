@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@data-fair/lib-common-types": "^1.5.0",
-    "@data-fair/lib-validation": "^0.0.0",
+    "@data-fair/lib-validation": "^1.0.0",
     "@data-fair/lib-utils": "^1.1.0",
     "agentkeepalive": "^4.5.0",
     "axios": "^1.7.7",
