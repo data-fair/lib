@@ -1,0 +1,23 @@
+{
+  "name": "@data-fair/lib-validation",
+  "version": "0.0.0",
+  "description": "Small validation utils, mostly wrapping ajv",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "**/*.js",
+    "**/*.d.ts"
+  ],
+  "scripts": {
+    "prepublishOnly": "cd .. && npm run prepublishOnly",
+    "build": "cd .. && npm run build"
+  },
+  "dependencies": {
+    "ajv-formats": "^3.0.1",
+    "ajv-i18n": "^4.2.0"
+  },
+  "devDependencies": {},
+  "author": "",
+  "license": "MIT",
+  "type": "module"
+}

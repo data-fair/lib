@@ -15,10 +15,9 @@
   },
   "dependencies": {
     "@data-fair/lib-common-types": "^1.5.0",
+    "@data-fair/lib-validation": "^0.0.0",
     "@data-fair/lib-utils": "^1.1.0",
     "agentkeepalive": "^4.5.0",
-    "ajv-formats": "^3.0.1",
-    "ajv-i18n": "^4.2.0",
     "axios": "^1.7.7",
     "cacheable-lookup": "^7.0.0",
     "semver": "^7.6.3"

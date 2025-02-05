@@ -54,6 +54,7 @@
     "packages/processing-dev",
     "packages/types-builder",
     "packages/utils",
+    "packages/validation",
     "packages/vue",
     "packages/vuetify"
   ]

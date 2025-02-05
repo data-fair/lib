@@ -7,6 +7,9 @@
     "prepublishOnly": "cd .. && npm run prepublishOnly",
     "build": "cd .. && npm run build"
   },
+  "dependencies": {
+    "@data-fair/lib-validation": "^0.0.0"
+  },
   "devDependencies": {},
   "files": [
     "**/schema.json",
