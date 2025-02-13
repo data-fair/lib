@@ -96,10 +96,49 @@ export const resolveXI18n = (schema: Record<string, any>, locale: string, defaul
       delete schema[key]
     } else if (Array.isArray(value)) {
       for (const child of value) {
-        resolveXI18n(child, locale, defaultLocale)
+        if (typeof child === 'object') {
+          resolveXI18n(child, locale, defaultLocale)
+        }
       }
     } if (typeof value === 'object') {
       resolveXI18n(value, locale, defaultLocale)
+    }
+  }
+}
+
+// recurse a JSON object and transform absolute refs to local refs in $defs
+export const makeLocalDefs = (schemas: Record<string, any>, schemaId: string) => {
+  const schema = clone(schemas[schemaId])
+  const localDefsSchemas = {}
+  recurseLocalDefs(localDefsSchemas, schemas, schemaId, schema)
+  schema.$defs = localDefsSchemas
+  return schema
+}
+
+const recurseLocalDefs = (
+  localDefsSchemas: Record<string, Record<string, any>>,
+  schemas: Record<string, Record<string, any>>,
+  schemaId: string,
+  schemaFragment: Record<string, any>
+) => {
+  for (const [key, value] of Object.entries(schemaFragment)) {
+    if (key === '$ref') {
+      if (!value.startsWith('#')) {
+        const fullId = new URL(value, schemaId).href
+        const refId = value.split('/').pop()
+        if (!localDefsSchemas[refId]) {
+          localDefsSchemas[refId] = clone(schemas[fullId])
+          recurseLocalDefs(localDefsSchemas, schemas, fullId, localDefsSchemas[refId])
+        }
+        schemaFragment[key] = `#/$defs/${refId}`
+      }
+    } else if (key === '$defs') {
+      for (const [defKey, defValue] of Object.entries(value as Record<string, any>)) {
+        localDefsSchemas[defKey] = clone(defValue)
+        recurseLocalDefs(localDefsSchemas, schemas, schemaId, localDefsSchemas[defKey])
+      }
+    } else if (typeof value === 'object') {
+      recurseLocalDefs(localDefsSchemas, schemas, schemaId, value)
     }
   }
 }

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
-import jsonSchema from '@data-fair/lib-utils/json-schema.js'
+import jsonSchema, { makeLocalDefs } from '@data-fair/lib-utils/json-schema.js'
 
 describe('json-schema utility functions', () => {
   it('should remove properties', async () => {
@@ -61,5 +61,39 @@ describe('json-schema utility functions', () => {
         }
       }
     })
+  })
+
+  it('should transform abolute references to local definitions', async () => {
+    const schema = makeLocalDefs({
+      'http://test.com/schema1': {
+        type: 'object',
+        properties: {
+          a: { type: 'string' },
+          b: { $ref: 'http://test.com/schema2' },
+          c: { $ref: '#/$defs/c' }
+        },
+        $defs: {
+          c: { type: 'string' }
+        }
+      },
+      'http://test.com/schema2': {
+        type: 'object',
+        properties: {
+          d: { type: 'string' },
+          e: { $ref: 'http://test.com/schema3' }
+        }
+      },
+      'http://test.com/schema3': {
+        type: 'object',
+        properties: {
+          f: { type: 'string' }
+        }
+      }
+    }, 'http://test.com/schema1')
+    assert.equal(schema.properties.b.$ref, '#/$defs/schema2')
+    assert.equal(schema.properties.c.$ref, '#/$defs/c')
+    assert.ok(schema.$defs.schema2)
+    assert.ok(schema.$defs.schema3)
+    assert.ok(schema.$defs.c)
   })
 })

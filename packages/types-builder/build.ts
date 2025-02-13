@@ -268,6 +268,6 @@ export declare function returnValid(data: any, options?: import('${validationImp
 program
   .argument('[dir]', 'root directory to scan for schema.json files', './')
   .option('--mjs', 'produce mjs files', false)
-  .option('--vjsf-dir <dir>', 'the directory where built vjsf components will be writtent')
+  .option('--vjsf-dir <dir>', 'the directory where built vjsf components will be written')
   .action(main)
   .parseAsync()
