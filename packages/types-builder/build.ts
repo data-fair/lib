@@ -6,10 +6,11 @@ import { pascalCase } from 'change-case'
 import { program } from 'commander'
 import clone from '@data-fair/lib-utils/clone.js'
 import { fdir as Fdir } from 'fdir'
+import { makeLocalDefs } from '@data-fair/lib-utils/json-schema.js'
 
 type TypesBuilderOptions = { mjs: boolean, vjsfDir?: string }
 type FileRef = { url: string }
-type SchemaExport = ('types' | 'validate' | 'stringify' | 'schema' | 'resolvedSchema' | 'resolvedSchemaJson' | 'vjsf')
+type SchemaExport = ('types' | 'validate' | 'stringify' | 'schema' | 'resolvedSchema' | 'resolvedSchemaJson' | 'localDefsSchema' | 'localDefsSchemaJson' | 'vjsf')
 
 const main = async (dir: string, options: TypesBuilderOptions) => {
   let pJsonName
@@ -105,6 +106,11 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
       if (resolvedSchema.$id) resolvedSchema.$id += '-resolved'
     }
 
+    let localDefsSchema
+    if (schemaExports.includes('localDefsSchema') || schemaExports.includes('localDefsSchemaJson')) {
+      localDefsSchema = makeLocalDefs(schemas, schema.$id)
+    }
+
     code += `
 export const schemaExports = ${JSON.stringify(schemaExports, null, 2)}
 `
@@ -146,6 +152,16 @@ export declare const resolvedSchema: any
       } else if (schemaExport === 'resolvedSchemaJson') {
         delete resolvedSchema['x-exports']
         writeFileSync(path.join(dir, '.type', 'resolved-schema.json'), JSON.stringify(resolvedSchema, null, 2))
+      } else if (schemaExport === 'localDefsSchema') {
+        code += `
+export const localDefsSchema = ${JSON.stringify(localDefsSchema, null, 2)}
+`
+        dtsCode += `
+export declare const localDefsSchema: any
+        `
+      } else if (schemaExport === 'localDefsSchemaJson') {
+        delete resolvedSchema['x-exports']
+        writeFileSync(path.join(dir, '.type', 'local-defs-schema.json'), JSON.stringify(resolvedSchema, null, 2))
       } else if (schemaExport === 'validate') {
         const Ajv = (await import('ajv')).default
         const addFormats = (await import('ajv-formats')).default
