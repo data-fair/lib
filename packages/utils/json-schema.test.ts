@@ -96,4 +96,25 @@ describe('json-schema utility functions', () => {
     assert.ok(schema.$defs.schema3)
     assert.ok(schema.$defs.c)
   })
+
+  it('should create a Patch schema from a base schema', async () => {
+    const schema = jsonSchema({
+      type: 'object',
+      title: 'My schema',
+      required: ['a'],
+      properties: {
+        a: { type: 'string' },
+        b: { type: 'string' },
+        c: { type: 'string', readOnly: true }
+      }
+    }).makePatchSchema().schema
+    assert.deepEqual(schema, {
+      type: 'object',
+      title: 'My schema patch',
+      properties: {
+        a: { type: 'string' },
+        b: { anyOf: [{ type: 'string' }, { type: 'null' }] }
+      }
+    })
+  })
 })

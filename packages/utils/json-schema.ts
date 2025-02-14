@@ -68,6 +68,11 @@ class SchemaWrapper {
     return this
   }
 
+  removeRequired () {
+    delete this.schema.required
+    return this
+  }
+
   appendTitle (append: string) {
     if (this.schema.title) this.schema.title = this.schema.title + append
     else this.schema.title = append
@@ -76,6 +81,29 @@ class SchemaWrapper {
 
   resolveXI18n (locale: string, defaultLocale = 'en') {
     resolveXI18n(this.schema, locale, defaultLocale)
+    return this
+  }
+
+  set (schemaPatch: Partial<SchemaObject>) {
+    Object.assign(this.schema, schemaPatch)
+    return this
+  }
+
+  makePatchSchema (properties?: string[]) {
+    if (!properties) {
+      this.removeReadonlyProperties()
+      properties = Object.keys(this.schema.properties ?? {})
+    } else {
+      this.pickProperties(properties)
+    }
+    const nullable = []
+    for (const property of properties) {
+      if (!this.schema.required?.includes(property)) nullable.push(property)
+    }
+    this.removeRequired()
+    this.makeNullable(nullable)
+    this.appendTitle(' patch')
+    if (this.schema.$id) this.schema.$id = this.schema.$id + '-patch'
     return this
   }
 }
