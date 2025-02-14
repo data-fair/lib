@@ -10,6 +10,10 @@ class SchemaWrapper {
     this.schema = clone(schema)
   }
 
+  clone () {
+    return new SchemaWrapper(this.schema)
+  }
+
   removeProperties (properties: string | string[]) {
     if (typeof properties === 'string') properties = [properties]
     if (this.schema.properties) {
