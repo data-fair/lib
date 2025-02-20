@@ -1,9 +1,9 @@
 import { type IncomingMessage } from 'node:http'
-import { type Ref, type ComputedRef, type App } from 'vue'
+import { type Ref, type ComputedRef, type App, shallowReadonly } from 'vue'
 import { type RouteLocation } from 'vue-router'
 import { FetchError, type fetch } from 'ofetch'
 import { type SessionState, type SessionStateAuthenticated, type User } from '@data-fair/lib-common-types/session/index.js'
-import { reactive, computed, watch, inject, ref } from 'vue'
+import { reactive, computed, watch, inject, ref, shallowRef, readonly } from 'vue'
 import { ofetch } from 'ofetch'
 import { jwtDecode } from 'jwt-decode'
 import cookiesModule from 'universal-cookie'
@@ -180,8 +180,8 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
 
   // the core state of the session that is filled by reading cookies
   const state = reactive({} as SessionState)
-  const fullSite = ref<FullSiteInfo | null>(null)
-  const site = ref<SiteInfo | null>(null)
+  const fullSite = shallowRef<FullSiteInfo | null>(null)
+  const site = shallowRef<SiteInfo | null>(null)
   const theme = ref<Theme | null>(null)
 
   // cookies are the source of truth and this information is transformed into the state reactive object
@@ -421,9 +421,9 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     account: computed(() => state.account),
     accountRole: computed(() => state.accountRole),
     lang: computed(() => state.lang),
-    theme,
-    site,
-    fullSite,
+    theme: readonly(theme),
+    site: shallowReadonly(site),
+    fullSite: shallowReadonly(fullSite),
     loginUrl,
     login,
     logout,

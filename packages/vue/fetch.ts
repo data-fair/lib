@@ -2,7 +2,7 @@ import type { QueryObject } from 'ufo'
 import type { Ref } from 'vue'
 import { ofetch } from 'ofetch'
 import { withQuery } from 'ufo'
-import { computed, isRef, watch, ref } from 'vue'
+import { computed, isRef, watch, ref, shallowRef, readonly, shallowReadonly } from 'vue'
 import { useUiNotif } from '@data-fair/lib-vue/ui-notif.js'
 
 type UseFetchOptions = {
@@ -22,10 +22,10 @@ export function useFetch<T> (url: string | Ref<string> | (() => string), options
     return fullUrl
   })
 
-  const data = ref(null) as Ref<T | null>
+  const data = shallowRef(null) as Ref<T | null>
   const loading = ref(false)
   const initialized = ref(false)
-  const error = ref<any>(null)
+  const error = shallowRef<any>(null)
 
   let abortController: AbortController | undefined
   const refresh = async () => {
@@ -52,7 +52,13 @@ export function useFetch<T> (url: string | Ref<string> | (() => string), options
     watch(fullUrl, refresh, { immediate: true })
   }
 
-  return { initialized, data, loading, refresh, error }
+  return {
+    initialized: readonly(initialized),
+    data: shallowReadonly(data),
+    loading: readonly(loading),
+    error: shallowReadonly(error),
+    refresh,
+  }
 }
 
 export default useFetch

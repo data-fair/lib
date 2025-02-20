@@ -1,6 +1,6 @@
 // similar to withUiNotif but more powerful
 
-import { ref, type Ref } from 'vue'
+import { ref, readonly, shallowReadonly, shallowRef, type Ref } from 'vue'
 import { type PartialUiNotif, type UiNotif, useUiNotif, getFullNotif, getErrorMsg } from './ui-notif.js'
 
 type AsyncActionOptions = {
@@ -11,7 +11,7 @@ type AsyncActionOptions = {
 
 export function useAsyncAction<F extends (...args: any[]) => Promise<any>> (fn: F, options?: AsyncActionOptions): { execute: F, notif: Ref<UiNotif | undefined>, loading: Ref<boolean>, error: Ref<string | undefined> } {
   const { sendUiNotif } = useUiNotif()
-  const notif = ref<UiNotif>()
+  const notif = shallowRef<UiNotif>()
   const loading = ref(false)
   const error = ref<string>()
   const execute = <F> async function (...args: any[]) {
@@ -40,7 +40,7 @@ export function useAsyncAction<F extends (...args: any[]) => Promise<any>> (fn: 
     }
   }
 
-  return { execute, notif, loading, error }
+  return { execute, notif: shallowReadonly(notif), loading: readonly(loading), error: readonly(error) }
 }
 
 export default useAsyncAction

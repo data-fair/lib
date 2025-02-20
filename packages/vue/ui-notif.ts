@@ -3,7 +3,7 @@
 // or can be displayed locally by @data-fair/lib-vuetify/ui-notif.vue
 
 import type { App } from 'vue'
-import { ref, inject } from 'vue'
+import { shallowRef, readonly, inject } from 'vue'
 import inIframe from '@data-fair/lib-utils/in-iframe.js'
 
 export type UiNotif = UiNotifBase | UiNotifError
@@ -67,7 +67,7 @@ export function getFullNotif (notif: PartialUiNotif, defaultType: UiNotifBase['t
 }
 
 export const getUiNotif = () => {
-  const notification = ref(null as null | UiNotif)
+  const notification = shallowRef(null as null | UiNotif)
   function sendUiNotif (partialNotif: PartialUiNotif) {
     const notif = notification.value = getFullNotif(partialNotif)
     if (inIframe) {
@@ -77,7 +77,7 @@ export const getUiNotif = () => {
       console.log('iframe notification', notif)
     }
   }
-  return { notification, sendUiNotif }
+  return { notification: readonly(notification), sendUiNotif }
 }
 
 // uses pattern for SSR friendly plugin/composable, cf https://antfu.me/posts/composable-vue-vueday-2021#shared-state-ssr-friendly
