@@ -28,6 +28,7 @@ function createStaticMiddleware (directory: string): import('express').RequestHa
   // static assets, images, etc are generally not hashed but a short cache is still ok
   const fileMaxAge = 60 * 5 // 5 minutes
   return expressStatic(directory, {
+    index: false,
     setHeaders: (res, path) => {
       if (path.endsWith('.js') || path.endsWith('.css')) {
         res.setHeader('Cache-Control', `public, max-age=${sourceMaxAge}, immutable`)
@@ -49,7 +50,7 @@ export async function createSpaMiddleware (directory: string, uiConfig: any, opt
     // force buffering, necessary for caching of source files in the reverse proxy
     res.setHeader('X-Accel-Buffering', 'yes')
 
-    if (req.url.startsWith('/index.html') || req.url === '' || req.url === '/') {
+    if (req.url.startsWith('/index.html')) {
       htmlMiddleware(req, res, next)
     } else {
       staticMiddleware(req, res, (err) => {
