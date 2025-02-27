@@ -9,6 +9,7 @@ type UseFetchOptions = {
   query?: QueryObject | Ref<QueryObject>,
   watch?: Boolean
   notifError?: Boolean
+  immediate?: Boolean
 }
 
 type OptionalUrl = string | null | undefined
@@ -32,8 +33,8 @@ export function useFetch<T> (url: OptionalUrl | Ref<OptionalUrl> | (() => Option
 
   let abortController: AbortController | undefined
   const refresh = async () => {
-    if (!fullUrl.value) return null
     initialized.value = true
+    if (!fullUrl.value) return null
     error.value = null
     if (abortController) abortController.abort()
     loading.value = true
@@ -53,7 +54,9 @@ export function useFetch<T> (url: OptionalUrl | Ref<OptionalUrl> | (() => Option
   }
 
   if (options.watch !== false) {
-    watch(fullUrl, refresh, { immediate: true })
+    watch(fullUrl, () => {
+      if (options.immediate !== false || initialized.value) refresh()
+    }, { immediate: true })
   }
 
   return {
