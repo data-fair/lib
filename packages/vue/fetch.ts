@@ -11,12 +11,15 @@ type UseFetchOptions = {
   notifError?: Boolean
 }
 
-export function useFetch<T> (url: string | Ref<string> | (() => string), options: UseFetchOptions = {}): { data: Ref<T | null>, loading: Ref<boolean>, initialized: Ref<boolean>, error: Ref<any>, refresh: (() => Promise<T | null>) } {
+type OptionalUrl = string | null | undefined
+
+export function useFetch<T> (url: OptionalUrl | Ref<OptionalUrl> | (() => OptionalUrl), options: UseFetchOptions = {}): { data: Ref<T | null>, loading: Ref<boolean>, initialized: Ref<boolean>, error: Ref<any>, refresh: (() => Promise<T | null>) } {
   const { sendUiNotif } = useUiNotif()
 
   if (typeof url === 'function') url = computed(url)
   const fullUrl = computed(() => {
     let fullUrl = isRef(url) ? url.value : url
+    if (!fullUrl) return null
     const query = isRef(options.query) ? options.query.value : options.query
     if (query) fullUrl = withQuery(fullUrl, query)
     return fullUrl
@@ -29,6 +32,7 @@ export function useFetch<T> (url: string | Ref<string> | (() => string), options
 
   let abortController: AbortController | undefined
   const refresh = async () => {
+    if (!fullUrl.value) return null
     initialized.value = true
     error.value = null
     if (abortController) abortController.abort()
