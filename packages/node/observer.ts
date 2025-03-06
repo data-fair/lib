@@ -49,8 +49,7 @@ const serveRegistry = async (res: ServerResponse, registry: Registry) => {
 }
 
 // live CPU performance inspection
-const serveCPUProfile = async (res: ServerResponse, duration = 2000) => {
-  // @ts-ignore
+const serveCPUProfile = async (res: ServerResponse, duration: number) => {
   const { Session } = await import('node:inspector/promises')
   const session = new Session()
   session.connect()
@@ -58,9 +57,27 @@ const serveCPUProfile = async (res: ServerResponse, duration = 2000) => {
   await session.post('Profiler.start')
   await new Promise(resolve => setTimeout(resolve, duration))
   const { profile } = await session.post('Profiler.stop')
+  await session.post('Profiler.disable')
   session.disconnect()
 
   res.setHeader('Content-Disposition', `attachment; filename="data-fair-${hostname()}-${new Date().toISOString()}.cpuprofile"`)
+  res.write(JSON.stringify(profile))
+  res.end()
+}
+
+// live heap allocation sampler
+const serveHeapSnapshot = async (res: ServerResponse, includeCollected: boolean, duration: number) => {
+  const { Session } = await import('node:inspector/promises')
+  const session = new Session()
+  session.connect()
+  await session.post('HeapProfiler.enable')
+  await session.post('HeapProfiler.startSampling', { includeObjectsCollectedByMajorGC: includeCollected, includeObjectsCollectedByMinorGC: true })
+  await new Promise(resolve => setTimeout(resolve, duration))
+  const { profile } = await session.post('HeapProfiler.stopSampling')
+  await session.post('HeapProfiler.disable')
+  session.disconnect()
+
+  res.setHeader('Content-Disposition', `attachment; filename="data-fair-${hostname()}-${new Date().toISOString()}.heapprofile"`)
   res.write(JSON.stringify(profile))
   res.end()
 }
@@ -69,13 +86,20 @@ let server: Server
 
 export const startObserver = async (port = 9090) => {
   server = createServer((req, res) => {
-    if (req.method === 'GET' && req.url === '/metrics') {
+    const url = new URL(req.url || '', `http://${req.headers.host}`)
+    if (req.method === 'GET' && url.pathname === '/metrics') {
       serveRegistry(res, register).catch(err => httpErrorHandler(res, err))
-    } else if (req.method === 'GET' && (req.url === '/global-metrics' || req.url === '/service-metrics')) {
+    } else if (req.method === 'GET' && (url.pathname === '/global-metrics' || url.pathname === '/service-metrics')) {
       serveRegistry(res, servicePromRegistry).catch(err => httpErrorHandler(res, err))
-    } else if (req.method === 'GET' && req.url === '/cpu-profile') {
-      // TODO: duration
-      serveCPUProfile(res).catch(err => httpErrorHandler(res, err))
+    } else if (req.method === 'GET' && url.pathname === '/cpu-profile') {
+      const duration = parseInt(url.searchParams.get('duration') || '2000')
+      serveCPUProfile(res, duration).catch(err => httpErrorHandler(res, err))
+    } else if (req.method === 'GET' && url.pathname === '/heap-profile') {
+      const duration = parseInt(url.searchParams.get('duration') || '2000')
+      serveHeapSnapshot(res, false, duration).catch(err => httpErrorHandler(res, err))
+    } else if (req.method === 'GET' && url.pathname === '/heap-profile-all') {
+      const duration = parseInt(url.searchParams.get('duration') || '2000')
+      serveHeapSnapshot(res, true, duration).catch(err => httpErrorHandler(res, err))
     } else {
       res.writeHead(404)
       res.end()
@@ -87,6 +111,8 @@ export const startObserver = async (port = 9090) => {
     GET /metrics -> get prometheus metrics for this instance
     GET /service-metrics -> get prometheus metrics shared accross all instances
     GET /cpu-profile -> generate and fetch a CPU profile
+    GET /heap-snapshot -> generate and fetch a sampled heap allocation snapshot
+    GET /heap-snapshot-all -> generate and fetch a sampled heap allocation snapshot including objects collected by GC
 `)
 }
 
