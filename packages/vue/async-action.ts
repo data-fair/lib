@@ -34,6 +34,7 @@ export function useAsyncAction<F extends (...args: any[]) => Promise<any>> (fn: 
         }
       }
       loading.value = false
+      if (options?.finally) await options?.finally()
       return result
     } catch (err) {
       error.value = getErrorMsg(err)
@@ -43,9 +44,7 @@ export function useAsyncAction<F extends (...args: any[]) => Promise<any>> (fn: 
         sendUiNotif(errorNotif)
       }
       loading.value = false
-    }
-    if (options?.finally) {
-      await options?.finally()
+      if (options?.finally) await options?.finally()
     }
   }
 
