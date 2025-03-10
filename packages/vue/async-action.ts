@@ -3,7 +3,7 @@
 import { ref, readonly, shallowReadonly, shallowRef, type Ref } from 'vue'
 import { type PartialUiNotif, type UiNotif, useUiNotif, getFullNotif, getErrorMsg } from './ui-notif.js'
 
-type Finally = () => Promise<void>
+type Finally = () => Promise<void> | void
 
 type AsyncActionOptions = {
   error?: string,
