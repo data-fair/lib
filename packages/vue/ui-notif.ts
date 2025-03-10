@@ -95,6 +95,7 @@ export default useUiNotif
 
 export function withUiNotif<F extends (...args: any[]) => Promise<any>> (fn: F, errorMsg?: string, successNotif?: PartialUiNotif): F {
   const { sendUiNotif } = useUiNotif()
+  console.warn('withUiNotif is deprecated, use useAsyncAction instead')
   return <F> async function (...args: any[]) {
     try {
       const result = await fn(...args)

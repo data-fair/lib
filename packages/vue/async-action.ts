@@ -3,13 +3,19 @@
 import { ref, readonly, shallowReadonly, shallowRef, type Ref } from 'vue'
 import { type PartialUiNotif, type UiNotif, useUiNotif, getFullNotif, getErrorMsg } from './ui-notif.js'
 
+type Finally = () => Promise<void>
+
 type AsyncActionOptions = {
   error?: string,
   success?: PartialUiNotif,
-  catch?: 'error' | 'success' | 'all'
+  catch?: 'error' | 'success' | 'all',
+  finally?: Finally
 }
 
-export function useAsyncAction<F extends (...args: any[]) => Promise<any>> (fn: F, options?: AsyncActionOptions): { execute: F, notif: Ref<UiNotif | undefined>, loading: Ref<boolean>, error: Ref<string | undefined> } {
+export function useAsyncAction<F extends (...args: any[]) => Promise<any>> (fn: F, options?: AsyncActionOptions | Finally): { execute: F, notif: Ref<UiNotif | undefined>, loading: Ref<boolean>, error: Ref<string | undefined> } {
+  if (typeof options === 'function') {
+    options = { finally: options }
+  }
   const { sendUiNotif } = useUiNotif()
   const notif = shallowRef<UiNotif>()
   const loading = ref(false)
@@ -37,6 +43,9 @@ export function useAsyncAction<F extends (...args: any[]) => Promise<any>> (fn: 
         sendUiNotif(errorNotif)
       }
       loading.value = false
+    }
+    if (options?.finally) {
+      await options?.finally()
     }
   }
 
