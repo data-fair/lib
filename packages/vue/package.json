@@ -28,7 +28,7 @@
     }
   },
   "dependencies": {
-    "@data-fair/lib-common-types": "^1.5.3",
+    "@data-fair/lib-common-types": "^1.7.1",
     "@data-fair/lib-utils": "^1.0.0",
     "jwt-decode": "^4.0.0",
     "universal-cookie": "^7.2.0"

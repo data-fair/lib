@@ -141,6 +141,15 @@ export class Session {
       session.accountRole = 'admin'
       return session
     }
+
+    if (session.user?.siteOwner) {
+      if (session.user.siteOwner.type === 'user' && session.user.siteOwner.id === session.user.id) {
+        session.siteRole = 'admin'
+      }
+      if (session.user.siteOwner.type === 'organization' && session.user.siteOwner.id === session.organization?.id) {
+        session.siteRole = session.organization.role
+      }
+    }
     return session
   }
 

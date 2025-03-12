@@ -84,6 +84,7 @@ export interface Session {
   organization: ComputedRef<SessionState['organization']>
   account: ComputedRef<SessionState['account']>
   accountRole: ComputedRef<SessionState['accountRole']>
+  siteRole: ComputedRef<SessionState['siteRole']>
   lang: ComputedRef<SessionState['lang']>
   theme: Ref<null | Theme>
   site: Ref<SiteInfo | null>
@@ -239,6 +240,15 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
         name: state.user.name
       }
       state.accountRole = 'admin'
+    }
+
+    if (state.user?.siteOwner) {
+      if (state.user.siteOwner.type === 'user' && state.user.siteOwner.id === state.user.id) {
+        state.siteRole = 'admin'
+      }
+      if (state.user.siteOwner.type === 'organization' && state.user.siteOwner.id === state.organization?.id) {
+        state.siteRole = state.organization.role
+      }
     }
   }
   readState()
@@ -420,6 +430,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     user: computed(() => state.user),
     account: computed(() => state.account),
     accountRole: computed(() => state.accountRole),
+    siteRole: computed(() => state.siteRole),
     lang: computed(() => state.lang),
     theme: readonly(theme),
     site: shallowReadonly(site),
