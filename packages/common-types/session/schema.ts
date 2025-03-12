@@ -132,6 +132,9 @@ export default {
         rememberMe: {
           type: 'integer',
           enum: [1]
+        },
+        siteOwner: {
+          $ref: '#/$defs/account'
         }
       }
     },
