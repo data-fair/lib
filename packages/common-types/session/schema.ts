@@ -18,6 +18,9 @@ export default {
     accountRole: {
       type: 'string'
     },
+    siteRole: {
+      type: 'string'
+    },
     lang: {
       type: 'string'
     },
