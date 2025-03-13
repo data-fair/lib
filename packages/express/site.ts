@@ -11,7 +11,7 @@ const reqSitePathKey = Symbol('reqSitePath')
 /**
  * extract site path prefix from url and strip the full service prefix for next routes
  */
-export function createSiteMiddleware (servicePathPart: string): RequestHandler {
+export function createSiteMiddleware (servicePathPart: string, prefixOptional?: boolean): RequestHandler {
   const prefixRegexp = createPrefixRegexp(servicePathPart)
   return (req, res, next) => {
     if (reqIsInternal(req)) {
@@ -22,12 +22,16 @@ export function createSiteMiddleware (servicePathPart: string): RequestHandler {
     }
 
     const match = req.url.match(prefixRegexp)
-    if (!match) throw httpError(404, 'URL path does not contain service prefix')
+    if (match) {
+      // @ts-ignore
+      req[reqSitePathKey] = match[1]
+      req.url = req.url.slice(match[1].length + servicePathPart.length + 1)
+    } else {
+      if (!prefixOptional) throw httpError(404, 'URL path does not contain service prefix')
+      // @ts-ignore
+      req[reqSitePathKey] = ''
+    }
 
-    // @ts-ignore
-    req[reqSitePathKey] = match[1]
-
-    req.url = req.url.slice(match[1].length + servicePathPart.length + 1)
     next()
   }
 }
@@ -35,7 +39,7 @@ export function createSiteMiddleware (servicePathPart: string): RequestHandler {
 export function reqSitePath (req: Request | IncomingMessage): string {
   // @ts-ignore
   const sitePath = req[reqSitePathKey]
-  if (sitePath === undefined) throw httpError(500, 'reqSitePath was not set, either createSiteMiddleware was not called ot this HTTP request is internal')
+  if (sitePath === undefined) throw httpError(500, 'reqSitePath was not set, either createSiteMiddleware was not called or this HTTP request is internal')
   return sitePath
 }
 
