@@ -1,4 +1,4 @@
-import type { IndexSpecification, CreateIndexesOptions, MongoClientOptions, IndexDirection } from 'mongodb'
+import type { IndexSpecification, CreateIndexesOptions, MongoClientOptions, IndexDirection, Db } from 'mongodb'
 import { MongoClient, MongoError } from 'mongodb'
 
 type IndexDirections = Record<string, IndexDirection>
@@ -7,6 +7,7 @@ export type IndexDefinitions = Record<string, Record<string, null | IndexDirecti
 
 export class Mongo {
   private _client: MongoClient | undefined
+  private _db: Db | undefined
 
   get client () {
     if (!this._client) throw new Error('db was not connected')
@@ -14,7 +15,8 @@ export class Mongo {
   }
 
   get db () {
-    return this.client.db()
+    if (!this._db) throw new Error('db was not connected')
+    return this._db
   }
 
   connect = async (mongoUrl: string, options: MongoClientOptions = {}) => {
@@ -24,6 +26,7 @@ export class Mongo {
     }
     console.log('connecting to mongodb...')
     this._client = await MongoClient.connect(mongoUrl, { maxPoolSize: 5, ignoreUndefined: true, ...options })
+    this._db = this._client.db()
     console.log('...ok')
   }
 
