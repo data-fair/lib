@@ -8,13 +8,20 @@ export const createPrefixRegexp = (servicePathPart: string) => new RegExp(`(.*?)
 
 const reqSitePathKey = Symbol('reqSitePath')
 
+type SiteMiddlewareOptions = {
+  // activate this to prevent breaking in the case of url rewriting by the reverse proxy
+  prefixOptional?: boolean,
+  // activate this is you don't need to distinguish between internal and external requests
+  neverInternal?: boolean
+}
+
 /**
  * extract site path prefix from url and strip the full service prefix for next routes
  */
-export function createSiteMiddleware (servicePathPart: string, prefixOptional?: boolean): RequestHandler {
+export function createSiteMiddleware (servicePathPart: string, options?: SiteMiddlewareOptions): RequestHandler {
   const prefixRegexp = createPrefixRegexp(servicePathPart)
   return (req, res, next) => {
-    if (reqIsInternal(req)) {
+    if (!options?.neverInternal && reqIsInternal(req)) {
       if (req.url.startsWith('/' + servicePathPart + '/')) {
         req.url = req.url.slice(servicePathPart.length + 1)
       }
@@ -27,7 +34,7 @@ export function createSiteMiddleware (servicePathPart: string, prefixOptional?: 
       req[reqSitePathKey] = match[1]
       req.url = req.url.slice(match[1].length + servicePathPart.length + 1)
     } else {
-      if (!prefixOptional) throw httpError(404, 'URL path does not contain service prefix')
+      if (!options?.prefixOptional) throw httpError(404, 'URL path does not contain service prefix')
       // case where the prefix was removed by the reverse proxy
       // @ts-ignore
       req[reqSitePathKey] = ''
@@ -40,7 +47,7 @@ export function createSiteMiddleware (servicePathPart: string, prefixOptional?: 
 export function reqSitePath (req: Request | IncomingMessage): string {
   // @ts-ignore
   const sitePath = req[reqSitePathKey]
-  if (sitePath === undefined) throw httpError(500, 'reqSitePath was not set, either createSiteMiddleware was not called or this HTTP request is internal')
+  if (sitePath === undefined) throw httpError(500, 'reqSitePath was not set, either createSiteMiddleware was not called or this HTTP request is internal (no x-forwarded-host header)')
   return sitePath
 }
 
