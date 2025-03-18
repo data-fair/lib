@@ -111,8 +111,8 @@ export const startObserver = async (port = 9090) => {
     GET /metrics -> get prometheus metrics for this instance
     GET /service-metrics -> get prometheus metrics shared accross all instances
     GET /cpu-profile -> generate and fetch a CPU profile
-    GET /heap-snapshot -> generate and fetch a sampled heap allocation snapshot
-    GET /heap-snapshot-all -> generate and fetch a sampled heap allocation snapshot including objects collected by GC
+    GET /heap-profile -> generate and fetch a sampled heap allocation snapshot
+    GET /heap-profile-all -> generate and fetch a sampled heap allocation snapshot including objects collected by GC
 `)
 }
 
