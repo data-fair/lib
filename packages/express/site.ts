@@ -28,6 +28,7 @@ export function createSiteMiddleware (servicePathPart: string, prefixOptional?: 
       req.url = req.url.slice(match[1].length + servicePathPart.length + 1)
     } else {
       if (!prefixOptional) throw httpError(404, 'URL path does not contain service prefix')
+      // case where the prefix was removed by the reverse proxy
       // @ts-ignore
       req[reqSitePathKey] = ''
     }
