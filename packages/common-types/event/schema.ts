@@ -39,6 +39,50 @@ export default {
     },
     // sender is the owner of the topic
     sender: { $ref: '#/$defs/sender' },
+    // originator is the account/user who triggered the event
+    originator: {
+      type: 'object',
+      properties: {
+        user: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              title: 'User ID'
+            },
+            name: {
+              type: 'string',
+              title: 'User name'
+            },
+            email: {
+              type: 'string',
+              title: 'User email'
+            }
+          }
+        },
+        organization: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              title: 'Organization ID'
+            },
+            name: {
+              type: 'string',
+              title: 'Organization name'
+            },
+            department: {
+              type: 'string',
+              title: 'Organization department'
+            },
+            departmentName: {
+              type: 'string',
+              title: 'Organization department name'
+            }
+          }
+        }
+      }
+    },
     topic: { $ref: '#/$defs/topicRef' },
     urlParams: {
       type: 'object',
@@ -61,6 +105,26 @@ export default {
     extra: {
       type: 'object',
       description: 'Free properties that varie depending on the type of event'
+    },
+    resource: {
+      type: 'object',
+      title: 'The main resource concerned by the event',
+      additionalProperties: false,
+      required: ['type', 'id'],
+      properties: {
+        type: {
+          type: 'string',
+          title: 'Type'
+        },
+        id: {
+          type: 'string',
+          description: 'The unique id of the resource'
+        },
+        title: {
+          type: 'string',
+          description: 'The display name of the resource'
+        }
+      }
     }
   },
   $defs: {
