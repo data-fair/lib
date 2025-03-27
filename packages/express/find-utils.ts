@@ -74,9 +74,7 @@ export function mongoPagination (query: Request['query'], defaultSize = 10) {
 export function mongoProjection (selectParam: any, exclude: string[] = []): Record<string, 0 | 1> {
   const select: Record<string, 0 | 1> = { }
 
-  if (typeof selectParam !== 'string') return select
-
-  if (!selectParam) {
+  if (!selectParam || typeof selectParam !== 'string') {
     exclude.forEach(e => {
       select[e] = 0
     })
