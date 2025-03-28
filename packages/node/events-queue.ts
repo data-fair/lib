@@ -3,6 +3,7 @@ import { type Notification } from '@data-fair/lib-common-types/notification/inde
 import { internalError } from '@data-fair/lib-node/observer.js'
 import axios from './axios.js'
 import Debug from 'debug'
+import { SessionState } from '@data-fair/lib-common-types/session/index.js'
 
 const debug = Debug('events-queue')
 
@@ -75,11 +76,24 @@ export class EventsQueue {
     }
   }
 
-  pushEvent (event: Omit<Event, 'date'>) {
+  pushEvent (event: Omit<Event, 'date'>, sessionState?: SessionState) {
     this.options()
     if (this.stopped) throw new Error('events queue has been stopped');
     (event as Event).date = new Date().toISOString()
     debug('pushEvent', event)
+    if (sessionState && sessionState.user) {
+      event.originator = {
+        user: { id: sessionState.user.id, name: sessionState.user.name }
+      }
+      if (sessionState.organization) {
+        event.originator.organization = {
+          id: sessionState.organization.id,
+          name: sessionState.organization.name,
+          department: sessionState.organization.department,
+          departmentName: sessionState.organization.departmentName
+        }
+      }
+    }
     this.eventsQueue.push(event as Event)
   }
 
