@@ -125,6 +125,26 @@ export default {
           description: 'The display name of the resource'
         }
       }
+    },
+    recipient: {
+      type: 'object',
+      title: 'Optional recipient target of the event',
+      required: ['id'],
+      readOnly: true,
+      properties: {
+        id: {
+          type: 'string',
+          description: 'The unique id of the user'
+        },
+        name: {
+          type: 'string',
+          description: 'The display name of the user'
+        },
+        subscribedOnly: {
+          type: 'boolean',
+          description: 'If true, the event is only sent to the recipient if they are subscribed to the topic'
+        }
+      }
     }
   },
   $defs: {
