@@ -126,7 +126,7 @@ export default {
         }
       }
     },
-    recipient: {
+    subscribedRecipient: {
       type: 'object',
       title: 'Optional recipient target of the event',
       required: ['id'],
@@ -139,10 +139,6 @@ export default {
         name: {
           type: 'string',
           description: 'The display name of the user'
-        },
-        subscribedOnly: {
-          type: 'boolean',
-          description: 'If true, the event is only sent to the recipient if they are subscribed to the topic'
         }
       }
     }
