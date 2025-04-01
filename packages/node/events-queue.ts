@@ -81,7 +81,7 @@ export class EventsQueue {
     if (this.stopped) throw new Error('events queue has been stopped');
     (event as Event).date = new Date().toISOString()
     debug('pushEvent', event)
-    if (sessionState && sessionState.user) {
+    if (!event.originator && sessionState && sessionState.user) {
       event.originator = {
         user: { id: sessionState.user.id, name: sessionState.user.name }
       }
