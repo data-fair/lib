@@ -43,6 +43,20 @@ export default {
     originator: {
       type: 'object',
       properties: {
+        internalProcess: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            title: { type: 'string' }
+          }
+        },
+        apiKey: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            title: { type: 'string' }
+          }
+        },
         user: {
           type: 'object',
           properties: {
