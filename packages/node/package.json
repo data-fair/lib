@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib-node",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "description": "Small nodejs related utility functions for the data-fair stack.",
   "main": "index.js",
   "files": [
@@ -14,7 +14,7 @@
     "build": "cd .. && npm run build"
   },
   "dependencies": {
-    "@data-fair/lib-common-types": "^1.5.0",
+    "@data-fair/lib-common-types": "^1.8.4",
     "@data-fair/lib-validation": "^1.0.0",
     "@data-fair/lib-utils": "^1.1.0",
     "agentkeepalive": "^4.5.0",
