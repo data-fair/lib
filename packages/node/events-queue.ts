@@ -81,16 +81,26 @@ export class EventsQueue {
     if (this.stopped) throw new Error('events queue has been stopped');
     (event as Event).date = new Date().toISOString()
     debug('pushEvent', event)
-    if (!event.originator && sessionState && sessionState.user) {
-      event.originator = {
-        user: { id: sessionState.user.id, name: sessionState.user.name }
-      }
-      if (sessionState.organization) {
-        event.originator.organization = {
-          id: sessionState.organization.id,
-          name: sessionState.organization.name,
-          department: sessionState.organization.department,
-          departmentName: sessionState.organization.departmentName
+    if (!event.originator && sessionState?.user && sessionState.account) {
+      if (sessionState.user.asAdmin) {
+        event.originator = {
+          user: { ...sessionState.user.asAdmin, admin: true }
+        }
+      } else if (sessionState.user.adminMode && (sessionState.account.type !== event.sender?.type || sessionState.account.id !== event.sender?.id)) {
+        event.originator = {
+          user: { id: sessionState.user.id, name: sessionState.user.name, admin: true }
+        }
+      } else {
+        event.originator = {
+          user: { id: sessionState.user.id, name: sessionState.user.name }
+        }
+        if (sessionState.organization) {
+          event.originator.organization = {
+            id: sessionState.organization.id,
+            name: sessionState.organization.name,
+            department: sessionState.organization.department,
+            departmentName: sessionState.organization.departmentName
+          }
         }
       }
     }

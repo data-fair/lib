@@ -71,6 +71,10 @@ export default {
             email: {
               type: 'string',
               title: 'User email'
+            },
+            admin: {
+              type: 'boolean',
+              title: 'User was working as a platform admin'
             }
           }
         },
