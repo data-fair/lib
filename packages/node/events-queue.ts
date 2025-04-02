@@ -9,7 +9,8 @@ const debug = Debug('events-queue')
 
 type EventsQueueOptions = {
   eventsUrl: string,
-  eventsSecret: string
+  eventsSecret: string,
+  inactive?: boolean
 }
 
 export class EventsQueue {
@@ -77,7 +78,8 @@ export class EventsQueue {
   }
 
   pushEvent (event: Omit<Event, 'date'>, sessionState?: SessionState) {
-    this.options()
+    const options = this.options()
+    if (options.inactive) return
     if (this.stopped) throw new Error('events queue has been stopped');
     (event as Event).date = new Date().toISOString()
     debug('pushEvent', event)
@@ -108,7 +110,8 @@ export class EventsQueue {
   }
 
   pushNotification (notification: Omit<Notification, 'date'>) {
-    this.options()
+    const options = this.options()
+    if (options.inactive) return
     if (this.stopped) throw new Error('notifications queue has been stopped');
     (notification as Notification).date = new Date().toISOString()
     debug('pushNotification', notification)
