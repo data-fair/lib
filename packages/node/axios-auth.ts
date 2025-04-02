@@ -1,5 +1,5 @@
 // build axios instances with sessions on a simple-directory instance
-// used for integration testing
+// WARNING: use for integration testing only
 
 import type { AxiosInstance, AxiosResponse } from 'axios'
 import { Agent } from 'node:http'
@@ -38,6 +38,9 @@ export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosAuthInsta
   if (callbackUrl.startsWith(directoryUrl + '/simple-directory')) {
     callbackUrl = callbackUrl.replace(directoryUrl + '/simple-directory', directoryUrl)
   }
+
+  // the cookie jar is used to store cookies from SD and send them back to all domains
+  // it doesn't work as a standard cookie jar because we need to send cookies to all domains
   const cookieJar = new CookieJar()
   const origin = new URL(directoryUrl).origin
   try {
@@ -52,7 +55,12 @@ export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosAuthInsta
   const ax = axiosBuilder(axiosOpts, (ax) => {
     ax.interceptors.request.use((config) => {
       const url = (config.baseURL && config.url?.startsWith('/')) ? (config.baseURL + config.url) : config.url
-      config.headers.Cookie = cookieJar.getCookiesSync(url ?? origin)
+      if (url?.startsWith(origin)) {
+        // send full url to apply the path filter
+        config.headers.Cookie = cookieJar.getCookiesSync(url)
+      } else {
+        config.headers.Cookie = cookieJar.getCookiesSync(origin)
+      }
       return config
     })
     ax.interceptors.response.use((res) => {
