@@ -47,29 +47,29 @@ export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosAuthInsta
     const redirectUrl = new URL(err.headers.location)
     const redirectError = redirectUrl.searchParams.get('error')
     if (redirectError) throw new Error(redirectError)
-    for (const cookie of err.headers['set-cookie'] ?? []) cookieJar.setCookie(cookie, origin)
+    for (const cookie of err.headers['set-cookie'] ?? []) cookieJar.setCookieSync(cookie, origin)
   }
   const ax = axiosBuilder(axiosOpts, (ax) => {
-    ax.interceptors.request.use(async (config) => {
+    ax.interceptors.request.use((config) => {
       const url = (config.baseURL && config.url?.startsWith('/')) ? (config.baseURL + config.url) : config.url
-      config.headers.Cookie = await cookieJar.getCookies(url ?? origin)
+      config.headers.Cookie = cookieJar.getCookiesSync(url ?? origin)
       return config
     })
-    ax.interceptors.response.use(async (res) => {
-      for (const cookie of res.headers['set-cookie'] ?? []) cookieJar.setCookie(cookie, origin)
+    ax.interceptors.response.use((res) => {
+      for (const cookie of res.headers['set-cookie'] ?? []) cookieJar.setCookieSync(cookie, origin)
       return res
     }, async (error) => {
       const res = error.response as AxiosResponse | undefined
       if (res) {
-        for (const cookie of res.headers['set-cookie'] ?? []) cookieJar.setCookie(cookie, origin)
+        for (const cookie of res.headers['set-cookie'] ?? []) cookieJar.setCookieSync(cookie, origin)
       }
       return Promise.reject(error)
     })
   }) as AxiosAuthInstance
   ax.cookieJar = cookieJar
   ax.setOrg = (org: string, dep?: string) => {
-    cookieJar.setCookie(`id_token_org=${org}`, origin)
-    cookieJar.setCookie(`id_token_dep=${dep ?? ''}`, origin)
+    cookieJar.setCookieSync(`id_token_org=${org}`, origin)
+    cookieJar.setCookieSync(`id_token_dep=${dep ?? ''}`, origin)
   }
 
   return ax
