@@ -107,9 +107,8 @@ class SchemaWrapper {
         for (const defKey in clonedPropertySchema[defProp]) {
           if (defKey in this.schema[defProp]) {
             throw new Error(`Definition "${defKey}" already exists in the schema's ${defProp}.`)
-          } else {
-            this.schema[defProp][defKey] = clonedPropertySchema[defProp][defKey]
           }
+          this.schema[defProp][defKey] = clonedPropertySchema[defProp][defKey]
         }
         delete clonedPropertySchema[defProp]
       }
