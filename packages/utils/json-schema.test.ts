@@ -117,4 +117,47 @@ describe('json-schema utility functions', () => {
       }
     })
   })
+
+  it('should add a property with its $defs and definitions', async () => {
+    const schema = jsonSchema({
+      type: 'object',
+      properties: {
+        existing: { type: 'string' }
+      }
+    }).addProperty('newProp', {
+      $id: 'should-be-removed',
+      type: 'object',
+      properties: {
+        subProp: { type: 'string' }
+      },
+      $defs: {
+        subDef: { type: 'number' }
+      },
+      definitions: {
+        subDefinition: { type: 'boolean' }
+      }
+    }).schema
+
+    assert.deepEqual(schema, {
+      type: 'object',
+      properties: {
+        existing: { type: 'string' },
+        newProp: {
+          type: 'object',
+          properties: {
+            subProp: { type: 'string' }
+          }
+        }
+      },
+      $defs: {
+        subDef: { type: 'number' }
+      },
+      definitions: {
+        subDefinition: { type: 'boolean' }
+      }
+    })
+
+    // Check that $id was removed from the property schema
+    assert.ok(!('$id' in schema.properties.newProp))
+  })
 })

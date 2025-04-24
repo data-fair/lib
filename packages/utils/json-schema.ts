@@ -83,6 +83,35 @@ class SchemaWrapper {
     return this
   }
 
+  /**
+   * Add a subschema to the current schema
+   * - delete `$id` from the subschema
+   * - merge `$defs` and `definitions` from the subschema to the current schema
+   * @param key the key of the property to add
+   * @param propertySchema the subschema to add
+   */
+  addProperty (key: string, propertySchema: SchemaObject) {
+    const clonedPropertySchema = clone(propertySchema)
+    delete clonedPropertySchema.$id
+
+    if (!this.schema.properties) this.schema.properties = {}
+    this.schema.properties[key] = clonedPropertySchema
+
+    if (clonedPropertySchema.$defs) {
+      if (!this.schema.$defs) this.schema.$defs = {}
+      Object.assign(this.schema.$defs, clonedPropertySchema.$defs)
+      delete clonedPropertySchema.$defs
+    }
+
+    if (clonedPropertySchema.definitions) {
+      if (!this.schema.definitions) this.schema.definitions = {}
+      Object.assign(this.schema.definitions, clonedPropertySchema.definitions)
+      delete clonedPropertySchema.definitions
+    }
+
+    return this
+  }
+
   resolveXI18n (locale: string, defaultLocale = 'en') {
     resolveXI18n(this.schema, locale, defaultLocale)
     return this
