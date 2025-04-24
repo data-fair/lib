@@ -97,16 +97,22 @@ class SchemaWrapper {
     if (!this.schema.properties) this.schema.properties = {}
     this.schema.properties[key] = clonedPropertySchema
 
-    if (clonedPropertySchema.$defs) {
-      if (!this.schema.$defs) this.schema.$defs = {}
-      Object.assign(this.schema.$defs, clonedPropertySchema.$defs)
-      delete clonedPropertySchema.$defs
-    }
+    if (!this.schema.$defs) this.schema.$defs = {}
 
-    if (clonedPropertySchema.definitions) {
-      if (!this.schema.definitions) this.schema.definitions = {}
-      Object.assign(this.schema.definitions, clonedPropertySchema.definitions)
-      delete clonedPropertySchema.definitions
+    for (const defProp of ['$defs', 'definitions']) {
+      if (clonedPropertySchema[defProp]) {
+        if (!this.schema[defProp]) this.schema[defProp] = {}
+
+        // Check if any definitions already exist at the root
+        for (const defKey in clonedPropertySchema[defProp]) {
+          if (defKey in this.schema[defProp]) {
+            throw new Error(`Definition "${defKey}" already exists in the schema's ${defProp}.`)
+          }
+        }
+
+        Object.assign(this.schema[defProp], clonedPropertySchema[defProp])
+        delete clonedPropertySchema[defProp]
+      }
     }
 
     return this
