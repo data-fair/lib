@@ -83,6 +83,40 @@ class SchemaWrapper {
     return this
   }
 
+  /**
+   * Add a subschema to the current schema
+   * - delete `$id` from the subschema
+   * - merge `$defs` and `definitions` from the subschema to the current schema
+   * @param key the key of the property to add
+   * @param propertySchema the subschema to add
+   */
+  addProperty (key: string, propertySchema: SchemaObject) {
+    const clonedPropertySchema = clone(propertySchema)
+    delete clonedPropertySchema.$id
+
+    if (!this.schema.properties) this.schema.properties = {}
+    this.schema.properties[key] = clonedPropertySchema
+
+    if (!this.schema.$defs) this.schema.$defs = {}
+
+    for (const defProp of ['$defs', 'definitions']) {
+      if (clonedPropertySchema[defProp]) {
+        if (!this.schema[defProp]) this.schema[defProp] = {}
+
+        // Check if any definitions already exist at the root
+        for (const defKey in clonedPropertySchema[defProp]) {
+          if (defKey in this.schema[defProp]) {
+            throw new Error(`Definition "${defKey}" already exists in the schema's ${defProp}.`)
+          }
+          this.schema[defProp][defKey] = clonedPropertySchema[defProp][defKey]
+        }
+        delete clonedPropertySchema[defProp]
+      }
+    }
+
+    return this
+  }
+
   resolveXI18n (locale: string, defaultLocale = 'en') {
     resolveXI18n(this.schema, locale, defaultLocale)
     return this
