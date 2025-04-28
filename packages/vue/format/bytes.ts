@@ -9,7 +9,11 @@ export function formatBytes (bytes: number | string, locale = 'fr'): string {
   for (let i = 0; i < def.length; i++) {
     const step = def[i][0]
     if (bytesInt < step || i === def.length - 1) {
-      return (bytesInt / (def[i - 1][0] || 1)).toLocaleString(locale, { maximumFractionDigits: 0 }) + ' ' + def[i - 1][1]
+      const value = bytesInt / (def[i - 1][0] || 1)
+      let digits = 2
+      if (value > 1) digits = 1
+      if (value > 10) digits = 0
+      return value.toLocaleString(locale, { maximumFractionDigits: digits }) + ' ' + def[i - 1][1]
     }
   }
   return '' // this is only for strict typing, but the code cannot go there, the return in the loop is always called
