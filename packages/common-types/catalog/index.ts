@@ -1,8 +1,6 @@
 import type { Capability, Metadata, CatalogDataset, Publication } from './.type/index.js'
 
-export type { CatalogDataset } from './.type/index.js'
-export type { CatalogResourceDataset } from './.type/index.js'
-export type { Publication } from './.type/index.js'
+export * from './.type/index.js'
 
 /** Utility type to check if a type T includes a type U */
 type Includes<T extends any[], U> = U extends T[number] ? true : false
