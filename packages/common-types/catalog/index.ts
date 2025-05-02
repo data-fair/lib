@@ -1,3 +1,9 @@
+import type { Capability, Metadata, CatalogDataset, Publication } from './.type/index.js'
+
+export type { CatalogDataset } from './.type/index.js'
+export type { CatalogResourceDataset } from './.type/index.js'
+export type { Publication } from './.type/index.js'
+
 /** Utility type to check if a type T includes a type U */
 type Includes<T extends any[], U> = U extends T[number] ? true : false
 
@@ -15,7 +21,7 @@ type BaseCatalogPlugin<TCatalogConfig, TCapabilities extends Capability[]> = {
   metadata: CatalogMetadata<TCapabilities>
   configSchema: TCatalogConfig
   /** Function to validates the catalog configuration. */
-  assertConfigValid(catalogConfig: TCatalogConfig): asserts catalogConfig is TCatalogConfig
+  assertConfigValid(catalogConfig: any): asserts catalogConfig is TCatalogConfig
 }
 
 type WithListDatasets<TCatalogConfig, TCapabilities extends Capability[]> = {
@@ -50,76 +56,17 @@ type WithPublishDataset<TCatalogConfig> = {
  * - pagination capability : take params page and size
  */
 type ListDatasetsParams<TCapabilities extends Capability[]> =
-  {} &
   (Includes<TCapabilities, 'search'> extends true ? SearchParams : {}) &
-  (Includes<TCapabilities, 'pagination'> extends true ? PaginationParams : {})
+  (Includes<TCapabilities, 'pagination'> extends true ? PaginationParams : {}) &
+  (Includes<TCapabilities, 'additionalFilters'> extends true ? Record<string, string> : {})
 
 type SearchParams = { q?: string }
 type PaginationParams = { page?: number; size?: number }
 
 /**
- * The metadata of a catalog is used to describe the catalog and its capabilities.
+ * The metadata of the catalog plugin.
+ * @template TCapabilities - This ensures that the `capabilities` field in the metadata is of the same type as `TCapabilities`.
  */
-export type CatalogMetadata<TCapabilities extends Capability[]> = {
-  /** The title of the plugin to be displayed in the UI */
-  title: string
-  /** The description of the plugin to be displayed in the UI */
-  description: string
-  /** The SVG Path icon of the plugin */
-  icon: string
+export type CatalogMetadata<TCapabilities extends Capability[]> = Metadata & {
   capabilities: TCapabilities
-}
-
-/**
- * The list of capabilities that a catalog can have.
- * - listDatasets: The catalog can list datasets and get one dataset
- * - search: The catalog can use a search param in the listDatasets method
- * - pagination: The catalog can paginate the results of the listDatasets method
- * - publishDataset: The catalog can publish and delete datasets
- */
-export type Capability = 'listDatasets' | 'search' | 'pagination' | 'additionalFilters' | 'publishDataset'
-
-/**
- * The normalized dataset format.
- */
-export type CatalogDataset = {
-  id: string
-  title: string
-  description?: string
-  keywords?: string[]
-  origin?: string
-  image?: string
-  license?: string
-  frequency?: string
-  private?: boolean
-  resources?: CatalogResourceDataset[]
-}
-
-export type CatalogResourceDataset = {
-  id: string
-  title: string
-  format: string
-  url: string
-  fileName?: string
-  mimeType?: string
-  size?: number
-}
-
-// TODO use DataFair Publication Type
-export type Publication = {
-  /** Id of this publication, for a better search in database */
-  publicationId: string
-  /** Id of the catalog where the resource is published */
-  catalogId: string
-  /** Id of the dataset in the remote catalog */
-  remoteDatasetId?: string
-  /** Id of the resource in the dataset in the remote catalog, used if a DataFair dataset is published as a resource in a remote catalog */
-  remoteResourceId?: string
-  /** True if the publication is a resource, false or undefined if it is a dataset */
-  isResource?: boolean
-  /** A simple flag to clearly identify the publications that were successful. If "error" then the error key should be defined. */
-  status: 'waiting' | 'published' | 'error' | 'deleted'
-  /** Date of the last update for this publication */
-  publishedAt?: string
-  error?: string
 }
