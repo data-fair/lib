@@ -83,8 +83,11 @@ export default {
           type: 'boolean'
         },
         resources: {
-          $ref: '#/$defs/catalogResourceDataset'
-        },
+          type: 'array',
+          items: {
+            $ref: '#/$defs/catalogResourceDataset'
+          }
+        }
       },
     },
     catalogResourceDataset: {
