@@ -7,7 +7,7 @@ import type { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
 export interface ProcessingContext<TProcesssingConfig = any> {
   processingConfig: TProcesssingConfig
   pluginConfig: any
-  secrets: Record<string, string>
+  secrets?: Record<string, string>
   processingId: string
   dir: string
   tmpDir: string
