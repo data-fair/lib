@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib-processing-dev",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Utilities for the development environment of a processing in the data-fair stack.",
   "main": "index.js",
   "files": [
