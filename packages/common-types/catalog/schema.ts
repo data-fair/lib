@@ -22,7 +22,7 @@ export default {
     metadata: {
       type: 'object',
       description: 'The metadata of the catalog plugin',
-      required: ['title', 'description', 'icon', 'capabilities'],
+      required: ['title', 'description', 'capabilities'],
       additionalProperties: false,
       properties: {
         title: {
@@ -31,10 +31,6 @@ export default {
         },
         description: {
           description: 'The description of the plugin to be displayed in the UI',
-          type: 'string'
-        },
-        icon: {
-          description: 'The SVG Path icon of the plugin',
           type: 'string'
         },
         capabilities: {
