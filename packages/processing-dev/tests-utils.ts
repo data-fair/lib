@@ -111,6 +111,7 @@ export function context (initialContext: any, config: ProcessingTestConfig, debu
     ...initialContext,
     processingConfig: initialContext.processingConfig || {},
     pluginConfig: initialContext.pluginConfig || {},
+    secrets: initialContext.secrets || {},
     log,
     axios: axiosInstance(config),
     ws: wsInstance(config, log),
