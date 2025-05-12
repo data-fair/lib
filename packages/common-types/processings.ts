@@ -27,6 +27,7 @@ export interface ProcessingContext<TProcesssingConfig = any> {
 export type PrepareFunction<TProcesssingConfig = any> = (
   context: {
     processingConfig: TProcesssingConfig
+    secrets: Record<string, string>
   }
 ) => Promise<{
   processingConfig?: TProcesssingConfig,
