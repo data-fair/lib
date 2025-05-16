@@ -36,15 +36,18 @@ export function useAsyncAction<F extends (...args: any[]) => Promise<any>> (fn: 
       loading.value = false
       if (options?.finally) await options?.finally()
       return result
-    } catch (err) {
-      error.value = getErrorMsg(err)
-      const errorNotif = getFullNotif({ msg: options?.error ?? '', error: err })
-      notif.value = errorNotif
-      if (options?.catch !== 'error' && options?.catch !== 'all') {
-        sendUiNotif(errorNotif)
+    } catch (err: any) {
+      const abortError = err.name === 'AbortError' || err.cause?.name === 'AbortError'
+      if (!abortError) {
+        error.value = getErrorMsg(err)
+        const errorNotif = getFullNotif({ msg: options?.error ?? '', error: err })
+        notif.value = errorNotif
+        if (options?.catch !== 'error' && options?.catch !== 'all') {
+          sendUiNotif(errorNotif)
+        }
       }
       loading.value = false
-      if (options?.finally) await options?.finally()
+      if (options?.finally && !abortError) await options?.finally()
     }
   }
 
