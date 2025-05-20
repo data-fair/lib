@@ -102,6 +102,10 @@ export default {
       }
     },
     topic: { $ref: '#/$defs/topicRef' },
+    url: {
+      type: 'string',
+      title: 'explicitly defined url, alternative is to use urlTemplate in subscription and urlParams',
+    },
     urlParams: {
       type: 'object',
       title: 'used to fill subscription.urlTemplate and so create notification.url',
