@@ -13,7 +13,7 @@ export default {
   title: 'Event',
   type: 'object',
   additionalProperties: false,
-  required: ['title', 'topic', 'sender', 'date'],
+  required: ['title', 'topic', 'date'],
   properties: {
     title: {
       oneOf: [{
@@ -37,7 +37,7 @@ export default {
       type: 'string',
       title: 'URL of event icon'
     },
-    // sender is the owner of the topic
+    // sender is the owner of the topic, topic is global if no sender is given
     sender: { $ref: '#/$defs/sender' },
     // originator is the account/user who triggered the event
     originator: {
