@@ -17,7 +17,7 @@ const baseDarkColors = {
   success: '#00E676' // green.accent3
 }
 
-export function vuetifySessionOptions (session: Session): VuetifyOptions {
+export function vuetifySessionOptions (session: Session, cspNonce?: string): VuetifyOptions {
   if (!session.site.value) throw new Error('vuetifySessionOptions requires fething site info in session util')
   const colors = { ...baseColors, ...session.site.value?.colors }
   return {
@@ -27,6 +27,7 @@ export function vuetifySessionOptions (session: Session): VuetifyOptions {
       messages: { fr, en }
     },
     theme: {
+      cspNonce,
       defaultTheme: session.theme.value ?? 'default',
       themes: {
         [session.theme.value ?? 'default']: {
