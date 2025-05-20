@@ -10,8 +10,8 @@ const getParamRegexp = (key: string) => {
 }
 
 export function microTemplate (txt: string, params: Record<string, string>) {
-  for (const [key, value] of Object.entries(params)) {
-    txt = txt.replace(getParamRegexp(key), value)
+  for (const key of Object.keys(params)) {
+    txt = txt.replace(getParamRegexp(key), params[key])
   }
   return txt
 }
