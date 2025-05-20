@@ -1,5 +1,6 @@
 // TODO: use sirv https://www.npmjs.com/package/sirv ?
 
+import crypto from 'crypto'
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import microTemplate from '@data-fair/lib-utils/micro-template.js'
@@ -8,17 +9,30 @@ import { reqSitePath } from '@data-fair/lib-express'
 
 const htmlCache: Record<string, string> = {}
 
-type ServeSpaOptions = { ignoreSitePath?: boolean }
+type ServeSpaOptions = {
+  ignoreSitePath?: boolean,
+  csp?: {
+    nonce?: boolean,
+    header: string
+  }
+}
 
 async function createHtmlMiddleware (directory: string, uiConfig: any, options?: ServeSpaOptions): Promise<import('express').RequestHandler> {
   const uiConfigStr = JSON.stringify(uiConfig)
-  const html = await readFile(join(directory, 'index.html'), 'utf8')
+  const rawHtml = await readFile(join(directory, 'index.html'), 'utf8')
   return (req, res, next) => {
     const sitePath = options?.ignoreSitePath ? '' : reqSitePath(req)
-    htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(html, { SITE_PATH: sitePath, UI_CONFIG: uiConfigStr })
+    let html = htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(rawHtml, { SITE_PATH: sitePath, UI_CONFIG: uiConfigStr })
+    if (options?.csp?.nonce) {
+      const nonce = crypto.randomBytes(16).toString('base64')
+      html = microTemplate(html, { CSP_NONCE: nonce })
+      res.set('Content-Security-Policy', microTemplate(options.csp.header, { NONCE: nonce }))
+    } else if (options?.csp) {
+      res.set('Content-Security-Policy', options.csp.header)
+    }
     res.type('html')
     res.set('Cache-Control', 'public, max-age=0, must-revalidate')
-    res.send(htmlCache[sitePath])
+    res.send(html)
   }
 }
 
