@@ -7,21 +7,21 @@ import microTemplate from '@data-fair/lib-utils/micro-template.js'
 import { static as expressStatic } from 'express'
 import { reqSitePath } from '@data-fair/lib-express'
 
-// same as the default policy of helmet https://helmetjs.github.io/#content-security-policy
-const defaultCSPDirectives = {
+// similar to the default policy of helmet https://helmetjs.github.io/#content-security-policy
+export const defaultCSPDirectives = {
   'default-src': "'self'",
   'base-uri': "'self'",
-  'font-src': "'self' https: data:",
+  'font-src': "'self'", // adjusted because we always self-host fonts
   'form-action': "'self'",
   'frame-ancestors': "'self'",
-  'img-src': "'self' data:",
+  'img-src': "'self' data: blob: https:", // we often allow free img integration
   'object-src': "'none'",
   'script-src': "'self'",
   'script-src-attr': "'none'",
-  'style-src': "'self' https: 'unsafe-inline'",
+  'style-src': "'self' 'unsafe-inline'", // adjusted because we always self-host styles
   'upgrade-insecure-requests': ''
 }
-const defaultNonceCSPDirectives = {
+export const defaultNonceCSPDirectives = {
   ...defaultCSPDirectives,
   'default-src': "'nonce-{NONCE}' 'self'",
   'script-src': "'nonce-{NONCE}' 'self'",
@@ -60,7 +60,6 @@ async function createHtmlMiddleware (directory: string, uiConfig: any, options?:
     if (options?.csp?.nonce) {
       const nonce = crypto.randomBytes(16).toString('base64')
       html = microTemplate(html, { CSP_NONCE: nonce })
-      console.log('injected nonce', html)
       if (rawCSPHeader) {
         res.set('Content-Security-Policy', microTemplate(rawCSPHeader, { NONCE: nonce }))
       }
