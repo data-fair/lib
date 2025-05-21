@@ -18,6 +18,8 @@ import selectNode from '@koumoul/vjsf/components/nodes/select.vue'
 
 import listNode from '@koumoul/vjsf/components/nodes/list.vue'
 
+import oneofselectNode from '@koumoul/vjsf/components/nodes/one-of-select.vue'
+
 
 import localizeErrors from "ajv-i18n/localize/en/index.js";
 const schema33 = {"$id":"export0","$ref":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0"};
@@ -1729,6 +1731,8 @@ const compiledLayout = {
         readOnly: true
       },
 
+      label: "_id",
+
       getOptions: {
         type: "js-eval",
         expr: "layout.options",
@@ -1750,6 +1754,7 @@ const compiledLayout = {
         ref: 2
       },
 
+      label: "Mode d'authentification",
       defaultData: "onlyBackOffice",
 
       getDefaultData: {
@@ -1765,7 +1770,7 @@ const compiledLayout = {
       comp: "list",
       title: "Fournisseurs d'identité (SSO)",
       listEditMode: "inline-single",
-      listActions: ["add", "edit", "delete", "duplicate", "sort"]
+      listActions: ["add", "edit", "delete", "sort", "duplicate"]
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items": {
@@ -1796,31 +1801,22 @@ const compiledLayout = {
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/title": {
-      comp: "text-field"
+      comp: "text-field",
+      label: "Nom"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/color": {
-      comp: "text-field"
+      comp: "text-field",
+      label: "Couleur"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/img": {
-      comp: "text-field"
+      comp: "text-field",
+      label: "Lien vers logo (petite taille)"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf": {
-      comp: "section",
-
-      children: [{
-        key: "title"
-      }, {
-        key: "color"
-      }, {
-        key: "img"
-      }, {
-        key: "$oneOf"
-      }],
-
-      title: null
+      comp: "one-of-select"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0": {
@@ -1860,7 +1856,9 @@ const compiledLayout = {
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/discovery": {
-      comp: "text-field"
+      comp: "text-field",
+      label: "URL de découverte OICD",
+      help: "<p>probablement de la forme <a href=\"http://mon-fournisseur/.well-known/openid-configuration\">http://mon-fournisseur/.well-known/openid-configuration</a></p>"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client": {
@@ -1885,11 +1883,13 @@ const compiledLayout = {
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/id": {
-      comp: "text-field"
+      comp: "text-field",
+      label: "Identifiant du client"
     },
 
     "https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/secret": {
-      comp: "text-field"
+      comp: "text-field",
+      label: "Secret"
     }
   },
 
@@ -1909,6 +1909,7 @@ const compiledLayout = {
     addItem: "Add item",
     delete: "Delete",
     edit: "Edit",
+    confirm: "Confirm",
     close: "Close",
     duplicate: "Duplicate",
     sort: "Sort",
@@ -1933,7 +1934,13 @@ const compiledLayout = {
     preview: "Aperçu du rendu",
     mdeGuide: "Documentation de la syntaxe",
     undo: "Undo",
-    redo: "Redo"
+    redo: "Redo",
+    default: "default: ",
+    name: "name: ",
+    examples: "Examples: ",
+    deprecated: "Warning, this information is deprecated.",
+    keyboardDate: "MM/DD/YYYY",
+    keyboardDateTime: "MM/DD/YYYY HH:mm"
   },
 
   components: {
@@ -1957,7 +1964,12 @@ const compiledLayout = {
     },
 
     list: {
-      name: "list"
+      name: "list",
+      itemsBased: true
+    },
+
+    "one-of-select": {
+      name: "one-of-select"
     },
 
     none: {
@@ -1977,6 +1989,8 @@ const nodeComponents = {
   "select": selectNode,
   
   "list": listNode,
+  
+  "one-of-select": oneofselectNode,
     
 }
 

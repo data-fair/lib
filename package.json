@@ -29,6 +29,7 @@
   "devDependencies": {
     "@commitlint/cli": "^18.2.0",
     "@commitlint/config-conventional": "^18.1.0",
+    "@koumoul/vjsf-compiler": "^1.0.0",
     "@types/cookie": "^0.6.0",
     "@types/debug": "^4.1.10",
     "@types/eslint": "^9.6.1",
