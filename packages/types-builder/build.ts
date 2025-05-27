@@ -251,7 +251,7 @@ export declare function returnValid(data: any, options?: import('${validationImp
         if (!options.vjsfDir) {
           console.error('vjsf exports requires the vjsf-dir option')
         } else {
-          const schemaVjsfOpts = schema['x-vjsf'] || {}
+          const schemaVjsfOpts = { locale: 'fr', ...schema['x-vjsf'] || {} }
           let compName = key
           if (schemaVjsfOpts.compName) {
             compName = schemaVjsfOpts.compName
@@ -261,7 +261,8 @@ export declare function returnValid(data: any, options?: import('${validationImp
           const compileVjsf = (await import('@koumoul/vjsf-compiler')).compile
           const otherSchemas = { ...schemas }
           if (schema.$id) delete otherSchemas[schema.$id]
-          const vjsfCode = await compileVjsf(schema, { ajvOptions: { schemas: otherSchemas } })
+          schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
+          const vjsfCode = await compileVjsf(schema, schemaVjsfOpts)
           const vjsfFilePath = path.join(vjsfDir, `vjsf-${compName}.vue`)
           console.log('  vjsf component path : ' + vjsfFilePath)
           writeFileSync(vjsfFilePath, vjsfCode)
