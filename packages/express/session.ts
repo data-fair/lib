@@ -70,7 +70,8 @@ export class Session {
       cookie.serialize('id_token', '', opts),
       cookie.serialize('id_token_sign', '', opts),
       cookie.serialize('id_token_org', '', opts),
-      cookie.serialize('id_token_dep', '', opts)
+      cookie.serialize('id_token_dep', '', opts),
+      cookie.serialize('id_token_role', '', opts)
     ])
   }
 
@@ -116,12 +117,14 @@ export class Session {
 
     const organizationId = cookies.id_token_org
     const departmentId = cookies.id_token_dep
+    const switchedRole = cookies.id_token_role
     if (organizationId) {
-      if (departmentId) {
-        session.organization = user.organizations.find(o => o.id === organizationId && o.department === departmentId)
-      } else {
-        session.organization = user.organizations.find(o => o.id === organizationId)
-      }
+      session.organization = user.organizations.find(o => {
+        if (o.id !== organizationId) return false
+        if (departmentId && departmentId !== o.department) return false
+        if (switchedRole && switchedRole !== o.role) return false
+        return true
+      })
     }
     if (session.organization) {
       session.account = {

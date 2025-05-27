@@ -215,12 +215,14 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     state.user = user
     const organizationId = cookies.get('id_token_org')
     const departmentId = cookies.get('id_token_dep')
+    const switchedRole = cookies.get('id_token_role')
     if (organizationId) {
-      if (departmentId) {
-        state.organization = state.user.organizations.find(o => o.id === organizationId && o.department === departmentId)
-      } else {
-        state.organization = state.user.organizations.find(o => o.id === organizationId)
-      }
+      state.organization = state.user.organizations.find(o => {
+        if (o.id !== organizationId) return false
+        if (departmentId && departmentId !== o.department) return false
+        if (switchedRole && switchedRole !== o.role) return false
+        return true
+      })
     } else {
       delete state.organization
     }
@@ -310,15 +312,18 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     cookies.remove('id_token')
     cookies.remove('id_token_org')
     cookies.remove('id_token_dep')
+    cookies.remove('id_token_role')
     goTo(redirect ?? options.logoutRedirectUrl ?? null)
   }
 
-  const switchOrganization = (org: string | null, dep?: string, updateState = true) => {
+  const switchOrganization = (org: string | null, dep?: string, role?: string, updateState = true) => {
     const cookieOpts = { path: cookiesPath }
     if (org) cookies.set('id_token_org', org, cookieOpts)
     else cookies.remove('id_token_org', cookieOpts)
     if (dep) cookies.set('id_token_dep', dep, cookieOpts)
     else cookies.remove('id_token_dep', cookieOpts)
+    if (role) cookies.set('id_token_role', dep, cookieOpts)
+    else cookies.remove('id_token_role', cookieOpts)
     if (updateState) readState()
   }
 
