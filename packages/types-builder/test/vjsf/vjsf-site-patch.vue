@@ -21,9 +21,9 @@ import listNode from '@koumoul/vjsf/components/nodes/list.vue'
 import oneofselectNode from '@koumoul/vjsf/components/nodes/one-of-select.vue'
 
 
-import localizeErrors from "ajv-i18n/localize/en/index.js";
+import localizeErrors from "ajv-i18n/localize/fr/index.js";
 const schema33 = {"$id":"export0","$ref":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0"};
-const schema28 = {"type":"object","required":["discovery","client"],"properties":{"type":{"type":"string","title":"Type de founisseur","const":"oidc","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/type","errorMessage":{}},"discovery":{"type":"string","title":"URL de découverte OICD","description":"probablement de la forme http://mon-fournisseur/.well-known/openid-configuration","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/discovery","errorMessage":{}},"client":{"type":"object","required":["id","secret"],"properties":{"id":{"type":"string","title":"Identifiant du client","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/id","errorMessage":{}},"secret":{"type":"string","title":"Secret","x-display":"textarea","writeOnly":true,"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/secret","errorMessage":{}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client","errorMessage":{"required":{"id":"required information","secret":"required information"}}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0","errorMessage":{"required":{"discovery":"required information","client":"required information"}}};
+const schema28 = {"type":"object","required":["discovery","client"],"properties":{"type":{"type":"string","title":"Type de founisseur","const":"oidc","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/type","errorMessage":{}},"discovery":{"type":"string","title":"URL de découverte OICD","description":"probablement de la forme http://mon-fournisseur/.well-known/openid-configuration","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/discovery","errorMessage":{}},"client":{"type":"object","required":["id","secret"],"properties":{"id":{"type":"string","title":"Identifiant du client","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/id","errorMessage":{}},"secret":{"type":"string","title":"Secret","x-display":"textarea","writeOnly":true,"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/secret","errorMessage":{}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client","errorMessage":{"required":{"id":"information obligatoire","secret":"information obligatoire"}}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0","errorMessage":{"required":{"discovery":"information obligatoire","client":"information obligatoire"}}};
 const obj0 = {"required":"missingProperty","dependencies":"property","dependentRequired":"property"};
 
 function validate26(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
@@ -292,7 +292,7 @@ return errors === 0;
 validate26.evaluated = {"props":{"type":true,"discovery":true,"client":true},"dynamicProps":false,"dynamicItems":false};
 
 const schema35 = {"$id":"export1","$ref":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items"};
-const schema30 = {"type":"object","required":["title","type"],"properties":{"title":{"type":"string","title":"Nom","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/title","errorMessage":{}},"color":{"type":"string","title":"Couleur","x-display":"color-picket","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/color","errorMessage":{}},"img":{"type":"string","title":"Lien vers logo (petite taille)","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/img","errorMessage":{}}},"oneOf":[{"type":"object","required":["discovery","client"],"properties":{"type":{"type":"string","title":"Type de founisseur","const":"oidc","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/type","errorMessage":{}},"discovery":{"type":"string","title":"URL de découverte OICD","description":"probablement de la forme http://mon-fournisseur/.well-known/openid-configuration","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/discovery","errorMessage":{}},"client":{"type":"object","required":["id","secret"],"properties":{"id":{"type":"string","title":"Identifiant du client","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/id","errorMessage":{}},"secret":{"type":"string","title":"Secret","x-display":"textarea","writeOnly":true,"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/secret","errorMessage":{}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client","errorMessage":{"required":{"id":"required information","secret":"required information"}}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0","errorMessage":{"required":{"discovery":"required information","client":"required information"}}}],"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items","errorMessage":{"oneOf":"chose one","required":{"title":"required information"}}};
+const schema30 = {"type":"object","required":["title","type"],"properties":{"title":{"type":"string","title":"Nom","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/title","errorMessage":{}},"color":{"type":"string","title":"Couleur","x-display":"color-picket","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/color","errorMessage":{}},"img":{"type":"string","title":"Lien vers logo (petite taille)","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/img","errorMessage":{}}},"oneOf":[{"type":"object","required":["discovery","client"],"properties":{"type":{"type":"string","title":"Type de founisseur","const":"oidc","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/type","errorMessage":{}},"discovery":{"type":"string","title":"URL de découverte OICD","description":"probablement de la forme http://mon-fournisseur/.well-known/openid-configuration","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/discovery","errorMessage":{}},"client":{"type":"object","required":["id","secret"],"properties":{"id":{"type":"string","title":"Identifiant du client","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/id","errorMessage":{}},"secret":{"type":"string","title":"Secret","x-display":"textarea","writeOnly":true,"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/secret","errorMessage":{}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client","errorMessage":{"required":{"id":"information obligatoire","secret":"information obligatoire"}}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0","errorMessage":{"required":{"discovery":"information obligatoire","client":"information obligatoire"}}}],"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items","errorMessage":{"oneOf":"choisissez une valeur","required":{"title":"information obligatoire"}}};
 
 function validate27(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 /*# sourceURL="export1" */;
@@ -762,7 +762,7 @@ return errors === 0;
 validate27.evaluated = {"dynamicProps":true,"dynamicItems":false};
 
 const schema37 = {"$id":"export2","$ref":"https://github.com/data-fair/simple-directory/site-patch-resolved#"};
-const schema27 = {"$id":"https://github.com/data-fair/simple-directory/site-patch-resolved","x-exports":["types","validate","resolvedSchema","vjsf"],"title":"site-patch","type":"object","additionalProperties":false,"required":["_id","authMode"],"properties":{"_id":{"readOnly":true,"type":"string","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/_id","errorMessage":{}},"authMode":{"default":"onlyBackOffice","title":"Mode d'authentification","type":"string","oneOf":[{"const":"onlyLocal","title":"uniquement sur le site lui même"},{"const":"onlyBackOffice","title":"uniquement sur le back-office"},{"const":"ssoBackOffice","title":"sur le site et sur le back-office par SSO"}],"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authMode","errorMessage":{"oneOf":"chose one"}},"authProviders":{"type":"array","title":"Fournisseurs d'identité (SSO)","items":{"type":"object","required":["title","type"],"properties":{"title":{"type":"string","title":"Nom","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/title","errorMessage":{}},"color":{"type":"string","title":"Couleur","x-display":"color-picket","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/color","errorMessage":{}},"img":{"type":"string","title":"Lien vers logo (petite taille)","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/img","errorMessage":{}}},"oneOf":[{"type":"object","required":["discovery","client"],"properties":{"type":{"type":"string","title":"Type de founisseur","const":"oidc","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/type","errorMessage":{}},"discovery":{"type":"string","title":"URL de découverte OICD","description":"probablement de la forme http://mon-fournisseur/.well-known/openid-configuration","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/discovery","errorMessage":{}},"client":{"type":"object","required":["id","secret"],"properties":{"id":{"type":"string","title":"Identifiant du client","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/id","errorMessage":{}},"secret":{"type":"string","title":"Secret","x-display":"textarea","writeOnly":true,"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/secret","errorMessage":{}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client","errorMessage":{"required":{"id":"required information","secret":"required information"}}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0","errorMessage":{"required":{"discovery":"required information","client":"required information"}}}],"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items","errorMessage":{"oneOf":"chose one","required":{"title":"required information"}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders","errorMessage":{}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#","errorMessage":{"required":{"_id":"required information","authMode":"required information"}}};
+const schema27 = {"$id":"https://github.com/data-fair/simple-directory/site-patch-resolved","x-exports":["types","validate","resolvedSchema","vjsf"],"title":"site-patch","type":"object","additionalProperties":false,"required":["_id","authMode"],"properties":{"_id":{"readOnly":true,"type":"string","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/_id","errorMessage":{}},"authMode":{"default":"onlyBackOffice","title":"Mode d'authentification","type":"string","oneOf":[{"const":"onlyLocal","title":"uniquement sur le site lui même"},{"const":"onlyBackOffice","title":"uniquement sur le back-office"},{"const":"ssoBackOffice","title":"sur le site et sur le back-office par SSO"}],"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authMode","errorMessage":{"oneOf":"choisissez une valeur"}},"authProviders":{"type":"array","title":"Fournisseurs d'identité (SSO)","items":{"type":"object","required":["title","type"],"properties":{"title":{"type":"string","title":"Nom","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/title","errorMessage":{}},"color":{"type":"string","title":"Couleur","x-display":"color-picket","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/color","errorMessage":{}},"img":{"type":"string","title":"Lien vers logo (petite taille)","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/properties/img","errorMessage":{}}},"oneOf":[{"type":"object","required":["discovery","client"],"properties":{"type":{"type":"string","title":"Type de founisseur","const":"oidc","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/type","errorMessage":{}},"discovery":{"type":"string","title":"URL de découverte OICD","description":"probablement de la forme http://mon-fournisseur/.well-known/openid-configuration","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/discovery","errorMessage":{}},"client":{"type":"object","required":["id","secret"],"properties":{"id":{"type":"string","title":"Identifiant du client","__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/id","errorMessage":{}},"secret":{"type":"string","title":"Secret","x-display":"textarea","writeOnly":true,"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client/properties/secret","errorMessage":{}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0/properties/client","errorMessage":{"required":{"id":"information obligatoire","secret":"information obligatoire"}}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items/oneOf/0","errorMessage":{"required":{"discovery":"information obligatoire","client":"information obligatoire"}}}],"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders/items","errorMessage":{"oneOf":"choisissez une valeur","required":{"title":"information obligatoire"}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#/properties/authProviders","errorMessage":{}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch-resolved#","errorMessage":{"required":{"_id":"information obligatoire","authMode":"information obligatoire"}}};
 
 function validate28(data, {instancePath="", parentData, parentDataProperty, rootData=data, dynamicAnchors={}}={}){
 /*# sourceURL="export2" */;
@@ -1901,46 +1901,46 @@ const compiledLayout = {
 
   validationErrors: {},
   expressions: [expression0, expression1, expression2, expression3],
-  locale: "en",
+  locale: "fr",
 
   messages: {
-    errorOneOf: "chose one",
-    errorRequired: "required information",
-    addItem: "Add item",
-    delete: "Delete",
-    edit: "Edit",
-    confirm: "Confirm",
-    close: "Close",
-    duplicate: "Duplicate",
-    sort: "Sort",
-    up: "Move up",
-    down: "Move down",
-    showHelp: "Show a help message",
-    mdeLink1: "[Link title",
-    mdeLink2: "](link url)",
+    errorOneOf: "choisissez une valeur",
+    errorRequired: "information obligatoire",
+    addItem: "Ajouter un élément",
+    delete: "Supprimer",
+    edit: "Éditer",
+    confirm: "Confirmer",
+    close: "Fermer",
+    duplicate: "Dupliquer",
+    sort: "Trier",
+    up: "Décaler vers le haut",
+    down: "Décaler vers le bas",
+    showHelp: "Afficher un message d'aide",
+    mdeLink1: "[titre du lien",
+    mdeLink2: "](adresse du lien)",
     mdeImg1: "![](",
-    mdeImg2: "image url)",
+    mdeImg2: "adresse de l'image)",
     mdeTable1: "",
-    mdeTable2: "\n\n| Column 1 | Column 2 | Column 3 |\n| -------- | -------- | -------- |\n| Text     | Text     | Text     |\n\n",
-    bold: "Bold",
-    italic: "Italic",
-    heading: "Title",
-    quote: "Quote",
-    unorderedList: "Unordered list",
-    orderedList: "Ordered list",
-    createLink: "Create a link",
-    insertImage: "Insert an image",
-    createTable: "Create a table",
-    preview: "Aperçu du rendu",
-    mdeGuide: "Documentation de la syntaxe",
-    undo: "Undo",
-    redo: "Redo",
-    default: "default: ",
-    name: "name: ",
-    examples: "Examples: ",
-    deprecated: "Warning, this information is deprecated.",
-    keyboardDate: "MM/DD/YYYY",
-    keyboardDateTime: "MM/DD/YYYY HH:mm"
+    mdeTable2: "\n\n| Colonne 1 | Colonne 2 | Colonne 3 |\n| -------- | -------- | -------- |\n| Texte     | Texte     | Texte     |\n\n",
+    bold: "Gras",
+    italic: "Italique",
+    heading: "Titre",
+    quote: "Citation",
+    unorderedList: "Liste à puce",
+    orderedList: "Liste numérotée",
+    createLink: "Créer un lien",
+    insertImage: "Insérer une image",
+    createTable: "Créer un tableau",
+    preview: "Preview",
+    mdeGuide: "Syntax documentation",
+    undo: "Défaire",
+    redo: "Refaire",
+    default: "défaut : ",
+    name: "nom : ",
+    examples: "Exemples : ",
+    deprecated: "Attention, cette information est obsolète.",
+    keyboardDate: "JJ/MM/AAAA",
+    keyboardDateTime: "JJ/MM/AAAA HH:mm"
   },
 
   components: {
