@@ -48,6 +48,9 @@ export default {
         role: {
           type: 'string'
         },
+        roleLabel: {
+          type: 'string'
+        },
         department: {
           type: 'string'
         },
