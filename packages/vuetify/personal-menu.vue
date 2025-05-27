@@ -49,8 +49,8 @@
           <v-list-item-title>
             {{ account.type === 'user' ? t('personalAccount') : account.name }}
           </v-list-item-title>
-          <v-list-item-subtitle v-if="account.department">
-            {{ account.departmentName || account.department }}
+          <v-list-item-subtitle v-if="account.department || organization?.roleLabel">
+            {{ account.departmentName || account.department }} {{ organization?.roleLabel }}
           </v-list-item-subtitle>
           <v-list-item-subtitle>{{ user.name }}</v-list-item-subtitle>
         </v-list-item>
@@ -208,7 +208,7 @@ import { mdiAlert, mdiShieldAlert, mdiLogout, mdiAccountSwitchOutline } from '@m
 const session = useSession()
 
 const { t } = useI18n({ useScope: 'local' })
-const { user, account } = toRefs(session.state)
+const { user, account, organization } = toRefs(session.state)
 const switchableOrganizations = computed(() => {
   const { user, account, accountRole } = session.state
   if (!user || !account) return
