@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib-vuetify",
-  "version": "1.9.2",
+  "version": "1.10.0",
   "description": "Components based on the Vuetify 3 UI lib for the data-fair stack.",
   "main": "index.js",
   "files": [
@@ -23,7 +23,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@data-fair/lib-common-types": "^1.1.0",
+    "@data-fair/lib-common-types": "^1.10.4",
     "@mdi/js": "^7.4.47"
   }
 }
