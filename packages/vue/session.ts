@@ -322,7 +322,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     else cookies.remove('id_token_org', cookieOpts)
     if (dep) cookies.set('id_token_dep', dep, cookieOpts)
     else cookies.remove('id_token_dep', cookieOpts)
-    if (role) cookies.set('id_token_role', dep, cookieOpts)
+    if (role) cookies.set('id_token_role', role, cookieOpts)
     else cookies.remove('id_token_role', cookieOpts)
     if (updateState) readState()
   }
