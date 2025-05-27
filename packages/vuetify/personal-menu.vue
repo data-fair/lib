@@ -102,7 +102,7 @@
             v-for="organization in switchableOrganizations"
             :id="'toolbar-menu-switch-orga-' + organization.id"
             :key="organization.id"
-            @click="session.switchOrganization(organization.id , organization.department)"
+            @click="session.switchOrganization(organization.id , organization.department, organization.role)"
           >
             <template #prepend>
               <v-avatar
@@ -113,8 +113,8 @@
             <v-list-item-title>
               {{ organization.name }}
             </v-list-item-title>
-            <v-list-item-subtitle v-if="organization.department">
-              {{ organization.departmentName || organization.department }}
+            <v-list-item-subtitle v-if="organization.department || organization.roleLabel">
+              {{ organization.departmentName || organization.department }} {{ organization.roleLabel }}
             </v-list-item-subtitle>
           </v-list-item>
         </template>
@@ -210,9 +210,9 @@ const session = useSession()
 const { t } = useI18n({ useScope: 'local' })
 const { user, account } = toRefs(session.state)
 const switchableOrganizations = computed(() => {
-  const { user, account } = session.state
+  const { user, account, accountRole } = session.state
   if (!user || !account) return
-  return user.organizations.filter(o => account.type === 'user' || account.id !== o.id || (account.department || null) !== (o.department || null))
+  return user.organizations.filter(o => account.type === 'user' || account.id !== o.id || (account.department || null) !== (o.department || null) || (accountRole || null) !== (o.role || null))
 })
 </script>
 
