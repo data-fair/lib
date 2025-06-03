@@ -13,8 +13,9 @@ const localize: Record<string, Localize> = {
 }
 
 // cf https://github.com/ajv-validator/ajv/blob/b3e0cb17d0e095b5c883042b2306571be5ec86b7/lib/core.ts#L650
-export const errorsText = (errors: ErrorObject[] | null | undefined, varName = 'data') => {
-  if (!errors || errors.length === 0) return 'No errors'
+export const errorsText = (errors: ErrorObject[] | null | undefined, varName = 'data', lang = 'fr') => {
+  if (!errors || errors.length === 0) return lang === 'fr' ? 'Aucune erreur' : 'No error';
+  (localize[lang] || localize.fr)(errors)
   return errors
     .map((e) => {
       let msg = `${varName}${e.instancePath} ${e.message}`.trim()
@@ -35,11 +36,8 @@ export const errorsText = (errors: ErrorObject[] | null | undefined, varName = '
 export type AssertValidOptions = { lang?: string, name?: string, internal?: boolean }
 
 export function assertValid<T> (validate: ValidateFunction, data: any, options: AssertValidOptions = {}): asserts data is T {
-  const lang = options.lang ?? 'fr'
-  const name = options.name ?? 'data'
   if (!validate(data)) {
-    (localize[lang] || localize.fr)(validate.errors)
-    const message = errorsText(validate.errors, name)
+    const message = errorsText(validate.errors, options.name, options.lang)
     if (options.internal) throw new Error(message)
     else throw httpError(400, message)
   }
