@@ -2,21 +2,27 @@ export default {
   $id: 'https://github.com/data-fair/lib/catalog',
   'x-exports': ['types'],
   type: 'object',
+  title: 'Catalogs common types',
   additionalProperties: false,
   $defs: {
     capability: {
       type: 'string',
       description: `The list of capabilities that a catalog can have.
- - listDatasets: The catalog can list datasets and get one dataset
- - search: The catalog can use a search param in the listDatasets method
- - pagination: The catalog can paginate the results of the listDatasets method
- - publishDataset: The catalog can publish and delete datasets`,
+ - import: The plugin can list some resources organized in folders and import them
+ - search: The plugin can use a search param in the listResources method
+ - pagination: The plugin can paginate the results of the listResources method
+ - additionalFilters: The plugin can use additional filters in the listResources method
+ - importConfig: The plugin gives an import configuration schema
+ - publishDataset: The plugin can publish a dataset
+ - deletePublication: The plugin can delete a dataset or a resource published in a remote catalog`,
       enum: [
-        'listDatasets',
-        'publishDataset',
+        'import',
         'search',
         'pagination',
-        'additionalFilters'
+        'additionalFilters',
+        'importConfig',
+        'publishDataset',
+        'deletePublication'
       ]
     },
     metadata: {
@@ -42,10 +48,9 @@ export default {
         }
       }
     },
-    catalogDataset: {
+    folder: {
       type: 'object',
-      description: 'The normalized dataset format',
-      required: ['id', 'title'],
+      required: ['id', 'title', 'type'],
       additionalProperties: false,
       properties: {
         id: {
@@ -54,49 +59,29 @@ export default {
         title: {
           type: 'string'
         },
-        description: {
-          type: 'string'
-        },
-        keywords: {
-          type: 'array',
-          items: {
-            type: 'string'
-          }
-        },
-        origin: {
-          type: 'string'
-        },
-        image: {
-          type: 'string'
-        },
-        license: {
-          type: 'string'
-        },
-        frequency: {
-          type: 'string'
-        },
-        private: {
-          type: 'boolean'
-        },
-        resources: {
-          type: 'array',
-          items: {
-            $ref: '#/$defs/catalogResourceDataset'
-          }
+        type: {
+          const: 'folder',
         }
       },
     },
-    catalogResourceDataset: {
+    resource: {
       type: 'object',
-      description: 'The normalized resource format',
-      required: ['id', 'title', 'format', 'url'],
+      description: 'The normalized resource to import from a remote catalog to Data Fair',
+      required: ['id', 'title', 'type', 'format', 'url'],
       additionalProperties: false,
       properties: {
         id: {
-          type: 'string'
+          type: 'string',
+          description: 'The unique identifier of the resource, independent of the folder it is in'
         },
         title: {
           type: 'string'
+        },
+        type: {
+          const: 'resource',
+        },
+        description: {
+          type: 'string',
         },
         format: {
           type: 'string'
@@ -112,46 +97,71 @@ export default {
         },
         size: {
           type: 'number'
+        },
+        keywords: {
+          type: 'array',
+          items: {
+            type: 'string'
+          }
+        },
+        image: {
+          type: 'string'
+        },
+        license: {
+          type: 'string'
+        },
+        frequency: {
+          type: 'string'
+        },
+        private: {
+          type: 'boolean'
         }
       }
     },
     publication: {
       type: 'object',
-      required: ['catalogId', 'status'],
       additionalProperties: false,
+      description: 'A small object that contains the information needed to publish or update a dataset or a resource',
       properties: {
-        publicationId: {
-          type: 'string',
-          description: 'Id of this publication, for a better search in database'
+        remoteDataset: {
+          type: 'object',
+          required: ['id'],
+          additionalProperties: false,
+          description: 'Dataset from the remote catalog, used if a local dataset is published as a dataset on a remote catalog. If it is defined during publication, then the remote dataset must be updated.',
+          properties: {
+            id: {
+              type: 'string',
+            },
+            title: {
+              type: 'string',
+            },
+            url: {
+              type: 'string',
+              description: 'URL to view the dataset in the remote catalog'
+            }
+          }
         },
-        catalogId: {
-          type: 'string',
-          description: 'Id of the catalog where the resource is published'
-        },
-        remoteDatasetId: {
-          type: 'string',
-          description: 'Id of the dataset in the remote catalog'
-        },
-        remoteResourceId: {
-          type: 'string',
-          description: 'Id of the resource in the dataset in the remote catalog, used if a DataFair dataset is published as a resource in a remote catalog'
+        remoteResource: {
+          type: 'object',
+          required: ['id'],
+          additionalProperties: false,
+          description: 'Dataset\'s resource from the remote catalog, used if a local dataset is published as a resource on a remote catalog. If it is defined during publication, then the remote resource must be updated.',
+          properties: {
+            id: {
+              type: 'string',
+            },
+            title: {
+              type: 'string',
+            },
+            url: {
+              type: 'string',
+              description: 'URL to view the resource in the remote catalog'
+            }
+          }
         },
         isResource: {
           type: 'boolean',
-          description: 'True if the publication is a resource, false or undefined if it is a dataset '
-        },
-        status: {
-          type: 'string',
-          description: 'A simple flag to clearly identify the publications that were successful. If "error" then the error key should be defined.',
-          enum: ['waiting', 'published', 'error', 'deleted']
-        },
-        publishedAt: {
-          type: 'string',
-          description: 'Date of the last update for this publication',
-          format: 'date-time'
-        },
-        error: {
-          type: 'string'
+          description: 'If true, the publication is for a resource, otherwise it is for a dataset'
         }
       }
     }
