@@ -4,8 +4,15 @@ import crypto from 'crypto'
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import microTemplate from '@data-fair/lib-utils/micro-template.js'
-import { static as expressStatic } from 'express'
+import { static as expressStatic, type Request } from 'express'
 import { reqSitePath } from '@data-fair/lib-express'
+
+type CSPDirectives = Record<string, string | string[]>
+type CSPHeader = string | CSPDirectives | boolean
+
+export function getCSPHeaderFromDirectives (cspDirectives: CSPDirectives) {
+  return Object.entries(cspDirectives).map(([key, value]) => `${key} ${Array.isArray(value) ? value.join(' ') : value}`).join('; ')
+}
 
 // similar to the default policy of helmet https://helmetjs.github.io/#content-security-policy
 export const defaultCSPDirectives = {
@@ -21,11 +28,19 @@ export const defaultCSPDirectives = {
   'style-src': "'self' 'unsafe-inline'", // adjusted because we always self-host styles
   'upgrade-insecure-requests': ''
 }
+export const defaultCSPHeader = getCSPHeaderFromDirectives(defaultCSPDirectives)
 export const defaultNonceCSPDirectives = {
   ...defaultCSPDirectives,
   'default-src': "'nonce-{NONCE}' 'self'",
   'script-src': "'nonce-{NONCE}' 'self'",
   'style-src': "'nonce-{NONCE}' 'self'"
+}
+export const defaultNonceCSPHeader = getCSPHeaderFromDirectives(defaultNonceCSPDirectives)
+
+export function getCSPHeader (cspHeader: CSPHeader, nonce?: boolean) {
+  if (typeof cspHeader === 'string') return cspHeader
+  else if (cspHeader === true) return nonce ? defaultNonceCSPHeader : defaultCSPHeader
+  else if (typeof cspHeader === 'object') return getCSPHeaderFromDirectives(cspHeader)
 }
 
 const htmlCache: Record<string, string> = {}
@@ -33,7 +48,7 @@ const htmlCache: Record<string, string> = {}
 type ServeSpaOptions = {
   ignoreSitePath?: boolean,
   csp?: {
-    header: string | Record<string, string> | boolean,
+    header: CSPHeader | ((req: Request) => CSPHeader),
     nonce?: boolean
   }
 }
@@ -41,22 +56,17 @@ type ServeSpaOptions = {
 async function createHtmlMiddleware (directory: string, uiConfig: any, options?: ServeSpaOptions): Promise<import('express').RequestHandler> {
   const uiConfigStr = JSON.stringify(uiConfig)
   const rawHtml = await readFile(join(directory, 'index.html'), 'utf8')
-  let rawCSPHeader: string | null = null
-  let cspDirectives
-  if (options?.csp?.header === true) {
-    cspDirectives = options.csp.nonce ? defaultNonceCSPDirectives : defaultCSPDirectives
-  } else if (typeof options?.csp?.header === 'object') {
-    cspDirectives = options.csp.header
-  } else if (typeof options?.csp?.header === 'string') {
-    rawCSPHeader = options?.csp?.header
-  }
-  if (cspDirectives) {
-    rawCSPHeader = Object.entries(cspDirectives).map(([key, value]) => `${key} ${Array.isArray(value) ? value.join(' ') : value}`).join('; ')
-  }
+  const cspHeaderOption = options?.csp?.header
+  let rawCSPHeader: string | undefined
+  if (cspHeaderOption && typeof cspHeaderOption !== 'function') rawCSPHeader = getCSPHeader(cspHeaderOption, options.csp?.nonce)
+
   return (req, res, next) => {
     const sitePath = options?.ignoreSitePath ? '' : reqSitePath(req)
     let html = htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(rawHtml, { SITE_PATH: sitePath, UI_CONFIG: uiConfigStr })
 
+    if (cspHeaderOption && typeof cspHeaderOption === 'function') {
+      rawCSPHeader = getCSPHeader(cspHeaderOption(req), options.csp?.nonce)
+    }
     if (options?.csp?.nonce) {
       const nonce = crypto.randomBytes(16).toString('base64')
       html = microTemplate(html, { CSP_NONCE: nonce })
