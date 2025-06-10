@@ -115,7 +115,11 @@ export async function createSpaMiddleware (directory: string, uiConfig: any, opt
     } else {
       staticMiddleware(req, res, (err) => {
         if (err) return next(err)
-        htmlMiddleware(req, res, next)
+        try {
+          htmlMiddleware(req, res, next)
+        } catch (err) {
+          next(err)
+        }
       })
     }
   }
