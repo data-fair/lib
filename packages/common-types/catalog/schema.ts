@@ -123,6 +123,10 @@ export default {
       additionalProperties: false,
       description: 'A small object that contains the information needed to publish or update a dataset or a resource',
       properties: {
+        publicationSite: {
+          type: 'string',
+          description: 'The URL of the publication site where the user will be redirected from the remote catalog'
+        },
         remoteDataset: {
           type: 'object',
           required: ['id'],
