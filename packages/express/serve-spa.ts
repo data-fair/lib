@@ -26,7 +26,9 @@ export const defaultCSPDirectives = {
   'script-src': "'self'",
   'script-src-attr': "'none'",
   'style-src': "'self' 'unsafe-inline'", // adjusted because we always self-host styles
-  'upgrade-insecure-requests': ''
+  'upgrade-insecure-requests': '',
+  'worker-src': 'blob:', // necessary for maplibre
+  'child-src': 'blob:', // same
 }
 export const defaultCSPHeader = getCSPHeaderFromDirectives(defaultCSPDirectives)
 export const defaultNonceCSPDirectives = {
