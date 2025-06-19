@@ -196,6 +196,15 @@ export function reqSessionAuthenticated (req: Request | IncomingMessage): Sessio
   assertAuthenticated(sessionState)
   return sessionState
 }
+export function reqAdminMode (req: Request | IncomingMessage): SessionStateAuthenticated {
+  // @ts-ignore
+  if (!req[sessionMiddlewareKey]) throw new Error('session middleware was not applied')
+  // @ts-ignore
+  const sessionState = req[sessionKey] as SessionState
+  assertAuthenticated(sessionState)
+  assertAdminMode(sessionState)
+  return sessionState
+}
 export function reqUser (req: Request | IncomingMessage): User | undefined { return reqSession(req).user }
 export function reqUserAuthenticated (req: Request | IncomingMessage): User { return reqSessionAuthenticated(req).user }
 
