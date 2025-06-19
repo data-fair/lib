@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { SessionState, SessionStateAuthenticated, User } from '@data-fair/lib-common-types/session/index.js'
+import type { Account, SessionState, SessionStateAuthenticated, User } from '@data-fair/lib-common-types/session/index.js'
 import type { Request, Response, RequestHandler } from 'express'
 import jwt from 'jsonwebtoken'
 import JwksClient from 'jwks-rsa'
@@ -199,16 +199,19 @@ export function reqSessionAuthenticated (req: Request | IncomingMessage): Sessio
 export function reqUser (req: Request | IncomingMessage): User | undefined { return reqSession(req).user }
 export function reqUserAuthenticated (req: Request | IncomingMessage): User { return reqSessionAuthenticated(req).user }
 
-export function setReqUser (req: Request, user: User, lang = 'fr') {
+// this can be used to override the normal session mechanisme
+// for example create a pseudo session based on a secret
+export function setReqUser (req: Request, user: User, lang = 'fr', account?: Account, accountRole = 'admin', extra?: Record<string, any>) {
   const sessionState: SessionStateAuthenticated = {
     user,
-    accountRole: 'admin',
-    account: {
+    accountRole,
+    account: account ?? {
       type: 'user',
       id: user.id,
       name: user.name
     },
-    lang
+    lang,
+    ...extra
   }
   // @ts-ignore
   req[sessionKey] = sessionState
