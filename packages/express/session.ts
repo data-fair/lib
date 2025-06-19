@@ -216,3 +216,7 @@ export function setReqUser (req: Request, user: User, lang = 'fr', account?: Acc
   // @ts-ignore
   req[sessionKey] = sessionState
 }
+export function setReqSession (req: Request, sessionState: SessionState) {
+  // @ts-ignore
+  req[sessionKey] = sessionState
+}
