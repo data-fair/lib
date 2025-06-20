@@ -7,11 +7,14 @@ import { SessionState } from '@data-fair/lib-common-types/session/index.js'
 
 const debug = Debug('events-queue')
 
-type EventsQueueOptions = {
+export type EventsQueueOptions = {
   eventsUrl: string,
   eventsSecret: string,
   inactive?: boolean
 }
+
+export type PushEvent = Omit<Event, 'date'>
+export type PushNotification = Omit<Notification, 'date'>
 
 export class EventsQueue {
   _options: EventsQueueOptions | undefined
@@ -77,7 +80,7 @@ export class EventsQueue {
     }
   }
 
-  pushEvent (event: Omit<Event, 'date'>, sessionState?: SessionState) {
+  pushEvent (event: PushEvent, sessionState?: SessionState) {
     const options = this.options()
     if (options.inactive) return
     if (this.stopped) throw new Error('events queue has been stopped');
@@ -109,7 +112,7 @@ export class EventsQueue {
     this.eventsQueue.push(event as Event)
   }
 
-  pushNotification (notification: Omit<Notification, 'date'>) {
+  pushNotification (notification: PushNotification) {
     const options = this.options()
     if (options.inactive) return
     if (this.stopped) throw new Error('notifications queue has been stopped');
