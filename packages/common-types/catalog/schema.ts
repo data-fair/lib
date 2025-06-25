@@ -9,9 +9,9 @@ export default {
       type: 'string',
       description: `The list of capabilities that a catalog can have.
  - import: The plugin can list some resources organized in folders and import them
- - search: The plugin can use a search param in the listResources method
- - pagination: The plugin can paginate the results of the listResources method
- - additionalFilters: The plugin can use additional filters in the listResources method
+ - search: The plugin can use the search param 'q' in the list method
+ - pagination: The plugin can paginate the results of the list method
+ - additionalFilters: The plugin can use additional filters in the list method
  - importConfig: The plugin gives an import configuration schema
  - publishDataset: The plugin can publish a dataset
  - deletePublication: The plugin can delete a dataset or a resource published in a remote catalog`,
@@ -123,10 +123,6 @@ export default {
       additionalProperties: false,
       description: 'A small object that contains the information needed to publish or update a dataset or a resource',
       properties: {
-        publicationSite: {
-          type: 'string',
-          description: 'The URL of the publication site where the user will be redirected from the remote catalog'
-        },
         remoteDataset: {
           type: 'object',
           required: ['id'],
