@@ -9,9 +9,9 @@ export default {
       type: 'string',
       description: `The list of capabilities that a catalog can have.
  - import: The plugin can list some resources organized in folders and import them
- - search: The plugin can use a search param in the listResources method
- - pagination: The plugin can paginate the results of the listResources method
- - additionalFilters: The plugin can use additional filters in the listResources method
+ - search: The plugin can use the search param 'q' in the list method
+ - pagination: The plugin can paginate the results of the list method
+ - additionalFilters: The plugin can use additional filters in the list method
  - importConfig: The plugin gives an import configuration schema
  - publishDataset: The plugin can publish a dataset
  - deletePublication: The plugin can delete a dataset or a resource published in a remote catalog`,
@@ -67,7 +67,7 @@ export default {
     resource: {
       type: 'object',
       description: 'The normalized resource to import from a remote catalog to Data Fair',
-      required: ['id', 'title', 'type', 'format', 'url'],
+      required: ['id', 'title', 'filePath', 'format'],
       additionalProperties: false,
       properties: {
         id: {
@@ -75,46 +75,56 @@ export default {
           description: 'The unique identifier of the resource, independent of the folder it is in'
         },
         title: {
-          type: 'string'
-        },
-        type: {
-          const: 'resource',
+          type: 'string',
+          description: 'The title of the resource'
         },
         description: {
           type: 'string',
         },
+        filePath: {
+          type: 'string',
+          description: 'The path to the downloaded resource file.',
+        },
         format: {
-          type: 'string'
+          type: 'string',
+          description: 'The format of the resource, e.g. csv, json, xml, etc. It is displayed in the UI of catalogs.',
         },
-        url: {
-          type: 'string'
-        },
-        fileName: {
-          type: 'string'
-        },
-        mimeType: {
-          type: 'string'
-        },
-        size: {
-          type: 'number'
-        },
-        keywords: {
-          type: 'array',
-          items: {
-            type: 'string'
-          }
+        // https://www.w3.org/TR/vocab-dcat-2/#Property:dataset_frequency and https://www.dublincore.org/specifications/dublin-core/collection-description/frequency/
+        frequency: {
+          type: 'string',
+          description: 'The frequency of the resource updates, if available. It can be one of the following values: triennial, biennial, annual, semiannual, threeTimesAYear, quarterly, bimonthly, monthly, semimonthly, biweekly, threeTimesAMonth, weekly, semiweekly, threeTimesAWeek, daily, continuous or irregular.',
+          enum: ['', 'triennial', 'biennial', 'annual', 'semiannual', 'threeTimesAYear', 'quarterly', 'bimonthly', 'monthly', 'semimonthly', 'biweekly', 'threeTimesAMonth', 'weekly', 'semiweekly', 'threeTimesAWeek', 'daily', 'continuous', 'irregular']
         },
         image: {
-          type: 'string'
+          type: 'string',
+          description: 'The URL of the image representing the resource, if available'
         },
         license: {
           type: 'string'
         },
-        frequency: {
-          type: 'string'
+        keywords: {
+          type: 'array',
+          description: 'The list of keywords associated with the resource, if available',
+          items: {
+            type: 'string'
+          }
         },
-        private: {
-          type: 'boolean'
+        mimeType: {
+          type: 'string',
+          description: 'The Mime type of the resource, if available'
+        },
+        origin: {
+          type: 'string',
+          description: 'The URL where the original data can be found'
+        },
+        schema: {
+          type: 'object',
+          additionalProperties: true,
+          description: 'The schema of the resource, if available'
+        },
+        size: {
+          type: 'number',
+          description: 'The size of the resource in bytes, if available. It is displayed in the UI of catalogs.'
         }
       }
     },
@@ -123,10 +133,6 @@ export default {
       additionalProperties: false,
       description: 'A small object that contains the information needed to publish or update a dataset or a resource',
       properties: {
-        publicationSite: {
-          type: 'string',
-          description: 'The URL of the publication site where the user will be redirected from the remote catalog'
-        },
         remoteDataset: {
           type: 'object',
           required: ['id'],
