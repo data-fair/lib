@@ -14,7 +14,8 @@ export default {
  - additionalFilters: The plugin can use additional filters in the list method
  - importConfig: The plugin gives an import configuration schema
  - publishDataset: The plugin can publish a dataset
- - deletePublication: The plugin can delete a dataset or a resource published in a remote catalog`,
+ - deletePublication: The plugin can delete a dataset or a resource published in a remote catalog
+ - thumbnail: The plugin provides a thumbnail image`,
       enum: [
         'import',
         'search',
@@ -22,7 +23,8 @@ export default {
         'additionalFilters',
         'importConfig',
         'publishDataset',
-        'deletePublication'
+        'deletePublication',
+        'thumbnail'
       ]
     },
     metadata: {
@@ -45,6 +47,10 @@ export default {
           items: {
             $ref: '#/$defs/capability'
           }
+        },
+        thumbnailPath: {
+          description: 'Optional path of the thumbnail image from the root of the plugin to be displayed in the UI.',
+          type: 'string',
         }
       }
     },
@@ -100,7 +106,19 @@ export default {
           description: 'The URL of the image representing the resource, if available'
         },
         license: {
-          type: 'string'
+          type: 'object',
+          additionalProperties: false,
+          required: ['title', 'href'],
+          properties: {
+            title: {
+              type: 'string',
+              description: 'Short title for the license'
+            },
+            href: {
+              type: 'string',
+              description: 'The URL where the license can be read'
+            }
+          }
         },
         keywords: {
           type: 'array',

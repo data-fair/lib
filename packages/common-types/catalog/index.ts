@@ -224,4 +224,5 @@ export type DeletePublicationContext<TCatalogConfig> = {
 export type CatalogMetadata<TCapabilities extends Capability[]> = Metadata & {
   /** The capabilities of the catalog plugin */
   capabilities: TCapabilities
-}
+} &
+(Includes<TCapabilities, 'thumbnail'> extends true ? { thumbnailPath: string } : {})
