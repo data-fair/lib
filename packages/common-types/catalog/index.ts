@@ -59,17 +59,16 @@ type WithImport<TCatalogConfig, TCapabilities extends Capability[]> = {
     /** The total number of items in the current folder */
     count: number;
     /** The list of folders and resources in the current folder, filtered with the search and pagination parameters */
-    results: (Folder | Resource)[],
+    results: (Folder | Pick<Resource, 'id' | 'title' | 'description' | 'format' | 'mimeType' | 'origin' | 'size'> & { type: 'resource' })[],
     /** The path to the current folder, including the current folder itself, used to navigate back */
     path: Folder[]
   }>;
-  /** Get informations about a specific resource. */
-  getResource: (context: GetResourceContext<TCatalogConfig>) => Promise<Resource | undefined>;
+  
   /**
-   * Download the resource to a temporary file from a context
-   * @returns The path to the downloaded resource file, or undefined if the download failed
+   * Download the resource to a temporary file and return the metadata of the resource.
+   * @returns A promise that resolves to the metadata of the resource, including the path to the downloaded file.
    */
-  downloadResource: (context: DownloadResourceContext<TCatalogConfig>) => Promise<string | undefined>;
+  getResource: (context: GetResourceContext<TCatalogConfig>) => Promise<Resource | undefined>;
 }
   & (Includes<TCapabilities, 'additionalFilters'> extends true ? { listFiltersSchema: Record<string, any> } : {})
   & (Includes<TCapabilities, 'importConfig'> extends true ? { importConfigSchema: Record<string, any> } : {})
@@ -145,23 +144,7 @@ type SearchParams = { q?: string }
 type PaginationParams = { page?: number; size?: number }
 
 /**
- * Context for getting a resource.
- * @template TCatalogConfig - The type of the catalog configuration.
- * @property catalogConfig - The catalog configuration.
- * @property secrets - The deciphered secrets of the catalog.
- * @property resourceId - The ID of the remote resource to get.
- */
-export type GetResourceContext<TCatalogConfig> = {
-  /** The catalog configuration */
-  catalogConfig: TCatalogConfig,
-  /** The deciphered secrets of the catalog */
-  secrets: Record<string, string>,
-  /** The ID of the remote resource to get */
-  resourceId: string
-}
-
-/**
- * Context for downloading a resource.
+ * Context for get and downloading a resource.
  * @template TCatalogConfig - The type of the catalog configuration.
  * @property catalogConfig - The catalog configuration.
  * @property secrets - The deciphered secrets of the catalog.
@@ -169,7 +152,7 @@ export type GetResourceContext<TCatalogConfig> = {
  * @property resourceId - The ID of the remote resource to download.
  * @property tmpDir - The path to the working directory where the resource will be downloaded.
  */
-export type DownloadResourceContext<TCatalogConfig> = {
+export type GetResourceContext<TCatalogConfig> = {
   /** The catalog configuration */
   catalogConfig: TCatalogConfig,
   /** The deciphered secrets of the catalog */
