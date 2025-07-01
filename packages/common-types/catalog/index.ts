@@ -63,7 +63,7 @@ type WithImport<TCatalogConfig, TCapabilities extends Capability[]> = {
     /** The path to the current folder, including the current folder itself, used to navigate back */
     path: Folder[]
   }>;
-  
+
   /**
    * Download the resource to a temporary file and return the metadata of the resource.
    * @returns A promise that resolves to the metadata of the resource, including the path to the downloaded file.
