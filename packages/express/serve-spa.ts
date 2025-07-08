@@ -21,6 +21,7 @@ export const defaultCSPDirectives = {
   'font-src': "'self'", // adjusted because we always self-host fonts
   'form-action': "'self'",
   'frame-ancestors': "'self'",
+  'frame-src': "'self'",
   'img-src': "'self' data: blob: https:", // we often allow free img integration
   'object-src': "'none'",
   'script-src': "'self'",

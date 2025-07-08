@@ -92,10 +92,10 @@ export class Session {
       try {
         user = await this.verifyToken(token)
       } catch (err: any) {
+        console.warn(err)
         if (err.name === 'JwksError') {
           // happens in case of temporary unavailability if SD
           // better not to disconnect user in this case
-          console.warn(err)
           throw httpError(500, 'Session token public keys not initialized')
         } else {
           if (res) this.unsetCookies(req, res)
