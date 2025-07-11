@@ -1,13 +1,11 @@
-import { watchEffect, ref, toRaw, type WatchEffectOptions, type ComputedGetter } from 'vue'
+import { computed, type ComputedGetter, type ComputedOptions } from 'vue'
 import equal from 'fast-deep-equal'
 
-export const computedDeepDiff = <Type>(getter: ComputedGetter<Type>, options: WatchEffectOptions) => {
-  const computedRef = ref<Type>()
-  watchEffect(() => {
+export const computedDeepDiff = <Type>(getter: ComputedGetter<Type>, options: ComputedOptions) => {
+  return computed<Type>((oldValue) => {
     const newValue = getter()
-    if (!equal(toRaw(computedRef.value), toRaw(newValue))) computedRef.value = newValue
+    return (oldValue !== undefined && equal(newValue, oldValue)) ? oldValue : newValue
   }, options)
-  return computedRef
 }
 
 export default computedDeepDiff
