@@ -46,8 +46,6 @@ export function getCSPHeader (cspHeader: CSPHeader, nonce?: boolean) {
   else if (typeof cspHeader === 'object') return getCSPHeaderFromDirectives(cspHeader)
 }
 
-const htmlCache: Record<string, string> = {}
-
 type ServeSpaOptions = {
   ignoreSitePath?: boolean,
   extraHtmlTemplateParams?: Record<string, string>
@@ -60,6 +58,7 @@ type ServeSpaOptions = {
 async function createHtmlMiddleware (directory: string, uiConfig: any, options?: ServeSpaOptions): Promise<import('express').RequestHandler> {
   const uiConfigStr = JSON.stringify(uiConfig)
   const rawHtml = await readFile(join(directory, 'index.html'), 'utf8')
+  const htmlCache: Record<string, string> = {}
   const cspHeaderOption = options?.csp?.header
   let rawCSPHeader: string | undefined
   if (cspHeaderOption && typeof cspHeaderOption !== 'function') rawCSPHeader = getCSPHeader(cspHeaderOption, options.csp?.nonce)
