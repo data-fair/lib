@@ -50,6 +50,7 @@ const htmlCache: Record<string, string> = {}
 
 type ServeSpaOptions = {
   ignoreSitePath?: boolean,
+  extraHtmlTemplateParams?: Record<string, string>
   csp?: {
     header: CSPHeader | ((req: Request) => CSPHeader),
     nonce?: boolean
@@ -65,7 +66,7 @@ async function createHtmlMiddleware (directory: string, uiConfig: any, options?:
 
   return (req, res, next) => {
     const sitePath = options?.ignoreSitePath ? '' : reqSitePath(req)
-    let html = htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(rawHtml, { SITE_PATH: sitePath, UI_CONFIG: uiConfigStr })
+    let html = htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(rawHtml, { ...options?.extraHtmlTemplateParams, SITE_PATH: sitePath, UI_CONFIG: uiConfigStr })
 
     if (cspHeaderOption && typeof cspHeaderOption === 'function') {
       rawCSPHeader = getCSPHeader(cspHeaderOption(req), options.csp?.nonce)
