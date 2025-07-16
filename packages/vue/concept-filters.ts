@@ -2,23 +2,29 @@
 
 import { reactive, watch } from 'vue'
 
-export function useConceptFilters (reactiveSearchParams: Record<string, string>, datasetId?: string) {
-  const conceptFilters = reactive({} as Record<string, string>)
+export function getConceptFilters (searchParams: Record<string, string>, datasetId?: string) {
+  const conceptFilters: Record<string, string> = {}
 
   const datasetFiltersPrefix = datasetId && `_d_${datasetId}_`
 
-  watch(reactiveSearchParams, () => {
-    for (const key of Object.keys(reactiveSearchParams)) {
-      if (key.startsWith('_c_')) conceptFilters[key] = reactiveSearchParams[key]
-      if (datasetFiltersPrefix && key.startsWith(datasetFiltersPrefix)) {
-        conceptFilters[key.replace(datasetFiltersPrefix, '')] = reactiveSearchParams[key]
-      }
+  for (const key of Object.keys(searchParams)) {
+    if (key.startsWith('_c_')) conceptFilters[key] = searchParams[key]
+    if (datasetFiltersPrefix && key.startsWith(datasetFiltersPrefix)) {
+      conceptFilters[key.replace(datasetFiltersPrefix, '')] = searchParams[key]
     }
+  }
+  return conceptFilters
+}
+
+export function useConceptFilters (reactiveSearchParams: Record<string, string>, datasetId?: string) {
+  const conceptFilters = reactive({} as Record<string, string>)
+
+  // we use a watch and mutations on a reactive to prevent triggering reactivity on unrelated changes in reactive search params
+  watch(reactiveSearchParams, () => {
+    const newConceptFilters = getConceptFilters(reactiveSearchParams, datasetId)
+    Object.assign(conceptFilters, newConceptFilters)
     for (const key of Object.keys(conceptFilters)) {
-      if (key.startsWith('_c_') && reactiveSearchParams[key] === undefined) delete conceptFilters[key]
-      if (datasetFiltersPrefix && !key.startsWith('_c_') && reactiveSearchParams[datasetFiltersPrefix + key] === undefined) {
-        delete conceptFilters[key]
-      }
+      if (!(key in newConceptFilters)) delete conceptFilters[key]
     }
   }, { immediate: true })
 
