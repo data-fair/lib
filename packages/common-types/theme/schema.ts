@@ -5,9 +5,9 @@ export default {
   title: 'Thème',
   required: ['colors'],
   layout: [
-    'logo',
-    { key: 'bodyFontFamilyCss', cols: 6 },
-    { key: 'headingFontFamilyCss', cols: 6 },
+    { key: 'logo', if: '!context.simplifiedTheme' },
+    { key: 'bodyFontFamilyCss', cols: 6, if: '!context.simplifiedTheme' },
+    { key: 'headingFontFamilyCss', cols: 6, if: '!context.simplifiedTheme' },
     'assistedMode',
     {
       comp: 'tabs',

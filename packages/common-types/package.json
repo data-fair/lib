@@ -7,6 +7,14 @@
     "prepublishOnly": "cd .. && npm run prepublishOnly",
     "build": "cd .. && npm run build"
   },
+  "peerDependencies": {
+    "tinycolor2": "1"
+  },
+  "peerDependenciesMeta": {
+    "tinycolor2": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "@data-fair/lib-validation": "^1.0.0",
     "ajv-formats": "3.0.1"
