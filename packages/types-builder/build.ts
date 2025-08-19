@@ -57,6 +57,8 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     schemas[eventSchema.$id] = eventSchema
     const catalogSchema = (await import('@data-fair/lib-common-types/catalog/schema.js')).default
     schemas[catalogSchema.$id] = catalogSchema
+    const themeSchema = (await import('@data-fair/lib-common-types/theme/schema.js')).default
+    schemas[themeSchema.$id] = themeSchema
   }
 
   for (const [dir, key, fileName] of dirs) {
