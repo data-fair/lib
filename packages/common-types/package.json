@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib-common-types",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "description": "Shared schemas and built type definitions in the data-fair stack.",
   "main": "index.js",
   "scripts": {
