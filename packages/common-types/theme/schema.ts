@@ -4,70 +4,73 @@ export default {
   type: 'object',
   title: 'Thème',
   required: ['colors'],
-  layout: [
-    { key: 'logo', if: '!context.simplifiedTheme' },
-    { key: 'bodyFontFamilyCss', cols: 6, if: '!context.simplifiedTheme' },
-    { key: 'headingFontFamilyCss', cols: 6, if: '!context.simplifiedTheme' },
-    'assistedMode',
-    {
-      comp: 'tabs',
-      if: 'data.assistedMode',
-      children: [{
-        title: 'Thème par défaut',
-        children: [
-          { key: 'assistedModeColors', cols: { sm: 7, lg: 9 } },
-          { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'colors', dark: false } }
-        ]
-      }, {
-        title: 'Thème sombre',
-        children: [
-          { key: 'dark', cols: { sm: 7, lg: 9 } },
-          { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'darkColors', dark: true } }
-        ]
-      }, {
-        title: 'Thème à fort contraste',
-        children: [
-          { key: 'hc', cols: { sm: 7, lg: 9 } },
-          { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'hcColors', dark: false } }
-        ]
-      }, {
-        title: 'Thème sombre à fort contraste',
-        children: [
-          { key: 'hcDark', cols: { sm: 7, lg: 9 } },
-          { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'hcDarkColors', dark: true } }
-        ]
-      }]
-    },
-    {
-      comp: 'tabs',
-      if: '!data.assistedMode',
-      children: [{
-        title: 'Thème par défaut',
-        children: [
-          { key: 'colors', cols: { sm: 7, lg: 9 } },
-          { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'colors', dark: false } }
-        ]
-      }, {
-        title: 'Thème sombre',
-        children: [
-          { children: ['dark', 'darkColors'], cols: { sm: 7, lg: 9 } },
-          { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'darkColors', dark: true } }
-        ]
-      }, {
-        title: 'Thème à fort contraste',
-        children: [
-          { children: ['hc', 'hcColors'], cols: { sm: 7, lg: 9 } },
-          { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'hcColors', dark: false } }
-        ]
-      }, {
-        title: 'Thème sombre à fort contraste',
-        children: [
-          { children: ['hcDark', 'hcDarkColors'], cols: { sm: 7, lg: 9 } },
-          { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'hcDarkColors', dark: true } }
-        ]
-      }]
-    }
-  ],
+  layout: {
+    title: '',
+    children: [
+      { key: 'logo', if: '!context.simplifiedTheme' },
+      { key: 'bodyFontFamilyCss', cols: 6, if: '!context.simplifiedTheme' },
+      { key: 'headingFontFamilyCss', cols: 6, if: '!context.simplifiedTheme' },
+      'assistedMode',
+      {
+        comp: 'tabs',
+        if: 'data.assistedMode',
+        children: [{
+          title: 'Thème par défaut',
+          children: [
+            { key: 'assistedModeColors', cols: { sm: 7, lg: 9 } },
+            { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'colors', dark: false } }
+          ]
+        }, {
+          title: 'Thème sombre',
+          children: [
+            { key: 'dark', cols: { sm: 7, lg: 9 } },
+            { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'darkColors', dark: true } }
+          ]
+        }, {
+          title: 'Thème à fort contraste',
+          children: [
+            { key: 'hc', cols: { sm: 7, lg: 9 } },
+            { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'hcColors', dark: false } }
+          ]
+        }, {
+          title: 'Thème sombre à fort contraste',
+          children: [
+            { key: 'hcDark', cols: { sm: 7, lg: 9 } },
+            { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'hcDarkColors', dark: true } }
+          ]
+        }]
+      },
+      {
+        comp: 'tabs',
+        if: '!data.assistedMode',
+        children: [{
+          title: 'Thème par défaut',
+          children: [
+            { key: 'colors', cols: { sm: 7, lg: 9 } },
+            { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'colors', dark: false } }
+          ]
+        }, {
+          title: 'Thème sombre',
+          children: [
+            { children: ['dark', 'darkColors'], cols: { sm: 7, lg: 9 } },
+            { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'darkColors', dark: true } }
+          ]
+        }, {
+          title: 'Thème à fort contraste',
+          children: [
+            { children: ['hc', 'hcColors'], cols: { sm: 7, lg: 9 } },
+            { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'hcColors', dark: false } }
+          ]
+        }, {
+          title: 'Thème sombre à fort contraste',
+          children: [
+            { children: ['hcDark', 'hcDarkColors'], cols: { sm: 7, lg: 9 } },
+            { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'hcDarkColors', dark: true } }
+          ]
+        }]
+      }
+    ]
+  },
   properties: {
     logo: {
       title: "URL d'un logo",
@@ -105,7 +108,7 @@ export default {
           title: 'Couleur principale',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 12, lg: 4 }
           }
         },
         secondary: {
@@ -113,7 +116,7 @@ export default {
           title: 'Couleur secondaire',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 12, lg: 4 }
           }
         },
         accent: {
@@ -121,7 +124,7 @@ export default {
           title: 'Couleur accentuée',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 12, lg: 4 }
           }
         }
       }
@@ -166,7 +169,7 @@ export default {
           title: 'Couleur de fond',
           layout: {
             comp: 'color-picker',
-            cols: 3
+            cols: { sm: 6, lg: 3 }
           }
         },
         'on-background': {
@@ -174,7 +177,7 @@ export default {
           title: 'Couleur de texte sur couleur de fond',
           layout: {
             comp: 'color-picker',
-            cols: 3
+            cols: { sm: 6, lg: 3 }
           }
         },
         surface: {
@@ -182,7 +185,7 @@ export default {
           title: 'Couleur des surfaces (vignettes, listes, etc)',
           layout: {
             comp: 'color-picker',
-            cols: 3
+            cols: { sm: 6, lg: 3 }
           }
         },
         'on-surface': {
@@ -190,7 +193,7 @@ export default {
           title: 'Couleur de texte sur couleur des surfaces',
           layout: {
             comp: 'color-picker',
-            cols: 3
+            cols: { sm: 6, lg: 3 }
           }
         },
         primary: {
@@ -198,7 +201,7 @@ export default {
           title: 'Couleur principale',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 12, lg: 4 }
           }
         },
         'on-primary': {
@@ -206,7 +209,7 @@ export default {
           title: 'Couleur de texte sur couleur principale',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 6, lg: 4 }
           }
         },
         'text-primary': {
@@ -214,7 +217,7 @@ export default {
           title: 'Couleur de texte principal',
           layout: {
             comp: 'color-picker',
-            cols: 4,
+            cols: { sm: 6, lg: 4 },
             hint: 'laissez vide pour utiliser la couleur principale'
           }
         },
@@ -223,7 +226,7 @@ export default {
           title: 'Couleur secondaire',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 12, lg: 4 }
           }
         },
         'on-secondary': {
@@ -231,7 +234,7 @@ export default {
           title: 'Couleur de texte sur couleur secondaire',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 6, lg: 4 }
           }
         },
         'text-secondary': {
@@ -239,7 +242,7 @@ export default {
           title: 'Couleur de texte secondaire',
           layout: {
             comp: 'color-picker',
-            cols: 4,
+            cols: { sm: 6, lg: 4 },
             hint: 'laissez vide pour utiliser la couleur secondaire'
           }
         },
@@ -248,7 +251,7 @@ export default {
           title: 'Couleur accentuée',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 12, lg: 4 }
           }
         },
         'on-accent': {
@@ -256,7 +259,7 @@ export default {
           title: 'Couleur de texte sur couleur accentuée',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 6, lg: 4 }
           }
         },
         'text-accent': {
@@ -264,7 +267,7 @@ export default {
           title: 'Couleur de texte accentué',
           layout: {
             comp: 'color-picker',
-            cols: 4,
+            cols: { sm: 6, lg: 4 },
             hint: 'laissez vide pour utiliser la couleur accentuée'
           }
         },
@@ -273,7 +276,7 @@ export default {
           title: 'Couleur info',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 12, lg: 4 }
           }
         },
         'on-info': {
@@ -281,7 +284,7 @@ export default {
           title: 'Couleur de texte sur couleur info',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 6, lg: 4 }
           }
         },
         'text-info': {
@@ -289,7 +292,7 @@ export default {
           title: 'Couleur de texte info',
           layout: {
             comp: 'color-picker',
-            cols: 4,
+            cols: { sm: 6, lg: 4 },
             hint: 'laissez vide pour utiliser la couleur info'
           }
         },
@@ -298,7 +301,7 @@ export default {
           title: 'Couleur succès',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 12, lg: 4 }
           }
         },
         'on-success': {
@@ -306,7 +309,7 @@ export default {
           title: 'Couleur succès',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 6, lg: 4 }
           }
         },
         'text-success': {
@@ -314,7 +317,7 @@ export default {
           title: 'Couleur de texte succès',
           layout: {
             comp: 'color-picker',
-            cols: 4,
+            cols: { sm: 6, lg: 4 },
             hint: 'laissez vide pour utiliser la couleur succès'
           }
         },
@@ -323,7 +326,7 @@ export default {
           title: 'Couleur erreur',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 12, lg: 4 }
           }
         },
         'on-error': {
@@ -331,7 +334,7 @@ export default {
           title: 'Couleur de texte sur couleur erreur',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 6, lg: 4 }
           }
         },
         'text-error': {
@@ -339,7 +342,7 @@ export default {
           title: 'Couleur de texte erreur',
           layout: {
             comp: 'color-picker',
-            cols: 4,
+            cols: { sm: 6, lg: 4 },
             hint: 'laissez vide pour utiliser la couleur erreur'
           }
         },
@@ -348,7 +351,7 @@ export default {
           title: 'Couleur avertissement',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 12, lg: 4 }
           }
         },
         'on-warning': {
@@ -356,7 +359,7 @@ export default {
           title: 'Couleur de texte sur avertissement',
           layout: {
             comp: 'color-picker',
-            cols: 4
+            cols: { sm: 6, lg: 4 }
           }
         },
         'text-warning': {
@@ -364,7 +367,7 @@ export default {
           title: 'Couleur de texte avertissement',
           layout: {
             comp: 'color-picker',
-            cols: 4,
+            cols: { sm: 6, lg: 4 },
             hint: 'laissez vide pour utiliser la couleur avertissement'
           }
         },

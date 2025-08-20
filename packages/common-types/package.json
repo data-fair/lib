@@ -16,6 +16,7 @@
     }
   },
   "dependencies": {
+    "@data-fair/lib-utils": "^1.6.1",
     "@data-fair/lib-validation": "^1.0.0",
     "ajv-formats": "3.0.1"
   },

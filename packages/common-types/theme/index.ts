@@ -1,5 +1,6 @@
 import { type Colors, type Theme } from './.type/index.js'
 import clone from '@data-fair/lib-utils/clone.js'
+import microTemplate from '@data-fair/lib-utils/micro-template.js'
 import tinycolor from 'tinycolor2'
 
 export * from './.type/index.js'
@@ -212,5 +213,127 @@ export const fillTheme = (theme: Theme, defaultTheme: Theme) => {
       accent: fullTheme.colors.accent,
     }
   }
+  // vuetify is sensitive to undefined keys, better to delete them
+  for (const key of Object.keys(fullTheme.colors) as (keyof Colors)[]) {
+    if (fullTheme.colors[key] === undefined) delete fullTheme.colors[key]
+  }
+  if (fullTheme.darkColors) {
+    for (const key of Object.keys(fullTheme.darkColors) as (keyof Colors)[]) {
+      if (fullTheme.darkColors[key] === undefined) delete fullTheme.darkColors[key]
+    }
+  }
+  if (fullTheme.hcColors) {
+    for (const key of Object.keys(fullTheme.hcColors) as (keyof Colors)[]) {
+      if (fullTheme.hcColors[key] === undefined) delete fullTheme.hcColors[key]
+    }
+  }
+  if (fullTheme.hcDarkColors) {
+    for (const key of Object.keys(fullTheme.hcDarkColors) as (keyof Colors)[]) {
+      if (fullTheme.hcDarkColors[key] === undefined) delete fullTheme.hcDarkColors[key]
+    }
+  }
   return fullTheme as Required<Pick<Theme, 'darkColors' | 'hcColors' | 'hcDarkColors'>> & Theme
+}
+
+const messages: Record<string, Record<string, string>> = {
+  fr: {
+    'theme.default': 'par défaut',
+    'theme.dark': 'sombre',
+    'theme.hc': 'à contraste élevé',
+    'theme.hcDark': 'sombre à contraste élevé',
+    readableWarning: 'la couleur {colorName} ({colorCode}) du thème {themeName} n\'est pas suffisamment lisible par dessus la couleur {bgColorName} ({bgColorCode})',
+    authProvider: 'du fournisseur d\'identité {title}',
+    white: 'blanche',
+    text: 'de texte',
+    background: 'd\'arrière plan',
+    surface: 'de surface',
+    primary: 'primaire',
+    'text-primary': 'texte primaire',
+    secondary: 'secondaire',
+    'text-secondary': 'texte secondaire',
+    accent: 'accentuée',
+    'text-accent': 'texte accentué',
+    error: 'd\'erreur',
+    'text-error': 'texte d\'erreur',
+    warning: 'd\'avertissement',
+    'text-warning': 'texte d\'avertissement',
+    success: 'de succès',
+    'text-success': 'texte de succès',
+    info: 'd\'information',
+    'text-info': 'texte d\'information',
+    admin: 'd\'administration',
+    'text-admin': 'texte d\'administration',
+  },
+  en: {
+    'theme.default': 'default',
+    'theme.dark': 'dark',
+    'theme.hc': 'high contrast',
+    'theme.hcDark': 'high contrast dark',
+    readableWarning: 'the {colorName} color ({colorCode}) of {themeName} theme is not sufficiently readable over the {bgColorName} color ({bgColorCode})',
+    authProvider: 'auth provider {title}',
+    white: 'white',
+    text: 'text',
+    background: 'background',
+    surface: 'surface',
+    primary: 'primary',
+    'text-primary': 'primary text',
+    secondary: 'secondary',
+    'text-secondary': 'secondary text',
+    accent: 'accent',
+    'text-accent': 'accent text',
+    error: 'error',
+    'text-error': 'error text',
+    warning: 'warning',
+    'text-warning': 'warning text',
+    success: 'success',
+    'text-success': 'success text',
+    info: 'info',
+    'text-info': 'info text',
+    admin: 'admin',
+    'text-admin': 'admin text'
+  }
+}
+
+const getMessage = (locale: 'en' | 'fr', messageKey: string, params: Record<string, string> = {}) => {
+  return microTemplate(messages[locale][messageKey] as string, params)
+}
+
+function readableWarning (readableOptions: tinycolor.WCAG2Options, locale: 'en' | 'fr', colorCode: string | undefined, colorName: string, bgColorCode: string | undefined, bgColorName: string, themeName: string) {
+  if (!colorCode || !bgColorCode) return
+  if (!tinycolor.isReadable(colorCode, bgColorCode, readableOptions)) {
+    return getMessage(locale, 'readableWarning', { colorCode, colorName: getMessage(locale, `${colorName}`), bgColorCode, bgColorName: getMessage(locale, `${bgColorName}`), themeName: getMessage(locale, `theme.${themeName}`) })
+  }
+}
+
+export function getColorsWarnings (locale: 'en' | 'fr', colors: Colors, themeName: string, readableOptions: tinycolor.WCAG2Options): string[] {
+  const warnings: (string | undefined)[] = []
+  for (const color of ['primary', 'secondary', 'accent', 'info', 'success', 'error', 'warning', 'admin']) {
+    const textColor = colors[`text-${color}` as keyof Colors] ?? colors[color as keyof Colors]
+    warnings.push(readableWarning(readableOptions, locale, textColor, `text-${color}`, colors.background, 'background', themeName))
+    warnings.push(readableWarning(readableOptions, locale, textColor, `text-${color}`, colors.surface, 'surface', themeName))
+  }
+  for (const color of ['background', 'surface', 'primary', 'secondary', 'accent', 'info', 'success', 'error', 'warning', 'admin']) {
+    warnings.push(readableWarning(readableOptions, locale, colors[`on-${color}` as keyof Colors], 'text', colors[color as keyof Colors], color, themeName))
+  }
+  return warnings.filter(w => w !== undefined)
+}
+
+export const readableOptions: tinycolor.WCAG2Options = { level: 'AA', size: 'small' }
+export const hcReadableOptions: tinycolor.WCAG2Options = { level: 'AAA', size: 'small' }
+
+export function getSiteColorsWarnings (locale: 'en' | 'fr', theme: Theme, authProviders?: { title?: string, color?: string }[]): string[] {
+  let warnings: (string | undefined)[] = getColorsWarnings(locale, theme.colors, 'default', readableOptions)
+  if (theme.dark && theme.darkColors) warnings = warnings.concat(getColorsWarnings(locale, theme.darkColors, 'dark', readableOptions))
+  if (theme.hc && theme.hcColors) warnings = warnings.concat(getColorsWarnings(locale, theme.hcColors, 'hc', hcReadableOptions))
+  if (theme.hcDark && theme.hcDarkColors) warnings = warnings.concat(getColorsWarnings(locale, theme.hcDarkColors, 'hcDark', hcReadableOptions))
+  if (authProviders) {
+    for (const p of authProviders) {
+      if (p.color && p.title) {
+        if (!tinycolor.isReadable('#FFFFFF', p.color, readableOptions)) {
+          warnings.push(getMessage(locale, 'colors.readableWarning', { colorCode: '#FFFFFF', colorName: getMessage(locale, 'colors.white'), bgColorCode: p.color, bgColorName: getMessage(locale, 'colors.authProvider', { title: p.title }) }))
+        }
+      }
+    }
+  }
+  return warnings.filter(w => w !== undefined)
 }
