@@ -77,8 +77,9 @@ export const start = async (
           return ws.send(JSON.stringify({ type: 'unsubscribe-confirm', channel: message.channel }))
         }
       } catch (err: any) {
-        const errorMessage: Message = { type: 'error', status: 500, data: err.message ?? err, channel: message.channel }
-        internalError('ws-error', err)
+        const status = err.status ?? err.statusCode ?? 500
+        const errorMessage: Message = { type: 'error', status, data: err.message ?? err, channel: message.channel }
+        if (status >= 500) internalError('ws-error', err)
         return ws.send(JSON.stringify(errorMessage))
       }
     })
