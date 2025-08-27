@@ -27,7 +27,7 @@ export const defaultCSPDirectives = {
   'script-src': "'self'",
   'script-src-attr': "'none'",
   'style-src': "'self' 'unsafe-inline'", // adjusted because we always self-host styles
-  'upgrade-insecure-requests': '',
+  // 'upgrade-insecure-requests': '', // not necessary and breaks on simple http instances
   'worker-src': 'blob:', // necessary for maplibre
   'child-src': 'blob:', // same
 }
