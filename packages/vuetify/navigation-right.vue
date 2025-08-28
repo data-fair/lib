@@ -1,35 +1,58 @@
 <template>
+  <!-- Right-side navigation drawer for larger screens -->
   <v-navigation-drawer
     v-if="display.lgAndUp.value"
-    class="navigation-right-drawer pl-2"
+    color="background"
+    class="pt-6"
     location="right"
     permanent
     floating
-    position="fixed"
-    color="surface"
-    style="padding-top: 60px; background-color: transparent;"
   >
-    <slot />
+    <template #default>
+      <v-list
+        data-iframe-height
+        bg-color="background"
+        density="compact"
+      >
+        <v-defaults-provider :defaults="{ VListItem: { rounded: true } }">
+          <slot />
+        </v-defaults-provider>
+      </v-list>
+    </template>
   </v-navigation-drawer>
-  <div
+
+  <!-- Floating action button for smaller screens -->
+  <v-fab
     v-else
-    class="navigation-right-button mt-4"
+    size="small"
+    color="primary"
+    location="top right"
+    app
+    icon
   >
+    <v-icon
+      :icon="mdiDotsVertical"
+    />
     <v-menu
-      location="bottom left"
+      activator="parent"
       :close-on-content-click="false"
     >
-      <template #activator="{ props }">
-        <v-btn
-          v-bind="props"
-          size="small"
-          color="primary"
-          :icon="mdiDotsVertical"
-        />
-      </template>
-      <slot />
+      <v-card
+        max-width="300"
+        class="mt-2"
+      >
+        <v-list
+          data-iframe-height
+          bg-color="background"
+          density="compact"
+        >
+          <v-defaults-provider :defaults="{ VListItem: { rounded: true } }">
+            <slot />
+          </v-defaults-provider>
+        </v-list>
+      </v-card>
     </v-menu>
-  </div>
+  </v-fab>
 </template>
 
 <script setup lang="ts">
@@ -39,11 +62,3 @@ import { useDisplay } from 'vuetify'
 const display = useDisplay()
 
 </script>
-
-<style>
-.navigation-right-button {
-  z-index: 1000;
-  position: fixed;
-  right: 20px;
-}
-</style>
