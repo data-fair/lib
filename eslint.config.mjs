@@ -1,7 +1,7 @@
 import neostandard from 'neostandard'
 
 export default [
-  { ignores: ['types/*', '**/.type/', '**/*.vue.js', '**/*.d.ts', 'packages/*/*.js'] },
+  { ignores: ['types/*', '**/.type/', '**/*.vue.js', '**/*.d.ts', 'packages/**/*.js'] },
   ...neostandard({ ts: true, noJsx: true }),
   {
     rules: {
