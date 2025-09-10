@@ -253,21 +253,25 @@ export declare function returnValid(data: any, options?: import('${validationImp
         if (!options.vjsfDir) {
           console.error('vjsf exports requires the vjsf-dir option')
         } else {
-          const schemaVjsfOpts = { locale: 'fr', ...schema['x-vjsf'] || {} }
-          let compName = key
-          if (schemaVjsfOpts.compName) {
-            compName = schemaVjsfOpts.compName
-            delete schemaVjsfOpts.compName
+          const vjsfLocales = schema['x-vjsf-locales'] ?? ['fr']
+          for (const locale of vjsfLocales) {
+            const schemaVjsfOpts = { locale, ...schema['x-vjsf'] || {} }
+            let compName = key
+            if (schemaVjsfOpts.compName) {
+              compName = schemaVjsfOpts.compName
+              delete schemaVjsfOpts.compName
+            }
+            const vjsfDir = path.resolve(options.vjsfDir)
+            const compileVjsf = (await import('@koumoul/vjsf-compiler')).compile
+            const otherSchemas = { ...schemas }
+            if (schema.$id) delete otherSchemas[schema.$id]
+            schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
+            const vjsfCode = await compileVjsf(schema, schemaVjsfOpts)
+            const filePrefix = vjsfLocales.length > 1 ? `vjsf-${locale}-` : 'vjsf-'
+            const vjsfFilePath = path.join(vjsfDir, `${filePrefix}${compName}.vue`)
+            console.log('  vjsf component path : ' + vjsfFilePath)
+            writeFileSync(vjsfFilePath, vjsfCode)
           }
-          const vjsfDir = path.resolve(options.vjsfDir)
-          const compileVjsf = (await import('@koumoul/vjsf-compiler')).compile
-          const otherSchemas = { ...schemas }
-          if (schema.$id) delete otherSchemas[schema.$id]
-          schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
-          const vjsfCode = await compileVjsf(schema, schemaVjsfOpts)
-          const vjsfFilePath = path.join(vjsfDir, `vjsf-${compName}.vue`)
-          console.log('  vjsf component path : ' + vjsfFilePath)
-          writeFileSync(vjsfFilePath, vjsfCode)
         }
       } else {
         throw new Error(`unsupported export ${schemaExport}`)
