@@ -253,24 +253,71 @@ export declare function returnValid(data: any, options?: import('${validationImp
         if (!options.vjsfDir) {
           console.error('vjsf exports requires the vjsf-dir option')
         } else {
-          const vjsfLocales = schema['x-vjsf-locales'] ?? ['fr']
+          const vjsfLocales: string[] = schema['x-vjsf-locales'] ?? ['fr']
+          let compName = key
+          const schemaVjsfOpts = { ...schema['x-vjsf'] }
+          if (schemaVjsfOpts.compName) {
+            compName = schemaVjsfOpts.compName
+            delete schemaVjsfOpts.compName
+          }
+          console.log(`  vjsf options: ${JSON.stringify(schemaVjsfOpts)}`)
+          const otherSchemas = { ...schemas }
+          if (schema.$id) delete otherSchemas[schema.$id]
+          schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
+
+          const vjsfDir = path.resolve(options.vjsfDir)
+          const compileVjsf = (await import('@koumoul/vjsf-compiler')).compile
+
           for (const locale of vjsfLocales) {
-            const schemaVjsfOpts = { locale, ...schema['x-vjsf'] || {} }
-            let compName = key
-            if (schemaVjsfOpts.compName) {
-              compName = schemaVjsfOpts.compName
-              delete schemaVjsfOpts.compName
-            }
-            const vjsfDir = path.resolve(options.vjsfDir)
-            const compileVjsf = (await import('@koumoul/vjsf-compiler')).compile
-            const otherSchemas = { ...schemas }
-            if (schema.$id) delete otherSchemas[schema.$id]
-            schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
-            const vjsfCode = await compileVjsf(schema, schemaVjsfOpts)
-            const filePrefix = vjsfLocales.length > 1 ? `vjsf-${locale}-` : 'vjsf-'
-            const vjsfFilePath = path.join(vjsfDir, `${filePrefix}${compName}.vue`)
-            console.log('  vjsf component path : ' + vjsfFilePath)
+            const vjsfCode = await compileVjsf(schema, { locale, ...schemaVjsfOpts })
+            const vjsfFilePath = path.join(vjsfDir, vjsfLocales.length > 1 ? `vjsf-${compName}-${locale}.vue` : `vjsf-${compName}.vue`)
+            console.log(`  vjsf ${locale} component path : ${vjsfFilePath}`)
             writeFileSync(vjsfFilePath, vjsfCode)
+          }
+
+          if (vjsfLocales.length > 1) {
+            const globalVjsfCode = `
+<script setup>
+// @ts-nocheck
+
+import { defineAsyncComponent, defineProps, defineEmits } from 'vue'
+import { emits } from '@koumoul/vjsf/composables/use-vjsf.js'
+
+const localeComps = {
+  ${vjsfLocales.map(locale => `${locale}: defineAsyncComponent(() => import('./vjsf-${compName}-${locale}.vue'))`).join(',\n  ')}
+}
+
+const props = defineProps({
+  locale: {
+    type: String,
+    required: true
+  },
+  modelValue: {
+    type: null,
+    default: null
+  },
+  options: {
+    /** @type import('vue').PropType<import('@koumoul/vjsf/types.js').PartialVjsfOptions | null> */
+    type: Object,
+    default: null
+  }
+})
+
+const emit = defineEmits(emits)
+</script>
+
+<template>
+<component :is="localeComps[locale]" :model-value="modelValue" :options="options" @update:model-value="value => emit('update:modelValue', value)" @update:state="state => emit('update:state')">
+  <template v-for="(_, name) in $slots" v-slot:[name]="slotData">
+    <slot :name="name" v-bind="slotData" />
+  </template>
+</component>
+</template>
+`
+
+            const vjsfFilePath = path.join(vjsfDir, `vjsf-${compName}.vue`)
+            console.log(`  vjsf global component path : ${vjsfFilePath}`)
+            writeFileSync(vjsfFilePath, globalVjsfCode)
           }
         }
       } else {
