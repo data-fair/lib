@@ -12,6 +12,7 @@ export const initMessagesCollection = async (db: Db) => {
 let messagesCollection: Collection | undefined
 
 export const init = async (db: Db) => {
+  if (messagesCollection) return // already initialized
   messagesCollection = await initMessagesCollection(db)
   await messagesCollection.insertOne({ type: 'init' })
 }

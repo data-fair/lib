@@ -29,7 +29,7 @@ export class EventsQueue {
   }
 
   start = async (options: EventsQueueOptions) => {
-    if (this._options) throw new Error('events queue was already initialized')
+    if (this._options) return // already initialized
     this._options = options
     this.loop()
   }
