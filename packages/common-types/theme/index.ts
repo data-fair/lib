@@ -332,7 +332,7 @@ export function getSiteColorsWarnings (locale: 'en' | 'fr', theme: Theme, authPr
     for (const p of authProviders) {
       if (p.color && p.title) {
         if (!tinycolor.isReadable('#FFFFFF', p.color, readableOptions)) {
-          warnings.push(getMessage(locale, 'readableWarning', { colorCode: '#FFFFFF', colorName: getMessage(locale, 'colors.white'), bgColorCode: p.color, bgColorName: getMessage(locale, 'colors.authProvider', { title: p.title }) }))
+          warnings.push(getMessage(locale, 'readableWarning', { colorCode: '#FFFFFF', colorName: getMessage(locale, 'white'), bgColorCode: p.color, bgColorName: getMessage(locale, 'authProvider', { title: p.title }) }))
         }
       }
     }
