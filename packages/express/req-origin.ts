@@ -5,7 +5,7 @@ import { httpError } from '@data-fair/lib-utils/http-errors.js'
 export const reqHost = (req: Request) => {
   const forwardedHost = req.get('x-forwarded-host')
   if (!forwardedHost) throw new Error('The "X-Forwarded-Host" header is required, please check the configuration of the reverse-proxy.')
-  return forwardedHost
+  return forwardedHost.split(',')[0]
 }
 
 /**
@@ -18,11 +18,13 @@ export const reqHost = (req: Request) => {
 export const reqOrigin = (req: Request) => {
   const host = reqHost(req)
 
-  const forwardedProto = req.get('x-forwarded-proto')
+  let forwardedProto = req.get('x-forwarded-proto')
   if (!forwardedProto) throw new Error('The "X-Forwarded-Proto" header is required, please check the configuration of the reverse-proxy.')
+  forwardedProto = forwardedProto.split(',')[0]
 
   const origin = `${forwardedProto}://${host}`
-  const port = req.get('x-forwarded-port')
+  let port = req.get('x-forwarded-port')
+  if (port) port = port.split(',')[0]
   if (port && !(port === '443' && forwardedProto === 'https') && !(port === '80' && forwardedProto === 'http')) {
     return origin + ':' + port
   } else {
@@ -31,8 +33,9 @@ export const reqOrigin = (req: Request) => {
 }
 
 export const reqIp = (req: Request) => {
-  const ip = req.get('x-forwarded-for')
+  let ip = req.get('x-forwarded-for')
   if (!ip) throw new Error('The "X-Forwarded-For" header is required, please check the configuration of the reverse-proxy.')
+  ip = ip.split(',')[0]
   if (!isIP(ip)) throw new Error(`The "X-Forwarded-For" header should contain an IP. "${ip}" is not valid.`)
   return ip
 }
