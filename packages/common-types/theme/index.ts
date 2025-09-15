@@ -306,6 +306,7 @@ function readableWarning (readableOptions: tinycolor.WCAG2Options, locale: 'en' 
 }
 
 export function getColorsWarnings (locale: 'en' | 'fr', colors: Colors, themeName: string, readableOptions: tinycolor.WCAG2Options): string[] {
+  if (locale !== 'fr' && locale !== 'en') locale = 'en'
   const warnings: (string | undefined)[] = []
   for (const color of ['primary', 'secondary', 'accent', 'info', 'success', 'error', 'warning', 'admin']) {
     const textColor = colors[`text-${color}` as keyof Colors] ?? colors[color as keyof Colors]
@@ -322,6 +323,7 @@ export const readableOptions: tinycolor.WCAG2Options = { level: 'AA', size: 'sma
 export const hcReadableOptions: tinycolor.WCAG2Options = { level: 'AAA', size: 'small' }
 
 export function getSiteColorsWarnings (locale: 'en' | 'fr', theme: Theme, authProviders?: { title?: string, color?: string }[]): string[] {
+  if (locale !== 'fr' && locale !== 'en') locale = 'en'
   let warnings: (string | undefined)[] = getColorsWarnings(locale, theme.colors, 'default', readableOptions)
   if (theme.dark && theme.darkColors) warnings = warnings.concat(getColorsWarnings(locale, theme.darkColors, 'dark', readableOptions))
   if (theme.hc && theme.hcColors) warnings = warnings.concat(getColorsWarnings(locale, theme.hcColors, 'hc', hcReadableOptions))
@@ -330,7 +332,7 @@ export function getSiteColorsWarnings (locale: 'en' | 'fr', theme: Theme, authPr
     for (const p of authProviders) {
       if (p.color && p.title) {
         if (!tinycolor.isReadable('#FFFFFF', p.color, readableOptions)) {
-          warnings.push(getMessage(locale, 'colors.readableWarning', { colorCode: '#FFFFFF', colorName: getMessage(locale, 'colors.white'), bgColorCode: p.color, bgColorName: getMessage(locale, 'colors.authProvider', { title: p.title }) }))
+          warnings.push(getMessage(locale, 'readableWarning', { colorCode: '#FFFFFF', colorName: getMessage(locale, 'colors.white'), bgColorCode: p.color, bgColorName: getMessage(locale, 'colors.authProvider', { title: p.title }) }))
         }
       }
     }
