@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib-vue",
-  "version": "1.23.2",
+  "version": "1.23.3",
   "description": "Composables and other utilities for Vue applications in the data-fair stack.",
   "main": "index.js",
   "files": [
