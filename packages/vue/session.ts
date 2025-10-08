@@ -71,6 +71,7 @@ interface FullSiteInfo {
 
 export interface SiteInfo {
   main?: boolean
+  isAccountMain?: boolean
   logo?: string
   dark?: boolean
   colors: Colors
@@ -389,6 +390,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
       fullSite.value = siteInfo
       const partialSite: SiteInfo = {
         main: siteInfo.main,
+        isAccountMain: siteInfo.isAccountMain,
         logo: siteInfo.theme.logo,
         colors: siteInfo.theme.colors
       }
