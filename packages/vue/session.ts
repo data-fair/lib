@@ -72,6 +72,8 @@ interface FullSiteInfo {
 export interface SiteInfo {
   main?: boolean
   isAccountMain?: boolean
+  authMode: string
+  authOnlyOtherSite?: string
   logo?: string
   dark?: boolean
   colors: Colors
@@ -392,7 +394,9 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
         main: siteInfo.main,
         isAccountMain: siteInfo.isAccountMain,
         logo: siteInfo.theme.logo,
-        colors: siteInfo.theme.colors
+        colors: siteInfo.theme.colors,
+        authMode: siteInfo.authMode,
+        authOnlyOtherSite: siteInfo.authOnlyOtherSite
       }
       if (theme.value == null) theme.value = getDefaultTheme(siteInfo)
       if (theme.value === 'hc') partialSite.colors = siteInfo.theme.hcColors
