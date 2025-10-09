@@ -255,20 +255,27 @@ export declare function returnValid(data: any, options?: import('${validationImp
         } else {
           const vjsfLocales: string[] = schema['x-vjsf-locales'] ?? ['fr']
           let compName = key
-          const schemaVjsfOpts = { ...schema['x-vjsf'] }
-          if (schemaVjsfOpts.compName) {
-            compName = schemaVjsfOpts.compName
-            delete schemaVjsfOpts.compName
-          }
-          console.log(`  vjsf options: ${JSON.stringify(schemaVjsfOpts)}`)
-          const otherSchemas = { ...schemas }
-          if (schema.$id) delete otherSchemas[schema.$id]
-          schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
 
           const vjsfDir = path.resolve(options.vjsfDir)
           const compileVjsf = (await import('@koumoul/vjsf-compiler')).compile
+          const { resolveXI18n } = await import('@json-layout/core')
 
           for (const locale of vjsfLocales) {
+            const schemaVjsfOpts = { ...schema['x-vjsf'] }
+            if (schemaVjsfOpts.compName) {
+              compName = schemaVjsfOpts.compName
+              delete schemaVjsfOpts.compName
+            }
+            console.log(`  vjsf options: ${JSON.stringify(schemaVjsfOpts)}`)
+            const otherSchemas = { ...schemas }
+            for (const [key, otherSchema] of Object.entries(schemas)) {
+              if (key === schema.$id) continue
+              otherSchemas[key] = clone(otherSchema)
+              resolveXI18n(otherSchemas[key], locale)
+            }
+            if (schema.$id) delete otherSchemas[schema.$id]
+            schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
+
             const vjsfCode = await compileVjsf(schema, { locale, ...schemaVjsfOpts })
             const vjsfFilePath = path.join(vjsfDir, vjsfLocales.length > 1 ? `vjsf-${compName}-${locale}.vue` : `vjsf-${compName}.vue`)
             console.log(`  vjsf ${locale} component path : ${vjsfFilePath}`)

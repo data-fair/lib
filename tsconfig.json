@@ -8,5 +8,5 @@
     "resolveJsonModule": true
   },
   "include": ["packages"],
-  "exclude": ["*.test.*"]
+  "exclude": ["*.test.*", ".type/*"]
 }
