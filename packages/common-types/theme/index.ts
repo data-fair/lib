@@ -147,7 +147,7 @@ export const getTextColorsCss = (colors: Colors, theme: string) => {
     const onKey = `on-${color}` as keyof Colors
     if (colors[onKey]) {
       css += `
-.bg-${color} a { color: ${colors[onKey]} }`
+.v-theme--${theme} .bg-${color} a { color: ${colors[onKey]} }`
     }
   }
   return css
