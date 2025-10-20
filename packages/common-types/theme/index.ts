@@ -144,6 +144,11 @@ export const getTextColorsCss = (colors: Colors, theme: string) => {
       css += `
 .v-theme--${theme} .text-${color}:not(.v-btn--disabled) { color: ${colors[key]}!important; }`
     }
+    const onKey = `on-${color}` as keyof Colors
+    if (colors[onKey]) {
+      css += `
+.bg-${color} a { color: ${colors[onKey]} }`
+    }
   }
   return css
 }
