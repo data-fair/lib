@@ -116,6 +116,9 @@ export default {
         asAdmin: {
           $ref: '#/$defs/userRef'
         },
+        asAdminOrg: {
+          $ref: '#/$defs/organizationMembership'
+        },
         pd: {
           type: 'string',
           format: 'date'
