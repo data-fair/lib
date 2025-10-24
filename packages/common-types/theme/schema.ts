@@ -156,6 +156,27 @@ export default {
       },
       type: 'string'
     },
+    bodyFontFamily: {
+      title: 'Nom de police de caractères pour le corps du texte',
+      'x-i18n-title': {
+        fr: 'Nom de police de caractères pour le corps du texte',
+        en: 'Font name for body text',
+        es: 'Nombre de fuente para el texto del cuerpo',
+        it: 'Nome del carattere per il testo del corpo',
+        pt: 'Nome da fonte para o texto do corpo',
+        de: 'Schriftartname für den Fließtext'
+      },
+      description: 'Par défaut une police Nunito auto-hébergée est utilisée',
+      'x-i18n-description': {
+        fr: 'Par défaut une police Nunito auto-hébergée est utilisée',
+        en: 'By default, a self-hosted Nunito font is used',
+        es: 'Por defecto se utiliza una fuente Nunito autoalojada',
+        it: 'Per impostazione predefinita viene utilizzata una fonte Nunito auto-ospitata',
+        pt: 'Por padrão, é usada uma fonte Nunito auto-hospedada',
+        de: 'Standardmäßig wird eine selbst gehostete Nunito-Schriftart verwendet'
+      },
+      type: 'string'
+    },
     bodyFontFamilyCss: {
       title: 'CSS police de caractères pour le corps du texte',
       'x-i18n-title': {
@@ -170,14 +191,35 @@ export default {
         comp: 'textarea',
         rows: 3
       },
-      description: "Par défaut une police Nunito auto-hébergée est utilisée. Vous pouvez aussi copier le CSS proposé par une plateforme comme Google Fonts, dans ce cas il faut remplacer le nom de la police par '{FONT_FAMILY}'.",
+      description: 'Vous pouvez copier le CSS proposé par une plateforme comme Google Fonts.',
       'x-i18n-description': {
-        fr: "Par défaut une police Nunito auto-hébergée est utilisée. Vous pouvez aussi copier le CSS proposé par une plateforme comme Google Fonts, dans ce cas il faut remplacer le nom de la police par '{FONT_FAMILY}'.",
-        en: "By default, a self-hosted Nunito font is used. You can also copy the CSS proposed by a platform like Google Fonts, in which case you need to replace the font name with '{FONT_FAMILY}'.",
-        es: "De forma predeterminada, se utiliza una fuente Nunito autoalojada. También puede copiar el CSS propuesto por una plataforma como Google Fonts, en cuyo caso debe reemplazar el nombre de la fuente con '{FONT_FAMILY}'.",
-        it: "Per impostazione predefinita, viene utilizzata una fonte Nunito auto-ospitata. È possibile anche copiare il CSS proposto da una piattaforma come Google Fonts, in tal caso è necessario sostituire il nome del carattere con '{FONT_FAMILY}'.",
-        pt: "Por padrão, é usada uma fonte Nunito auto-hospedada. Você também pode copiar o CSS proposto por uma plataforma como Google Fonts, nesse caso, você precisa substituir o nome da fonte por '{FONT_FAMILY}'.",
-        de: "Standardmäßig wird eine selbst gehostete Nunito-Schriftart verwendet. Sie können auch die von einer Plattform wie Google Fonts vorgeschlagene CSS-Datei kopieren. In diesem Fall müssen Sie den Schriftartnamen durch '{FONT_FAMILY}' ersetzen."
+        fr: 'Vous pouvez copier le CSS proposé par une plateforme comme Google Fonts.',
+        en: 'You can copy the CSS proposed by a platform like Google Fonts.',
+        es: 'Puede copiar el CSS propuesto por una plataforma como Google Fonts.',
+        it: 'Puoi copiare il CSS proposto da una piattaforma come Google Fonts.',
+        pt: 'Você pode copiar o CSS proposto por uma plataforma como Google Fonts.',
+        de: 'Sie können das von einer Plattform wie Google Fonts vorgeschlagene CSS kopieren.'
+      },
+      type: 'string'
+    },
+    headingFontFamily: {
+      title: 'Nom de police de caractères pour les titres',
+      'x-i18n-title': {
+        fr: 'Nom de police de caractères pour les titres',
+        en: 'Font name for headings',
+        es: 'Nombre de fuente para los títulos',
+        it: 'Nome del carattere per le intestazioni',
+        pt: 'Nome da fonte para títulos',
+        de: 'Schriftartname für Überschriften'
+      },
+      description: 'Renseignez de la même manière que pour le corps de texte, ou laissez vide pour utiliser la police du corps du texte',
+      'x-i18n-description': {
+        fr: 'Renseignez de la même manière que pour le corps de texte, ou laissez vide pour utiliser la police du corps du texte',
+        en: 'Fill in the same way as for the body text, or leave blank to use the body text font',
+        es: 'Complete de la misma manera que para el texto del cuerpo, o deje en blanco para usar la fuente del texto del cuerpo',
+        it: 'Compilare nello stesso modo del testo del corpo, o lasciare vuoto per utilizzare il carattere del testo del corpo',
+        pt: 'Preencha da mesma forma que para o texto do corpo, ou deixe em branco para usar a fonte do texto do corpo',
+        de: 'Füllen Sie wie beim Fließtext aus, oder lassen Sie das Feld leer, um die Schriftart des Fließtexts zu verwenden'
       },
       type: 'string'
     },
@@ -194,15 +236,6 @@ export default {
       layout: {
         comp: 'textarea',
         rows: 3
-      },
-      description: 'Renseignez de la même manière que pour le corps de texte, ou laissez vide pour utiliser la police du corps du texte',
-      'x-i18n-description': {
-        fr: 'Renseignez de la même manière que pour le corps de texte, ou laissez vide pour utiliser la police du corps du texte',
-        en: 'Fill in the same way as for the body text, or leave blank to use the body text font',
-        es: 'Complete de la misma manera que para el texto del cuerpo, o deje en blanco para usar la fuente del texto del cuerpo',
-        it: 'Compilare nello stesso modo del testo del corpo, o lasciare vuoto per utilizzare il carattere del testo del corpo',
-        pt: 'Preencha da mesma forma que para o texto do corpo, ou deixe em branco para usar a fonte do texto do corpo',
-        de: 'Füllen Sie wie beim Fließtext aus, oder lassen Sie das Feld leer, um die Schriftart des Fließtexts zu verwenden'
       },
       type: 'string'
     },
