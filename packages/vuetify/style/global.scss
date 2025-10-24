@@ -1,11 +1,17 @@
 @use 'vuetify' with (
   $color-pack: false,
-  $body-font-family: 'BodyFontFamily',
-  $heading-font-family: 'HeadingFontFamily'
+  $body-font-family: var(--d-body-font-family),
+  $heading-font-family: var(--d-heading-font-family)
 );
 
 // v-icon has an opacity when it is prepended in a list of items.
 // ref: https://github.com/vuetifyjs/vuetify/issues/18760
 .v-icon {
   --v-medium-emphasis-opacity: 1 !important;
+}
+
+// default font variables values provide retro-compatibility with the aliases we used before
+:root {
+  --d-body-font-family: BodyFontFamily;
+  --d-heading-font-family: HeadingFontFamily;
 }
