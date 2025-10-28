@@ -30,6 +30,7 @@ export const defaultCSPDirectives = {
   // 'upgrade-insecure-requests': '', // not necessary and breaks on simple http instances
   'worker-src': 'blob:', // necessary for maplibre
   'child-src': 'blob:', // same
+  'connect-src': "'self' https://koumoul.com" // used by fetch, xhr, etc. we allow specifically koumoul.com as it contains icons datasets for example
 }
 export const defaultCSPHeader = getCSPHeaderFromDirectives(defaultCSPDirectives)
 export const defaultNonceCSPDirectives = {
