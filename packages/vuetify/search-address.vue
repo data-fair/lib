@@ -1,5 +1,25 @@
+<template>
+  <v-autocomplete
+    v-model="address"
+    :items="addressesList"
+    :loading="loadingAddresses"
+    no-filter
+    :clearable="true"
+    return-object
+    hide-no-data
+    hide-details
+    label="Adresse"
+    placeholder="Saisissez une adresse"
+    :variant="variant"
+    density="compact"
+    menu-icon=""
+    @update:search="(search: string) => findAdresses(search)"
+  />
+</template>
+
+
 <script setup lang="ts">
-import { VAutocomplete } from 'vuetify/components/VAutocomplete'
+import type { VAutocomplete } from 'vuetify/components/VAutocomplete'
 import { ref, watch } from 'vue'
 import { ofetch } from 'ofetch'
 import { useDebounceFn } from '@vueuse/core'
@@ -8,9 +28,9 @@ defineProps<{variant?: VAutocomplete['variant']}>()
 const emit = defineEmits(['selected'])
 const model = defineModel({ type: String })
 
-const addressesList = ref([] as any[])
+const addressesList = ref<any[]>([])
 const loadingAddresses = ref(false)
-const address = ref(null as any)
+const address = ref<any>(null)
 
 const findAdressesFn = async (search: string, selectedId?: string) => {
   loadingAddresses.value = true
@@ -54,22 +74,3 @@ watch(
   }
 )
 </script>
-
-<template>
-  <v-autocomplete
-    v-model="address"
-    :items="addressesList"
-    :loading="loadingAddresses"
-    no-filter
-    :clearable="true"
-    return-object
-    hide-no-data
-    hide-details
-    label="Adresse"
-    placeholder="Saisissez une adresse"
-    :variant="variant"
-    density="compact"
-    menu-icon=""
-    @update:search="(search: string) => findAdresses(search)"
-  />
-</template>
