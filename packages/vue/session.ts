@@ -334,6 +334,11 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     if (adminMode) {
       const params: Record<string, string> = { adminMode: 'true' }
       if (state.user != null) params.email = state.user.email
+      // preserve current active org/dep
+      if (state.organization) {
+        params.org = state.organization.id
+        if (state.organization.department) params.dep = state.organization.department
+      }
       const url = loginUrl(redirect, params, true)
       goTo(url)
     } else {
