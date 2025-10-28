@@ -446,6 +446,38 @@ export default {
             cols: { sm: 6, lg: 3 }
           }
         },
+        'surface-inverse': {
+          type: 'string',
+          title: 'Couleur des surfaces avec contraste inversé',
+          'x-i18n-title': {
+            fr: 'Couleur des surfaces avec contraste inversé',
+            en: 'Surface color with inverted contrast',
+            es: 'Color de las superficies con contraste invertido',
+            it: 'Colore delle superfici con contrasto invertito',
+            pt: 'Cor das superfícies com contraste invertido',
+            de: 'Oberflächenfarbe mit invertiertem Kontrast'
+          },
+          layout: {
+            comp: 'color-picker',
+            cols: { sm: 6, lg: 3 }
+          }
+        },
+        'on-surface-inverse': {
+          type: 'string',
+          title: 'Couleur de texte sur couleur des surfaces avec contraste inversé',
+          'x-i18n-title': {
+            fr: 'Couleur de texte sur couleur des surfaces avec contraste inversé',
+            en: 'Text color on surface color with inverted contrast',
+            es: 'Color de texto sobre color de superficie con contraste invertido',
+            it: 'Colore del testo sul colore della superficie con contrasto invertito',
+            pt: 'Cor do texto na cor da superfície com contraste invertido',
+            de: 'Textfarbe auf Oberflächenfarbe mit invertiertem Kontrast'
+          },
+          layout: {
+            comp: 'color-picker',
+            cols: { sm: 6, lg: 3 }
+          }
+        },
         primary: {
           type: 'string',
           title: 'Couleur principale',

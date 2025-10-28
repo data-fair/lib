@@ -17,6 +17,8 @@ export const defaultTheme = {
     'on-background': '#424242', // grey-darken-3
     surface: '#FFFFFF',
     'on-surface': '#424242', // grey-darken-3
+    'surface-inverse': '#424242', // grey-darken-3
+    'on-surface-inverse': '#FFFFFF',
     primary: '#1976D2', // blue-darken-2
     'on-primary': '#FFFFFF',
     'text-primary': '#1565C0',
@@ -46,8 +48,10 @@ export const defaultTheme = {
   darkColors: {
     background: '#121212',
     'on-background': '#FFFFFF', // white
-    surface: '#212121',
+    surface: '#212121', // grey-darken-4
     'on-surface': '#FFFFFF', // white
+    'surface-inverse': '#FAFAFA', // grey-lighten-5
+    'on-surface-inverse': '#424242', // grey-darken-3
     primary: '#1976D2', // blue-darken-2
     'on-primary': '#FFFFFF', // white
     'text-primary': '#2196F3', // blue
@@ -80,6 +84,8 @@ export const defaultTheme = {
     'on-background': '#000000',
     surface: '#FFFFFF',
     'on-surface': '#000000',
+    'surface-inverse': '#212121', // grey-darken-4
+    'on-surface-inverse': '#FFFFFF',
     primary: '#0D47A1', // blue-darken-4
     'on-primary': '#FFFFFF',
     'text-primary': undefined,
@@ -111,6 +117,8 @@ export const defaultTheme = {
     'on-background': '#FFFFFF', // white
     surface: '#121212',
     'on-surface': '#FFFFFF', // white
+    'surface-inverse': '#FFFFFF', // white
+    'on-surface-inverse': '#000000',
     primary: '#0D47A1', // blue-darken-4
     'on-primary': '#FFFFFF', // white
     'text-primary': '#42A5F5', // blue-lighten-1
@@ -254,6 +262,7 @@ const messages: Record<string, Record<string, string>> = {
     text: 'de texte',
     background: 'd\'arrière plan',
     surface: 'de surface',
+    'surface-inverse': 'de surface avec contraste inversé',
     primary: 'primaire',
     'text-primary': 'texte primaire',
     secondary: 'secondaire',
@@ -282,6 +291,7 @@ const messages: Record<string, Record<string, string>> = {
     text: 'text',
     background: 'background',
     surface: 'surface',
+    'surface-inverse': 'surface with inverted contrast',
     primary: 'primary',
     'text-primary': 'primary text',
     secondary: 'secondary',
@@ -320,7 +330,7 @@ export function getColorsWarnings (locale: 'en' | 'fr', colors: Colors, themeNam
     warnings.push(readableWarning(readableOptions, locale, textColor, `text-${color}`, colors.background, 'background', themeName))
     warnings.push(readableWarning(readableOptions, locale, textColor, `text-${color}`, colors.surface, 'surface', themeName))
   }
-  for (const color of ['background', 'surface', 'primary', 'secondary', 'accent', 'info', 'success', 'error', 'warning', 'admin']) {
+  for (const color of ['background', 'surface', 'surface-inverse', 'primary', 'secondary', 'accent', 'info', 'success', 'error', 'warning', 'admin']) {
     warnings.push(readableWarning(readableOptions, locale, colors[`on-${color}` as keyof Colors], 'text', colors[color as keyof Colors], color, themeName))
   }
   return warnings.filter(w => w !== undefined)
