@@ -16,6 +16,8 @@ export default {
     title: '',
     children: [
       { key: 'logo', if: '!context.simplifiedTheme' },
+      { key: 'bodyFontFamily', cols: 6, if: '!context.simplifiedTheme' },
+      { key: 'headingFontFamily', cols: 6, if: '!context.simplifiedTheme' },
       { key: 'bodyFontFamilyCss', cols: 6, if: '!context.simplifiedTheme' },
       { key: 'headingFontFamilyCss', cols: 6, if: '!context.simplifiedTheme' },
       'assistedMode',
