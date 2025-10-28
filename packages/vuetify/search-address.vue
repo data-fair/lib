@@ -24,7 +24,7 @@ import { ref, watch } from 'vue'
 import { ofetch } from 'ofetch'
 import { useDebounceFn } from '@vueuse/core'
 
-defineProps<{variant?: VAutocomplete['variant']}>()
+defineProps({variant: String as () => VAutocomplete['variant']})
 const emit = defineEmits(['selected'])
 const model = defineModel({ type: String })
 
