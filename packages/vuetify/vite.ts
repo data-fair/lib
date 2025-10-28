@@ -11,7 +11,8 @@ export const autoImports = [
     '@data-fair/lib-vuetify/owner-avatar.vue': [['default', 'dfOwnerAvatar']],
     '@data-fair/lib-vuetify/owner-pick.vue': [['default', 'dfOwnerPick']],
     '@data-fair/lib-vuetify/personal-menu.vue': [['default', 'dfPersonalMenu']],
-    '@data-fair/lib-vuetify/search-address.vue': [['default', 'dfSearchAddress']],
+    // I don't understand why but search-address.vue breaks some typescript checks
+    // '@data-fair/lib-vuetify/search-address.vue': [['default', 'dfSearchAddress']],
     '@data-fair/lib-vuetify/theme-switcher.vue': [['default', 'dfThemeSwitcher']],
     '@data-fair/lib-vuetify/tutorial-alert.vue': [['default', 'dfTutorialAlert']],
     '@data-fair/lib-vuetify/ui-notif-alert.vue': [['default', 'dfUiNotifAlert']],
