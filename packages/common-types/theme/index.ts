@@ -149,10 +149,10 @@ export const defaultTheme = {
 export const getTextColorsCss = (colors: Colors, theme: string) => {
   let css = ''
 
-  // by default give the text-primary color to links
+  // by default give the text-primary color to links with the "simple-link" class
   if (colors['text-primary']) {
     css += `
-.v-theme--${theme} a { color: ${colors['text-primary']} }`
+.v-theme--${theme} a.simple-link { color: ${colors['text-primary']} }`
   }
 
   for (const color of ['surface-inverse', 'primary', 'secondary', 'accent', 'error', 'info', 'success', 'warning', 'admin']) {
@@ -167,7 +167,7 @@ export const getTextColorsCss = (colors: Colors, theme: string) => {
     const onKey = `on-${color}` as keyof Colors
     if (colors[onKey]) {
       css += `
-.v-theme--${theme} .bg-${color} a { color: ${colors[onKey]} }`
+.v-theme--${theme} .bg-${color} a.simple-link { color: ${colors[onKey]} }`
     }
   }
   return css
