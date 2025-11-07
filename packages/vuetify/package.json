@@ -24,6 +24,7 @@
   "type": "module",
   "dependencies": {
     "@data-fair/lib-common-types": "^1.10.4",
-    "@mdi/js": "^7.4.47"
+    "@mdi/js": "^7.4.47",
+    "@vueuse/core": "^14.0.0"
   }
 }
