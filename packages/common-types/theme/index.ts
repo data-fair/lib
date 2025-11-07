@@ -148,12 +148,22 @@ export const defaultTheme = {
 
 export const getTextColorsCss = (colors: Colors, theme: string) => {
   let css = ''
-  for (const color of ['primary', 'secondary', 'accent', 'error', 'info', 'success', 'warning', 'admin']) {
-    const key = `text-${color}` as keyof Colors
-    if (colors[key]) {
+
+  // by default give the text-primary color to links
+  if (colors['text-primary']) {
+    css += `
+.v-theme--${theme} a { color: ${colors['text-primary']} }`
+  }
+
+  for (const color of ['surface-inverse', 'primary', 'secondary', 'accent', 'error', 'info', 'success', 'warning', 'admin']) {
+    // create a text-color class to apply text-* color variants
+    const textKey = `text-${color}` as keyof Colors
+    if (colors[textKey]) {
       css += `
-.v-theme--${theme} .text-${color}:not(.v-btn--disabled) { color: ${colors[key]}!important; }`
+.v-theme--${theme} .text-${color}:not(.v-btn--disabled) { color: ${colors[textKey]}!important; }`
     }
+
+    // apply the on-* color variants to links (they are ignored by vuetify by default)
     const onKey = `on-${color}` as keyof Colors
     if (colors[onKey]) {
       css += `
