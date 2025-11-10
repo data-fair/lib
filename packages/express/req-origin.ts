@@ -5,7 +5,8 @@ import { httpError } from '@data-fair/lib-utils/http-errors.js'
 export const reqHost = (req: Request) => {
   const forwardedHost = req.get('x-forwarded-host')
   if (!forwardedHost) throw new Error('The "X-Forwarded-Host" header is required, please check the configuration of the reverse-proxy.')
-  return forwardedHost.split(',')[0]
+  // ignore the port that is sometimes added to the host header
+  return forwardedHost.split(',')[0].split(':')[0]
 }
 
 /**
