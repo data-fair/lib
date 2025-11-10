@@ -5,8 +5,7 @@ import { httpError } from '@data-fair/lib-utils/http-errors.js'
 export const reqHost = (req: Request) => {
   const forwardedHost = req.get('x-forwarded-host')
   if (!forwardedHost) throw new Error('The "X-Forwarded-Host" header is required, please check the configuration of the reverse-proxy.')
-  // ignore the port that is sometimes added to the host header
-  return forwardedHost.split(',')[0].split(':')[0]
+  return forwardedHost.split(',')[0]
 }
 
 /**
@@ -17,15 +16,19 @@ export const reqHost = (req: Request) => {
  *  - limiting the accepted headers and making them required removes any ambiguity that could be exploited
  */
 export const reqOrigin = (req: Request) => {
-  const host = reqHost(req)
+  let [host, port] = reqHost(req).split(':')
 
   let forwardedProto = req.get('x-forwarded-proto')
   if (!forwardedProto) throw new Error('The "X-Forwarded-Proto" header is required, please check the configuration of the reverse-proxy.')
   forwardedProto = forwardedProto.split(',')[0]
 
   const origin = `${forwardedProto}://${host}`
-  let port = req.get('x-forwarded-port')
-  if (port) port = port.split(',')[0]
+
+  // we didn't make x-forwarded-port required contrary to x-forwarded-host and x-forwarded-proto
+  // sometimes the port is passed as part of x-forwarded-host
+  const forwardedPort = req.get('x-forwarded-port')
+  if (forwardedPort) port = forwardedPort.split(',')[0]
+
   if (port && !(port === '443' && forwardedProto === 'https') && !(port === '80' && forwardedProto === 'http')) {
     return origin + ':' + port
   } else {
