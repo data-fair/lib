@@ -114,10 +114,7 @@ function createStaticMiddleware (directory: string): import('express').RequestHa
  * serve a built SPA from a directory
  */
 export async function createSpaMiddleware (directory: string, uiConfig: any, options?: ServeSpaOptions): Promise<import('express').RequestHandler> {
-  const uiConfigStr = serialize(uiConfig)
-  const uiConfigJs = `window.__UI_CONFIG=${uiConfigStr}`
-  const uiConfigPath = `/${crypto.createHash('md5').update(uiConfigStr).digest('hex')}-ui-config.js`
-
+  const { uiConfigStr, uiConfigJs, uiConfigPath } = prepareUiConfig(uiConfig)
   const baseParams = { UI_CONFIG: uiConfigStr, UI_CONFIG_PATH: uiConfigPath }
 
   const staticMiddleware = createStaticMiddleware(directory)
@@ -144,4 +141,11 @@ export async function createSpaMiddleware (directory: string, uiConfig: any, opt
       })
     }
   }
+}
+
+export function prepareUiConfig (uiConfig: any) {
+  const uiConfigStr = serialize(uiConfig)
+  const uiConfigJs = `window.__UI_CONFIG=${uiConfigStr}`
+  const uiConfigPath = `/${crypto.createHash('md5').update(uiConfigStr).digest('hex')}-ui-config.js`
+  return { uiConfigStr, uiConfigJs, uiConfigPath }
 }
