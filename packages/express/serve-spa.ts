@@ -1,11 +1,12 @@
 // TODO: use sirv https://www.npmjs.com/package/sirv ?
 
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import microTemplate from '@data-fair/lib-utils/micro-template.js'
 import { static as expressStatic, type Request } from 'express'
 import { reqSitePath, reqSiteUrl, reqOrigin } from '@data-fair/lib-express'
+import serialize from 'serialize-javascript'
 
 type CSPDirectives = Record<string, string | string[]>
 type CSPHeader = string | CSPDirectives | boolean
@@ -57,8 +58,7 @@ type ServeSpaOptions = {
   getSiteExtraParams?: (siteUrl: string) => Promise<Record<string, string>>
 }
 
-async function createHtmlMiddleware (directory: string, uiConfig: any, options?: ServeSpaOptions): Promise<import('express').RequestHandler> {
-  const uiConfigStr = JSON.stringify(uiConfig)
+async function createHtmlMiddleware (directory: string, baseParams: Record<string, string>, options?: ServeSpaOptions): Promise<import('express').RequestHandler> {
   const rawHtml = await readFile(join(directory, 'index.html'), 'utf8')
   const htmlCache: Record<string, string> = {}
   const cspHeaderOption = options?.csp?.header
@@ -67,7 +67,7 @@ async function createHtmlMiddleware (directory: string, uiConfig: any, options?:
 
   return async (req, res, next) => {
     const sitePath = options?.ignoreSitePath ? '' : reqSitePath(req)
-    let html = htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(rawHtml, { ...options?.extraHtmlTemplateParams, SITE_PATH: sitePath, UI_CONFIG: uiConfigStr })
+    let html = htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(rawHtml, { ...options?.extraHtmlTemplateParams, ...baseParams, SITE_PATH: sitePath })
 
     if (options?.getSiteExtraParams) {
       const siteExtraParams = await options.getSiteExtraParams(options?.ignoreSitePath ? reqOrigin(req) : reqSiteUrl(req))
@@ -92,11 +92,12 @@ async function createHtmlMiddleware (directory: string, uiConfig: any, options?:
   }
 }
 
+// source code should always be hashed, a long cache duration is ok
+const sourceMaxAge = 60 * 60 * 24 * 10 // 10 days
+// static assets, images, etc are generally not hashed but a short cache is still ok
+const fileMaxAge = 60 * 5 // 5 minutes
+
 function createStaticMiddleware (directory: string): import('express').RequestHandler {
-  // source code should always be hashed, a long cache duration is ok
-  const sourceMaxAge = 60 * 60 * 24 * 10 // 10 days
-  // static assets, images, etc are generally not hashed but a short cache is still ok
-  const fileMaxAge = 60 * 5 // 5 minutes
   return expressStatic(directory, {
     index: false,
     setHeaders: (res, path) => {
@@ -113,8 +114,14 @@ function createStaticMiddleware (directory: string): import('express').RequestHa
  * serve a built SPA from a directory
  */
 export async function createSpaMiddleware (directory: string, uiConfig: any, options?: ServeSpaOptions): Promise<import('express').RequestHandler> {
+  const uiConfigStr = serialize(uiConfig)
+  const uiConfigJs = `window.__UI_CONFIG=${uiConfigStr}`
+  const uiConfigPath = `/${crypto.createHash('md5').update(uiConfigStr).digest('hex')}-ui-config.js`
+
+  const baseParams = { UI_CONFIG: uiConfigStr, UI_CONFIG_PATH: uiConfigPath }
+
   const staticMiddleware = createStaticMiddleware(directory)
-  const htmlMiddleware = await createHtmlMiddleware(directory, uiConfig, options)
+  const htmlMiddleware = await createHtmlMiddleware(directory, baseParams, options)
   return (req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(404).send()
     // force buffering, necessary for caching of source files in the reverse proxy
@@ -122,6 +129,10 @@ export async function createSpaMiddleware (directory: string, uiConfig: any, opt
 
     if (req.url.startsWith('/index.html')) {
       htmlMiddleware(req, res, next)
+    } if (req.url === uiConfigPath) {
+      res.type('application/js')
+      res.setHeader('Cache-Control', `public, max-age=${sourceMaxAge}, immutable`)
+      res.send(uiConfigJs)
     } else {
       staticMiddleware(req, res, (err) => {
         if (err) return next(err)
