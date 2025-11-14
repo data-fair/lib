@@ -262,12 +262,10 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   if (!ssr) {
     // sessionData is also stored in localStorage as a way to access it in simpler pages that do not require use-session
     // and in order to listen to storage event from other contexts and sync session info accross windows and tabs
-    if (!ssr) {
-      const storageListener = (event: StorageEvent) => {
-        if (event.key === 'sd-session' + options.sitePath) readState()
-      }
-      window.addEventListener('storage', storageListener)
+    const storageListener = (event: StorageEvent) => {
+      if (event.key === 'sd-session' + options.sitePath) readState()
     }
+    window.addEventListener('storage', storageListener)
 
     // we cannot use onUnmounted here or we get warnings "onUnmounted is called when there is no active component instance to be associated with. "
     // TODO: should we have another cleanup mechanism ?
@@ -392,7 +390,12 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   }
 
   const refreshSiteInfo = async () => {
-    const siteInfo = await customFetch(`${options.directoryUrl}/api/sites/_public`) ?? null
+    console.warn('@data-fair/lib-vue/session refreshSiteInfo is deprecated')
+    const siteInfo = await customFetch(`${options.directoryUrl}/api/sites/_public`)
+    setSiteInfo(siteInfo)
+  }
+
+  const setSiteInfo = (siteInfo: any) => {
     if (siteInfo.theme) {
       fullSite.value = siteInfo
       const partialSite: SiteInfo = {
@@ -420,6 +423,9 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   }
 
   if (options.siteInfo) await refreshSiteInfo()
+
+  // @ts-ignore
+  if (!ssr && window.__PUBLIC_SITE_INFO) setSiteInfo(window.__PUBLIC_SITE_INFO)
 
   // immediately performs a keepalive, but only on top windows (not iframes or popups)
   // and only if it was not done very recently (maybe from a refreshed page next to this one)
