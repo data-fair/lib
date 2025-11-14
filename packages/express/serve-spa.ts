@@ -123,11 +123,10 @@ export async function createSpaMiddleware (directory: string, uiConfig: any, opt
     if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(404).send()
     // force buffering, necessary for caching of source files in the reverse proxy
     res.setHeader('X-Accel-Buffering', 'yes')
-
     if (req.url.startsWith('/index.html')) {
       htmlMiddleware(req, res, next)
-    } if (req.url === uiConfigPath) {
-      res.type('application/js')
+    } else if (req.url === uiConfigPath) {
+      res.type('application/javascript')
       res.setHeader('Cache-Control', `public, max-age=${sourceMaxAge}, immutable`)
       res.send(uiConfigJs)
     } else {
