@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import microTemplate from '@data-fair/lib-utils/micro-template.js'
 import { static as expressStatic, type Request } from 'express'
-import { reqSitePath } from '@data-fair/lib-express'
+import { reqSitePath, reqSiteUrl, reqOrigin } from '@data-fair/lib-express'
 
 type CSPDirectives = Record<string, string | string[]>
 type CSPHeader = string | CSPDirectives | boolean
@@ -53,7 +53,8 @@ type ServeSpaOptions = {
   csp?: {
     header: CSPHeader | ((req: Request) => CSPHeader),
     nonce?: boolean
-  }
+  },
+  getSiteExtraParams?: (siteUrl: string) => Promise<Record<string, string>>
 }
 
 async function createHtmlMiddleware (directory: string, uiConfig: any, options?: ServeSpaOptions): Promise<import('express').RequestHandler> {
@@ -64,9 +65,14 @@ async function createHtmlMiddleware (directory: string, uiConfig: any, options?:
   let rawCSPHeader: string | undefined
   if (cspHeaderOption && typeof cspHeaderOption !== 'function') rawCSPHeader = getCSPHeader(cspHeaderOption, options.csp?.nonce)
 
-  return (req, res, next) => {
+  return async (req, res, next) => {
     const sitePath = options?.ignoreSitePath ? '' : reqSitePath(req)
     let html = htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(rawHtml, { ...options?.extraHtmlTemplateParams, SITE_PATH: sitePath, UI_CONFIG: uiConfigStr })
+
+    if (options?.getSiteExtraParams) {
+      const siteExtraParams = await options.getSiteExtraParams(options?.ignoreSitePath ? reqOrigin(req) : reqSiteUrl(req))
+      html = microTemplate(html, siteExtraParams)
+    }
 
     if (cspHeaderOption && typeof cspHeaderOption === 'function') {
       rawCSPHeader = getCSPHeader(cspHeaderOption(req), options.csp?.nonce)
