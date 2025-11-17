@@ -29,8 +29,8 @@ export const defaultCSPDirectives = {
   'script-src-attr': "'none'",
   'style-src': "'self' 'unsafe-inline'", // adjusted because we always self-host styles
   // 'upgrade-insecure-requests': '', // not necessary and breaks on simple http instances
-  'worker-src': 'blob:', // necessary for maplibre
-  'child-src': 'blob:', // same
+  'worker-src': "'self' blob:", // necessary for maplibre
+  'child-src': "'self' blob:", // same
   'connect-src': "'self' https://koumoul.com" // used by fetch, xhr, etc. we allow specifically koumoul.com as it contains icons datasets for example
 }
 export const defaultCSPHeader = getCSPHeaderFromDirectives(defaultCSPDirectives)
