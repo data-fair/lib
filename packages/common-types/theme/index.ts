@@ -152,7 +152,7 @@ export const getTextColorsCss = (colors: Colors, theme: string) => {
   // by default give the text-primary color to links with the "simple-link" class
   if (colors['text-primary']) {
     css += `
-.v-theme--${theme} a.simple-link { color: ${colors['text-primary']} }`
+.v-theme--${theme} a.simple-link { color: ${colors['text-primary']}; text-decoration: none; }`
   }
 
   for (const color of ['surface-inverse', 'primary', 'secondary', 'accent', 'error', 'info', 'success', 'warning', 'admin']) {
