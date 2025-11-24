@@ -3,6 +3,16 @@
 import type { SchemaObject } from 'ajv'
 import clone from './clone.js'
 
+const resolvePath = (obj: any, path: string) => {
+  const pathParts = path.split('/').filter(Boolean)
+  let resolved = obj
+  for (let i = 0; i < pathParts.length; i++) {
+    resolved = resolved[pathParts[i]]
+    if (resolved === undefined) throw new Error('failed to resolve ' + pathParts.slice(0, i + 1).join('/'))
+  }
+  return resolved
+}
+
 class SchemaWrapper {
   schema: SchemaObject
 
@@ -174,6 +184,7 @@ export const resolveXI18n = (schema: Record<string, any>, locale: string, defaul
 
 // recurse a JSON object and transform absolute refs to local refs in $defs
 export const makeLocalDefs = (schemas: Record<string, any>, schemaId: string) => {
+  if (!schemas[schemaId]) throw new Error('unknown schema ' + schemaId)
   const schema = clone(schemas[schemaId])
   const localDefsSchemas = {}
   recurseLocalDefs(localDefsSchemas, schemas, schemaId, schema)
@@ -187,16 +198,21 @@ const recurseLocalDefs = (
   schemaId: string,
   schemaFragment: Record<string, any>
 ) => {
+  if (!schemaFragment) throw new Error('failed to resolve ' + schemaId)
   for (const [key, value] of Object.entries(schemaFragment)) {
     if (key === '$ref') {
       if (!value.startsWith('#')) {
         const fullId = new URL(value, schemaId).href
-        const refId = value.split('/').pop()
-        if (!localDefsSchemas[refId]) {
-          localDefsSchemas[refId] = clone(schemas[fullId])
-          recurseLocalDefs(localDefsSchemas, schemas, fullId, localDefsSchemas[refId])
+        const [refSchemaId, refSchemaPath] = fullId.split('#')
+        const refName = value.split('/').pop()
+        if (!localDefsSchemas[refName]) {
+          let refSchema = schemas[refSchemaId]
+          if (!refSchema) throw new Error('failed to resolve schema ' + refSchemaId)
+          if (refSchemaPath) refSchema = resolvePath(refSchema, refSchemaPath)
+          localDefsSchemas[refName] = clone(refSchema)
+          recurseLocalDefs(localDefsSchemas, schemas, fullId, localDefsSchemas[refName])
         }
-        schemaFragment[key] = `#/$defs/${refId}`
+        schemaFragment[key] = `#/$defs/${refName}`
       }
     } else if (key === '$defs') {
       for (const [defKey, defValue] of Object.entries(value as Record<string, any>)) {

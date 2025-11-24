@@ -70,7 +70,8 @@ describe('json-schema utility functions', () => {
         properties: {
           a: { type: 'string' },
           b: { $ref: 'http://test.com/schema2' },
-          c: { $ref: '#/$defs/c' }
+          c: { $ref: '#/$defs/c' },
+          d: { $ref: 'http://test.com/schema3#/$defs/g' },
         },
         $defs: {
           c: { type: 'string' }
@@ -87,6 +88,9 @@ describe('json-schema utility functions', () => {
         type: 'object',
         properties: {
           f: { type: 'string' }
+        },
+        $defs: {
+          g: { type: 'string' }
         }
       }
     }, 'http://test.com/schema1')
@@ -95,6 +99,7 @@ describe('json-schema utility functions', () => {
     assert.ok(schema.$defs.schema2)
     assert.ok(schema.$defs.schema3)
     assert.ok(schema.$defs.c)
+    assert.ok(schema.$defs.d)
   })
 
   it('should create a Patch schema from a base schema', async () => {
