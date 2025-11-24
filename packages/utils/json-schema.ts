@@ -219,7 +219,7 @@ const recurseLocalDefs = (
         localDefsSchemas[defKey] = clone(defValue)
         recurseLocalDefs(localDefsSchemas, schemas, schemaId, localDefsSchemas[defKey])
       }
-    } else if (typeof value === 'object') {
+    } else if (typeof value === 'object' && value !== null) {
       recurseLocalDefs(localDefsSchemas, schemas, schemaId, value)
     }
   }
