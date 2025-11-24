@@ -118,9 +118,6 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
       continue
     }
 
-    const resolvedSchema = (await refParser.dereference(schema, $refOptions)) as any
-    if (resolvedSchema.$id) resolvedSchema.$id += '-resolved'
-
     const schemaExports: SchemaExport[] = schema['x-exports'] || ['types', 'validate']
     console.log(`  exports: ${JSON.stringify(schemaExports)}`)
     let importsCode = '/* eslint-disable */\n\n'
@@ -128,6 +125,12 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     let dtsCode = ''
     if (existsSync(path.join(dir, '.type'))) rmSync(path.join(dir, '.type'), { recursive: true })
     mkdirSync(path.join(dir, '.type'))
+
+    let resolvedSchema
+    if (schemaExports.includes('resolvedSchema') || schemaExports.includes('resolvedSchemaJson')) {
+      resolvedSchema = (await refParser.dereference(schema, $refOptions)) as any
+      if (resolvedSchema.$id) resolvedSchema.$id += '-resolved'
+    }
 
     code += `
 export const schemaExports = ${JSON.stringify(schemaExports, null, 2)}
