@@ -3,7 +3,6 @@
 import { readFileSync, writeFileSync, existsSync, rmSync, mkdirSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import path from 'node:path'
-import { inspect } from 'node:util'
 import { pascalCase } from 'change-case'
 import { program } from 'commander'
 import clone from '@data-fair/lib-utils/clone.js'
@@ -16,10 +15,8 @@ type TypesBuilderOptions = { mjs: boolean, vjsfDir?: string }
 type FileRef = { url: string }
 type SchemaExport = ('types' | 'validate' | 'stringify' | 'schema' | 'resolvedSchema' | 'resolvedSchemaJson' | 'localDefsSchema' | 'localDefsSchemaJson' | 'vjsf')
 
-// we use inspect for simple predictable stringify tolerant to circular structure
-const inspectOpts = { depth: Infinity, maxArrayLength: Infinity, maxStringLength: Infinity, breakLength: Infinity, compact: Infinity, sorted: true }
 const hashObject = (obj: any) => {
-  return createHash('md5').update(inspect(obj, inspectOpts)).digest('hex')
+  return createHash('md5').update(JSON.stringify(obj)).digest('hex')
 }
 
 const main = async (dir: string, options: TypesBuilderOptions) => {
@@ -71,6 +68,7 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     schemas[themeSchema.$id] = themeSchema
   }
 
+  const schemaIds: Record<string, string> = {}
   for (const [dir, key, fileName] of dirs) {
     const filePath = path.join(dir, fileName)
     let schema
@@ -79,6 +77,7 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     schema.$id = schema.$id || key
     if (schemas[schema.$id]) throw new Error(`duplicate schema key ${schema.$id}`)
     schemas[schema.$id] = schema
+    schemaIds[dir] = schema.$id
   }
 
   const localResolver = {
@@ -102,25 +101,25 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     existingHashes = JSON.parse(readFileSync('node_modules/.cache/@data-fair/lib-types-builder/hashes.json', 'utf8'))
   } catch (err: any) {}
 
-  for (const [dir, key, fileName] of dirs) {
+  for (const [dir, key] of dirs) {
     console.log(`compile ${key} in ${dir}`)
 
-    const filePath = path.join(dir, fileName)
-    let schema
-    if (fileName === 'schema.json') schema = JSON.parse(readFileSync(filePath, 'utf8'))
-    else schema = clone((await import(filePath)).default)
+    const schema = schemas[schemaIds[dir]]
     if (schema.$id) console.log(`  $id: ${JSON.stringify(schema.$id)}`)
     const mainTypeName = pascalCase(schema.title || key)
 
     const $refOptions = { resolve: { local: localResolver } }
     const refParser = await import('@bcherny/json-schema-ref-parser')
-    const resolvedSchema = (await refParser.dereference(schema, $refOptions)) as any
-    if (resolvedSchema.$id) resolvedSchema.$id += '-resolved'
-    hashes[dir] = hashObject(resolvedSchema)
+    const localDefsSchema = makeLocalDefs(schemas, schema.$id)
+
+    hashes[dir] = hashObject(localDefsSchema)
     if (hashes[dir] === existingHashes?.[dir]) {
       console.log('  no change in schema, use previously built version')
       continue
     }
+
+    const resolvedSchema = (await refParser.dereference(schema, $refOptions)) as any
+    if (resolvedSchema.$id) resolvedSchema.$id += '-resolved'
 
     const schemaExports: SchemaExport[] = schema['x-exports'] || ['types', 'validate']
     console.log(`  exports: ${JSON.stringify(schemaExports)}`)
@@ -129,11 +128,6 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     let dtsCode = ''
     if (existsSync(path.join(dir, '.type'))) rmSync(path.join(dir, '.type'), { recursive: true })
     mkdirSync(path.join(dir, '.type'))
-
-    let localDefsSchema
-    if (schemaExports.includes('localDefsSchema') || schemaExports.includes('localDefsSchemaJson')) {
-      localDefsSchema = makeLocalDefs(schemas, schema.$id)
-    }
 
     code += `
 export const schemaExports = ${JSON.stringify(schemaExports, null, 2)}

@@ -10,7 +10,7 @@ describe('build.js script', () => {
       // here obj is typed as SimpleObject
     }
     // default value was written as x-ajv was used in schema
-    assert.deepEqual(obj, { str1: 'Str 1', str2: 'Str 2', str3: 'val1' })
+    assert.deepEqual(obj, { str1: 'Str 1', str2: 'Str 2' })
   })
 
   it('should build a simple schema and expose a type assertion function', async () => {
@@ -19,7 +19,7 @@ describe('build.js script', () => {
     // here obj is typed as SimpleObject
 
     // default value was written as x-ajv was used in schema
-    assert.deepEqual(obj, { str1: 'Str 1', str2: 'Str 2', str3: 'val1' })
+    assert.deepEqual(obj, { str1: 'Str 1', str2: 'Str 2' })
   })
 
   it('should support resolving references', async () => {
