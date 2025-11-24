@@ -3,6 +3,7 @@
 import { readFileSync, writeFileSync, existsSync, rmSync, mkdirSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import path from 'node:path'
+import { inspect } from 'node:util'
 import { pascalCase } from 'change-case'
 import { program } from 'commander'
 import clone from '@data-fair/lib-utils/clone.js'
@@ -14,6 +15,12 @@ import { ensureDir } from '@data-fair/lib-node/fs.js'
 type TypesBuilderOptions = { mjs: boolean, vjsfDir?: string }
 type FileRef = { url: string }
 type SchemaExport = ('types' | 'validate' | 'stringify' | 'schema' | 'resolvedSchema' | 'resolvedSchemaJson' | 'localDefsSchema' | 'localDefsSchemaJson' | 'vjsf')
+
+// we use inspect for simple predictable stringify tolerant to circular structure
+const inspectOpts = { depth: Infinity, maxArrayLength: Infinity, maxStringLength: Infinity, breakLength: Infinity, compact: Infinity, sorted: true }
+const hashObject = (obj: any) => {
+  return createHash('md5').update(inspect(obj, inspectOpts)).digest('hex')
+}
 
 const main = async (dir: string, options: TypesBuilderOptions) => {
   let pJsonName
@@ -109,7 +116,7 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     const refParser = await import('@bcherny/json-schema-ref-parser')
     const resolvedSchema = (await refParser.dereference(schema, $refOptions)) as any
     if (resolvedSchema.$id) resolvedSchema.$id += '-resolved'
-    hashes[dir] = createHash('md5').update(JSON.stringify(resolvedSchema)).digest('hex')
+    hashes[dir] = hashObject(resolvedSchema)
     if (hashes[dir] === existingHashes?.[dir]) {
       console.log('  no change in schema, use previously built version')
       continue
