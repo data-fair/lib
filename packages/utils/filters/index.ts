@@ -1,7 +1,9 @@
 // small tools to transform objects containing simple data filter into elasticsearch querystring syntax
 
-import type { Filter } from './.type/index.js'
+import type { Filtres } from './.type/index.js'
 export * from './.type/index.js'
+
+type Filter = Filtres[0]
 
 export function filter2qs (filter: Filter, locale = 'fr'): string | null {
   if (typeof filter === 'string') return filter
