@@ -92,7 +92,7 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
   const hashes: Record<string, string> = {}
   let existingHashes: Record<string, string> | undefined
   try {
-    existingHashes = JSON.parse(readFileSync('node_modules/.cache/hashes.json', 'utf8'))
+    existingHashes = JSON.parse(readFileSync('node_modules/.cache/@data-fair/lib-types-builder/hashes.json', 'utf8'))
   } catch (err: any) {}
 
   for (const [dir, key, fileName] of dirs) {
@@ -356,8 +356,8 @@ const emit = defineEmits(emits)
     }
   }
 
-  await ensureDir('node_modules/.cache')
-  writeFileSync('node_modules/.cache/hashes.json', JSON.stringify(hashes))
+  await ensureDir('node_modules/.cache/@data-fair/lib-types-builder')
+  writeFileSync('node_modules/.cache/@data-fair/lib-types-builder/hashes.json', JSON.stringify(hashes))
 }
 
 program

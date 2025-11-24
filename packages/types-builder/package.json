@@ -20,7 +20,7 @@
     "@bcherny/json-schema-ref-parser": "^10.0.5-fork",
     "@data-fair/lib-common-types": "^1.14.0",
     "@data-fair/lib-utils": "^1.4.0",
-    "@data-fair/lib-node": "^2.10.0",
+    "@data-fair/lib-node": "^2.10.1",
     "ajv": "^8.17.1",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^3.0.1",
