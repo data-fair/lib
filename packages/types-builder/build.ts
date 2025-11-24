@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 
 import { readFileSync, writeFileSync, existsSync, rmSync, mkdirSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import path from 'node:path'
 import { pascalCase } from 'change-case'
 import { program } from 'commander'
 import clone from '@data-fair/lib-utils/clone.js'
 import { fdir as Fdir } from 'fdir'
 import { makeLocalDefs } from '@data-fair/lib-utils/json-schema.js'
+import { ensureDir } from '@data-fair/lib-node/fs.js'
+// import { ensureDir } from '@data-fair/lib-node/fs.js'
 
 type TypesBuilderOptions = { mjs: boolean, vjsfDir?: string }
 type FileRef = { url: string }
@@ -86,14 +89,32 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     }
   }
 
+  const hashes: Record<string, string> = {}
+  let existingHashes: Record<string, string> | undefined
+  try {
+    existingHashes = JSON.parse(readFileSync('node_modules/.cache/hashes.json', 'utf8'))
+  } catch (err: any) {}
+
   for (const [dir, key, fileName] of dirs) {
     console.log(`compile ${key} in ${dir}`)
+
     const filePath = path.join(dir, fileName)
     let schema
     if (fileName === 'schema.json') schema = JSON.parse(readFileSync(filePath, 'utf8'))
     else schema = clone((await import(filePath)).default)
     if (schema.$id) console.log(`  $id: ${JSON.stringify(schema.$id)}`)
     const mainTypeName = pascalCase(schema.title || key)
+
+    const $refOptions = { resolve: { local: localResolver } }
+    const refParser = await import('@bcherny/json-schema-ref-parser')
+    const resolvedSchema = (await refParser.dereference(schema, $refOptions)) as any
+    if (resolvedSchema.$id) resolvedSchema.$id += '-resolved'
+    hashes[dir] = createHash('md5').update(JSON.stringify(resolvedSchema)).digest('hex')
+    if (hashes[dir] === existingHashes?.[dir]) {
+      console.log('  no change in schema, use previously built version')
+      continue
+    }
+
     const schemaExports: SchemaExport[] = schema['x-exports'] || ['types', 'validate']
     console.log(`  exports: ${JSON.stringify(schemaExports)}`)
     let importsCode = '/* eslint-disable */\n\n'
@@ -101,14 +122,6 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     let dtsCode = ''
     if (existsSync(path.join(dir, '.type'))) rmSync(path.join(dir, '.type'), { recursive: true })
     mkdirSync(path.join(dir, '.type'))
-
-    const $refOptions = { resolve: { local: localResolver } }
-    let resolvedSchema
-    if (schemaExports.includes('resolvedSchema') || schemaExports.includes('resolvedSchemaJson')) {
-      const refParser = await import('@bcherny/json-schema-ref-parser')
-      resolvedSchema = (await refParser.dereference(schema, $refOptions)) as any
-      if (resolvedSchema.$id) resolvedSchema.$id += '-resolved'
-    }
 
     let localDefsSchema
     if (schemaExports.includes('localDefsSchema') || schemaExports.includes('localDefsSchemaJson')) {
@@ -342,6 +355,9 @@ const emit = defineEmits(emits)
       writeFileSync(dtsIndexFilePath, `export * from './.type/index.${options.mjs ? 'mjs' : 'js'}'\n`)
     }
   }
+
+  await ensureDir('node_modules/.cache')
+  writeFileSync('node_modules/.cache/hashes.json', JSON.stringify(hashes))
 }
 
 program
