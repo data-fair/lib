@@ -96,10 +96,11 @@ describe('json-schema utility functions', () => {
     }, 'http://test.com/schema1')
     assert.equal(schema.properties.b.$ref, '#/$defs/schema2')
     assert.equal(schema.properties.c.$ref, '#/$defs/c')
+    assert.equal(schema.properties.d.$ref, '#/$defs/g')
     assert.ok(schema.$defs.schema2)
     assert.ok(schema.$defs.schema3)
     assert.ok(schema.$defs.c)
-    assert.ok(schema.$defs.d)
+    assert.ok(schema.$defs.g)
   })
 
   it('should create a Patch schema from a base schema', async () => {
