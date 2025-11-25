@@ -27,7 +27,7 @@ export const defaultCSPDirectives = {
   'object-src': "'none'",
   'script-src': "'self'",
   'script-src-attr': "'none'",
-  'style-src': "'self' 'unsafe-inline'", // adjusted because we always self-host styles
+  'style-src': "'self' 'unsafe-inline'", // adjusted because we always self-host styles, unsafe-inline is mostly for vuetify
   // 'upgrade-insecure-requests': '', // not necessary and breaks on simple http instances
   'worker-src': "'self' blob:", // necessary for maplibre
   'child-src': "'self' blob:", // same
@@ -36,9 +36,9 @@ export const defaultCSPDirectives = {
 export const defaultCSPHeader = getCSPHeaderFromDirectives(defaultCSPDirectives)
 export const defaultNonceCSPDirectives = {
   ...defaultCSPDirectives,
-  'default-src': "'nonce-{NONCE}' 'self'",
-  'script-src': "'nonce-{NONCE}' 'self'",
-  'style-src': "'nonce-{NONCE}' 'self'"
+  'default-src': "'nonce-{NONCE}'",
+  'script-src': "'nonce-{NONCE}'",
+  'style-src': "'nonce-{NONCE}'"
 }
 export const defaultNonceCSPHeader = getCSPHeaderFromDirectives(defaultNonceCSPDirectives)
 
