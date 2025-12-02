@@ -7,6 +7,7 @@ import microTemplate from '@data-fair/lib-utils/micro-template.js'
 import { static as expressStatic, type Request } from 'express'
 import { reqSitePath, reqSiteUrl, reqOrigin } from '@data-fair/lib-express'
 import serialize from 'serialize-javascript'
+import axios from '@data-fair/lib-node/axios.js'
 
 type CSPDirectives = Record<string, string | string[]>
 type CSPHeader = string | CSPDirectives | boolean
@@ -50,6 +51,7 @@ export function getCSPHeader (cspHeader: CSPHeader, nonce?: boolean) {
 
 type ServeSpaOptions = {
   ignoreSitePath?: boolean,
+  privateDirectoryUrl?: string,
   extraHtmlTemplateParams?: Record<string, string>
   csp?: {
     header: CSPHeader | ((req: Request) => CSPHeader),
@@ -69,9 +71,14 @@ async function createHtmlMiddleware (directory: string, baseParams: Record<strin
     const sitePath = options?.ignoreSitePath ? '' : reqSitePath(req)
     let html = htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(rawHtml, { ...options?.extraHtmlTemplateParams, ...baseParams, SITE_PATH: sitePath })
 
+    const siteUrl = options?.ignoreSitePath ? reqOrigin(req) : reqSiteUrl(req)
     if (options?.getSiteExtraParams) {
-      const siteExtraParams = await options.getSiteExtraParams(options?.ignoreSitePath ? reqOrigin(req) : reqSiteUrl(req))
+      const siteExtraParams = await options.getSiteExtraParams(siteUrl)
       html = microTemplate(html, siteExtraParams)
+    }
+    if (options?.privateDirectoryUrl) {
+      const hashes = await getSiteHashes(options.privateDirectoryUrl, siteUrl)
+      html = microTemplate(html, hashes)
     }
 
     if (cspHeaderOption && typeof cspHeaderOption === 'function') {
@@ -147,4 +154,25 @@ export function prepareUiConfig (uiConfig: any) {
   const uiConfigJs = `window.__UI_CONFIG=${uiConfigStr}`
   const uiConfigPath = `/${crypto.createHash('md5').update(uiConfigStr).digest('hex')}-ui-config.js`
   return { uiConfigStr, uiConfigJs, uiConfigPath }
+}
+
+type Hashes = { THEME_CSS_HASH: string, PUBLIC_SITE_INFO_HASH: string }
+const cache: Record<string, { hashes: Promise<Hashes>, ts: number }> = {}
+
+const minuteMS = 1000 * 60
+
+const getSiteHashes = async (privateDirectoryUrl: string, siteUrl: string) => {
+  const now = new Date().getTime()
+  if (!cache[siteUrl] || cache[siteUrl].ts < (now - minuteMS)) {
+    const url = new URL(siteUrl)
+    const hashes = axios.get<{ publicInfo: string, themeCss: string }>(privateDirectoryUrl + '/simple-directory/api/sites/_hashes', {
+      headers: {
+        'x-forwarded-proto': url.protocol.slice(0, -1),
+        'x-forwarded-host': url.hostname,
+        'x-forwarded-port': url.port
+      }
+    }).then(r => ({ THEME_CSS_HASH: r.data.publicInfo + '/', PUBLIC_SITE_INFO_HASH: r.data.themeCss + '/' }))
+    cache[siteUrl] = { ts: now, hashes }
+  }
+  return cache[siteUrl].hashes
 }
