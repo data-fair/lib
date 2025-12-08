@@ -108,7 +108,7 @@ function createStaticMiddleware (directory: string): import('express').RequestHa
   return expressStatic(directory, {
     index: false,
     setHeaders: (res, path) => {
-      if (path.endsWith('.js') || path.endsWith('.css')) {
+      if (path.endsWith('.js') || path.endsWith('.css') || path.endsWith('.woff2')) {
         res.setHeader('Cache-Control', `public, max-age=${sourceMaxAge}, immutable`)
       } else {
         res.setHeader('Cache-Control', 'public, max-age=' + fileMaxAge)
