@@ -32,6 +32,7 @@
 
 import type { Sort, SortDirection } from 'mongodb'
 import type { Request } from 'express'
+import httpError from '@data-fair/lib-utils/http-errors.js'
 
 export function mongoSort (sortParam: any): Sort {
   const sort: Record<string, SortDirection> = {}
@@ -44,7 +45,9 @@ export function mongoSort (sortParam: any): Sort {
     const key = toks[0]
     const val = toks[1]
     if (val !== undefined) {
-      return { [key]: Number(toks[1] ?? 1) }
+      const order = Number(toks[1] ?? 1)
+      if (order !== 1 && order !== -1) throw httpError(400, `bad sort order "${s}"`)
+      return { [key]: order }
     }
     if (key.startsWith('-')) {
       return { [key.slice(1)]: -1 }
