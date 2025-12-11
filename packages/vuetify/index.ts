@@ -47,6 +47,15 @@ export function vuetifySessionOptions (session: Session, cspNonce?: string): Vue
         // white card with light grey border by default
         variant: 'flat',
         border: 'sm'
+      },
+      VColorPicker: {
+        mode: 'hex'
+      },
+      VCheckbox: {
+        color: 'primary'
+      },
+      VSwitch: {
+        color: 'primary'
       }
     }
   }
