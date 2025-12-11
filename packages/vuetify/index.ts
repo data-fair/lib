@@ -92,6 +92,15 @@ export function defaultOptions (searchParams: Record<string, string>, darkCookie
         // grey outlined card by default
         variant: 'outlined',
         style: 'border-color: rgba(var(--v-theme-on-surface), var(--v-focus-opacity)) !important;'
+      },
+      VColorPicker: {
+        mode: 'hex'
+      },
+      VCheckbox: {
+        color: 'primary'
+      },
+      VSwitch: {
+        color: 'primary'
       }
     }
   }
