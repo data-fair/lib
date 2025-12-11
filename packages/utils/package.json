@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib-utils",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "description": "Small dependency-less or dependency-light utility functions for the data-fair stack.",
   "main": "index.js",
   "scripts": {
