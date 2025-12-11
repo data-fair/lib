@@ -32,7 +32,8 @@ export class SessionHandler {
     session.dark = cookies.theme_dark === '1' || cookies.theme_dark === 'true'
     if (cookies.i18n_lang) session.lang = cookies.i18n_lang
 
-    if (!cookies.id_token || !cookies.id_token_sign) return session
+    if (!cookies.id_token) return session
+    if (!cookies.id_token_sign && !onlyDecode) return session
     const token = cookies.id_token + '.' + cookies.id_token_sign
     let user: User
     if (onlyDecode) {
