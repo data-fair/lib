@@ -373,7 +373,9 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   }
 
   const keepalive = async () => {
-    if (state.user == null) return
+    // check cookies.get('id_token') not state.user so that we do a keepalive on expired id tokens
+    // as we might have an exchange token
+    if (!cookies.get('id_token')) return
     if (!ssr) {
       window.localStorage.setItem('sd-keepalive' + options.sitePath, `${new Date().getTime()}`)
     }
@@ -385,8 +387,8 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
       } else {
         throw err
       }
-      readState()
     }
+    readState()
   }
 
   const refreshSiteInfo = async () => {
@@ -432,8 +434,8 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   // also run an auto-refresh loop
   if (!ssr && !inIframe && !('triggerCapture' in window)) {
     const lastKeepalive = window.localStorage.getItem('sd-keepalive' + options.sitePath)
-    // check cookies.get('id_token') not state.user so that we do a keepalive on expired id tokens
-    if (cookies.get('id_token') && (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) > 10000)) {
+
+    if (!lastKeepalive || (new Date().getTime() - Number(lastKeepalive)) > 10000) {
       await keepalive()
     }
 
