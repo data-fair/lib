@@ -100,7 +100,7 @@ async function createHtmlMiddleware (directory: string, baseParams: Record<strin
 }
 
 // source code should always be hashed, a long cache duration is ok
-const sourceMaxAge = 60 * 60 * 24 * 10 // 10 days
+const sourceMaxAge = 60 * 60 * 24 * 365 // 365 days
 // static assets, images, etc are generally not hashed but a short cache is still ok
 const fileMaxAge = 60 * 5 // 5 minutes
 
