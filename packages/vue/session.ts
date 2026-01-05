@@ -407,7 +407,8 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
         logo: siteInfo.theme.logo,
         colors: siteInfo.theme.colors,
         authMode: siteInfo.authMode,
-        authOnlyOtherSite: siteInfo.authOnlyOtherSite
+        authOnlyOtherSite: siteInfo.authOnlyOtherSite,
+        owner: siteInfo.owner
       }
       if (theme.value == null) theme.value = getDefaultTheme(siteInfo)
       if (theme.value === 'hc') partialSite.colors = siteInfo.theme.hcColors
