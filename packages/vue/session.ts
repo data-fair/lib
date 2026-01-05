@@ -2,7 +2,7 @@ import { type IncomingMessage } from 'node:http'
 import { type Ref, type ComputedRef, type App, shallowReadonly } from 'vue'
 import { type RouteLocation } from 'vue-router'
 import { FetchError, type fetch } from 'ofetch'
-import { type SessionState, type SessionStateAuthenticated, type User } from '@data-fair/lib-common-types/session/index.js'
+import { type AccountKeys, type SessionState, type SessionStateAuthenticated, type User } from '@data-fair/lib-common-types/session/index.js'
 import { reactive, computed, watch, inject, ref, shallowRef, readonly } from 'vue'
 import { ofetch } from 'ofetch'
 import { jwtDecode } from 'jwt-decode'
@@ -77,6 +77,7 @@ export interface SiteInfo {
   logo?: string
   dark?: boolean
   colors: Colors
+  owner: AccountKeys
 }
 
 type Theme = 'default' | 'dark' | 'hc' | 'hc-dark'
