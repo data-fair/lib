@@ -34,9 +34,18 @@ export default async function (db: Db, locks: Locks, basePath = './', isFresh?: 
 
 async function runScripts (db: Db, basePath: string, isFresh?: () => Promise<boolean>) {
   const dir = path.resolve(basePath)
+  // in the case of workspaces the parent package.json is the right place to look for name and versions
+  const parentPjsonPath = path.join(dir, '../package.json')
   const pjsonPath = path.join(dir, 'package.json')
-  debug('read service info from ' + pjsonPath)
-  const pjson = JSON.parse(readFileSync(pjsonPath, 'utf8'))
+  let pjson
+  try {
+    pjson = JSON.parse(readFileSync(parentPjsonPath, 'utf8'))
+    debug('read service info from ' + parentPjsonPath)
+  } catch (err) {
+    pjson = JSON.parse(readFileSync(pjsonPath, 'utf8'))
+    debug('read service info from ' + pjsonPath)
+  }
+
   const scriptsRoot = path.join(dir, 'upgrade')
   debug(`service=${pjson.name} version=${pjson.version}`)
 
