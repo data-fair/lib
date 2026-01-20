@@ -71,14 +71,16 @@ async function createHtmlMiddleware (directory: string, baseParams: Record<strin
     const sitePath = options?.ignoreSitePath ? '' : reqSitePath(req)
     let html = htmlCache[sitePath] = htmlCache[sitePath] ?? microTemplate(rawHtml, { ...options?.extraHtmlTemplateParams, ...baseParams, SITE_PATH: sitePath })
 
-    const siteUrl = options?.ignoreSitePath ? reqOrigin(req) : reqSiteUrl(req)
-    if (options?.getSiteExtraParams) {
-      const siteExtraParams = await options.getSiteExtraParams(siteUrl)
-      html = microTemplate(html, siteExtraParams)
-    }
-    if (options?.privateDirectoryUrl) {
-      const hashes = await getSiteHashes(options.privateDirectoryUrl, siteUrl)
-      html = microTemplate(html, hashes)
+    if (options?.getSiteExtraParams || options?.privateDirectoryUrl) {
+      const siteUrl = options?.ignoreSitePath ? reqOrigin(req) : reqSiteUrl(req)
+      if (options?.getSiteExtraParams) {
+        const siteExtraParams = await options.getSiteExtraParams(siteUrl)
+        html = microTemplate(html, siteExtraParams)
+      }
+      if (options?.privateDirectoryUrl) {
+        const hashes = await getSiteHashes(options.privateDirectoryUrl, siteUrl)
+        html = microTemplate(html, hashes)
+      }
     }
 
     if (cspHeaderOption && typeof cspHeaderOption === 'function') {
