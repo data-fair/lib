@@ -14,6 +14,7 @@ export const autoImports = [
     '@data-fair/lib-vue/ws.js': ['useWS'],
     '@data-fair/lib-vue/async-action.js': ['useAsyncAction'],
     '@data-fair/lib-vue/deep-diff.js': ['computedDeepDiff', 'watchDeepDiff'],
+    '@data-fair/lib-vue/format/bytes.js': ['formatBytes'],
   }
 ]
 
