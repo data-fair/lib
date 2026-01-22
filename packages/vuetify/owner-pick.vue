@@ -80,6 +80,7 @@ const owners = computedAsync(async () => {
       const org = await ofetch(`/simple-directory/api/organizations/${o.id}`)
       owners.push({ type: 'organization', id: o.id, name: o.name })
       if (!org.departments) continue
+      org.departments.sort((d1: any, d2: any) => d1.department.name.localeCompare(d2.department.name))
       for (const dep of org.departments) {
         if (!owners.find(ow => ow.type === 'organization' && ow.id === o.id && ow.department === dep.id)) {
           owners.push({ type: 'organization', id: o.id, name: o.name, department: dep.id, departmentName: dep.name })
