@@ -38,7 +38,7 @@ const findAdressesFn = async (search: string, selectedId?: string) => {
     addressesList.value = address.value ? [address.value] : []
   } else {
     const params = { q: search }
-    const result = (await ofetch('https://api-adresse.data.gouv.fr/search/', { params }))
+    const result = (await ofetch('https://data.geopf.fr/geocodage/search/', { params }))
     addressesList.value = result.features.map((f: any) => ({
       title: f.properties.label,
       value: {
