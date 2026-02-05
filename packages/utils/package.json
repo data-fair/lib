@@ -1,11 +1,19 @@
 {
   "name": "@data-fair/lib-utils",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "Small dependency-less or dependency-light utility functions for the data-fair stack.",
   "main": "index.js",
   "scripts": {
     "prepublishOnly": "cd .. && npm run prepublishOnly",
     "build": "cd .. && npm run build"
+  },
+  "peerDependencies": {
+    "dayjs": "1"
+  },
+  "peerDependenciesMeta": {
+    "dayjs": {
+      "optional": true
+    }
   },
   "devDependencies": {},
   "files": [
