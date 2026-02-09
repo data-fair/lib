@@ -2,11 +2,12 @@ import type { QueryObject } from 'ufo'
 import type { Ref } from 'vue'
 import { ofetch } from 'ofetch'
 import { withQuery } from 'ufo'
-import { computed, isRef, watch, ref, shallowRef, readonly, shallowReadonly } from 'vue'
+import { computed, watch, ref, shallowRef, readonly, shallowReadonly, toValue } from 'vue'
 import { useUiNotif } from '@data-fair/lib-vue/ui-notif.js'
+import { MaybeRefOrGetter } from 'vue'
 
-type UseFetchOptions = {
-  query?: QueryObject | Ref<QueryObject>,
+export type UseFetchOptions = {
+  query?: MaybeRefOrGetter<QueryObject>,
   watch?: Boolean
   notifError?: Boolean
   immediate?: Boolean
@@ -14,14 +15,14 @@ type UseFetchOptions = {
 
 type OptionalUrl = string | null | undefined
 
-export function useFetch<T> (url: OptionalUrl | Ref<OptionalUrl> | (() => OptionalUrl), options: UseFetchOptions = {}): { data: Ref<T | null>, loading: Ref<boolean>, initialized: Ref<boolean>, error: Ref<any>, refresh: (() => Promise<T | null>) } {
+export function useFetch<T> (url: MaybeRefOrGetter<OptionalUrl>, options: UseFetchOptions = {}): { data: Ref<T | null>, fullUrl: Ref<string | null>, loading: Ref<boolean>, initialized: Ref<boolean>, error: Ref<any>, refresh: (() => Promise<T | null>) } {
   const { sendUiNotif } = useUiNotif()
 
   if (typeof url === 'function') url = computed(url)
   const fullUrl = computed(() => {
-    let fullUrl = isRef(url) ? url.value : url
+    let fullUrl = toValue(url)
     if (!fullUrl) return null
-    const query = isRef(options.query) ? options.query.value : options.query
+    const query = toValue(options.query)
     if (query) fullUrl = withQuery(fullUrl, query)
     return fullUrl
   })
@@ -61,6 +62,7 @@ export function useFetch<T> (url: OptionalUrl | Ref<OptionalUrl> | (() => Option
 
   return {
     initialized: readonly(initialized),
+    fullUrl: readonly(fullUrl),
     data: shallowReadonly(data),
     loading: readonly(loading),
     error: shallowReadonly(error),

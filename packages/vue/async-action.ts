@@ -5,7 +5,7 @@ import { type PartialUiNotif, type UiNotif, useUiNotif, getFullNotif, getErrorMs
 
 type Finally = () => Promise<void> | void
 
-type AsyncActionOptions = {
+export type AsyncActionOptions = {
   error?: string,
   success?: PartialUiNotif,
   catch?: 'error' | 'success' | 'all',
