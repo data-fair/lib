@@ -1,4 +1,4 @@
-import { ref, watch, type Ref } from 'vue'
+import { ref, watch, computed, type Ref } from 'vue'
 import { ofetch } from 'ofetch'
 import { useFetch, type UseFetchOptions } from './fetch.js'
 import useAsyncAction, { AsyncActionOptions } from './async-action.js'
@@ -20,13 +20,25 @@ export function useEditFetch<T extends Record<string, any>> (url: OptionalUrl | 
     serverData.value = fetch.data.value
     data.value = fetch.data.value
   })
+
+  const hasDiff = computed(() => !equal(data.value, serverData.value))
+
+  const getPatch = () => {
+    if (!data.value || !serverData.value) return null
+    const patch: any = {}
+    for (const key of Object.keys(data.value)) {
+      if (!equal(data.value[key], serverData.value[key])) patch[key] = data.value[key]
+    }
+    for (const key of Object.keys(serverData.value)) {
+      if (!(key in data.value)) patch[key] = null
+    }
+    return patch
+  }
+
   const save = useAsyncAction(async () => {
     if (!data.value || !serverData.value || !fetch.data.value) throw new Error('cannot save data that has not been fetched yet')
     if (options.patch) {
-      const patch: any = {}
-      for (const key of Object.keys(data.value)) {
-        if (!equal(data.value[key], serverData.value[key])) patch[key] = data.value[key]
-      }
+      const patch = getPatch()
       if (!Object.keys(patch).length) return
       serverData.value = await ofetch<T>(fetch.fullUrl.value!, { method: 'PATCH', body: patch })
     } else {
@@ -39,6 +51,7 @@ export function useEditFetch<T extends Record<string, any>> (url: OptionalUrl | 
     fetch,
     data,
     serverData,
+    hasDiff,
     save
   }
 }

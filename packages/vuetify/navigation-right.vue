@@ -60,5 +60,4 @@ import { mdiDotsVertical } from '@mdi/js'
 import { useDisplay } from 'vuetify'
 
 const display = useDisplay()
-
 </script>
