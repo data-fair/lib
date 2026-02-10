@@ -3,6 +3,7 @@ import { ofetch } from 'ofetch'
 import { useFetch, type UseFetchOptions } from './fetch.js'
 import useAsyncAction, { AsyncActionOptions } from './async-action.js'
 import equal from 'fast-deep-equal'
+import clone from '@data-fair/lib-utils/clone.js'
 
 type UseEditFetchOptions = UseFetchOptions & {
   patch?: boolean
@@ -17,8 +18,8 @@ export function useEditFetch<T extends Record<string, any>> (url: OptionalUrl | 
   const data = ref<T | null>(null)
   watch(fetch.data, () => {
     // TODO: check for local changes before overwriting ?
-    serverData.value = fetch.data.value
-    data.value = fetch.data.value
+    serverData.value = clone(fetch.data.value)
+    data.value = clone(fetch.data.value)
   })
 
   const hasDiff = computed(() => !equal(data.value, serverData.value))
@@ -45,7 +46,7 @@ export function useEditFetch<T extends Record<string, any>> (url: OptionalUrl | 
       // TODO: add if-unmodified-since header ?
       serverData.value = await ofetch<T>(fetch.fullUrl.value!, { method: 'PUT', body: data.value })
     }
-    serverData.value = data.value
+    serverData.value = clone(data.value)
   }, options.saveOptions)
   return {
     fetch,
