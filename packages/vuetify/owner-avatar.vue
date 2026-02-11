@@ -50,7 +50,7 @@ const avatarUrl = computed(() => {
 const label = computed(() => {
   let label = ''
   if (!props.omitOwnerName || !props.owner.department) label += props.owner.name
-  if (props.owner.department) label += ' - ' + (props.owner.departmentName || props.owner.department)
+  if (props.owner.department) label += !props.omitOwnerName ? ' - ' : '' + (props.owner.departmentName || props.owner.department)
   if (props.owner.role) label += ` (${props.owner.role})`
   return label
 })
