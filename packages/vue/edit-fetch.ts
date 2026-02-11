@@ -8,6 +8,7 @@ import clone from '@data-fair/lib-utils/clone.js'
 type UseEditFetchOptions = UseFetchOptions & {
   patch?: boolean
   saveOptions?: AsyncActionOptions
+  fetchAfterSave?: boolean
 }
 
 type OptionalUrl = string | null | undefined
@@ -24,29 +25,37 @@ export function useEditFetch<T extends Record<string, any>> (url: OptionalUrl | 
 
   const hasDiff = computed(() => !equal(data.value, serverData.value))
 
-  const getPatch = () => {
-    if (!data.value || !serverData.value) return null
+  const getPatch = (oldData: any, newData: any) => {
+    if (!oldData || !newData) return null
     const patch: any = {}
-    for (const key of Object.keys(data.value)) {
-      if (!equal(data.value[key], serverData.value[key])) patch[key] = data.value[key]
+    for (const key of Object.keys(newData)) {
+      if (!equal(newData[key], oldData[key])) patch[key] = newData[key]
     }
-    for (const key of Object.keys(serverData.value)) {
-      if (!(key in data.value)) patch[key] = null
+    for (const key of Object.keys(oldData)) {
+      if (!(key in newData)) patch[key] = null
     }
     return patch
   }
 
   const save = useAsyncAction(async () => {
     if (!data.value || !serverData.value || !fetch.data.value) throw new Error('cannot save data that has not been fetched yet')
+    let res: T
+    const dataBeforeSave = clone(data.value)
     if (options.patch) {
-      const patch = getPatch()
+      const patch = getPatch(serverData.value, data.value)
       if (!Object.keys(patch).length) return
-      serverData.value = await ofetch<T>(fetch.fullUrl.value!, { method: 'PATCH', body: patch })
+      res = await ofetch<T>(fetch.fullUrl.value!, { method: 'PATCH', body: patch })
     } else {
       // TODO: add if-unmodified-since header ?
-      serverData.value = await ofetch<T>(fetch.fullUrl.value!, { method: 'PUT', body: data.value })
+      res = await ofetch<T>(fetch.fullUrl.value!, { method: 'PUT', body: data.value })
     }
-    serverData.value = clone(data.value)
+    if (options.fetchAfterSave || !res) {
+      fetch.refresh()
+    } else {
+      serverData.value = clone(res)
+      // case of server-side calculated properties, updatedAt, etc
+      Object.assign(data.value, getPatch(dataBeforeSave, res))
+    }
   }, options.saveOptions)
   return {
     fetch,
