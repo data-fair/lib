@@ -6,6 +6,10 @@ export default {
   additionalProperties: false,
   required: ['title', 'topic', 'sender', 'recipient', 'date'],
   properties: {
+    eventId: {
+      type: 'string',
+      title: 'Globally unique id of the event source of this notification'
+    },
     origin: {
       type: 'string',
       title: 'Site d\'origine de la souscription',

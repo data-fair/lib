@@ -15,6 +15,10 @@ export default {
   additionalProperties: false,
   required: ['title', 'topic', 'date'],
   properties: {
+    _id: {
+      type: 'string',
+      title: 'Globally unique id'
+    },
     title: {
       oneOf: [{
         type: 'string',
