@@ -173,7 +173,7 @@ const getSiteHashes = async (privateDirectoryUrl: string, siteUrl: string) => {
         'x-forwarded-host': url.hostname,
         'x-forwarded-port': url.port
       }
-    }).then(r => ({ THEME_CSS_HASH: r.data.publicInfo + '/', PUBLIC_SITE_INFO_HASH: r.data.themeCss + '/' }))
+    }).then(r => ({ THEME_CSS_HASH: r.data.themeCss + '/', PUBLIC_SITE_INFO_HASH: r.data.publicInfo + '/' }))
     cache[siteUrl] = { ts: now, hashes }
   }
   return cache[siteUrl].hashes
