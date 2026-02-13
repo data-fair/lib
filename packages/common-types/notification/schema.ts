@@ -70,11 +70,9 @@ export default {
     },
     url: {
       type: 'string',
-      title: 'calculé à partir de subscription.urlTemplate et event.urlParams',
-      readOnly: true
+      title: 'calculé à partir de subscription.urlTemplate et event.urlParams'
     },
     date: {
-      readOnly: true,
       type: 'string',
       description: 'reception date',
       format: 'date-time'
