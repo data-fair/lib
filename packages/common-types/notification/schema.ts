@@ -4,7 +4,7 @@ export default {
   title: 'Notification',
   type: 'object',
   additionalProperties: false,
-  required: ['title', 'topic', 'sender', 'recipient', 'date'],
+  required: ['title', 'topic', 'recipient', 'date'],
   properties: {
     _id: {
       type: 'string',
@@ -40,7 +40,7 @@ export default {
       type: 'string',
       title: 'URL de l\'icone de la notification'
     },
-    // sender is the owner of the topic
+    // sender is the owner of the topic, topic is global if no sender is given
     sender: { $ref: 'https://github.com/data-fair/lib/event#/$defs/sender' },
     topic: { $ref: 'https://github.com/data-fair/lib/event#/$defs/topicRef' },
     recipient: {
