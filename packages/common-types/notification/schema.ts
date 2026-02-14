@@ -46,7 +46,6 @@ export default {
     recipient: {
       type: 'object',
       required: ['id'],
-      readOnly: true,
       properties: {
         id: {
           type: 'string',
