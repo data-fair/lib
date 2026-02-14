@@ -6,6 +6,10 @@ export default {
   additionalProperties: false,
   required: ['title', 'topic', 'sender', 'recipient', 'date'],
   properties: {
+    _id: {
+      type: 'string',
+      title: 'Globally unique id'
+    },
     eventId: {
       type: 'string',
       title: 'Globally unique id of the event source of this notification'
@@ -70,7 +74,7 @@ export default {
     },
     url: {
       type: 'string',
-      title: 'calculé à partir de subscription.urlTemplate et event.urlParams'
+      title: 'défini explicitement ou calculé à partir de subscription.urlTemplate et event.urlParams',
     },
     date: {
       type: 'string',
