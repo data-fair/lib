@@ -156,7 +156,6 @@ export default {
       type: 'object',
       title: 'Optional recipient target of the event',
       required: ['id'],
-      readOnly: true,
       properties: {
         id: {
           type: 'string',
