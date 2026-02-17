@@ -27,9 +27,6 @@ export default {
     dark: {
       deprecated: true,
       type: 'boolean'
-    },
-    pseudoSession: {
-      type: 'boolean'
     }
   },
   $defs: {
@@ -147,6 +144,9 @@ export default {
         },
         siteOwner: {
           $ref: '#/$defs/account'
+        },
+        pseudoSession: {
+          type: 'boolean'
         }
       }
     },

@@ -67,7 +67,7 @@ export class Session extends SessionHandler {
       // @ts-ignore
       req[sessionMiddlewareKey] = true
       const sessionState = await this.req(req, res)
-      if (sessionState.pseudoSession && req.method !== 'GET') {
+      if (sessionState.user?.pseudoSession && req.method !== 'GET') {
         res.status(403).send('pseudo session only allows GET requests')
         return
       }
