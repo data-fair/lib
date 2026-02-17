@@ -51,6 +51,10 @@ export function vuetifySessionOptions (session: Session, cspNonce?: string): Vue
       VColorPicker: {
         mode: 'hex'
       },
+      VColorInput: {
+        // the text-field input is sufficient
+        hideInputs: true
+      },
       VCheckbox: {
         color: 'primary'
       },
