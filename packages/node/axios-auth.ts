@@ -1,10 +1,10 @@
 // build axios instances with sessions on a simple-directory instance
 // WARNING: use for integration testing only
 
-import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { Agent } from 'node:http'
-import { axiosBuilder, axiosInstance } from './axios.js'
 import { CookieJar } from 'tough-cookie'
+import { axiosInstance } from './axios.js'
+import { axiosWithCookies, type AxiosWithCookiesInstance } from './axios-with-cookies.js'
 
 export interface AxiosAuthOptions {
   email: string
@@ -18,15 +18,10 @@ export interface AxiosAuthOptions {
   globalCookies?: boolean
 }
 
-export type AxiosAuthInstance = AxiosInstance & {
-  cookieJar: CookieJar,
+export type AxiosAuthInstance = AxiosWithCookiesInstance & {
   setOrg: (org: string, dep?: string) => void
 }
 
-const getConfigUrl = (config: InternalAxiosRequestConfig) => {
-  if (!config.url) throw new Error('url is required')
-  return new URL((config.baseURL && config.url?.startsWith('/')) ? (config.baseURL + config.url) : config.url)
-}
 export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosAuthInstance> {
   const body: any = { email: opts.email, password: opts.password }
   if (opts.org) body.org = opts.org
@@ -44,8 +39,8 @@ export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosAuthInsta
     callbackUrl = callbackUrl.replace(directoryUrl + '/simple-directory', directoryUrl)
   }
 
-  const cookieJar = new CookieJar()
   const sdOrigin = new URL(directoryUrl).origin
+  const cookieJar = new CookieJar()
   try {
     await axiosInstance.get(callbackUrl, { maxRedirects: 0 })
   } catch (err: any) {
@@ -55,35 +50,17 @@ export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosAuthInsta
     if (redirectError) throw new Error(redirectError)
     for (const cookie of err.headers['set-cookie'] ?? []) cookieJar.setCookieSync(cookie, sdOrigin)
   }
-  const ax = axiosBuilder(axiosOpts, (ax) => {
-    ax.interceptors.request.use((config) => {
-      const url = getConfigUrl(config)
-      // if opts.globalCookies is true the cookie jar is used to store cookies shared accross all domains
-      // this behavior is useful for testing purposes if serves are not on the same domain
-      if (!opts.globalCookies || url.origin === sdOrigin) {
-        config.headers.Cookie = cookieJar.getCookiesSync(url.href)
-      } else {
-        config.headers.Cookie = cookieJar.getCookiesSync(sdOrigin)
-      }
-      return config
-    })
-    ax.interceptors.response.use((res) => {
-      const origin = opts.globalCookies ? sdOrigin : getConfigUrl(res.config).origin
-      for (const cookie of res.headers['set-cookie'] ?? []) cookieJar.setCookieSync(cookie, origin)
-      return res
-    }, async (error) => {
-      const res = error.response as AxiosResponse | undefined
-      if (res) {
-        const origin = opts.globalCookies ? sdOrigin : getConfigUrl(res.config).origin
-        for (const cookie of res.headers['set-cookie'] ?? []) cookieJar.setCookieSync(cookie, origin)
-      }
-      return Promise.reject(error)
-    })
+
+  const ax = axiosWithCookies({
+    axiosOpts,
+    cookiesOrigin: sdOrigin,
+    globalCookies: opts.globalCookies,
+    cookieJar
   }) as AxiosAuthInstance
-  ax.cookieJar = cookieJar
+
   ax.setOrg = (org: string, dep?: string) => {
-    cookieJar.setCookieSync(`id_token_org=${org}`, sdOrigin)
-    cookieJar.setCookieSync(`id_token_dep=${dep ?? ''}`, sdOrigin)
+    ax.cookieJar.setCookieSync(`id_token_org=${org}`, sdOrigin)
+    ax.cookieJar.setCookieSync(`id_token_dep=${dep ?? ''}`, sdOrigin)
   }
 
   return ax
