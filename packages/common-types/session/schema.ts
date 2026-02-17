@@ -27,6 +27,9 @@ export default {
     dark: {
       deprecated: true,
       type: 'boolean'
+    },
+    pseudoSession: {
+      type: 'boolean'
     }
   },
   $defs: {
