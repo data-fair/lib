@@ -60,6 +60,12 @@ export function vuetifySessionOptions (session: Session, cspNonce?: string): Vue
       },
       VSwitch: {
         color: 'primary'
+      },
+      vAutocomplete: {
+        autocomplete: 'off'
+      },
+      vSelect: {
+        autocomplete: 'off'
       }
     }
   }
