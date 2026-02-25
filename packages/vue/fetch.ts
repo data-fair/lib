@@ -11,6 +11,7 @@ export type UseFetchOptions = {
   watch?: Boolean
   notifError?: Boolean
   immediate?: Boolean
+  waitFor?: MaybeRefOrGetter<Boolean>
 }
 
 type OptionalUrl = string | null | undefined
@@ -21,6 +22,8 @@ export function useFetch<T> (url: MaybeRefOrGetter<OptionalUrl>, options: UseFet
   if (typeof url === 'function') url = computed(url)
   const fullUrl = computed(() => {
     let fullUrl = toValue(url)
+    const waitFor = toValue(options.waitFor)
+    if (waitFor === false) return null
     if (!fullUrl) return null
     const query = toValue(options.query)
     if (query) fullUrl = withQuery(fullUrl, query)
