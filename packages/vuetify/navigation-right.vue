@@ -14,7 +14,7 @@
         bg-color="background"
         density="compact"
       >
-        <v-defaults-provider :defaults="{ VListItem: { rounded: true } }">
+        <v-defaults-provider :defaults="defaults">
           <slot />
         </v-defaults-provider>
       </v-list>
@@ -43,10 +43,9 @@
       >
         <v-list
           data-iframe-height
-          bg-color="background"
           density="compact"
         >
-          <v-defaults-provider :defaults="{ VListItem: { rounded: true } }">
+          <v-defaults-provider :defaults="defaults">
             <slot />
           </v-defaults-provider>
         </v-list>
@@ -60,4 +59,29 @@ import { mdiDotsVertical } from '@mdi/js'
 import { useDisplay } from 'vuetify'
 
 const display = useDisplay()
+
+const defaults = {
+  VListItem: {
+    rounded: true
+  },
+  VAutocomplete: {
+    color: 'primary',
+    density: 'compact',
+    variant: 'outlined',
+    clearable: true,
+    hideDetails: true,
+    rounded: true,
+  },
+  VSelect: {
+    color: 'primary',
+    density: 'compact',
+    variant: 'outlined',
+    clearable: true,
+    hideDetails: true,
+    rounded: true
+  },
+  VSwitch: {
+    hideDetails: true
+  }
+}
 </script>
