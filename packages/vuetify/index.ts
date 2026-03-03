@@ -62,10 +62,10 @@ export function vuetifySessionOptions (session: Session, cspNonce?: string): Vue
         color: 'primary'
       },
       vAutocomplete: {
-        autocomplete: 'off'
+        autocomplete: 'suppress'
       },
       vSelect: {
-        autocomplete: 'off'
+        autocomplete: 'suppress'
       }
     }
   }
