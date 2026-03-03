@@ -106,7 +106,7 @@ export const start = async (
     if (stopped || !wss) return
     for (const ws of wss.clients) {
       // @ts-ignore
-      if (ws[isAlive] === false) return ws.terminate()
+      if (ws[isAlive] === false) { ws.terminate(); continue }
       // @ts-ignore
       ws[isAlive] = false
       ws.ping('', false, () => {})

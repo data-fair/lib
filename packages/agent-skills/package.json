@@ -1,0 +1,14 @@
+{
+  "name": "@data-fair/lib-agent-skills",
+  "version": "0.0.0",
+  "description": "Skills for AI coding agents in data data-fair stack.",
+  "main": "index.js",
+  "files": [
+    "**/*.md"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {},
+  "type": "module",
+  "dependencies": {}
+}
