@@ -3,11 +3,14 @@ name: data-fair-ws
 description: >
   How to implement real-time websocket communication in data-fair services.
   Covers the full stack: server-side setup with @data-fair/lib-express/ws-server,
-  emitting events with @data-fair/lib-node/ws-emitter, and subscribing from
-  Vue components with @data-fair/lib-vue/ws. Use this skill whenever the user
-  wants to add websocket support, emit real-time events, subscribe to channels,
-  implement live updates, push notifications, or any pub/sub pattern in a
-  data-fair service — even if they just say "real-time" or "live updates".
+  emitting events with @data-fair/lib-node/ws-emitter, subscribing from
+  Vue components with @data-fair/lib-vue/ws, and using
+  @data-fair/lib-node/ws-client for Node.js programmatic WS clients and
+  integration tests. Use this skill whenever the user wants to add websocket
+  support, emit real-time events, subscribe to channels, implement live updates,
+  push notifications, any pub/sub pattern in a data-fair service, or write
+  integration tests that verify websocket behavior — even if they just say
+  "real-time", "live updates", or "test websockets".
 ---
 
 # WebSocket Integration in data-fair Services
@@ -24,8 +27,12 @@ Vue UI (browser)                 Express API server              Worker / backgr
 ─────────────────                ──────────────────               ──────────────────────────
 useWS('/my-svc/api/')            wsServer.start(server, db,      wsEmitter.init(db)
   .subscribe(channel, cb)  ◄──    canSubscribe)                  wsEmitter.emit(channel, data)
-                                       │                                │
-                                       │  tailable cursor               │  insert
+                                       │  ▲                             │
+Node.js client (tests)                 │  │ ws connection               │
+──────────────────────                 │  │                             │
+WsClient / DataFairWsClient      ─────┘  │                             │
+  .subscribe(channel)            ◄────────┘                             │
+  .waitFor(channel, filter)            │  tailable cursor               │  insert
                                        ▼                                ▼
                                  ┌──────────────────────────────────────────┐
                                  │  MongoDB capped collection "ws-messages" │
@@ -40,6 +47,9 @@ useWS('/my-svc/api/')            wsServer.start(server, db,      wsEmitter.init(
 3. **`@data-fair/lib-vue/ws`** (`useWS`) — Vue composable that manages a
    `ReconnectingWebSocket` connection, tracks subscriptions reactively, and
    auto-cleans up via `onScopeDispose`.
+4. **`@data-fair/lib-node/ws-client`** (`WsClient` / `DataFairWsClient`) — Node.js
+   WebSocket client with auto-reconnect, JSON parsing, and channel subscriptions.
+   Designed for programmatic use in workers and **integration tests**.
 
 ## Step-by-step Integration Guide
 
@@ -161,6 +171,137 @@ proxy_set_header Upgrade $http_upgrade;
 proxy_set_header Connection "Upgrade";
 ```
 
+### 7. Node.js client: `@data-fair/lib-node/ws-client`
+
+The `ws-client` module provides two classes for consuming websockets from Node.js
+(not from the browser). This is essential for **integration tests** and for
+programmatic use in workers or CLI tools.
+
+#### `WsClient` — generic WS client
+
+```ts
+import { WsClient } from '@data-fair/lib-node/ws-client.js'
+
+const client = new WsClient({
+  url: 'http://localhost:8080',   // HTTP URL — auto-converted to ws://
+  headers: { Cookie: '...' },     // optional: forward auth cookies
+  apiKey: 'my-api-key',           // optional: sent in subscribe messages
+  adminMode: true,                // optional: enables admin mode
+  account: { type: 'organization', id: 'org1', name: 'Org 1' },  // optional
+  log: console                    // optional: defaults to console
+})
+```
+
+**Key methods:**
+
+- **`subscribe(channel, force?, timeout?)`** — Subscribes to a channel. Opens the
+  WS connection on first call. Sends a subscribe message including `apiKey` and
+  `account` if configured. Waits for `subscribe-confirm` or throws on `error`.
+  ```ts
+  await client.subscribe('things/abc123/updates')
+  ```
+
+- **`waitFor(channel, filter?, timeout?, skipSubscribe?, fullMessage?)`** — Subscribes
+  (unless `skipSubscribe`) then returns a promise that resolves when a matching
+  message arrives on the channel, or rejects on timeout (default 5 minutes).
+  ```ts
+  // Wait for a specific event type
+  const event = await client.waitFor(
+    'things/abc123/updates',
+    (data) => data.status === 'done',
+    10000  // 10s timeout
+  )
+  ```
+
+- **`close()`** — Terminates the underlying WebSocket connection.
+
+Auto-reconnect: if the connection drops, `WsClient` automatically reconnects
+and re-subscribes to all previously subscribed channels.
+
+#### `DataFairWsClient` — specialized for Data Fair datasets
+
+Extends `WsClient` with a convenience method for waiting on dataset journal events:
+
+```ts
+import { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
+
+const ws = new DataFairWsClient({
+  url: 'http://localhost:8080',
+  apiKey: 'my-api-key',
+  log: console
+})
+
+// Wait for a dataset to finish indexing
+const event = await ws.waitForJournal(datasetId, 'finalize-end', 60000)
+// Throws if an 'error' event arrives before the expected event
+```
+
+#### Integration testing with `WsClient`
+
+The `WsClient` is the primary tool for writing integration tests that verify
+websocket behavior end-to-end. Typical pattern:
+
+```ts
+import { WsClient } from '@data-fair/lib-node/ws-client.js'
+import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
+
+describe('websocket integration', () => {
+  let client: WsClient
+
+  beforeAll(async () => {
+    // Point at the test server
+    client = new WsClient({
+      url: 'http://localhost:' + testPort,
+      headers: { Cookie: testSessionCookie }  // or use apiKey
+    })
+  })
+
+  afterAll(() => {
+    client.close()
+  })
+
+  it('should receive emitted events', async () => {
+    // Subscribe and set up a waiter BEFORE emitting
+    const eventPromise = client.waitFor(
+      'things/abc123/updates',
+      (data) => data.status === 'done'
+    )
+
+    // Trigger the action that emits
+    await wsEmitter.emit('things/abc123/updates', { status: 'done', result: 42 })
+
+    // Assert the received event
+    const event = await eventPromise
+    expect(event.status).toBe('done')
+    expect(event.result).toBe(42)
+  })
+
+  it('should reject unauthorized subscriptions', async () => {
+    const unauthorizedClient = new WsClient({
+      url: 'http://localhost:' + testPort
+      // no auth headers
+    })
+    try {
+      await unauthorizedClient.subscribe('private/channel')
+      throw new Error('should have thrown')
+    } catch (err) {
+      expect(err.message).toMatch(/Permission/)
+    } finally {
+      unauthorizedClient.close()
+    }
+  })
+})
+```
+
+**Testing tips:**
+- Always call `waitFor()` or `subscribe()` **before** the action that emits —
+  otherwise the event may fire before the subscription is active.
+- Use short timeouts in tests (e.g. 5000ms) to fail fast instead of the default 5min.
+- Call `client.close()` in `afterAll` / `afterEach` to avoid hanging connections.
+- The `WsClient` sends `apiKey` and `account` in the subscribe message payload,
+  which the server's `canSubscribe` callback receives as `message.apiKey` and
+  `message.account`. This allows tests to authenticate without cookies.
+
 ## Common Pitfalls
 
 - **Forgetting `wsEmitter.init(db)` in workers**: each process that emits must
@@ -176,8 +317,9 @@ proxy_set_header Connection "Upgrade";
 ## Reference Files
 
 - `references/server-examples.md` — Full canSubscribe and emit examples from
-  the events and processings services. Read this when implementing a new service's
-  WS layer.
-- `references/source-api.md` — Abridged source of the three library modules
-  (ws-server, ws-emitter, useWS). Read this only if you need to understand
-  internal behavior or debug an issue.
+  the events and processings services, plus integration test patterns using
+  `WsClient`. Read this when implementing a new service's WS layer or writing
+  tests.
+- `references/source-api.md` — Abridged source of the four library modules
+  (ws-server, ws-emitter, useWS, ws-client). Read this only if you need to
+  understand internal behavior or debug an issue.

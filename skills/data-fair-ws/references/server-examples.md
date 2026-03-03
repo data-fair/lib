@@ -136,12 +136,136 @@ ws?.subscribe(`processings/${processingId}/patch-config`, () => {
 
 ---
 
+## Integration Testing with `WsClient`
+
+### Processing plugin tests (`@data-fair/lib-processing-dev/tests-utils.ts`)
+
+The processing-dev package uses `DataFairWsClient` to provide a WS client
+in the test context. This is the canonical example of using ws-client for tests:
+
+```ts
+import { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
+
+function wsInstance (config: ProcessingTestConfig, log: LogFunctions): DataFairWsClient {
+  return new DataFairWsClient({
+    url: config.dataFairUrl,
+    apiKey: config.dataFairAPIKey,
+    log,
+    adminMode: config.adminMode,
+    account: config.account
+  })
+}
+
+// In the test context factory:
+const processingContext = {
+  ws: wsInstance(config, log),
+  // ... other context fields
+}
+
+// Cleanup in afterAll:
+processingContext.ws.close()
+```
+
+Processing plugins then use `ws.waitForJournal()` to wait for dataset indexing:
+
+```ts
+// Wait for the dataset to be fully indexed before asserting
+await context.ws.waitForJournal(datasetId, 'finalize-end', 120000)
+```
+
+### Generic service integration test pattern
+
+For testing any service's WS layer end-to-end:
+
+```ts
+import { WsClient } from '@data-fair/lib-node/ws-client.js'
+import * as wsEmitter from '@data-fair/lib-node/ws-emitter.js'
+import { describe, it, beforeAll, afterAll, expect } from 'vitest'
+
+describe('websocket events', () => {
+  let client: WsClient
+
+  beforeAll(async () => {
+    client = new WsClient({
+      url: `http://localhost:${testPort}`,
+      headers: { Cookie: authenticatedSessionCookie }
+    })
+  })
+
+  afterAll(() => {
+    client.close()
+  })
+
+  it('receives real-time updates on resource change', async () => {
+    // 1. Start waiting BEFORE triggering the action
+    const eventPromise = client.waitFor(
+      'things/abc123/updates',
+      (data) => data.status === 'completed',
+      10000  // short timeout for tests
+    )
+
+    // 2. Trigger the server-side action that emits
+    await axios.post(`http://localhost:${testPort}/api/things/abc123/process`)
+
+    // 3. Await and assert the WS event
+    const event = await eventPromise
+    expect(event.status).toBe('completed')
+  })
+
+  it('rejects unauthorized channel subscriptions', async () => {
+    const anonClient = new WsClient({
+      url: `http://localhost:${testPort}`
+    })
+    try {
+      await anonClient.subscribe('private/resource/updates')
+      throw new Error('Expected subscribe to fail')
+    } catch (err: any) {
+      expect(err.message).toMatch(/Permission/)
+    } finally {
+      anonClient.close()
+    }
+  })
+
+  it('can use apiKey authentication instead of cookies', async () => {
+    const apiKeyClient = new WsClient({
+      url: `http://localhost:${testPort}`,
+      apiKey: testApiKey,
+      adminMode: true,
+      account: { type: 'organization', id: 'org1', name: 'Test Org' }
+    })
+
+    const eventPromise = apiKeyClient.waitFor(
+      'org/org1/events',
+      undefined,
+      10000
+    )
+
+    await wsEmitter.emit('org/org1/events', { type: 'test' })
+
+    const event = await eventPromise
+    expect(event.type).toBe('test')
+
+    apiKeyClient.close()
+  })
+})
+```
+
+**Key testing patterns:**
+- Always `waitFor()` / `subscribe()` **before** the action that emits events.
+- Use short timeouts (5–10s) in tests to fail fast on regressions.
+- Pass `apiKey` + `adminMode` + `account` for API-key-based auth in tests
+  (the server's `canSubscribe` receives these in the `message` parameter).
+- Always `close()` clients in cleanup to prevent hanging test processes.
+
+---
+
 ## Patterns Summary
 
-| Aspect | Events | Processings |
-|--------|--------|-------------|
-| Channel scheme | `user:{id}:notifications` | `processings/{id}/{event-type}` |
-| Auth strategy | Match user ID from channel | Load resource, check permission profile |
-| Emitting process | API (notification service) | Worker + task child process + API (kill) |
-| Sub-channels | Single per user | Multiple per resource (run-patch, run-log, patch-config) |
-| Client reaction | Re-fetch list | Granular: apply patch / append log / re-fetch |
+| Aspect | Events | Processings | Integration Tests |
+|--------|--------|-------------|-------------------|
+| Channel scheme | `user:{id}:notifications` | `processings/{id}/{event-type}` | Service-specific |
+| Auth strategy | Match user ID from channel | Load resource, check permission profile | apiKey + adminMode or cookies |
+| Emitting process | API (notification service) | Worker + task child process + API (kill) | wsEmitter or API triggers |
+| Sub-channels | Single per user | Multiple per resource (run-patch, run-log, patch-config) | As needed |
+| Client type | `useWS` (Vue) | `useWS` (Vue) | `WsClient` / `DataFairWsClient` (Node.js) |
+| Client reaction | Re-fetch list | Granular: apply patch / append log / re-fetch | Assert with `waitFor()` |
