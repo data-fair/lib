@@ -1,0 +1,23 @@
+{
+  "skill_name": "data-fair-session",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm building a new data-fair service called 'data-fair-charts'. I need to add an Express endpoint POST /api/charts that creates a chart resource. The chart should be owned by the current user's active account. Only authenticated users should be able to create charts. Write the route handler code.",
+      "expected_output": "Should use session.init() at startup, session.middleware() on routes, reqSessionAuthenticated(req) in the handler, default owner to session.account, and use assertAccountRole if an explicit owner is provided.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I have a Vue 3 SPA (not Nuxt) that is a back-office for managing datasets in a data-fair service. I need to show a list of datasets and only display an 'Edit' button if the current user has admin role on the dataset's owner. Also show a special 'Platform Settings' section only for super-admins. Write the component code.",
+      "expected_output": "Should use useSessionAuthenticated() composable, getAccountRole(session.state, dataset.owner) for per-dataset permission check, session.state.user.adminMode for super-admin check. Should show createSession setup in main.ts.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I need to add a GET /api/resources endpoint that lists resources. The endpoint should: allow anonymous access but return different results based on auth state, scope results to the current account for authenticated users, and allow super-admins to pass ?showAll=true to see everything. This is in a data-fair service using @data-fair/lib.",
+      "expected_output": "Should use reqSession(req) (not reqSessionAuthenticated since anonymous is allowed), check session.user for auth state, filter by session.account.type/id/department for authenticated users, use assertAdminMode for showAll parameter.",
+      "files": []
+    }
+  ]
+}
