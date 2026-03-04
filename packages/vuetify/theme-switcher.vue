@@ -2,7 +2,7 @@
   <v-toolbar-items class="theme-switcher" v-if="session.fullSite.value?.theme.dark || session.fullSite.value?.theme.hc || session.fullSite.value?.theme.hcDark">
     <v-menu
       offset-y
-      nudge-left
+      class="ml-n4"
     >
       <template #activator="{props: activatorProps}">
         <v-btn

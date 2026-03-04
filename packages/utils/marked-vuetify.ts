@@ -43,12 +43,12 @@ function cleanUrl (href: string) {
 // ==============================================
 
 const headingClasses: Record<number, string> = {
-  1: 'text-h2 text-primary mt-12 mb-8',
-  2: 'text-h4 mt-10 mb-6',
-  3: 'text-h5 mt-8 mb-4',
-  4: 'text-h6 mt-6 mb-4',
-  5: 'text-subtitle-1 mt-6 mb-4',
-  6: 'text-subtitle-2 mt-6 mb-4'
+  1: 'text-h2 text-display-medium text-primary mt-12 mb-8',
+  2: 'text-h4 text-headline-large mt-10 mb-6',
+  3: 'text-h5 text-headline-medium mt-8 mb-4',
+  4: 'text-h6 text-headline-small mt-6 mb-4',
+  5: 'text-subtitle-1 text-body-large mt-6 mb-4',
+  6: 'text-subtitle-2 text-label-large mt-6 mb-4'
 }
 
 export const markedVuetify: MarkedExtension = {

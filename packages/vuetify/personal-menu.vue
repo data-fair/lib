@@ -10,7 +10,7 @@
     <v-menu
       v-else
       offset-y
-      nudge-left
+      class="ml-n4"
       max-height="700"
     >
       <template #activator="{props: activatorProps}">

@@ -6,7 +6,7 @@
     <template #activator="{ props: tooltipProps }">
       <span
         v-bind="tooltipProps"
-        class="text-body-2"
+        class="text-body-medium"
       >
         <v-avatar
           :size="size"
