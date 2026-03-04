@@ -63,7 +63,7 @@ describe('json-schema utility functions', () => {
     })
   })
 
-  it('should transform abolute references to local definitions', async () => {
+  it('should transform absolute references to local definitions', async () => {
     const schema = makeLocalDefs({
       'http://test.com/schema1': {
         type: 'object',
@@ -72,6 +72,7 @@ describe('json-schema utility functions', () => {
           b: { $ref: 'http://test.com/schema2' },
           c: { $ref: '#/$defs/c' },
           d: { $ref: 'http://test.com/schema3#/$defs/g' },
+          h: { $ref: 'http://test.com/schema4#/$defs/h' },
         },
         $defs: {
           c: { type: 'string' }
@@ -92,6 +93,13 @@ describe('json-schema utility functions', () => {
         $defs: {
           g: { type: 'string' }
         }
+      },
+      'http://test.com/schema4': {
+        type: 'object',
+        $defs: {
+          h: { type: 'object', properties: { i: { $ref: '#/$defs/i' } } },
+          i: { type: 'string' }
+        }
       }
     }, 'http://test.com/schema1')
     assert.equal(schema.properties.b.$ref, '#/$defs/schema2')
@@ -101,6 +109,8 @@ describe('json-schema utility functions', () => {
     assert.ok(schema.$defs.schema3)
     assert.ok(schema.$defs.c)
     assert.ok(schema.$defs.g)
+    assert.ok(schema.$defs.h)
+    assert.ok(schema.$defs.i)
   })
 
   it('should create a Patch schema from a base schema', async () => {

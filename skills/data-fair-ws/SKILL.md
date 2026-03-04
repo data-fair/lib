@@ -30,7 +30,7 @@ useWS('/my-svc/api/')            wsServer.start(server, db,      wsEmitter.init(
                                        │  ▲                             │
 Node.js client (tests)                 │  │ ws connection               │
 ──────────────────────                 │  │                             │
-WsClient / DataFairWsClient      ─────┘  │                             │
+WsClient / DataFairWsClient       ─────┘  │                             │
   .subscribe(channel)            ◄────────┘                             │
   .waitFor(channel, filter)            │  tailable cursor               │  insert
                                        ▼                                ▼

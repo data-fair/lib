@@ -187,12 +187,13 @@ export const makeLocalDefs = (schemas: Record<string, any>, schemaId: string) =>
   if (!schemas[schemaId]) throw new Error('unknown schema ' + schemaId)
   const schema = clone(schemas[schemaId])
   const localDefsSchemas = {}
-  recurseLocalDefs(localDefsSchemas, schemas, schemaId, schema)
+  recurseLocalDefs(schemaId, localDefsSchemas, schemas, schemaId, schema)
   schema.$defs = localDefsSchemas
   return schema
 }
 
 const recurseLocalDefs = (
+  originalSchemaId: string,
   localDefsSchemas: Record<string, Record<string, any>>,
   schemas: Record<string, Record<string, any>>,
   schemaId: string,
@@ -201,8 +202,13 @@ const recurseLocalDefs = (
   if (!schemaFragment) throw new Error('failed to resolve ' + schemaId)
   for (const [key, value] of Object.entries(schemaFragment)) {
     if (key === '$ref') {
-      if (!value.startsWith('#')) {
-        const fullId = new URL(value, schemaId).href
+      if (schemaId !== originalSchemaId || !value.startsWith('#')) {
+        let fullId
+        try {
+          fullId = new URL(value, schemaId).href
+        } catch (err) {
+          throw new Error(`Failed to normalize URL ${value} from ${schemaId}`)
+        }
         const [refSchemaId, refSchemaPath] = fullId.split('#')
         const refName = value.split('/').pop()
         if (!localDefsSchemas[refName]) {
@@ -210,17 +216,17 @@ const recurseLocalDefs = (
           if (!refSchema) throw new Error('failed to resolve schema ' + refSchemaId)
           if (refSchemaPath) refSchema = resolvePath(refSchema, refSchemaPath)
           localDefsSchemas[refName] = clone(refSchema)
-          recurseLocalDefs(localDefsSchemas, schemas, fullId, localDefsSchemas[refName])
+          recurseLocalDefs(originalSchemaId, localDefsSchemas, schemas, fullId, localDefsSchemas[refName])
         }
         schemaFragment[key] = `#/$defs/${refName}`
       }
     } else if (key === '$defs') {
       for (const [defKey, defValue] of Object.entries(value as Record<string, any>)) {
         localDefsSchemas[defKey] = clone(defValue)
-        recurseLocalDefs(localDefsSchemas, schemas, schemaId, localDefsSchemas[defKey])
+        recurseLocalDefs(originalSchemaId, localDefsSchemas, schemas, schemaId, localDefsSchemas[defKey])
       }
     } else if (typeof value === 'object' && value !== null) {
-      recurseLocalDefs(localDefsSchemas, schemas, schemaId, value)
+      recurseLocalDefs(originalSchemaId, localDefsSchemas, schemas, schemaId, value)
     }
   }
 }
