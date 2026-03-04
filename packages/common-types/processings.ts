@@ -2,11 +2,37 @@ import type { AxiosInstance } from 'axios'
 import type { DataFairWsClient } from '@data-fair/lib-node/ws-client.js'
 
 /**
+ * Function to prepare a processing (trigger when the config is updated).
+ * It can be used to:
+ * - throw additional errors to validate the config
+ * - remove secrets from the config and store them in the secrets object
+ */
+export type PrepareFunction<TProcessingConfig = any> = (
+  context: {
+    processingConfig: TProcessingConfig
+    secrets: Record<string, string>
+  }
+) => Promise<{
+  processingConfig?: TProcessingConfig,
+  secrets?: Record<string, string>
+}>
+
+/**
+ * Function to execute the processing (triggered when the processing is started).
+ * This is the main function of the plugin where the business logic is implemented.
+ *
+ * @returns An object with a optional deleteOnComplete property to indicate that the last run should be deleted after completion.
+ */
+export type RunFunction<TProcessingConfig = any, TPluginConfig = any> = (
+  context: ProcessingContext<TProcessingConfig, TPluginConfig>
+) => Promise<void | { deleteOnComplete?: boolean }>
+
+/**
  * Processing context.
  */
-export interface ProcessingContext<TProcesssingConfig = any> {
-  processingConfig: TProcesssingConfig
-  pluginConfig: any
+export interface ProcessingContext<TProcessingConfig = any, TPluginConfig = any> {
+  processingConfig: TProcessingConfig
+  pluginConfig: TPluginConfig
   secrets?: Record<string, string>
   processingId: string
   dir: string
@@ -17,22 +43,6 @@ export interface ProcessingContext<TProcesssingConfig = any> {
   sendMail: (mail: string) => Promise<void>
   patchConfig: (patch: { datasetMode: string, dataset: any }) => Promise<void>
 }
-
-/**
- * Function to prepare a processing (trigger when the config is updated).
- * It can be used to:
- * - throw additional errors to validate the config
- * - remove secrets from the config and store them in the secrets object
- */
-export type PrepareFunction<TProcesssingConfig = any> = (
-  context: {
-    processingConfig: TProcesssingConfig
-    secrets: Record<string, string>
-  }
-) => Promise<{
-  processingConfig?: TProcesssingConfig,
-  secrets?: Record<string, string>
-}>
 
 /**
  * Log functions.

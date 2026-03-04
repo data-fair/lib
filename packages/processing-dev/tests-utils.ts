@@ -11,8 +11,9 @@ import draftlog from 'draftlog'
 export interface ProcessingTestConfig {
   dataFairAPIKey: string
   dataFairUrl: string
-  adminMode: boolean
-  account: Account
+  adminMode?: boolean
+  /** Required when using a superadmin API key */
+  account?: Account
 };
 
 export interface ProcessingTestContext extends ProcessingContext {
