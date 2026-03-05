@@ -1,4 +1,3 @@
-import type { Account } from '@data-fair/lib-common-types/session/index.js'
 import type { ProcessingContext, LogFunctions } from '@data-fair/lib-common-types/processings.js'
 import type { AxiosInstance } from 'axios'
 import chalk from 'chalk'
@@ -11,9 +10,6 @@ import draftlog from 'draftlog'
 export interface ProcessingTestConfig {
   dataFairAPIKey: string
   dataFairUrl: string
-  adminMode?: boolean
-  /** Required when using a superadmin API key */
-  account?: Account
 };
 
 export interface ProcessingTestContext extends ProcessingContext {
@@ -97,9 +93,7 @@ function wsInstance (config: ProcessingTestConfig, log: LogFunctions): DataFairW
   return new DataFairWsClient({
     url: config.dataFairUrl,
     apiKey: config.dataFairAPIKey,
-    log,
-    adminMode: config.adminMode,
-    account: config.account
+    log
   })
 }
 
