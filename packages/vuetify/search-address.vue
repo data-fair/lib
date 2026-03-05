@@ -36,6 +36,12 @@ const findAdressesFn = async (search: string, selectedId?: string) => {
   loadingAddresses.value = true
   if (!search || search.length < 3) {
     addressesList.value = address.value ? [address.value] : []
+  } else if (/^\s*(-?\d+\.?\d*),\s*(-?\d+\.?\d*)\s*$/.test(search)) {
+    const [lat, lon] = search.split(',').map(s => parseFloat(s.trim()))
+    addressesList.value = [{
+      title: `${lat}, ${lon}`,
+      value: { lat, lon, label: `${lat}, ${lon}` }
+    }]
   } else {
     const params = { q: search }
     const result = (await ofetch('https://data.geopf.fr/geocodage/search/', { params }))
@@ -65,7 +71,11 @@ watch(
   address,
   (addr) => {
     if (addr) {
-      model.value = JSON.stringify([addr.title, addr.value.id]).slice(1, -1)
+      if (addr.value.lat !== undefined && addr.value.lon !== undefined && !addr.value.id) {
+        model.value = `${addr.value.lat}, ${addr.value.lon}`
+      } else {
+        model.value = JSON.stringify([addr.title, addr.value.id]).slice(1, -1)
+      }
     } else {
       model.value = undefined
       addressesList.value = []
