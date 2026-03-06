@@ -137,6 +137,14 @@ class SchemaWrapper {
     return this
   }
 
+  /**
+   * Transform a normal schema into a PATCH schema, meaning
+   *  - non required properties are made nullable (null means remove the property)
+   *  - properties are not longer required (missing property is kept as it is)
+   *  - readOnly properties are removed (a PATCH only contains changes)
+   *  - title and id are modified
+   * @param [properties] - limit the PATCH to a list of known properties
+   */
   makePatchSchema (properties?: string[]) {
     if (!properties) {
       this.removeReadonlyProperties()
@@ -152,6 +160,24 @@ class SchemaWrapper {
     this.makeNullable(nullable)
     this.appendTitle(' patch')
     if (this.schema.$id) this.schema.$id = this.schema.$id + '-patch'
+    return this
+  }
+
+  /**
+   * Transform a normal schema into a PUT schema, meaning
+   *  - readOnly properties are not removed but they are never required (allows for write after read)
+   *  - title and id are modified
+   */
+  makePutSchema () {
+    const roProperties: string[] = []
+    if (this.schema.properties) {
+      for (const [key, property] of Object.entries(this.schema.properties)) {
+        if ((property as any).readOnly) roProperties.push(key)
+      }
+    }
+    this.removeFromRequired(roProperties)
+    this.appendTitle(' put')
+    if (this.schema.$id) this.schema.$id = this.schema.$id + '-put'
     return this
   }
 }
