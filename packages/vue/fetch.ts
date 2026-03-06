@@ -19,7 +19,6 @@ type OptionalUrl = string | null | undefined
 export function useFetch<T> (url: MaybeRefOrGetter<OptionalUrl>, options: UseFetchOptions = {}): { data: Ref<T | null>, fullUrl: Ref<string | null>, loading: Ref<boolean>, initialized: Ref<boolean>, error: Ref<any>, refresh: (() => Promise<T | null>) } {
   const { sendUiNotif } = useUiNotif()
 
-  if (typeof url === 'function') url = computed(url)
   const fullUrl = computed(() => {
     let fullUrl = toValue(url)
     const waitFor = toValue(options.waitFor)
