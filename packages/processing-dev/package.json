@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@data-fair/lib-common-types": "^1.0.0",
-    "@data-fair/lib-node": "^0.2.0",
+    "@data-fair/lib-node": "^2.0.0",
     "axios": "^1.7.7",
     "chalk": "^5.3.0",
     "dayjs": "^1.11.13",

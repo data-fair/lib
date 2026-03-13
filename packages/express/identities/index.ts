@@ -4,7 +4,7 @@
 import type { PostIdentityReq } from './types/post-req/index.js'
 import type { DeleteIdentityReq } from './types/delete-req/index.js'
 import { Router } from 'express'
-import { asyncHandler, assertReqInternal, httpError } from '@data-fair/lib-express'
+import { assertReqInternal, httpError } from '@data-fair/lib-express'
 import * as postReq from './types/post-req/index.js'
 import * as deleteReq from './types/delete-req/index.js'
 
@@ -22,27 +22,26 @@ export function createIdentitiesRouter (
   })
 
   // notify a name change or initialization
-  router.post('/:type/:id', asyncHandler(async (req, res) => {
+  router.post('/:type/:id', async (req, res) => {
     const { params, body } = postReq.returnValid(req)
     await onUpdate?.({
       ...params,
       ...body
     })
     res.send()
-  }))
+  })
 
   // Remove resources owned, permissions and anonymize created and updated
-  router.delete('/:type/:id', asyncHandler(async (req, res) => {
+  router.delete('/:type/:id', async (req, res) => {
     const { params } = deleteReq.returnValid(req)
     await onDelete?.(params)
     res.send()
-  }))
+  })
 
   // Ask for a report of every piece of data in the service related to an identity
-  router.get('/:type/:id/report', asyncHandler(async (req, res) => {
-    // TODO
-    res.send()
-  }))
+  router.get('/:type/:id/report', (req, res) => {
+    res.status(501).send('Not implemented')
+  })
 
   return router
 }

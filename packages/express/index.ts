@@ -2,7 +2,6 @@
 // but not heavier optional stuff like websocket support
 
 export * from './session.js'
-export { default as asyncHandler } from './async-handler.js'
 export { default as errorHandler } from './error-handler.js'
 export * from './events-log.js'
 export * from './find-utils.js'

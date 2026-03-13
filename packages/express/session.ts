@@ -2,7 +2,6 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Account, SessionState, SessionStateAuthenticated, User } from '@data-fair/lib-common-types/session/index.js'
 import type { Request, Response, RequestHandler } from 'express'
 import cookie from 'cookie'
-import asyncHandler from './async-handler.js'
 import { validate, assertAdminMode, assertAuthenticated } from '@data-fair/lib-common-types/session/index.js'
 import { reqSitePathSafe } from '@data-fair/lib-express'
 import { SessionHandler } from '@data-fair/lib-node/session.js'
@@ -63,7 +62,7 @@ export class Session extends SessionHandler {
   }
 
   middleware (options: { required?: boolean, adminOnly?: boolean } = {}): RequestHandler {
-    return asyncHandler(async (req, res, next) => {
+    return async (req, res, next) => {
       // @ts-ignore
       req[sessionMiddlewareKey] = true
       const sessionState = await this.req(req, res)
@@ -84,7 +83,7 @@ export class Session extends SessionHandler {
         }
       }
       next()
-    })
+    }
   }
 }
 
