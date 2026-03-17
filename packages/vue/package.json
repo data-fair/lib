@@ -17,13 +17,17 @@
     "dayjs": "1",
     "ofetch": "1",
     "reconnecting-websocket": "4",
-    "vue": "3"
+    "vue": "3",
+    "vue-router": "4 || 5"
   },
   "peerDependenciesMeta": {
     "reconnecting-websocket": {
       "optional": true
     },
     "dayjs": {
+      "optional": true
+    },
+    "vue-router": {
       "optional": true
     }
   },
@@ -36,7 +40,7 @@
   },
   "devDependencies": {
     "reconnecting-websocket": "^4.4.0",
-    "vue-router": "^4.4.5"
+    "vue-router": "^5.0.3"
   },
   "type": "module"
 }

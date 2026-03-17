@@ -1,10 +1,15 @@
 // inspired by useUrlSearchParams (https://github.com/vueuse/vueuse/blob/main/packages/core/useUrlSearchParams/index.ts)
 // but even simpler, without array values, always in history mode, and shared in a app plugin
 
-import type { App } from 'vue'
-import type { Router } from 'vue-router'
+import type { App, ShallowRef } from 'vue'
 import { reactive, watch, inject, computed } from 'vue'
 import Debug from 'debug'
+
+// minimal structural type compatible with both vue-router v4 and v5
+interface ReactiveSearchParamsRouter {
+  currentRoute: ShallowRef<{ query: Record<string, string | null | (string | null)[]> }>
+  replace: (to: { query: Record<string, string> }) => unknown
+}
 
 const debug = Debug('reactive-search-params')
 debug.log = console.log.bind(console)
@@ -30,7 +35,7 @@ const applySearchParams = (state: Record<string, string>, queryParams: Record<st
   }
 }
 
-export function getReactiveSearchParams (router?: Router): Record<string, string> {
+export function getReactiveSearchParams (router?: ReactiveSearchParamsRouter): Record<string, string> {
   // @ts-ignore
   if (!import.meta.env?.SSR && !router) {
     try {
@@ -97,7 +102,7 @@ export function getReactiveSearchParams (router?: Router): Record<string, string
 // uses pattern for SSR friendly plugin/composable, cf https://antfu.me/posts/composable-vue-vueday-2021#shared-state-ssr-friendly
 export const reactiveSearchParamsKey = Symbol('reactiveSearchParams')
 
-export function createReactiveSearchParams (router?: Router) {
+export function createReactiveSearchParams (router?: ReactiveSearchParamsRouter) {
   const reactiveSearchParams = getReactiveSearchParams(router)
   return {
     install (app: App) { app.provide(reactiveSearchParamsKey, reactiveSearchParams) },

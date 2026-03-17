@@ -1,7 +1,9 @@
 import { type IncomingMessage } from 'node:http'
 import { type Ref, type ComputedRef, type App, shallowReadonly } from 'vue'
-import { type RouteLocation } from 'vue-router'
 import { FetchError, type fetch } from 'ofetch'
+
+// minimal structural type compatible with both vue-router v4 and v5
+interface RouteLocationLike { fullPath: string }
 import { type AccountKeys, type SessionState, type SessionStateAuthenticated, type User } from '@data-fair/lib-common-types/session/index.js'
 import { reactive, computed, watch, inject, ref, shallowRef, readonly } from 'vue'
 import { ofetch } from 'ofetch'
@@ -24,7 +26,7 @@ export interface SessionOptions {
   sitePath: string
   directoryUrl: string
   defaultLang: string
-  route?: RouteLocation
+  route?: RouteLocationLike
   logoutRedirectUrl?: string
   req?: IncomingMessage
   cookies?: GenericCookies
