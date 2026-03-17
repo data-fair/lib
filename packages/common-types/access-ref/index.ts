@@ -9,8 +9,8 @@ export * from './.type/index.js'
 export const matchAccessRef = (session: SessionStateAuthenticated, accessRef: AccessRef): boolean => {
   // Check by user, not active account
   if (accessRef.type === 'user') {
-    if (accessRef.id) return session.user.id === accessRef.id
-    if (accessRef.email) return session.user.email === accessRef.email
+    if ('id' in accessRef) return session.user.id === accessRef.id
+    if ('email' in accessRef) return session.user.email === accessRef.email
     return false
   }
 
