@@ -66,6 +66,8 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     schemas[catalogSchema.$id] = catalogSchema
     const themeSchema = (await import('@data-fair/lib-common-types/theme/schema.js')).default
     schemas[themeSchema.$id] = themeSchema
+    const accessRefSchema = (await import('@data-fair/lib-common-types/access-ref/schema.js')).default
+    schemas[accessRefSchema.$id] = accessRefSchema
   }
 
   const schemaIds: Record<string, string> = {}
