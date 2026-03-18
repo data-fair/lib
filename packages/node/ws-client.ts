@@ -9,6 +9,15 @@ import Debug from 'debug'
 
 const debug = Debug('ws')
 
+const { stackTraceLimit } = Error
+
+class WsClientError extends Error {
+  constructor () {
+    super()
+    this.name = 'WsClientError'
+  }
+}
+
 type logFn = (msg: string, ...args: any[]) => void
 
 export interface WsClientOpts {
@@ -70,6 +79,13 @@ export class WsClient extends EventEmitter {
     if (this._channels.includes(channel) && !force) return
     const ws = this._ws ?? await this._connect()
 
+    // better stack traces
+    // see https://github.com/axios/axios/issues/2387#issuecomment-652242713
+    Error.stackTraceLimit = 0
+    const errorContext = new WsClientError()
+    Error.stackTraceLimit = stackTraceLimit
+    Error.captureStackTrace(errorContext, this.subscribe)
+
     debug('subscribe to channel', channel)
     const subscribeMessage: any = { type: 'subscribe', channel }
     if (this.opts.apiKey) subscribeMessage.apiKey = this.opts.apiKey
@@ -82,16 +98,39 @@ export class WsClient extends EventEmitter {
       },
       timeout,
       true,
-      true
+      true,
+      errorContext
     )
-    if (event.type === 'error') throw new Error(event.data)
+    if (event.type === 'error') {
+      const error = new Error(event.data)
+      error.stack += '\nSubscribe context:\n' + errorContext.stack
+      throw error
+    }
     if (this._channels.includes(channel)) this._channels.push(channel)
   }
 
-  async waitFor (channel: string, filter?: (message: Message) => boolean, timeout = 300000, skipSubscribe = false, fullMessage = false): Promise<Message> {
+  async waitFor (channel: string, filter?: (message: Message) => boolean, timeout = 300000, skipSubscribe = false, fullMessage = false, _errorContext?: WsClientError): Promise<Message> {
     if (!skipSubscribe) await this.subscribe(channel)
+
+    // better stack traces
+    // see https://github.com/axios/axios/issues/2387#issuecomment-652242713
+    let errorContext: WsClientError
+    if (_errorContext) {
+      errorContext = _errorContext
+    } else {
+      Error.stackTraceLimit = 0
+      errorContext = new WsClientError()
+      Error.stackTraceLimit = stackTraceLimit
+      Error.captureStackTrace(errorContext, this.waitFor)
+    }
+
     return await new Promise((resolve, reject) => {
-      const _timeout = setTimeout(() => { reject(new Error('timeout')) }, timeout)
+      const _timeout = setTimeout(() => {
+        this.off('message', messageCb)
+        const error = new Error(`Timeout of ${timeout}ms exceeded`)
+        error.stack += '\nWaitFor context:\n' + errorContext.stack
+        reject(error)
+      }, timeout)
       const messageCb = (message: any) => {
         if (message.channel === channel && (!filter || filter(fullMessage ? message : message.data))) {
           clearTimeout(_timeout)
@@ -111,14 +150,29 @@ export class WsClient extends EventEmitter {
 export class DataFairWsClient extends WsClient {
   async waitForJournal (datasetId: string, eventType: string, timeout = 300000) {
     await this.opts.log.info(`wait for event "${eventType}" on dataset "${datasetId}"`)
+
+    // better stack traces
+    // see https://github.com/axios/axios/issues/2387#issuecomment-652242713
+    Error.stackTraceLimit = 0
+    const errorContext = new WsClientError()
+    Error.stackTraceLimit = stackTraceLimit
+    Error.captureStackTrace(errorContext, this.waitForJournal)
+
     const event = await this.waitFor(
       `datasets/${datasetId}/journal`,
       (e) => {
         return e.type === eventType || e.type === 'error'
       },
-      timeout
+      timeout,
+      false,
+      false,
+      errorContext
     )
-    if (event.type === 'error') throw new Error(event.data)
+    if (event.type === 'error') {
+      const error = new Error(event.data)
+      error.stack += '\nWaitForJournal context:\n' + errorContext.stack
+      throw error
+    }
     return event
   }
 }
