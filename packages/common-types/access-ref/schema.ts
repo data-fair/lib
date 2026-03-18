@@ -95,7 +95,7 @@ export default {
         mode: { type: 'string', const: 'member' },
         type: { type: 'string', const: 'organization' },
         department: { type: 'string', const: '*' },
-        roles: { type: 'array', const: [] },
+        roles: { type: 'array', const: [], items: { type: 'string' } },
         id: {
           type: 'string',
           layout: {
