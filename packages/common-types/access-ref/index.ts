@@ -55,16 +55,18 @@ export const mongoFilterAccessRef = (session: SessionStateAuthenticated): Record
 
   if (session.account.type === 'user') return userFilter
 
+  const departmentCondition = session.account.department
+    ? { $or: [{ 'access.department': { $exists: false } }, { 'access.department': { $in: ['*', session.account.department] } }] }
+    : { $or: [{ 'access.department': { $exists: false } }, { 'access.department': { $in: ['-', '*'] } }] }
+
   const baseOrgFilter: Record<string, any> = {
-    'access.type': 'organization',
-    'access.id': session.account.id,
-    $or: [
-      { 'access.roles': { $size: 0 } },
-      { 'access.roles': { $in: [session.accountRole] } }
+    $and: [
+      { 'access.type': 'organization' },
+      { 'access.id': session.account.id },
+      { $or: [{ 'access.roles': { $exists: false } }, { 'access.roles': { $size: 0 } }, { 'access.roles': { $in: [session.accountRole] } }] },
+      departmentCondition
     ]
   }
-  if (session.account.department) baseOrgFilter['access.department'] = { $in: ['*', session.account.department] }
-  else baseOrgFilter['access.department'] = { $in: ['-', '*'] }
 
   userFilter.$or.push(baseOrgFilter)
   return userFilter
