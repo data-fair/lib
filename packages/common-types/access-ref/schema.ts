@@ -66,6 +66,7 @@ export default {
         type: { type: 'string', const: 'user' },
         email: {
           type: 'string',
+          format: 'email',
           title: 'Adresse mail',
           'x-i18n-title': {
             fr: 'Adresse mail',
