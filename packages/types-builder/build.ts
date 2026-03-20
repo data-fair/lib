@@ -220,7 +220,7 @@ export declare const localDefsSchema: any
           validateCode = validateCode.replace(/require\("ajv\/dist\/runtime\/ucs2length"\)/g, 'ucs2length')
         }
         if (validateCode.includes('require("ajv/dist/runtime/equal")')) {
-          validateCode = 'import equal from "ajv/dist/runtime/equal.js";\n' + validateCode
+          validateCode = 'import _equal from "ajv/dist/runtime/equal.js";\nconst equal = _equal.default || _equal;\n' + validateCode
           validateCode = validateCode.replace(/require\("ajv\/dist\/runtime\/equal"\)\.default/g, 'equal')
         }
 
