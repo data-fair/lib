@@ -7,6 +7,7 @@
     color="primary"
     density="compact"
     variant="outlined"
+    autocomplete="suppress"
     autofocus
     hide-details
     clearable
