@@ -37,9 +37,18 @@ export default {
         type: { type: 'string', const: 'user' },
         id: {
           type: 'string',
+          title: 'Membre',
+          'x-i18n-title': {
+            fr: 'Membre',
+            en: 'Member',
+            es: 'Miembro',
+            it: 'Membro',
+            pt: 'Membro',
+            de: 'Mitglied'
+          },
           layout: {
             getItems: {
-              url: '/simple-directory/api/organization/${context.owner.id}/members',
+              url: '/simple-directory/api/organizations/${context.owner.id}/members',
               itemsResults: 'data.results',
               itemTitle: 'item.name',
               itemValue: 'item.id',
@@ -66,6 +75,7 @@ export default {
         type: { type: 'string', const: 'user' },
         email: {
           type: 'string',
+          format: 'email',
           title: 'Adresse mail',
           'x-i18n-title': {
             fr: 'Adresse mail',
@@ -95,13 +105,22 @@ export default {
         mode: { type: 'string', const: 'member' },
         type: { type: 'string', const: 'organization' },
         department: { type: 'string', const: '*' },
-        roles: { type: 'array', const: [] },
+        roles: { type: 'array', const: [], items: { type: 'string' } },
         id: {
           type: 'string',
+          title: 'Partenaire',
+          'x-i18n-title': {
+            fr: 'Partenaire',
+            en: 'Partner',
+            es: 'Socio',
+            it: 'Partner',
+            pt: 'Parceiro',
+            de: 'Partner'
+          },
           layout: {
             getItems: {
-              url: '/simple-directory/api/organization/${context.owner.id}/partners',
-              itemsResults: 'data.results',
+              url: '/simple-directory/api/organizations/${context.owner.id}',
+              itemsResults: 'data.partners',
               itemTitle: 'item.name',
               itemValue: 'item.id',
               itemIcon: '`/simple-directory/api/avatars/organization/${item.id}/avatar.png`'
@@ -126,13 +145,28 @@ export default {
       properties: {
         mode: { type: 'string', const: 'internal' },
         type: { type: 'string', const: 'organization' },
-        id: { type: 'string' },
-        department: {
+        id: {
           type: 'string',
           layout: {
+            comp: 'none',
+            getConstData: 'context.owner.id'
+          }
+        },
+        department: {
+          type: 'string',
+          title: 'Département',
+          'x-i18n-title': {
+            fr: 'Département',
+            en: 'Department',
+            es: 'Departamento',
+            it: 'Dipartimento',
+            pt: 'Departamento',
+            de: 'Abteilung'
+          },
+          layout: {
             getItems: {
-              url: '/simple-directory/api/organization/${context.owner.id}/departments',
-              itemsResults: '[...data.results, {id: "*", name: "Tous les départements"}, {id: "-", name: "Racine de l\'organisation uniquement"}]',
+              url: '/simple-directory/api/organizations/${context.owner.id}',
+              itemsResults: '[...(data.departments || []), {id: "*", name: "Tous les départements"}, {id: "-", name: "Racine de l\'organisation uniquement"}]',
               itemTitle: 'item.name',
               itemValue: 'item.id'
             }
@@ -140,15 +174,22 @@ export default {
         },
         roles: {
           type: 'array',
+          title: 'Rôles',
+          'x-i18n-title': {
+            fr: 'Rôles',
+            en: 'Roles',
+            es: 'Roles',
+            it: 'Ruoli',
+            pt: 'Funções',
+            de: 'Rollen'
+          },
           items: {
             type: 'string'
           },
           layout: {
             getItems: {
-              url: '/simple-directory/api/organization/${context.owner.id}/roles',
-              itemsResults: 'data.results',
-              itemTitle: 'item.name',
-              itemValue: 'item.id'
+              url: '/simple-directory/api/organizations/${context.owner.id}',
+              itemsResults: 'data.roles'
             }
           }
         }
