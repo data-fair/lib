@@ -87,9 +87,9 @@ const listClasses: Record<MarkedVuetifyDensity, string> = {
 }
 
 const paragraphClasses: Record<MarkedVuetifyDensity, string> = {
-  default: 'markdown-paragraph',
-  comfortable: 'markdown-paragraph mb-3',
-  compact: 'markdown-paragraph mb-1'
+  default: 'markdown-paragraph mt-4 mb-4',
+  comfortable: 'markdown-paragraph mt-3 mb-3',
+  compact: 'markdown-paragraph mt-1 mb-1'
 }
 
 export function createMarkedVuetify (options?: MarkedVuetifyOptions): MarkedExtension {
