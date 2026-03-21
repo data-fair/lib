@@ -1,5 +1,6 @@
 <template>
   <!-- Right-side navigation drawer for larger screens -->
+   <!-- order=1 is to be to the left of the agent chat -->
   <v-navigation-drawer
     v-if="display.lgAndUp.value"
     color="background"
@@ -7,6 +8,7 @@
     location="right"
     permanent
     floating
+    order="1"
   >
     <template #default>
       <v-list

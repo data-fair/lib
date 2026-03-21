@@ -1,5 +1,5 @@
 <template>
-  <v-toolbar-items class="theme-switcher" v-if="session.fullSite.value?.theme.dark || session.fullSite.value?.theme.hc || session.fullSite.value?.theme.hcDark">
+  <v-toolbar-items class="theme-switcher" v-if="session.fullSite.value?.theme.dark || session.fullSite.value?.theme.hc || session.fullSite.value?.theme.hcDark">
     <v-menu
       offset-y
       class="ml-n4"
