@@ -4,6 +4,7 @@
       v-if="locales.length > 1"
       direction="bottom"
       transition="fade-transition"
+      style="z-index: 2600; /* Higher than agent-chat's 2500 */"
     >
       <template #activator="{props}">
         <v-btn

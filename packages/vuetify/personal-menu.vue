@@ -11,6 +11,7 @@
       v-else
       offset-y
       class="ml-n4"
+      style="z-index: 2600; /* Higher than agent-chat's 2500 */"
       max-height="700"
     >
       <template #activator="{props: activatorProps}">

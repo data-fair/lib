@@ -5,6 +5,7 @@
     v-model="showNotification"
     class="ui-notif"
     v-bind="fullSnackbarProps"
+    style="z-index: 2600; /* Higher than agent-chat's 2500 */"
   >
     <p v-if="notification.msg">{{ notification.msg }}</p>
     <p
