@@ -4,6 +4,19 @@
   $heading-font-family: var(--d-heading-font-family)
 );
 
+// CSS reset removed from Vuetify 4
+// cf https://vuetifyjs.com/en/getting-started/upgrade-guide/
+@layer vuetify-core.reset {
+  ul, ol, figure, details, summary {
+    padding: 0;
+    margin: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+  }
+}
+
 // v-icon has an opacity when it is prepended in a list of items.
 // ref: https://github.com/vuetifyjs/vuetify/issues/18760
 .v-icon {
