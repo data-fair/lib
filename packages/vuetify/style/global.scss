@@ -1,3 +1,4 @@
+// This @use is ignored by vuetify-nuxt-module (used by @data-fair/portals)
 @use 'vuetify' with (
   $color-pack: false,
   $body-font-family: var(--d-body-font-family),
@@ -12,7 +13,7 @@
     margin: 0;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1, h2, h3, h4, h5, h6, p {
     margin: 0;
   }
 }

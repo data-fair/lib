@@ -18,7 +18,7 @@ const baseDarkColors = {
 }
 
 export function vuetifySessionOptions (session: Session, cspNonce?: string): VuetifyOptions {
-  if (!session.site.value) throw new Error('vuetifySessionOptions requires fething site info in session util')
+  if (!session.site.value) throw new Error('vuetifySessionOptions requires fetching site info in session util')
   const colors = { ...baseColors, ...session.site.value?.colors }
   return {
     ssr: false,
