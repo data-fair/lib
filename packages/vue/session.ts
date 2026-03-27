@@ -310,14 +310,19 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
     goTo(loginUrl(redirect, extraParams, immediateRedirect))
   }
   const logout = async (redirect?: string) => {
-    await customFetch(`${options.directoryUrl}/api/auth`, { method: 'DELETE' })
+    const response = await customFetch(`${options.directoryUrl}/api/auth`, { method: 'DELETE' }) as { endSessionUrl?: string } | undefined
     // sometimes server side cookie deletion is not applied immediately in browser local js context
     // so we do it here to
     cookies.remove('id_token')
     cookies.remove('id_token_org')
     cookies.remove('id_token_dep')
     cookies.remove('id_token_role')
-    goTo(redirect ?? options.logoutRedirectUrl ?? null)
+    // RP-Initiated Logout: if the server returned an endSessionUrl, redirect to the SSO logout
+    if (response?.endSessionUrl) {
+      goTo(response.endSessionUrl)
+    } else {
+      goTo(redirect ?? options.logoutRedirectUrl ?? null)
+    }
   }
 
   const switchOrganization = (org: string | null, dep?: string, role?: string, updateState = true) => {
