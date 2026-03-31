@@ -1,5 +1,22 @@
-// made for https://github.com/unplugin/unplugin-auto-import
-
+/**
+ * Preset for {@link https://github.com/unplugin/unplugin-auto-import unplugin-auto-import}.
+ *
+ * Auto-imports Vue, vue-router, vue-i18n built-ins and all data-fair composables
+ * so they can be used in `<script setup>` without explicit import statements.
+ *
+ * @example
+ * ```ts
+ * // vite.config.ts
+ * import { autoImports } from '@data-fair/lib-vue/vite.js'
+ * import AutoImport from 'unplugin-auto-import/vite'
+ *
+ * export default defineConfig({
+ *   plugins: [
+ *     AutoImport({ imports: [...autoImports] })
+ *   ]
+ * })
+ * ```
+ */
 export const autoImports = [
   'vue',
   'vue-i18n',
