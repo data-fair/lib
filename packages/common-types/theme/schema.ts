@@ -397,7 +397,7 @@ export default {
           },
           layout: {
             comp: 'color-picker',
-            cols: { sm: 6, lg: 3 }
+            cols: { sm: 6 }
           }
         },
         'on-background': {
@@ -413,7 +413,7 @@ export default {
           },
           layout: {
             comp: 'color-picker',
-            cols: { sm: 6, lg: 3 }
+            cols: { sm: 6 }
           }
         },
         surface: {
@@ -429,7 +429,7 @@ export default {
           },
           layout: {
             comp: 'color-picker',
-            cols: { sm: 6, lg: 3 }
+            cols: { sm: 6 }
           }
         },
         'on-surface': {
@@ -445,7 +445,7 @@ export default {
           },
           layout: {
             comp: 'color-picker',
-            cols: { sm: 6, lg: 3 }
+            cols: { sm: 6 }
           }
         },
         'surface-inverse': {
@@ -461,7 +461,7 @@ export default {
           },
           layout: {
             comp: 'color-picker',
-            cols: { sm: 6, lg: 3 }
+            cols: { sm: 6 }
           }
         },
         'on-surface-inverse': {
@@ -477,7 +477,7 @@ export default {
           },
           layout: {
             comp: 'color-picker',
-            cols: { sm: 6, lg: 3 }
+            cols: { sm: 6 }
           }
         },
         primary: {
