@@ -13,7 +13,7 @@ import { ensureDir } from '@data-fair/lib-node/fs.js'
 
 type TypesBuilderOptions = { mjs: boolean, vjsfDir?: string }
 type FileRef = { url: string }
-type SchemaExport = ('types' | 'validate' | 'stringify' | 'schema' | 'resolvedSchema' | 'resolvedSchemaJson' | 'localDefsSchema' | 'localDefsSchemaJson' | 'vjsf')
+type SchemaExport = ('types' | 'validate' | 'stringify' | 'schema' | 'resolvedSchema' | 'resolvedSchemaJson' | 'localDefsSchema' | 'localDefsSchemaJson' | 'vjsf' | 'compiledLayout')
 
 const hashObject = (obj: any) => {
   return createHash('md5').update(JSON.stringify(obj)).digest('hex')
@@ -349,6 +349,42 @@ const emit = defineEmits(emits)
             console.log(`  vjsf global component path : ${vjsfFilePath}`)
             writeFileSync(vjsfFilePath, globalVjsfCode)
           }
+        }
+      } else if (schemaExport === 'compiledLayout') {
+        const vjsfLocales: string[] = schema['x-vjsf-locales'] ?? ['fr']
+        const { compile: compileLayout } = await import('@json-layout/core')
+        const { serialize: serializeCompiledLayout } = await import('@json-layout/core/src/compile/serialize')
+        const { resolveXI18n } = await import('@json-layout/core')
+
+        for (const locale of vjsfLocales) {
+          const schemaVjsfOpts = { ...schema['x-vjsf'] }
+          delete schemaVjsfOpts.compName
+          const otherSchemas = { ...schemas }
+          for (const [key, otherSchema] of Object.entries(schemas)) {
+            if (key === schema.$id) continue
+            otherSchemas[key] = clone(otherSchema)
+            resolveXI18n(otherSchemas[key], locale)
+          }
+          if (schema.$id) delete otherSchemas[schema.$id]
+          schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
+
+          const fullOptions = { pluginsImports: [] as string[], webmcp: false, locale, ...schemaVjsfOpts }
+          for (const pluginImport of fullOptions.pluginsImports) {
+            const componentInfo = (await import(pluginImport + '/info.js')).default
+            fullOptions.components = fullOptions.components ?? {}
+            fullOptions.components[componentInfo.name] = componentInfo
+          }
+
+          console.log(`  compiledLayout ${locale} options: ${JSON.stringify(schemaVjsfOpts)}`)
+          const compiledLayout = compileLayout(schema, fullOptions)
+          let compiledLayoutCode = await serializeCompiledLayout(compiledLayout)
+          // The serialized code declares `const compiledLayout = {...}`.
+          // Make it an export.
+          compiledLayoutCode = compiledLayoutCode.replace('const compiledLayout =', 'export const compiledLayout =')
+
+          const filePath = path.join(dir, '.type', `compiled-layout-${locale}.js`)
+          writeFileSync(filePath, '/* eslint-disable */\n// @ts-nocheck\n\n' + compiledLayoutCode)
+          console.log(`  compiledLayout ${locale} path: ${filePath}`)
         }
       } else {
         throw new Error(`unsupported export ${schemaExport}`)
