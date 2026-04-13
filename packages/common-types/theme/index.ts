@@ -19,60 +19,65 @@ export const defaultTheme = {
     'on-surface': '#424242', // grey-darken-3
     'surface-inverse': '#424242', // grey-darken-3
     'on-surface-inverse': '#FFFFFF',
+    // Primary / secondary / accent forms an anlogous trio (blue / light blue / indigo)
     primary: '#1976D2', // blue-darken-2
     'on-primary': '#FFFFFF',
-    'text-primary': '#1565C0',
+    'text-primary': '#1565C0', // blue-darken-3
     secondary: '#81D4FA', // light-blue-lighten-3
     'on-secondary': '#000000',
-    'text-secondary': '#0277BD', // light-blue-darken-3
-    accent: '#2962FF', // blue-accent-4
+    'text-secondary': '#01579B', // light-blue-darken-4
+    accent: '#283593', // indigo-darken-3
     'on-accent': '#FFFFFF',
-    'text-accent': undefined,
-    info: '#FFE0B2', // orange-lighten-4
+    'text-accent': '#283593', // indigo-darken-3
+    // Info and warning are variants of orange (light for info, dark for warning)
+    // a natural complementary color for the dominant blue
+    info: '#FFCC80', // orange-lighten-4
     'on-info': '#000000',
     'text-info': '#BF4300',
+    warning: '#BF360A', // deep-orange-darken-4
+    'on-warning': '#FFFFFF',
+    'text-warning': '#8B2500',
+    // error, success and admin are not very important
+    // reserved for very specific UI element where semantics are more important than esthetics
+    error: '#D50000', // red-accent-4
+    'on-error': '#FFFFFF',
+    'text-error': '#B71C1C', // red-darken-4
     success: '#B9F6CA', // green-accent-1
     'on-success': '#000000',
     'text-success': '#2E7D32', // green-darken-3
-    error: '#D50000', // red-accent-4
-    'on-error': '#FFFFFF',
-    'text-error': undefined,
-    warning: '#D81B60', // pink-darken-1
-    'on-warning': '#FFFFFF',
-    'text-warning': undefined,
     admin: '#B71C1C', // red-darken-4
     'on-admin': '#FFFFFF',
-    'text-admin': undefined,
+    'text-admin': '#B71C1C', // red-darken-4
   },
   dark: false,
   darkColors: {
-    background: '#121212',
+    background: '#303030', // slightly darker than surface
     'on-background': '#FFFFFF', // white
-    surface: '#212121', // grey-darken-4
+    surface: '#424242', // grey-darken-3
     'on-surface': '#FFFFFF', // white
     'surface-inverse': '#FAFAFA', // grey-lighten-5
     'on-surface-inverse': '#424242', // grey-darken-3
     primary: '#1976D2', // blue-darken-2
     'on-primary': '#FFFFFF', // white
-    'text-primary': '#2196F3', // blue
-    secondary: '#BBDEFB', // blue-lighten-4
+    'text-primary': '#90CAF9', // blue-lighten-3
+    secondary: '#81D4FA', // light-blue-lighten-3
     'on-secondary': '#000000',
-    'text-secondary': undefined,
-    accent: '#2962FF', // blue-accent-1
+    'text-secondary': '#81D4FA', // light-blue-lighten-3
+    accent: '#283593', // indigo-darken-3
     'on-accent': '#FFFFFF',
-    'text-accent': '#82B1FF',
-    error: '#D50000', // red-accent-4
-    'on-error': '#FFFFFF',
-    'text-error': '#FF5252', // red-accent-2
+    'text-accent': '#C5CAE9', // indigo-lighten-4
     info: '#FFE0B2',
     'on-info': '#000000',
     'text-info': undefined,
+    warning: '#BF360A', // deep-orange-darken-4
+    'on-warning': '#FFFFFF',
+    'text-warning': '#FFAB40', // orange-accent-2
+    error: '#D50000', // red-accent-4
+    'on-error': '#FFFFFF',
+    'text-error': '#FFCDD2', // red-lighten-4
     success: '#B9F6CA', // green-accent-1
     'on-success': '#000000',
     'text-success': undefined,
-    warning: '#D81B60', // pink-darken-1
-    'on-warning': '#FFFFFF',
-    'text-warning': '#FF4081', // pink-accent-2
     admin: '#B71C1C', // red-darken-4
     'on-admin': '#FFFFFF',
     'text-admin': '#FFCDD2'
@@ -91,25 +96,25 @@ export const defaultTheme = {
     'text-primary': undefined,
     secondary: '#81D4FA', // light-blue-lighten-3
     'on-secondary': '#000000',
-    'text-secondary': '#01579B', // light-blue-darken-3
-    accent: '#1d44b3', // blue-accent-4
+    'text-secondary': '#003A6B', // custom light-blue-darken-5
+    accent: '#283593', // indigo-darken-3
     'on-accent': '#FFFFFF',
-    'text-accent': undefined,
+    'text-accent': '#283593', // indigo-darken-3
     info: '#FFE0B2', // orange-lighten-4
     'on-info': '#000000',
     'text-info': '#993500',
+    warning: '#6D1B00', // custom deep-orange-darken-5
+    'on-warning': '#FFFFFF',
+    'text-warning': undefined,
+    error: '#b30000',
+    'on-error': '#FFFFFF',
+    'text-error': '#8B0000',
     success: '#B9F6CA', // green-accent-1
     'on-success': '#000000',
     'text-success': '#1B5E20', // green-darken-4
-    error: '#b30000',
-    'on-error': '#FFFFFF',
-    'text-error': undefined,
-    warning: '#880E4F', // pink-darken-4
-    'on-warning': '#FFFFFF',
-    'text-warning': undefined,
     admin: '#b30000',
     'on-admin': '#FFFFFF',
-    'text-admin': undefined,
+    'text-admin': '#8B0000',
   },
   hcDark: false,
   hcDarkColors: {
@@ -121,25 +126,25 @@ export const defaultTheme = {
     'on-surface-inverse': '#000000',
     primary: '#0D47A1', // blue-darken-4
     'on-primary': '#FFFFFF', // white
-    'text-primary': '#42A5F5', // blue-lighten-1
-    secondary: '#BBDEFB', // blue-lighten-4
+    'text-primary': '#BBDEFB', // blue-lighten-4
+    secondary: '#81D4FA', // light-blue-lighten-3
     'on-secondary': '#000000',
-    'text-secondary': undefined,
-    accent: '#1d44b3', // blue-accent-1
+    'text-secondary': '#81D4FA', // light-blue-lighten-3
+    accent: '#283593', // indigo-darken-3
     'on-accent': '#FFFFFF',
-    'text-accent': '#82B1FF',
-    error: '#b30000',
-    'on-error': '#FFFFFF',
-    'text-error': '#FF8A80', // red-accent-1
+    'text-accent': '#C5CAE9', // indigo-lighten-4
     info: '#FFE0B2',
     'on-info': '#000000',
     'text-info': undefined,
+    warning: '#6D1B00', // custom deep-orange-darken-5
+    'on-warning': '#FFFFFF',
+    'text-warning': '#FFAB40', // orange-accent-2
+    error: '#b30000',
+    'on-error': '#FFFFFF',
+    'text-error': '#FF8A80', // red-accent-1
     success: '#B9F6CA', // green-accent-1
     'on-success': '#000000',
     'text-success': undefined,
-    warning: '#880E4F', // pink-darken-4
-    'on-warning': '#FFFFFF',
-    'text-warning': '#FF80AB', // pink-accent-1
     admin: '#b30000',
     'on-admin': '#FFFFFF',
     'text-admin': '#FFCDD2'
@@ -155,13 +160,14 @@ export const getTextColorsCss = (colors: Colors, theme: string) => {
 .v-theme--${theme} a.simple-link { color: ${colors['text-primary']}; text-decoration: none; }`
   }
 
-  for (const color of ['surface-inverse', 'primary', 'secondary', 'accent', 'error', 'info', 'success', 'warning', 'admin']) {
+  for (const color of ['surface-inverse', 'primary', 'secondary', 'accent', 'info', 'warning', 'error', 'success', 'admin']) {
     // create a text-color class to apply text-* color variants
+    // always emit the rule (falling back to the base color via the vuetify CSS var)
+    // to prevent a parent theme's text-* rule from cascading into nested theme providers
     const textKey = `text-${color}` as keyof Colors
-    if (colors[textKey]) {
-      css += `
-.v-theme--${theme} .text-${color}:not(.v-btn--disabled) { color: ${colors[textKey]}!important; }`
-    }
+    const textValue = colors[textKey] ?? `rgb(var(--v-theme-${color}))`
+    css += `
+.v-theme--${theme} .text-${color}:not(.v-btn--disabled) { color: ${textValue}!important; }`
 
     // apply the on-* color variants to links (they are ignored by vuetify by default)
     const onKey = `on-${color}` as keyof Colors
@@ -185,6 +191,13 @@ export const getReadableColor = (baseColor: string, bgColors: string [], darkMod
     }
   }
   return c.toHexString()
+}
+
+export const getTonalBg = (color: string, bgColor: string) => {
+  // Vuetify variant="tonal" renders the color as a ~12% opacity overlay
+  // over the underlying surface. Compositing color at 12% over bgColor
+  // is equivalent to mixing bgColor with 12% of color.
+  return tinycolor.mix(bgColor, color, 12).toHexString()
 }
 
 export const getOnColor = (color: string) => {
@@ -219,18 +232,27 @@ export const fillTheme = (theme: Theme, defaultTheme: Theme) => {
     Object.assign(fullTheme.darkColors, customColors)
     Object.assign(fullTheme.hcColors, customColors)
     Object.assign(fullTheme.hcDarkColors, customColors)
-    fullTheme.colors['text-primary'] = getReadableColor(fullTheme.colors.primary, [fullTheme.colors.background, fullTheme.colors.surface], false, 'AA')
-    fullTheme.colors['text-secondary'] = getReadableColor(fullTheme.colors.secondary, [fullTheme.colors.background, fullTheme.colors.surface], false, 'AA')
-    fullTheme.colors['text-accent'] = getReadableColor(fullTheme.colors.accent, [fullTheme.colors.background, fullTheme.colors.surface], false, 'AA')
-    fullTheme.darkColors['text-primary'] = getReadableColor(fullTheme.colors.primary, [fullTheme.darkColors.background, fullTheme.darkColors.surface], true, 'AA')
-    fullTheme.darkColors['text-secondary'] = getReadableColor(fullTheme.colors.secondary, [fullTheme.darkColors.background, fullTheme.darkColors.surface], true, 'AA')
-    fullTheme.darkColors['text-accent'] = getReadableColor(fullTheme.colors.accent, [fullTheme.darkColors.background, fullTheme.darkColors.surface], true, 'AA')
-    fullTheme.hcColors['text-primary'] = getReadableColor(fullTheme.colors.primary, [fullTheme.hcColors.background, fullTheme.hcColors.surface], false, 'AAA')
-    fullTheme.hcColors['text-secondary'] = getReadableColor(fullTheme.colors.secondary, [fullTheme.hcColors.background, fullTheme.hcColors.surface], false, 'AAA')
-    fullTheme.hcColors['text-accent'] = getReadableColor(fullTheme.colors.accent, [fullTheme.hcColors.background, fullTheme.hcColors.surface], false, 'AAA')
-    fullTheme.hcDarkColors['text-primary'] = getReadableColor(fullTheme.colors.primary, [fullTheme.hcDarkColors.background, fullTheme.hcDarkColors.surface], true, 'AAA')
-    fullTheme.hcDarkColors['text-secondary'] = getReadableColor(fullTheme.colors.secondary, [fullTheme.hcDarkColors.background, fullTheme.hcDarkColors.surface], true, 'AAA')
-    fullTheme.hcDarkColors['text-accent'] = getReadableColor(fullTheme.colors.accent, [fullTheme.hcDarkColors.background, fullTheme.hcDarkColors.surface], true, 'AAA')
+    const textBgColors = (c: Colors, key: 'primary' | 'secondary' | 'accent') => {
+      const base = c[key] as string
+      return [
+        c.background,
+        c.surface,
+        getTonalBg(base, c.background),
+        getTonalBg(base, c.surface)
+      ]
+    }
+    fullTheme.colors['text-primary'] = getReadableColor(fullTheme.colors.primary, textBgColors(fullTheme.colors, 'primary'), false, 'AA')
+    fullTheme.colors['text-secondary'] = getReadableColor(fullTheme.colors.secondary, textBgColors(fullTheme.colors, 'secondary'), false, 'AA')
+    fullTheme.colors['text-accent'] = getReadableColor(fullTheme.colors.accent, textBgColors(fullTheme.colors, 'accent'), false, 'AA')
+    fullTheme.darkColors['text-primary'] = getReadableColor(fullTheme.colors.primary, textBgColors(fullTheme.darkColors, 'primary'), true, 'AA')
+    fullTheme.darkColors['text-secondary'] = getReadableColor(fullTheme.colors.secondary, textBgColors(fullTheme.darkColors, 'secondary'), true, 'AA')
+    fullTheme.darkColors['text-accent'] = getReadableColor(fullTheme.colors.accent, textBgColors(fullTheme.darkColors, 'accent'), true, 'AA')
+    fullTheme.hcColors['text-primary'] = getReadableColor(fullTheme.colors.primary, textBgColors(fullTheme.hcColors, 'primary'), false, 'AAA')
+    fullTheme.hcColors['text-secondary'] = getReadableColor(fullTheme.colors.secondary, textBgColors(fullTheme.hcColors, 'secondary'), false, 'AAA')
+    fullTheme.hcColors['text-accent'] = getReadableColor(fullTheme.colors.accent, textBgColors(fullTheme.hcColors, 'accent'), false, 'AAA')
+    fullTheme.hcDarkColors['text-primary'] = getReadableColor(fullTheme.colors.primary, textBgColors(fullTheme.hcDarkColors, 'primary'), true, 'AAA')
+    fullTheme.hcDarkColors['text-secondary'] = getReadableColor(fullTheme.colors.secondary, textBgColors(fullTheme.hcDarkColors, 'secondary'), true, 'AAA')
+    fullTheme.hcDarkColors['text-accent'] = getReadableColor(fullTheme.colors.accent, textBgColors(fullTheme.hcDarkColors, 'accent'), true, 'AAA')
   } else {
     fullTheme.assistedModeColors = {
       primary: fullTheme.colors.primary,
@@ -266,7 +288,8 @@ const messages: Record<string, Record<string, string>> = {
     'theme.dark': 'sombre',
     'theme.hc': 'à contraste élevé',
     'theme.hcDark': 'sombre à contraste élevé',
-    readableWarning: 'la couleur {colorName} ({colorCode}) du thème {themeName} n\'est pas suffisamment lisible par dessus la couleur {bgColorName} ({bgColorCode})',
+    readableWarning: 'la couleur {colorName} ({colorCode}) du thème {themeName} n\'est pas suffisamment lisible par-dessus la couleur {bgColorName} ({bgColorCode})',
+    tonalReadableWarning: 'la couleur {colorName} ({colorCode}) du thème {themeName} n\'est pas suffisamment lisible par-dessus la variante tonale {baseName} ({tonalBgCode}) au-dessus de la couleur {bgColorName}',
     authProvider: 'du fournisseur d\'identité {title}',
     white: 'blanche',
     text: 'de texte',
@@ -279,14 +302,14 @@ const messages: Record<string, Record<string, string>> = {
     'text-secondary': 'texte secondaire',
     accent: 'accentuée',
     'text-accent': 'texte accentué',
-    error: 'd\'erreur',
-    'text-error': 'texte d\'erreur',
-    warning: 'd\'avertissement',
-    'text-warning': 'texte d\'avertissement',
-    success: 'de succès',
-    'text-success': 'texte de succès',
     info: 'd\'information',
     'text-info': 'texte d\'information',
+    warning: 'd\'avertissement',
+    'text-warning': 'texte d\'avertissement',
+    error: 'd\'erreur',
+    'text-error': 'texte d\'erreur',
+    success: 'de succès',
+    'text-success': 'texte de succès',
     admin: 'd\'administration',
     'text-admin': 'texte d\'administration',
   },
@@ -296,6 +319,7 @@ const messages: Record<string, Record<string, string>> = {
     'theme.hc': 'high contrast',
     'theme.hcDark': 'high contrast dark',
     readableWarning: 'the {colorName} color ({colorCode}) of {themeName} theme is not sufficiently readable over the {bgColorName} color ({bgColorCode})',
+    tonalReadableWarning: 'the {colorName} color ({colorCode}) of {themeName} theme is not sufficiently readable over the tonal variant of {baseName} ({tonalBgCode}) on top of {bgColorName}',
     authProvider: 'auth provider {title}',
     white: 'white',
     text: 'text',
@@ -308,14 +332,14 @@ const messages: Record<string, Record<string, string>> = {
     'text-secondary': 'secondary text',
     accent: 'accent',
     'text-accent': 'accent text',
-    error: 'error',
-    'text-error': 'error text',
-    warning: 'warning',
-    'text-warning': 'warning text',
-    success: 'success',
-    'text-success': 'success text',
     info: 'info',
     'text-info': 'info text',
+    warning: 'warning',
+    'text-warning': 'warning text',
+    error: 'error',
+    'text-error': 'error text',
+    success: 'success',
+    'text-success': 'success text',
     admin: 'admin',
     'text-admin': 'admin text'
   }
@@ -332,16 +356,30 @@ function readableWarning (readableOptions: tinycolor.WCAG2Options, locale: 'en' 
   }
 }
 
+function tonalReadableWarning (readableOptions: tinycolor.WCAG2Options, locale: 'en' | 'fr', colorCode: string | undefined, colorName: string, baseCode: string | undefined, baseName: string, bgColorCode: string | undefined, bgColorName: string, themeName: string) {
+  if (!colorCode || !baseCode || !bgColorCode) return
+  const tonalBgCode = getTonalBg(baseCode, bgColorCode)
+  if (!tinycolor.isReadable(colorCode, tonalBgCode, readableOptions)) {
+    return getMessage(locale, 'tonalReadableWarning', { colorCode, colorName: getMessage(locale, `${colorName}`), tonalBgCode, baseName: getMessage(locale, `${baseName}`), bgColorName: getMessage(locale, `${bgColorName}`), themeName: getMessage(locale, `theme.${themeName}`) })
+  }
+}
+
 export function getColorsWarnings (locale: 'en' | 'fr', colors: Colors, themeName: string, readableOptions: tinycolor.WCAG2Options): string[] {
   if (locale !== 'fr' && locale !== 'en') locale = 'en'
   const warnings: (string | undefined)[] = []
-  for (const color of ['primary', 'secondary', 'accent', 'info', 'success', 'error', 'warning', 'admin']) {
+  for (const color of ['primary', 'secondary', 'accent', 'info', 'warning', 'error', 'success', 'admin']) {
     const textColor = colors[`text-${color}` as keyof Colors] ?? colors[color as keyof Colors]
     warnings.push(readableWarning(readableOptions, locale, textColor, `text-${color}`, colors.background, 'background', themeName))
     warnings.push(readableWarning(readableOptions, locale, textColor, `text-${color}`, colors.surface, 'surface', themeName))
   }
   for (const color of ['background', 'surface', 'surface-inverse', 'primary', 'secondary', 'accent', 'info', 'success', 'error', 'warning', 'admin']) {
     warnings.push(readableWarning(readableOptions, locale, colors[`on-${color}` as keyof Colors], 'text', colors[color as keyof Colors], color, themeName))
+  }
+  for (const color of ['primary', 'secondary', 'accent', 'info', 'warning', 'error', 'success', 'admin']) {
+    const textColor = colors[`text-${color}` as keyof Colors] ?? colors[color as keyof Colors]
+    const baseColor = colors[color as keyof Colors]
+    warnings.push(tonalReadableWarning(readableOptions, locale, textColor, `text-${color}`, baseColor, color, colors.background, 'background', themeName))
+    warnings.push(tonalReadableWarning(readableOptions, locale, textColor, `text-${color}`, baseColor, color, colors.surface, 'surface', themeName))
   }
   return warnings.filter(w => w !== undefined)
 }

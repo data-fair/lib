@@ -1,7 +1,4 @@
 {
-  "compilerOptions": {
-    "sourceMap": true
-  },
   "extends": "./tsconfig.build.json",
   "include": ["packages/vuetify"]
 }

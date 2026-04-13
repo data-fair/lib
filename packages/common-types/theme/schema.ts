@@ -372,14 +372,14 @@ export default {
         'on-secondary',
         'accent',
         'on-accent',
-        'error',
-        'on-error',
         'info',
         'on-info',
-        'success',
-        'on-success',
         'warning',
         'on-warning',
+        'error',
+        'on-error',
+        'success',
+        'on-success',
         'admin',
         'on-admin'
       ],
@@ -708,63 +708,6 @@ export default {
             }
           }
         },
-        success: {
-          type: 'string',
-          title: 'Couleur succès',
-          'x-i18n-title': {
-            fr: 'Couleur succès',
-            en: 'Success color',
-            es: 'Color de éxito',
-            it: 'Colore successo',
-            pt: 'Cor de sucesso',
-            de: 'Erfolgsfarbe'
-          },
-          layout: {
-            comp: 'color-picker',
-            cols: { sm: 12, lg: 4 }
-          }
-        },
-        'on-success': {
-          type: 'string',
-          title: 'Couleur succès',
-          'x-i18n-title': {
-            fr: 'Couleur succès',
-            en: 'Success color',
-            es: 'Color de éxito',
-            it: 'Colore successo',
-            pt: 'Cor de sucesso',
-            de: 'Erfolgsfarbe'
-          },
-          layout: {
-            comp: 'color-picker',
-            cols: { sm: 6, lg: 4 }
-          }
-        },
-        'text-success': {
-          type: 'string',
-          title: 'Couleur de texte succès',
-          'x-i18n-title': {
-            fr: 'Couleur de texte succès',
-            en: 'Success text color',
-            es: 'Color de texto de éxito',
-            it: 'Colore del testo successo',
-            pt: 'Cor do texto de sucesso',
-            de: 'Erfolgs-Textfarbe'
-          },
-          layout: {
-            comp: 'color-picker',
-            cols: { sm: 6, lg: 4 },
-            hint: 'laissez vide pour utiliser la couleur succès',
-            'x-i18n-hint': {
-              fr: 'laissez vide pour utiliser la couleur succès',
-              en: 'leave empty to use the success color',
-              es: 'deje en blanco para usar el color de éxito',
-              it: 'lasciare vuoto per usare il colore successo',
-              pt: 'deixe em branco para usar a cor de sucesso',
-              de: 'leer lassen, um die Erfolgsfarbe zu verwenden'
-            }
-          }
-        },
         error: {
           type: 'string',
           title: 'Couleur erreur',
@@ -876,6 +819,63 @@ export default {
               it: 'lasciare vuoto per usare il colore avvertimento',
               pt: 'deixe em branco para usar a cor de aviso',
               de: 'leer lassen, um die Warnfarbe zu verwenden'
+            }
+          }
+        },
+        success: {
+          type: 'string',
+          title: 'Couleur succès',
+          'x-i18n-title': {
+            fr: 'Couleur succès',
+            en: 'Success color',
+            es: 'Color de éxito',
+            it: 'Colore successo',
+            pt: 'Cor de sucesso',
+            de: 'Erfolgsfarbe'
+          },
+          layout: {
+            comp: 'color-picker',
+            cols: { sm: 12, lg: 4 }
+          }
+        },
+        'on-success': {
+          type: 'string',
+          title: 'Couleur succès',
+          'x-i18n-title': {
+            fr: 'Couleur succès',
+            en: 'Success color',
+            es: 'Color de éxito',
+            it: 'Colore successo',
+            pt: 'Cor de sucesso',
+            de: 'Erfolgsfarbe'
+          },
+          layout: {
+            comp: 'color-picker',
+            cols: { sm: 6, lg: 4 }
+          }
+        },
+        'text-success': {
+          type: 'string',
+          title: 'Couleur de texte succès',
+          'x-i18n-title': {
+            fr: 'Couleur de texte succès',
+            en: 'Success text color',
+            es: 'Color de texto de éxito',
+            it: 'Colore del testo successo',
+            pt: 'Cor do texto de sucesso',
+            de: 'Erfolgs-Textfarbe'
+          },
+          layout: {
+            comp: 'color-picker',
+            cols: { sm: 6, lg: 4 },
+            hint: 'laissez vide pour utiliser la couleur succès',
+            'x-i18n-hint': {
+              fr: 'laissez vide pour utiliser la couleur succès',
+              en: 'leave empty to use the success color',
+              es: 'deje en blanco para usar el color de éxito',
+              it: 'lasciare vuoto per usare il colore successo',
+              pt: 'deixe em branco para usar a cor de sucesso',
+              de: 'leer lassen, um die Erfolgsfarbe zu verwenden'
             }
           }
         },
