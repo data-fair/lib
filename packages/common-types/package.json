@@ -24,6 +24,7 @@
   "files": [
     "**/schema.json",
     "**/*.js",
+    "**/*.js.map",
     "**/*.d.ts"
   ],
   "author": "",
