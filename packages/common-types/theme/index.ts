@@ -289,7 +289,9 @@ const messages: Record<string, Record<string, string>> = {
     'theme.hc': 'à contraste élevé',
     'theme.hcDark': 'sombre à contraste élevé',
     readableWarning: 'la couleur {colorName} ({colorCode}) du thème {themeName} n\'est pas suffisamment lisible par-dessus la couleur {bgColorName} ({bgColorCode})',
-    tonalReadableWarning: 'la couleur {colorName} ({colorCode}) du thème {themeName} n\'est pas suffisamment lisible par-dessus la variante tonale {baseName} ({tonalBgCode}) au-dessus de la couleur {bgColorName}',
+    readableWarningAggregated: 'la couleur {colorName} ({colorCode}) du thème {themeName} n\'est pas suffisamment lisible par-dessus : {bgList}',
+    bgSolid: '{bgColorName} ({bgColorCode})',
+    bgTonal: 'variante tonale {baseName} ({tonalBgCode}) sur {bgColorName}',
     authProvider: 'du fournisseur d\'identité {title}',
     white: 'blanche',
     text: 'de texte',
@@ -319,7 +321,9 @@ const messages: Record<string, Record<string, string>> = {
     'theme.hc': 'high contrast',
     'theme.hcDark': 'high contrast dark',
     readableWarning: 'the {colorName} color ({colorCode}) of {themeName} theme is not sufficiently readable over the {bgColorName} color ({bgColorCode})',
-    tonalReadableWarning: 'the {colorName} color ({colorCode}) of {themeName} theme is not sufficiently readable over the tonal variant of {baseName} ({tonalBgCode}) on top of {bgColorName}',
+    readableWarningAggregated: 'the {colorName} color ({colorCode}) of {themeName} theme is not sufficiently readable over: {bgList}',
+    bgSolid: '{bgColorName} ({bgColorCode})',
+    bgTonal: 'tonal variant of {baseName} ({tonalBgCode}) on {bgColorName}',
     authProvider: 'auth provider {title}',
     white: 'white',
     text: 'text',
@@ -349,39 +353,66 @@ const getMessage = (locale: 'en' | 'fr', messageKey: string, params: Record<stri
   return microTemplate(messages[locale][messageKey] as string, params)
 }
 
-function readableWarning (readableOptions: tinycolor.WCAG2Options, locale: 'en' | 'fr', colorCode: string | undefined, colorName: string, bgColorCode: string | undefined, bgColorName: string, themeName: string) {
-  if (!colorCode || !bgColorCode) return
-  if (!tinycolor.isReadable(colorCode, bgColorCode, readableOptions)) {
-    return getMessage(locale, 'readableWarning', { colorCode, colorName: getMessage(locale, `${colorName}`), bgColorCode, bgColorName: getMessage(locale, `${bgColorName}`), themeName: getMessage(locale, `theme.${themeName}`) })
-  }
-}
-
-function tonalReadableWarning (readableOptions: tinycolor.WCAG2Options, locale: 'en' | 'fr', colorCode: string | undefined, colorName: string, baseCode: string | undefined, baseName: string, bgColorCode: string | undefined, bgColorName: string, themeName: string) {
-  if (!colorCode || !baseCode || !bgColorCode) return
-  const tonalBgCode = getTonalBg(baseCode, bgColorCode)
-  if (!tinycolor.isReadable(colorCode, tonalBgCode, readableOptions)) {
-    return getMessage(locale, 'tonalReadableWarning', { colorCode, colorName: getMessage(locale, `${colorName}`), tonalBgCode, baseName: getMessage(locale, `${baseName}`), bgColorName: getMessage(locale, `${bgColorName}`), themeName: getMessage(locale, `theme.${themeName}`) })
-  }
-}
-
 export function getColorsWarnings (locale: 'en' | 'fr', colors: Colors, themeName: string, readableOptions: tinycolor.WCAG2Options): string[] {
   if (locale !== 'fr' && locale !== 'en') locale = 'en'
-  const warnings: (string | undefined)[] = []
+
+  type Culprit = { colorName: string, colorCode: string, bgs: string[], failedSolid: Set<string> }
+  const culprits = new Map<string, Culprit>()
+  const getCulprit = (colorName: string, colorCode: string): Culprit => {
+    const key = `${colorName}::${colorCode}`
+    let c = culprits.get(key)
+    if (!c) {
+      c = { colorName, colorCode, bgs: [], failedSolid: new Set() }
+      culprits.set(key, c)
+    }
+    return c
+  }
+
+  const checkSolid = (colorCode: string | undefined, colorName: string, bgColorCode: string | undefined, bgColorName: string) => {
+    if (!colorCode || !bgColorCode) return
+    if (tinycolor.isReadable(colorCode, bgColorCode, readableOptions)) return
+    const c = getCulprit(colorName, colorCode)
+    c.bgs.push(getMessage(locale, 'bgSolid', { bgColorCode, bgColorName: getMessage(locale, bgColorName) }))
+    c.failedSolid.add(bgColorName)
+  }
+
+  const checkTonal = (colorCode: string | undefined, colorName: string, baseCode: string | undefined, baseName: string, bgColorCode: string | undefined, bgColorName: string) => {
+    if (!colorCode || !baseCode || !bgColorCode) return
+    // if the solid check against this same bg already failed, the tonal variant
+    // would add a redundant warning about the same root cause — skip it
+    const existing = culprits.get(`${colorName}::${colorCode}`)
+    if (existing?.failedSolid.has(bgColorName)) return
+    const tonalBgCode = getTonalBg(baseCode, bgColorCode)
+    if (tinycolor.isReadable(colorCode, tonalBgCode, readableOptions)) return
+    const c = getCulprit(colorName, colorCode)
+    c.bgs.push(getMessage(locale, 'bgTonal', { tonalBgCode, baseName: getMessage(locale, baseName), bgColorName: getMessage(locale, bgColorName) }))
+  }
+
   for (const color of ['primary', 'secondary', 'accent', 'info', 'warning', 'error', 'success', 'admin']) {
     const textColor = colors[`text-${color}` as keyof Colors] ?? colors[color as keyof Colors]
-    warnings.push(readableWarning(readableOptions, locale, textColor, `text-${color}`, colors.background, 'background', themeName))
-    warnings.push(readableWarning(readableOptions, locale, textColor, `text-${color}`, colors.surface, 'surface', themeName))
+    checkSolid(textColor, `text-${color}`, colors.background, 'background')
+    checkSolid(textColor, `text-${color}`, colors.surface, 'surface')
   }
   for (const color of ['background', 'surface', 'surface-inverse', 'primary', 'secondary', 'accent', 'info', 'success', 'error', 'warning', 'admin']) {
-    warnings.push(readableWarning(readableOptions, locale, colors[`on-${color}` as keyof Colors], 'text', colors[color as keyof Colors], color, themeName))
+    checkSolid(colors[`on-${color}` as keyof Colors], 'text', colors[color as keyof Colors], color)
   }
   for (const color of ['primary', 'secondary', 'accent', 'info', 'warning', 'error', 'success', 'admin']) {
     const textColor = colors[`text-${color}` as keyof Colors] ?? colors[color as keyof Colors]
     const baseColor = colors[color as keyof Colors]
-    warnings.push(tonalReadableWarning(readableOptions, locale, textColor, `text-${color}`, baseColor, color, colors.background, 'background', themeName))
-    warnings.push(tonalReadableWarning(readableOptions, locale, textColor, `text-${color}`, baseColor, color, colors.surface, 'surface', themeName))
+    checkTonal(textColor, `text-${color}`, baseColor, color, colors.background, 'background')
+    checkTonal(textColor, `text-${color}`, baseColor, color, colors.surface, 'surface')
   }
-  return warnings.filter(w => w !== undefined)
+
+  const warnings: string[] = []
+  for (const c of culprits.values()) {
+    warnings.push(getMessage(locale, 'readableWarningAggregated', {
+      colorName: getMessage(locale, c.colorName),
+      colorCode: c.colorCode,
+      themeName: getMessage(locale, `theme.${themeName}`),
+      bgList: c.bgs.join('; ')
+    }))
+  }
+  return warnings
 }
 
 export const readableOptions: tinycolor.WCAG2Options = { level: 'AA', size: 'small' }
