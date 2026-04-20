@@ -1,3 +1,35 @@
+<template>
+  <label
+    v-if="props.label"
+    class="text-body-2 text-medium-emphasis ml-2"
+  >{{ label }}</label>
+  <v-row
+    v-if="model && model.length"
+    class="date-range-picker"
+    align="center"
+  >
+    <v-col class="pr-0">
+      <v-text-field
+        v-model="start"
+        :min="min"
+        :max="max"
+        type="date"
+        density="compact"
+      />
+    </v-col>
+    <span class="pb-6">~</span>
+    <v-col class="pl-0">
+      <v-text-field
+        v-model="end"
+        :min="min"
+        :max="max"
+        type="date"
+        density="compact"
+      />
+    </v-col>
+  </v-row>
+</template>
+
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 
@@ -31,39 +63,7 @@ watch(end, (val) => {
 })
 </script>
 
-<template>
-  <label
-    v-if="props.label"
-    class="text-body-2 text-medium-emphasis ml-2"
-  >{{ label }}</label>
-  <v-row
-    v-if="model && model.length"
-    class="date-range-picker"
-    align="center"
-  >
-    <v-col class="pr-0">
-      <v-text-field
-        v-model="start"
-        :min="min"
-        :max="max"
-        type="date"
-        density="compact"
-      />
-    </v-col>
-    <span class="pb-6">~</span>
-    <v-col class="pl-0">
-      <v-text-field
-        v-model="end"
-        :min="min"
-        :max="max"
-        type="date"
-        density="compact"
-      />
-    </v-col>
-  </v-row>
-</template>
-
-<style>
+<style lang="css">
 .date-range-picker .v-input__control input{
   padding-left: 8px;
   padding-right: 8px;

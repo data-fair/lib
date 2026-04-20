@@ -4,8 +4,7 @@
   <v-fab-transition>
     <v-btn
       v-show="show"
-      title="Remonter au début de la page"
-      aria-label="Remonter au début de la page"
+      :title="t('scrollToTop')"
       color="primary"
       fixed
       style="z-index: 6; position: absolute; right: 24px; bottom: 24px;"
@@ -15,10 +14,18 @@
   </v-fab-transition>
 </template>
 
-<script lang="ts" setup>
+<i18n lang="yaml">
+  en:
+    scrollToTop: 'Scroll to top'
+  fr:
+    scrollToTop: 'Remonter au début de la page'
+</i18n>
+
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { mdiChevronUp } from '@mdi/js'
+import { useI18n } from 'vue-i18n'
 import { useGoTo } from 'vuetify'
 
 const { selector } = defineProps({ selector: { type: String, required: false, default: '.v-main__scroller' } })
@@ -26,6 +33,7 @@ const { selector } = defineProps({ selector: { type: String, required: false, de
 const route = useRoute()
 const router = useRouter()
 const goTo = useGoTo()
+const { t } = useI18n()
 
 let _scrollElement: Element | Window | null
 const show = ref(false)

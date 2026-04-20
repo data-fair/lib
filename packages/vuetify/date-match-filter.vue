@@ -1,5 +1,4 @@
-<!-- produces a string compatible with the _c_date_match filter of data-fair -->
-
+<!-- Produces a string compatible with the _c_date_match filter of data-fair -->
 <template>
   <v-menu
     v-model="menu"
@@ -99,6 +98,3 @@ export default {
   }
 }
 </script>
-
-<style lang="css">
-</style>

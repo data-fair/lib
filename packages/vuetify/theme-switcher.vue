@@ -63,6 +63,6 @@ const session = useSession()
 const { t } = useI18n({ useScope: 'local' })
 </script>
 
-<style>
+<style lang="css">
 
 </style>

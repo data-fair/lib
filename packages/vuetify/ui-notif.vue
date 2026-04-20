@@ -67,6 +67,3 @@ const fullSnackbarProps = computed(() => {
 })
 
 </script>
-
-<style>
-</style>

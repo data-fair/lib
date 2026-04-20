@@ -67,6 +67,19 @@
   </v-theme-provider>
 </template>
 
+<i18n lang="yaml">
+en:
+  cardExample:
+    title: Card example
+    text: Surface color.
+    textInverse: Inverse surface color.
+fr:
+  cardExample:
+    title: Vignette
+    text: Couleur des surfaces.
+    textInverse: Couleur inversée des surfaces.
+</i18n>
+
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useTheme } from 'vuetify'
@@ -120,16 +133,3 @@ const colorsWarnings = computed(() => {
   return getColorsWarnings('fr', colors.value, themeNames[colorsKey], colorsKey.startsWith('hc') ? hcReadableOptions : readableOptions)
 })
 </script>
-
-<i18n lang="yaml">
-en:
-  cardExample:
-    title: Card example
-    text: Surface color.
-    textInverse: Inverse surface color.
-fr:
-  cardExample:
-    title: Vignette
-    text: Couleur des surfaces.
-    textInverse: Couleur inversée des surfaces.
-</i18n>

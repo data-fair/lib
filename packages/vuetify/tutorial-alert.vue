@@ -1,48 +1,44 @@
 <!-- eslint-disable vue/no-v-html -->
-<template lang="html">
+<template>
   <div
-    v-if="show || showBtn"
-    class="tutorial-alert pt-3 pb-2 pr-3"
+    v-if="show || persistent"
+    class="pt-3 pb-4 pr-3"
+    style="position: relative;"
   >
+    <v-btn
+      :icon="show ? mdiCloseCircleOutline : mdiInformationOutline"
+      :title="show ? t('closeHelp') : t('readHelp')"
+      style="position: absolute; top: 0; right: 0; z-index: 1;"
+      density="compact"
+      color="success"
+      variant="flat"
+      @click="show = !show"
+    />
     <v-alert
       v-if="show"
-      dark
+      :text="(!$slots.default && !href && !html) ? (text ?? undefined) : undefined"
       color="success"
       density="compact"
+      variant="outlined"
       border="start"
-      class="ma-0"
-      :variant="theme.current.value.dark ? 'outlined' : 'flat'"
     >
-      <slot>
+      <template
+        v-if="href"
+        #text
+      >
         <a
-          v-if="href"
           :href="href"
           target="_blank"
         >{{ text || t('readDoc') }}</a>
-        <template v-else>
-          <span
-            v-if="text"
-            v-text="text"
-          />
-          <div
-            v-else-if="html"
-            v-html="html"
-          />
-        </template>
-      </slot>
+      </template>
+      <template
+        v-else-if="html"
+        #text
+      >
+        <div v-html="html" />
+      </template>
+      <slot />
     </v-alert>
-    <v-btn
-      v-if="showBtn"
-      class="toggle"
-      icon
-      density="compact"
-      color="success"
-      :title="show ? t('closeHelp') : t('readHelp')"
-      @click="show = !show"
-    >
-      <v-icon v-if="show":icon="mdiCloseCircle" />
-      <v-icon v-else :icon="mdiInformation" />
-    </v-btn>
   </div>
 </template>
 
@@ -57,76 +53,41 @@ en:
   readDoc: Read the documentation
 </i18n>
 
-<script lang="ts">
-import { useTheme } from 'vuetify'
+<script setup lang="ts">
+import { ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { mdiCloseCircle, mdiInformation } from '@mdi/js'
+import { mdiCloseCircleOutline, mdiInformationOutline } from '@mdi/js'
 
-export default {
-  props: {
-    id: { type: String, required: true },
-    href: { type: String, required: false, default: null },
-    text: { type: String, required: false, default: null },
-    html: { type: String, required: false, default: null },
-    initial: { type: Boolean, default: true },
-    persistent: { type: Boolean, default: false }
-  },
-  setup () {
-    const theme = useTheme()
-    const { t } = useI18n({ useScope: 'local' })
-    return { theme, t }
-  },
-  data: () => ({
-    show: false,
-    mdiCloseCircle,
-    mdiInformation
-  }),
-  computed: {
-    showBtn () {
-      return this.show || (!this.show && this.persistent)
-    }
-  },
-  watch: {
-    show () {
-      window.localStorage['closed-tutorial-' + this.id] = '' + !this.show
-    }
-  },
-  mounted () {
-    if (window.localStorage) {
-      if (window.localStorage['closed-tutorial-' + this.id] !== 'true') {
-        this.show = this.initial
-      }
-    }
+const props = withDefaults(defineProps<{
+  /** Unique identifier for the tutorial, used as localStorage key (`closed-tutorial-{id}`) */
+  id: string
+  /** External documentation URL, turns the alert into a clickable link */
+  href?: string | null
+  /** Text content to display in the alert */
+  text?: string | null
+  /** HTML content to display in the alert (alternative to text) */
+  html?: string | null
+  /** Whether to show the alert on first render, before any user interaction */
+  initial?: boolean
+  /** Keep the toggle button visible even when the alert is closed */
+  persistent?: boolean
+}>(), {
+  href: null,
+  text: null,
+  html: null,
+  initial: true,
+  persistent: false
+})
+
+const { t } = useI18n()
+
+const show = ref(false)
+watch(show, () => {
+  window.localStorage['closed-tutorial-' + props.id] = '' + !show.value
+})
+onMounted(() => {
+  if (window.localStorage && window.localStorage['closed-tutorial-' + props.id] !== 'true') {
+    show.value = props.initial
   }
-}
+})
 </script>
-
-<style lang="css">
-.tutorial-alert {
-  /*background-color: rgba(10, 10, 10, 0.1);*/
-  position: relative;
-  overflow:visible;
-  min-height:28px;
-}
-.tutorial-alert .v-alert--outlined {
-  background: black !important
-}
-.tutorial-alert .v-alert .v-alert__content a {
-  color: white !important;
-  text-decoration: underline;
-}
-.tutorial-alert .toggle.v-btn {
-  position: absolute;
-  top: -1px;
-  right: -1px;
-}
-.tutorial-alert .toggle.v-btn .v-icon {
-  border-radius: 30px;
-}
-.tutorial-alert .toggle.v-btn .v-icon.theme--dark {
-  background-color: black;
-}
-.tutorial-alert .toggle.v-btn .v-icon.theme--light {
-  background-color: white;
-}
-</style>

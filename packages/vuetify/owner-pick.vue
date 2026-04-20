@@ -1,29 +1,28 @@
-<template lang="html">
-  <v-row>
-    <v-col>
-      <template v-if="status === 'loading'">
-        <v-progress-linear
-          indeterminate
-          color="primary"
-        />
-      </template>
-      <template v-if="status === 'ok'">
-        <p>{{ message || t('message') }}</p>
-        <v-radio-group
-          v-if="model"
-          v-model="model"
-          class="my-3 ml-2"
-        >
-          <v-radio
-            v-for="(owner, $index) in owners"
-            :key="$index"
-            :label="getLabel(owner)"
-            :value="owner"
-          />
-        </v-radio-group>
-      </template>
-    </v-col>
-  </v-row>
+<template>
+  <template v-if="status === 'loading'">
+    <v-progress-linear
+      indeterminate
+      color="primary"
+    />
+  </template>
+  <template v-if="status === 'ok'">
+    <p v-if="!hideMessage">
+      {{ message || t('message') }}
+    </p>
+    <v-radio-group
+      v-if="model"
+      v-model="model"
+      class="my-2 ml-2"
+      hide-details
+    >
+      <v-radio
+        v-for="(owner, i) in owners"
+        :key="i"
+        :label="getLabel(owner)"
+        :value="owner"
+      />
+    </v-radio-group>
+  </template>
 </template>
 
 <i18n lang="yaml">
@@ -34,7 +33,7 @@ fr:
 en:
   yourself: Personal account
   org: Organization
-  message: Choisissez un propriétaire
+  message: Choose an owner
 </i18n>
 
 <script setup lang="ts">
@@ -49,6 +48,7 @@ const { t } = useI18n({ useScope: 'local' })
 const props = defineProps({
   otherAccounts: { type: Boolean, default: false },
   hideSingle: { type: Boolean, default: true },
+  hideMessage: { type: Boolean, default: false },
   message: { type: String, default: null }
 })
 
@@ -102,8 +102,17 @@ const getLabel = (owner: Account) => {
 }
 
 watch(owners, () => {
-  if (!model.value && owners.value?.length) {
-    model.value = owners.value[0]
+  if (owners.value?.length) {
+    if (model.value) {
+      const match = owners.value.find(o =>
+        o.type === model.value!.type &&
+        o.id === model.value!.id &&
+        (o.department || null) === (model.value!.department || null)
+      )
+      if (match) model.value = match
+    } else {
+      model.value = owners.value[0]
+    }
   }
   if (owners.value) {
     ready.value = true

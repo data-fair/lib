@@ -37,7 +37,7 @@ en:
   content: CONTENT
 </i18n>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useGoTo } from 'vuetify'
