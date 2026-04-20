@@ -2,10 +2,10 @@
   <v-toolbar-items class="personal-menu">
     <v-btn
       v-if="!user || !account"
-      v-t="'login'"
       depressed
       color="primary"
       :href="session.loginUrl()"
+      :text="t('login')"
     />
     <v-menu
       v-else
@@ -83,9 +83,10 @@
         <!-- account switching (personal account and organizations) -->
         <template v-if="user.organizations.length > 1 || (user.organizations.length === 1 && (!user.ipa || account.type === 'user'))">
           <v-list-subheader
-            v-t="'switchAccount'"
             style="height: 24px"
-          />
+          >
+            {{ t('switchAccount') }}
+          </v-list-subheader>
           <v-list-item
             v-if="account.type !== 'user' && !user.ipa"
             id="toolbar-menu-switch-user"
@@ -97,7 +98,7 @@
                 :image="`${session.options.directoryUrl}/api/avatars/user/${user.id}/avatar.png`"
               />
             </template>
-            <v-list-item-title v-t="'personalAccount'" />
+            <v-list-item-title>{{ t('personalAccount') }}</v-list-item-title>
           </v-list-item>
           <v-list-item
             v-for="organization in switchableOrganizations"
@@ -167,7 +168,7 @@
           <template #prepend>
             <v-icon :icon="mdiLogout" />
           </template>
-          <v-list-item-title v-t="'logout'" />
+          <v-list-item-title>{{ t('logout') }}</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-menu>
@@ -217,7 +218,7 @@ const switchableOrganizations = computed(() => {
 })
 </script>
 
-<style>
+<style lang="css">
 .personal-menu-switch-list-item .v-list-item__content {
   overflow: visible!important;
 }

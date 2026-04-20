@@ -41,5 +41,5 @@ const fullAlertProps = computed(() => {
 
 </script>
 
-<style>
+<style lang="css">
 </style>

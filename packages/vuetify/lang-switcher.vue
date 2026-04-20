@@ -1,4 +1,4 @@
-<template lang="html">
+<template>
   <v-toolbar-items class="lang-switcher">
     <v-speed-dial
       v-if="locales.length > 1"
@@ -22,10 +22,10 @@
         {{ locale }}
       </v-btn>
     </v-speed-dial>
-    </v-toolbar-items>
-  </template>
+  </v-toolbar-items>
+</template>
   
-  <script lang="ts" setup>
+<script setup lang="ts">
   import useSession from '@data-fair/lib-vue/session.js'
   
   const session = useSession()
@@ -41,7 +41,4 @@
     session.switchLang(locale)
     window.location.reload()
   }
-  </script>
-  
-  <style lang="css">
-  </style>
+</script>

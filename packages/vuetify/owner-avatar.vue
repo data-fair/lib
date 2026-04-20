@@ -55,6 +55,3 @@ const label = computed(() => {
   return label
 })
 </script>
-
-<style>
-</style>

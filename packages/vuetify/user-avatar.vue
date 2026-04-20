@@ -46,7 +46,7 @@ const showSecondAvatar = computed(() => props.showAccount && session.state.accou
 
 </script>
 
-  <style>
+<style>
   .sd-avatar {
     width: 36px;
     text-indent: 0;
@@ -68,4 +68,4 @@ const showSecondAvatar = computed(() => props.showAccount && session.state.accou
     right:0px;
     bottom:0;
   }
-  </style>
+</style>
