@@ -11,13 +11,20 @@
         class="d-flex flex-no-wrap w-100"
         style="min-height: 112px;"
       >
-        <!-- SVG Image -->
+        <!-- Image / SVG -->
         <div
-          v-if="svg && display.mdAndUp.value"
+          v-if="(src || svg) && display.mdAndUp.value"
           :class="`pa-${svgNoMargin ? 0 : 2} flex-grow-0`"
           style="height: 112px;"
         >
+          <v-img
+            v-if="src"
+            :src="src"
+            height="100%"
+            width="112"
+          />
           <df-themed-svg
+            v-else-if="svg"
             :source="svg"
             :color="color"
           />
@@ -111,6 +118,7 @@ const { color = 'primary' } = defineProps<{
   subtitle?: string,
   tabs?: TabInfo[],
   svg?: string,
+  src?: string,
   svgNoMargin?: boolean,
   color?: string,
 }>()

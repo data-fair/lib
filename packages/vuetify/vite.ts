@@ -15,6 +15,8 @@ const components: Record<string, string> = {
   DfDateMatchFilter: '@data-fair/lib-vuetify/date-match-filter.vue',
   DfDateRangePicker: '@data-fair/lib-vuetify/date-range-picker.vue',
   DfLangSwitcher: '@data-fair/lib-vuetify/lang-switcher.vue',
+  DfLayoutEmptyState: '@data-fair/lib-vuetify/layout-empty-state.vue',
+  DfLayoutFetchError: '@data-fair/lib-vuetify/layout-fetch-error.vue',
   DfNavigationRight: '@data-fair/lib-vuetify/navigation-right.vue',
   DfOwnerAvatar: '@data-fair/lib-vuetify/owner-avatar.vue',
   DfOwnerPick: '@data-fair/lib-vuetify/owner-pick.vue',
