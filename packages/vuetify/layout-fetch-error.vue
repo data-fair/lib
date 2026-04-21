@@ -83,25 +83,25 @@ const title = computed(() => {
 })
 
 /**
- * Detects whether the 403 error message references an organization the user belongs to,
- * so we can offer a one-click "switch account" action.
- *
- * The API (data-fair permissions middleware) returns a text/plain 403 with the format:
- *   "...l'organisation {name} ({orgId}) dont vous êtes membre..."
- *
- * The regex captures the orgId between parentheses just before "dont vous êtes membre",
- * then matches it against the user's session organizations to retrieve the full org object
- * (id, department, role) needed by switchOrganization().
+ * Generic "switch account" affordance: if the service that produced the error
+ * advertises a resource owner via the `x-owner` response header (JSON-encoded
+ * {type, id, department?}) and the user is a member of that organization from
+ * another active account, offer a one-click switch.
  */
 const switchOrg = computed(() => {
-  const msg = errorMsg.value
-  if (!msg || !user.value) return null
+  if (statusCode.value !== 403 || !user.value) return null
 
-  const match = msg.match(/\(([^)]+)\) dont vous êtes membre/)
-  if (!match) return null
+  const headers = error?.response?.headers
+  const rawOwner = typeof headers?.get === 'function' ? headers.get('x-owner') : null
+  if (!rawOwner) return null
 
-  const orgId = match[1]
-  return user.value.organizations?.find(o => o.id === orgId) ?? null
+  let owner: { type?: string, id?: string, department?: string } | null = null
+  try { owner = JSON.parse(rawOwner) } catch { return null }
+  if (!owner || owner.type !== 'organization' || !owner.id) return null
+
+  return user.value.organizations?.find(o =>
+    o.id === owner!.id && (o.department ?? undefined) === (owner!.department ?? undefined)
+  ) ?? null
 })
 
 const doSwitch = () => {
