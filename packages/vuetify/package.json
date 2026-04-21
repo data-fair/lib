@@ -8,7 +8,8 @@
     "**/*.js.map",
     "**/*.d.ts",
     "**/*.vue",
-    "**/*.scss"
+    "**/*.scss",
+    "**/*.svg"
   ],
   "author": "",
   "license": "MIT",

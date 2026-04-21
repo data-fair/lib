@@ -61,7 +61,8 @@ const owners = computedAsync(async () => {
   const user = session.state.user
 
   const owners: Account[] = []
-  if (props.otherAccounts || session.state.account.type === 'user') {
+  const onPersonalAccount = session.state.account.type === 'user'
+  if (onPersonalAccount || (props.otherAccounts && !user.ipa)) {
     owners.push({ type: 'user', id: user.id, name: user.name })
   }
   for (const o of user.organizations.filter(o => ['contrib', 'admin'].includes(o.role))) {
