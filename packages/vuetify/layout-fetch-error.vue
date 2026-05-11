@@ -64,7 +64,7 @@ const { error, backTo = '/', backLabel } = defineProps<{
 }>()
 
 const { t } = useI18n({ useScope: 'local' })
-const { switchOrganization, user } = useSession()
+const { switchOrganization, user, account } = useSession()
 
 const statusCode = computed(() => error?.statusCode ?? error?.status ?? 500)
 
@@ -99,9 +99,25 @@ const switchOrg = computed(() => {
   try { owner = JSON.parse(rawOwner) } catch { return null }
   if (!owner || owner.type !== 'organization' || !owner.id) return null
 
-  return user.value.organizations?.find(o =>
-    o.id === owner!.id && (o.department ?? undefined) === (owner!.department ?? undefined)
-  ) ?? null
+  const orgs = user.value.organizations ?? []
+  const ownerDept = owner.department ?? undefined
+  const isCurrentAccount = (o: { id: string, department?: string }) =>
+    account.value?.type === 'organization' &&
+    account.value.id === o.id &&
+    (account.value.department ?? undefined) === (o.department ?? undefined)
+
+  // Prefer a membership matching the resource's department exactly...
+  const exact = orgs.find(o =>
+    o.id === owner!.id && (o.department ?? undefined) === ownerDept && !isCurrentAccount(o)
+  )
+  if (exact) return exact
+  // ...otherwise fall back to a membership at the organization root: in
+  // simple-directory's authz model, root access generally grants visibility
+  // over department-scoped resources.
+  if (ownerDept) {
+    return orgs.find(o => o.id === owner!.id && !o.department && !isCurrentAccount(o)) ?? null
+  }
+  return null
 })
 
 const doSwitch = () => {
