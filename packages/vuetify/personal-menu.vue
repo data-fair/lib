@@ -182,9 +182,8 @@ fr:
   openPersonalMenu: Ouvrez le menu personnel
   personalAccount: Compte personnel
   switchAccount: Changer de compte
-  adminMode: mode admin
+  adminMode: Mode admin
   backToAdmin: Revenir à ma session administrateur
-  darkMode: mode nuit
   plannedDeletion: La suppression de l'utilisateur {name} et toutes ses informations est programmée le {plannedDeletion}.
   cancelDeletion: Annuler la suppression de l'utilisateur
 en:
@@ -193,9 +192,8 @@ en:
   openPersonalMenu: Open personal menu
   personalAccount: Personal account
   switchAccount: Switch account
-  adminMode: admin mode
+  adminMode: Admin mode
   backToAdmin: Return to administrator session
-  darkMode: night mode
   plannedDeletion: The deletion of the user {name} and all its data is planned on the {plannedDeletion}.
   cancelDeletion: Cancel the deletion of the user
 </i18n>
