@@ -22,8 +22,9 @@
             color="primary"
             hide-details
             :label="t('themeSwitch')"
-            @update:modelValue="value => session.switchTheme(value as 'default' | 'dark' | 'hc' | 'hc-dark')"
+            @update:modelValue="value => session.switchTheme(value as 'default' | 'dark' | 'hc' | 'hc-dark' | 'system')"
           >
+            <v-radio :label="t('theme.system')" value="system"></v-radio>
             <v-radio :label="t('theme.default')" value="default"></v-radio>
             <v-radio v-if="session.fullSite.value?.theme.dark" :label="t('theme.dark')" value="dark"></v-radio>
             <v-radio v-if="session.fullSite.value?.theme.hc":label="t('theme.hc')" value="hc"></v-radio>
@@ -39,6 +40,7 @@
 fr:
   themeSwitch: Changer de thème
   theme:
+    system: Système
     default: Par défaut
     dark: Sombre
     hc: Contraste élevé
@@ -46,6 +48,7 @@ fr:
 en:
   themeSwitch: Change theme
   theme:
+    system: System
     default: Default
     dark: Dark
     hc: High contrast

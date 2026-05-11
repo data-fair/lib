@@ -82,7 +82,8 @@ export interface SiteInfo {
   owner: AccountKeys
 }
 
-type Theme = 'default' | 'dark' | 'hc' | 'hc-dark'
+type AppliedTheme = 'default' | 'dark' | 'hc' | 'hc-dark'
+type Theme = AppliedTheme | 'system'
 
 export interface Session {
   state: SessionState
@@ -120,14 +121,19 @@ export type SessionAuthenticated = Omit<Session, 'state' | 'user' | 'account' | 
 const debug = Debug('session')
 debug.log = console.log.bind(console)
 
-function getDefaultTheme (site: FullSiteInfo): Theme {
+function getDefaultTheme (site: FullSiteInfo): AppliedTheme {
   // see https://www.scottohara.me/blog/2021/10/01/detect-high-contrast-and-dark-modes.html
-  const preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-  const preferHC = window.matchMedia && window.matchMedia('(forced-colors: active)').matches
+  const preferDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  const preferHC = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(forced-colors: active)').matches
   if (site.theme.hcDark && preferDark && preferHC) return 'hc-dark'
   if (site.theme.hc && preferHC) return 'hc'
   if (site.theme.dark && preferDark) return 'dark'
   return 'default'
+}
+
+function resolveTheme (userTheme: Theme | null, site: FullSiteInfo): AppliedTheme {
+  if (userTheme && userTheme !== 'system') return userTheme
+  return getDefaultTheme(site)
 }
 
 function jwtDecodeAlive (jwt: string | null): User | undefined {
@@ -403,6 +409,9 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   const setSiteInfo = (siteInfo: any) => {
     if (siteInfo.theme) {
       fullSite.value = siteInfo
+      // an absent cookie is treated as an implicit 'system' choice so the
+      // theme-switcher radio has a value to bind to.
+      if (theme.value == null) theme.value = 'system'
       const partialSite: SiteInfo = {
         main: siteInfo.main,
         isAccountMain: siteInfo.isAccountMain,
@@ -412,13 +421,13 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
         authOnlyOtherSite: siteInfo.authOnlyOtherSite,
         owner: siteInfo.owner
       }
-      if (theme.value == null) theme.value = getDefaultTheme(siteInfo)
-      if (theme.value === 'hc') partialSite.colors = siteInfo.theme.hcColors
-      if (theme.value === 'dark') {
+      const applied = resolveTheme(theme.value, siteInfo)
+      if (applied === 'hc') partialSite.colors = siteInfo.theme.hcColors
+      if (applied === 'dark') {
         partialSite.colors = siteInfo.theme.darkColors
         partialSite.dark = true
       }
-      if (theme.value === 'hc-dark') {
+      if (applied === 'hc-dark') {
         partialSite.colors = siteInfo.theme.hcDarkColors
         partialSite.dark = true
       }
@@ -432,6 +441,16 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
 
   // @ts-ignore
   if (!ssr && window.__PUBLIC_SITE_INFO) setSiteInfo(window.__PUBLIC_SITE_INFO)
+
+  // re-apply the theme when the OS preference changes while the user is on
+  // 'system'. Important for mobile devices that switch light/dark over the day.
+  if (!ssr && typeof window !== 'undefined' && window.matchMedia) {
+    const onOsPrefChange = () => {
+      if (theme.value === 'system' && fullSite.value) setSiteInfo(fullSite.value)
+    }
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onOsPrefChange)
+    window.matchMedia('(forced-colors: active)').addEventListener('change', onOsPrefChange)
+  }
 
   // immediately performs a keepalive, but only on top windows (not iframes or popups)
   // and only if it was not done very recently (maybe from a refreshed page next to this one)
