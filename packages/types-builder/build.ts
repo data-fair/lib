@@ -361,6 +361,7 @@ const emit = defineEmits(emits)
         for (const locale of vjsfLocales) {
           const schemaVjsfOpts = { ...schema['x-vjsf'] }
           delete schemaVjsfOpts.compName
+          console.log(`  compiledLayout ${locale} options: ${JSON.stringify(schemaVjsfOpts)}`)
           const otherSchemas = { ...schemas }
           for (const [key, otherSchema] of Object.entries(schemas)) {
             if (key === schema.$id) continue
@@ -377,7 +378,6 @@ const emit = defineEmits(emits)
             fullOptions.components[componentInfo.name] = componentInfo
           }
 
-          console.log(`  compiledLayout ${locale} options: ${JSON.stringify(schemaVjsfOpts)}`)
           const compiledLayout = compileLayout(schema, fullOptions)
           let compiledLayoutCode = await serializeCompiledLayout(compiledLayout)
           // The serialized code declares `const compiledLayout = {...}`.
