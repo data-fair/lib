@@ -7,6 +7,8 @@
 import type { Server, ServerResponse } from 'node:http'
 import { hostname } from 'node:os'
 import { createServer } from 'node:http'
+import { getHeapSnapshot } from 'node:v8'
+import { pipeline } from 'node:stream/promises'
 import { Registry, Counter, register, collectDefaultMetrics } from 'prom-client'
 import eventPromise from '@data-fair/lib-utils/event-promise.js'
 
@@ -65,6 +67,18 @@ const serveCPUProfile = async (res: ServerResponse, duration: number) => {
   res.end()
 }
 
+// full retained heap snapshot (the V8 inspector "take heap snapshot"). Blocks the event loop while V8
+// walks the heap: ~5-20 ms per MB of live heap, so ~10-30 s for a 1-1.5 GB process; all in-flight
+// requests stall for the duration. Use sparingly, ideally after detaching the pod from its Service.
+const serveRetainedHeapSnapshot = async (res: ServerResponse) => {
+  res.setHeader('Content-Disposition', `attachment; filename="data-fair-${hostname()}-${new Date().toISOString()}.heapsnapshot"`)
+  res.setHeader('Content-Type', 'application/octet-stream')
+  const start = Date.now()
+  console.log('observer: starting full heap snapshot — event loop will be blocked')
+  await pipeline(getHeapSnapshot(), res)
+  console.log(`observer: full heap snapshot done in ${Date.now() - start}ms`)
+}
+
 // live heap allocation sampler
 const serveHeapSnapshot = async (res: ServerResponse, includeCollected: boolean, duration: number) => {
   const { Session } = await import('node:inspector/promises')
@@ -100,6 +114,8 @@ export const startObserver = async (port = 9090) => {
     } else if (req.method === 'GET' && url.pathname === '/heap-profile-all') {
       const duration = parseInt(url.searchParams.get('duration') || '2000')
       serveHeapSnapshot(res, true, duration).catch(err => httpErrorHandler(res, err))
+    } else if (req.method === 'GET' && url.pathname === '/heap-snapshot') {
+      serveRetainedHeapSnapshot(res).catch(err => httpErrorHandler(res, err))
     } else {
       res.writeHead(404)
       res.end()
@@ -113,6 +129,7 @@ export const startObserver = async (port = 9090) => {
     GET /cpu-profile -> generate and fetch a CPU profile
     GET /heap-profile -> generate and fetch a sampled heap allocation snapshot
     GET /heap-profile-all -> generate and fetch a sampled heap allocation snapshot including objects collected by GC
+    GET /heap-snapshot -> dump a full retained heap snapshot (blocks the event loop while V8 walks the heap)
 `)
 }
 
