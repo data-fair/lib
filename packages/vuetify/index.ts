@@ -1,4 +1,4 @@
-import { type Session } from '@data-fair/lib-vue/session.js'
+import { resolveTheme, type Session } from '@data-fair/lib-vue/session.js'
 import { VuetifyOptions } from 'vuetify'
 import { fr, en } from 'vuetify/locale'
 
@@ -20,6 +20,9 @@ const baseDarkColors = {
 export function vuetifySessionOptions (session: Session, cspNonce?: string): VuetifyOptions {
   if (!session.site.value) throw new Error('vuetifySessionOptions requires fetching site info in session util')
   const colors = { ...baseColors, ...session.site.value?.colors }
+  const themeName = session.fullSite.value
+    ? resolveTheme(session.theme.value, session.fullSite.value)
+    : 'default'
   return {
     ssr: false,
     locale: {
@@ -28,9 +31,9 @@ export function vuetifySessionOptions (session: Session, cspNonce?: string): Vue
     },
     theme: {
       cspNonce,
-      defaultTheme: session.theme.value ?? 'default',
+      defaultTheme: themeName,
       themes: {
-        [session.theme.value ?? 'default']: {
+        [themeName]: {
           dark: session.site.value?.dark,
           colors,
           variables: {

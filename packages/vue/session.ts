@@ -57,16 +57,16 @@ export interface Colors {
   'on-admin': string
 }
 
-interface FullSiteInfo {
+export interface FullSiteInfo {
   main?: boolean
   theme: {
     logo?: string
     colors: Colors
-    dark: boolean
+    dark?: boolean
     darkColors?: Colors
-    hc: boolean
+    hc?: boolean
     hcColors?: Colors
-    hcDark: boolean
+    hcDark?: boolean
     hcDarkColors?: Colors
   }
 }
@@ -82,8 +82,14 @@ export interface SiteInfo {
   owner: AccountKeys
 }
 
-type AppliedTheme = 'default' | 'dark' | 'hc' | 'hc-dark'
-type Theme = AppliedTheme | 'system'
+export type AppliedTheme = 'default' | 'dark' | 'hc' | 'hc-dark'
+// `theme` cookie semantics:
+//  - absent: implicit 'system' (no choice made yet)
+//  - 'system': explicit "follow the OS preference"
+//  - other: explicit override
+// In both 'system' cases the applied theme is computed at runtime via
+// resolveTheme() using prefers-color-scheme + forced-colors.
+export type Theme = AppliedTheme | 'system'
 
 export interface Session {
   state: SessionState
@@ -121,7 +127,23 @@ export type SessionAuthenticated = Omit<Session, 'state' | 'user' | 'account' | 
 const debug = Debug('session')
 debug.log = console.log.bind(console)
 
-function getDefaultTheme (site: FullSiteInfo): AppliedTheme {
+// loose shape: hosts whose Colors are partially optional (e.g. portal config) can pass their own type
+export type ThemeOffers = {
+  theme: {
+    dark?: boolean
+    hc?: boolean
+    hcDark?: boolean
+  }
+}
+
+/**
+ * Resolves a user theme preference to a concrete AppliedTheme — returns the explicit choice when set,
+ * otherwise picks the best variant offered by `site` based on the OS `prefers-color-scheme` / `forced-colors`
+ * media queries. Always call this before handing a theme name to Vuetify: its built-in `'system'` defaultTheme
+ * bypasses custom themes and falls back to its own light/dark.
+ */
+export function resolveTheme (userTheme: Theme | null, site: ThemeOffers): AppliedTheme {
+  if (userTheme && userTheme !== 'system') return userTheme
   // see https://www.scottohara.me/blog/2021/10/01/detect-high-contrast-and-dark-modes.html
   const preferDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
   const preferHC = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(forced-colors: active)').matches
@@ -129,11 +151,6 @@ function getDefaultTheme (site: FullSiteInfo): AppliedTheme {
   if (site.theme.hc && preferHC) return 'hc'
   if (site.theme.dark && preferDark) return 'dark'
   return 'default'
-}
-
-function resolveTheme (userTheme: Theme | null, site: FullSiteInfo): AppliedTheme {
-  if (userTheme && userTheme !== 'system') return userTheme
-  return getDefaultTheme(site)
 }
 
 function jwtDecodeAlive (jwt: string | null): User | undefined {
@@ -200,7 +217,9 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   // cookies are the source of truth and this information is transformed into the state reactive object
   const cookies = initOptions?.cookies ?? new Cookies(options.req?.headers.cookie)
   const readState = () => {
-    theme.value = cookies.get('theme') ?? null
+    // absent cookie is treated as implicit 'system' so consumers (theme-switcher
+    // radios, host plugins) always have a meaningful value to bind to.
+    theme.value = (cookies.get('theme') as Theme | undefined) ?? 'system'
 
     const langCookie = cookies.get('i18n_lang')
     state.lang = langCookie ?? options.defaultLang
@@ -409,9 +428,6 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   const setSiteInfo = (siteInfo: any) => {
     if (siteInfo.theme) {
       fullSite.value = siteInfo
-      // an absent cookie is treated as an implicit 'system' choice so the
-      // theme-switcher radio has a value to bind to.
-      if (theme.value == null) theme.value = 'system'
       const partialSite: SiteInfo = {
         main: siteInfo.main,
         isAccountMain: siteInfo.isAccountMain,
