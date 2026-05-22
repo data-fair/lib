@@ -39,17 +39,17 @@
 fr:
   themeSwitch: Changer de thème
   theme:
-    default: par défaut
-    dark: sombre
-    hc: contraste élevé
-    hcDark: sombre et contraste élevé
+    default: Par défaut
+    dark: Sombre
+    hc: Contraste élevé
+    hcDark: Sombre et contraste élevé
 en:
   themeSwitch: Change theme
   theme:
-    default: default
-    dark: dark
-    hc: high contrast
-    hcDark: dark and high contrast
+    default: Default
+    dark: Dark
+    hc: High contrast
+    hcDark: Dark and high contrast
 </i18n>
 
 <script setup lang="ts">
