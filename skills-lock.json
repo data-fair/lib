@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "pr-ready": {
+      "source": "data-fair/lib",
+      "sourceType": "github",
+      "skillPath": "skills/pr-ready/SKILL.md",
+      "computedHash": "072d8f3cf6e27521b3834ff86fa23ad407aa3f4459fa5830706915afa8587fed"
+    },
     "skill-creator": {
       "source": "anthropics/skills",
       "sourceType": "github",
