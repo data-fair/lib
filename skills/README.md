@@ -8,7 +8,7 @@ Skills for AI coding agents working in the data-fair stack.
 | --- | --- |
 | [`data-fair-session`](./data-fair-session/SKILL.md) | Consuming sessions in a data-fair service: reading user identity, checking permissions, protecting routes, and using session middleware on Express/Node and Vue. |
 | [`data-fair-ws`](./data-fair-ws/SKILL.md) | Real-time websocket integration: server-side setup, emitting events, Vue subscriptions, and Node clients for integration tests. |
-| [`pr-ready`](./pr-ready/SKILL.md) | Pre-PR flight check. Reviews the current branch against the original intent, flags scope creep, regression risks, and commit hygiene problems, and drafts a compact PR description. Manual invocation only. |
+| [`pr-ready`](./pr-ready/SKILL.md) | Pre-PR flight check. Reviews the current branch against the original intent, flags scope creep, regression risks, and commit hygiene problems, and drafts a compact PR title (conventional-commit style) and description. Manual invocation only. |
 
 ## Installing
 

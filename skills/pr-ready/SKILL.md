@@ -1,6 +1,6 @@
 ---
 name: pr-ready
-description: Pre-PR flight check on the current branch. Reviews the diff against stated intent, flags scope creep, regression risks, and commit hygiene problems, and drafts a compact PR description. Requires a clean working tree. Does not run tests, lint, or type-check.
+description: Pre-PR flight check on the current branch. Reviews the diff against stated intent, flags scope creep, regression risks, and commit hygiene problems, and drafts a compact PR title (conventional-commit style) and description. Requires a clean working tree. Does not run tests, lint, or type-check.
 disable-model-invocation: true
 ---
 
@@ -91,9 +91,34 @@ Output a single compact report in this order. If a section has nothing to say, w
 ## Commit hygiene
 - <bullets; include a squash plan if needed>
 
+## Suggested PR title
+<one line, ready to paste>
+
 ## Suggested PR description
 <markdown block, ready to paste>
 ```
+
+### Suggested PR title: format
+
+Follow Conventional Commits. Pick the prefix that best matches the dominant change in the diff:
+
+- `feat:` — new user-facing functionality
+- `fix:` — bug fix
+- `refactor:` — code change that neither fixes a bug nor adds a feature
+- `perf:` — performance improvement
+- `docs:` — documentation only
+- `test:` — adding or correcting tests
+- `build:` / `ci:` — build system or CI changes
+- `chore:` — tooling, deps, housekeeping that doesn't fit the above
+- `revert:` — reverts a previous commit
+
+Optional scope in parentheses when the repo already uses it (look at recent `git log` to confirm style): `feat(lib-node): add /heap-snapshot endpoint`.
+
+Style:
+- Imperative mood, lowercase after the colon, no trailing period.
+- Aim for ≤ 72 characters so it doesn't truncate in GitHub.
+- If the branch already has a single, well-formed conventional commit, reuse its subject as the title rather than inventing a new one.
+- If the changes don't fit a single prefix, that's a signal the PR is doing too much — flag it under "Intent check" rather than papering over it with `chore:`.
 
 ### Suggested PR description: format
 
@@ -109,6 +134,8 @@ Length guidance: as compact as the change allows. A typo fix is one sentence. A 
 Example, for a small feature:
 
 ```markdown
+Title: feat(import): add --dry-run flag to preview changes without writing
+
 Add `--dry-run` flag to the import command so users can preview changes without writing.
 
 **Why:** requested by ops to validate large imports before committing.
