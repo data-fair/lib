@@ -146,6 +146,27 @@ Add `--dry-run` flag to the import command so users can preview changes without 
 - Default behavior unchanged, but the new flag short-circuits before the DB transaction — double-check no downstream code assumed the transaction always runs.
 ```
 
+### Persist to files
+
+After printing the report, write the title and body to local files so the user can copy them without terminal soft-wraps inserting stray line breaks into the pasted text:
+
+```bash
+mkdir -p .git
+printf '%s\n' "<title>" > .git/PR_TITLE
+cat > .git/PR_BODY.md <<'EOF'
+<body markdown>
+EOF
+```
+
+`.git/` is the right location: it's never committed, is scoped to this repo, and persists across sessions. Don't write these files outside `.git/` — they'd pollute the working tree.
+
+Then tell the user, in one short message, where the files are and how to copy the body to the system clipboard:
+
+> Wrote `.git/PR_TITLE` and `.git/PR_BODY.md`. To copy the body:
+> - Wayland: `wl-copy < .git/PR_BODY.md`
+> - X11: `xclip -selection clipboard < .git/PR_BODY.md`
+> - macOS: `pbcopy < .git/PR_BODY.md`
+
 ## Red flags — do not skip these
 
 - Tree not clean → stop, do not review.
