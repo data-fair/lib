@@ -148,24 +148,24 @@ Add `--dry-run` flag to the import command so users can preview changes without 
 
 ### Persist to files
 
-After printing the report, write the title and body to local files so the user can copy them without terminal soft-wraps inserting stray line breaks into the pasted text:
+After printing the report, write the title and body to local files so the user can copy them without terminal soft-wraps inserting stray line breaks into the pasted text. Resolve the git directory via `git rev-parse --git-dir` — in a linked worktree, `.git` is a *file* (containing `gitdir: ...`), not a directory, so a hardcoded `.git/PR_BODY.md` path fails with "Not a directory":
 
 ```bash
-mkdir -p .git
-printf '%s\n' "<title>" > .git/PR_TITLE
-cat > .git/PR_BODY.md <<'EOF'
+git_dir=$(git rev-parse --git-dir)
+printf '%s\n' "<title>" > "$git_dir/PR_TITLE"
+cat > "$git_dir/PR_BODY.md" <<'EOF'
 <body markdown>
 EOF
 ```
 
-`.git/` is the right location: it's never committed, is scoped to this repo, and persists across sessions. Don't write these files outside `.git/` — they'd pollute the working tree.
+The git directory is the right location: it's never committed, is scoped to this repo (or worktree, so parallel branches don't clobber each other), and persists across sessions. Don't write these files into the working tree — they'd risk being committed.
 
-Then tell the user, in one short message, where the files are and how to copy the body to the system clipboard:
+Then tell the user, in one short message, the **resolved** file paths and the platform-specific clipboard command. Substitute the actual value of `$git_dir` into the message — don't print the literal `$git_dir`:
 
-> Wrote `.git/PR_TITLE` and `.git/PR_BODY.md`. To copy the body:
-> - Wayland: `wl-copy < .git/PR_BODY.md`
-> - X11: `xclip -selection clipboard < .git/PR_BODY.md`
-> - macOS: `pbcopy < .git/PR_BODY.md`
+> Wrote `<git_dir>/PR_TITLE` and `<git_dir>/PR_BODY.md`. To copy the body:
+> - Wayland: `wl-copy < <git_dir>/PR_BODY.md`
+> - X11: `xclip -selection clipboard < <git_dir>/PR_BODY.md`
+> - macOS: `pbcopy < <git_dir>/PR_BODY.md`
 
 ## Red flags — do not skip these
 
