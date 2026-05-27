@@ -8,12 +8,46 @@ import type { Locks } from './locks.js'
 
 const debug = Debug('upgrade')
 
+/**
+ * A migration to be applied to the service's database.
+ *
+ * Scripts live in `upgrade/<last-released-version>/<filename>.ts` under the
+ * service. The folder name MUST be the version of the last release at the
+ * time the script is authored — never an anticipated future version. On a
+ * working branch the eventual release number is unknown (the same change may
+ * ship as a minor, a major, or be backported), so the last known release is
+ * the only stable reference.
+ *
+ * The runner executes every script whose folder version satisfies
+ * `semver.gte(folder, dbVersion)`, where `dbVersion` is what was stored at
+ * the previous startup, then records the current `package.json` version.
+ * With folder = last-released, the script runs once on production upgrade
+ * (after the release bumps `package.json`), and re-runs on every staging
+ * deploy until the next release ships — this is expected.
+ *
+ * `exec` MUST be idempotent: re-running it must be a safe no-op.
+ */
 export interface UpgradeScript {
+  /** One short sentence; logged at run time. */
   description: string
+  /** Idempotent migration body. */
   exec: (db: Db, debug: Debugger) => Promise<void>
 }
 
-// chose the proper scripts to execute, then run them
+/**
+ * Run pending upgrade scripts for the current service, then record the
+ * current `package.json` version in the `services` Mongo collection.
+ *
+ * Acquires the `upgrade` lock so only one process runs migrations at a time;
+ * other processes log a warning and continue without waiting.
+ *
+ * See the `UpgradeScript` interface for the folder-naming rule.
+ *
+ * @param db - Active Mongo connection (reused by the scripts).
+ * @param locks - Lock manager from `@data-fair/lib-node/locks`.
+ * @param basePath - Path to the service directory containing `upgrade/` and `package.json`. Defaults to `./`.
+ * @param isFresh - Optional callback returning true if the database is a brand-new install with no legacy data. When true, all historical scripts are skipped and only the current version is recorded.
+ */
 export default async function (db: Db, locks: Locks, basePath = './', isFresh?: () => Promise<boolean>) {
   const ack = await locks.acquire('upgrade')
   if (!ack) {

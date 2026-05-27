@@ -261,16 +261,18 @@ new client.Gauge({
 
 ### Upgrade scripts
 
-Scripts must be written in 'upgrade/{CURRENT VERSION}' directory. All scripts with a version number greater than or equal to the version of the service registered in the database will executed.
+Scripts live in `upgrade/<last-released-version>/` directories. The folder name must be the version of the **last release** of the service at the time the script is written — never an anticipated future version. On a working branch the eventual release number is unknown (the same change may ship as a minor, a major, or be backported), so the last released version is the only stable reference.
 
-The scripts will be run automatically at startup of service.
+At service startup the runner reads the version stored in the `services` Mongo collection and runs every script whose folder version is `>=` that stored version, then writes the current `package.json` version back. With folder = last-released, the script runs once on production upgrade (after the release bumps `package.json`) and re-runs on every staging deploy until the next release ships — that re-run is expected, and is why scripts must be idempotent.
 
-Scripts are simple nodejs modules that export an object following UpgradeScript interface:
+Scripts are simple nodejs modules that export an object following the `UpgradeScript` interface:
 
-  - description: A short description string.
-  - exec: An async function. It accepts a mongodb connection as first parameter and debug log method as second parameter.
+  - `description`: A short description string.
+  - `exec`: An async function. It accepts a mongodb connection as first parameter and a debug log method as second parameter.
 
-WARNING: theoretically all scripts are run only once. But this cannot be strictly ensured therefore scripts should be idempotent. It means that running them multiple times should not create problems.
+WARNING: in theory each script runs once, but this cannot be strictly ensured (concurrent pods, crashes, manual re-runs, misnamed folders), so **scripts must be idempotent** — running them more than once must be a no-op, not a failure.
+
+If you are writing or modifying an upgrade script and your AI agent has access to the [`upgrade-scripts` skill](./skills/upgrade-scripts/SKILL.md), point it at that skill — it documents the folder-naming rule, idempotency patterns, and the wiring needed for fresh installs.
 
 Install peer dependencies:
 
