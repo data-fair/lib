@@ -31,7 +31,7 @@ The whole review hinges on knowing what the change was *supposed* to do.
 2. Otherwise, gather signals:
    - Recent turns in the current chat
    - Current branch name: `git branch --show-current`
-   - Commit subjects since the merge-base with the default branch (see Phase 3 for how to find it): `git log --oneline $(git merge-base "$default_branch" HEAD)..HEAD`
+   - Commit subjects since the merge-base with the default branch (see Phase 3 for how to find it): `git log --oneline --no-merges $(git merge-base "$default_branch" HEAD)..HEAD`
 3. Synthesize a single sentence of inferred intent and present it:
 
    > Inferred intent: *"<one sentence>"*. Correct as-is, or refine?
@@ -54,10 +54,12 @@ Then scope the review to what this branch actually added (the merge-base sideste
 
 ```bash
 base=$(git merge-base "$default_branch" HEAD)
-git log --oneline "$base..HEAD"     # commit list with subjects
-git diff --stat "$base..HEAD"        # file-level overview
-git diff "$base..HEAD"               # full content diff
+git log --oneline --no-merges "$base..HEAD"   # commit list with subjects
+git diff --stat "$base..HEAD"                  # file-level overview
+git diff "$base..HEAD"                          # full content diff
 ```
+
+`--no-merges` drops commits like `Merge branch 'main'` that only pulled the default branch back into this one — they aren't this branch's own work and shouldn't be analyzed under commit hygiene or intent. The diff itself is already scoped via the merge-base, so changes brought in by those merges don't appear in `git diff "$base..HEAD"` either; only edits actually made on this branch (including any conflict resolutions in the merge commit) show up.
 
 Read the full diff. For larger changes, use `--stat` first to plan where to look closest.
 
