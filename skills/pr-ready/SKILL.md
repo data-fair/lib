@@ -1,6 +1,6 @@
 ---
 name: pr-ready
-description: Use when the user explicitly asks for a pre-PR review of the current branch (e.g. "/pr-ready", "is this PR ready?", "review my branch before I open the PR"). Only invoke on explicit request — do not auto-invoke on generic "review my code" prompts. Operates on a clean working tree. Does not run tests, lint, or type-check.
+description: Pre-PR flight check on the current branch. Reviews the diff against stated intent, flags scope creep, regression risks, and commit hygiene problems, and drafts a compact PR description. Requires a clean working tree. Does not run tests, lint, or type-check.
 disable-model-invocation: true
 ---
 
