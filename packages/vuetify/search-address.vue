@@ -8,13 +8,16 @@
     return-object
     hide-no-data
     hide-details
-    label="Adresse"
     placeholder="Saisissez une adresse"
     :variant="variant"
     density="compact"
     menu-icon=""
     @update:search="(search: string) => findAdresses(search)"
-  />
+  >
+    <template #label>
+      Adresse <span class="d-sr-only">Lorsque des résultats sont disponibles, utilisez les flèches haut et bas pour les parcourir et appuyez sur Entrée pour sélectionner. Sur un appareil tactile explorer par toucher ou avec des gestes de balayage.</span>
+    </template>
+  </v-autocomplete>
 </template>
 
 
