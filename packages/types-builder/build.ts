@@ -11,7 +11,7 @@ import { makeLocalDefs } from '@data-fair/lib-utils/json-schema.js'
 import { ensureDir } from '@data-fair/lib-node/fs.js'
 // import { ensureDir } from '@data-fair/lib-node/fs.js'
 
-type TypesBuilderOptions = { mjs: boolean, vjsfDir?: string }
+type TypesBuilderOptions = { mjs: boolean, vjsfDir?: string, cache: boolean }
 type FileRef = { url: string }
 type SchemaExport = ('types' | 'validate' | 'stringify' | 'schema' | 'resolvedSchema' | 'resolvedSchemaJson' | 'localDefsSchema' | 'localDefsSchemaJson' | 'vjsf' | 'compiledLayout')
 
@@ -99,9 +99,11 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
 
   const hashes: Record<string, string> = {}
   let existingHashes: Record<string, string> | undefined
-  try {
-    existingHashes = JSON.parse(readFileSync('node_modules/.cache/@data-fair/lib-types-builder/hashes.json', 'utf8'))
-  } catch (err: any) {}
+  if (options.cache) {
+    try {
+      existingHashes = JSON.parse(readFileSync('node_modules/.cache/@data-fair/lib-types-builder/hashes.json', 'utf8'))
+    } catch (err: any) {}
+  }
 
   for (const [dir, key] of dirs) {
     console.log(`compile ${key} in ${dir}`)
@@ -130,7 +132,7 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
 
     let resolvedSchema
     if (schemaExports.includes('resolvedSchema') || schemaExports.includes('resolvedSchemaJson')) {
-      resolvedSchema = (await refParser.dereference(schema, $refOptions)) as any
+      resolvedSchema = (await refParser.dereference(clone(schema), $refOptions)) as any
       if (resolvedSchema.$id) resolvedSchema.$id += '-resolved'
     }
 
@@ -410,5 +412,6 @@ program
   .argument('[dir]', 'root directory to scan for schema.json files', './')
   .option('--mjs', 'produce mjs files', false)
   .option('--vjsf-dir <dir>', 'the directory where built vjsf components will be written')
+  .option('--no-cache', 'ignore the hashes cache and rebuild all schemas')
   .action(main)
   .parseAsync()

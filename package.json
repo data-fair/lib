@@ -11,7 +11,7 @@
     "prepare": "husky install",
     "quality": "eslint . && npm test",
     "prepublishOnly": "npm run quality && npm run build",
-    "pre-test": "cd packages/types-builder/test && node --experimental-strip-types ../build.ts . --vjsf-dir=vjsf",
+    "pre-test": "cd packages/types-builder/test && node --experimental-strip-types ../build.ts . --vjsf-dir=vjsf --no-cache",
     "test": "npm run pre-test && node --experimental-strip-types --test --test-force-exit **/*.test.ts",
     "test-only": "npm run pre-test && node --experimental-strip-types --test --test-force-exit --test-only"
   },
