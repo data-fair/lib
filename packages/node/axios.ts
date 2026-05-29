@@ -46,7 +46,8 @@ export function axiosBuilder (opts: CreateAxiosDefaults = {}, beforeInterceptors
     delete error.response.request
     error.response.config = { method: error.response.config.method, url: error.response.config.url, data: error.response.config.data }
     if (error.response.config.data && error.response.config.data._writableState) delete error.response.config.data
-    if (error.response.data && error.response.data._readableState) delete error.response.data
+    // destroy() a streamed error body before dropping it, else its socket leaks
+    if (error.response.data && error.response.data._readableState) { error.response.data.destroy(); delete error.response.data }
     let messageText = error.response.statusText
     if (error.response.data) {
       messageText = typeof error.response.data === 'string' ? error.response.data : JSON.stringify(error.response.data)
