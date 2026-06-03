@@ -45,6 +45,17 @@ function cleanUrl (href: string) {
 export type MarkedVuetifyDensity = 'default' | 'comfortable' | 'compact'
 export interface MarkedVuetifyOptions {
   density?: MarkedVuetifyDensity
+  /**
+   * Override the classes applied to headings, merged over the density-derived
+   * defaults. Keys are markdown heading depths (1 = `#`, 2 = `##`, ...), values
+   * are the class string applied to the rendered element. Use this to make
+   * titles even smaller than the `compact` density allows, e.g.
+   * `{ 1: 'text-title-medium font-weight-bold mt-2 mb-1' }`.
+   *
+   * Note: headings are rendered one level down (`#` → `<h2>`, `##` → `<h3>`, ...)
+   * so the top-level document heading does not collide with a page's `<h1>`.
+   */
+  headingClasses?: Record<number, string>
 }
 
 const headingClassesByDensity: Record<MarkedVuetifyDensity, Record<number, string>> = {
@@ -94,7 +105,7 @@ const paragraphClasses: Record<MarkedVuetifyDensity, string> = {
 
 export function createMarkedVuetify (options?: MarkedVuetifyOptions): MarkedExtension {
   const density = options?.density ?? 'default'
-  const headingClasses = headingClassesByDensity[density]
+  const headingClasses = { ...headingClassesByDensity[density], ...options?.headingClasses }
   const tableClass = tableDensityClass[density]
   const listClass = listClasses[density]
   const paragraphClass = paragraphClasses[density]
