@@ -1,6 +1,6 @@
 // simple composable to display store a UI notification
-// this will be transmitted to frame parent if available (compatible with v-iframe uiNotification message type)
-// or can be displayed locally by @data-fair/lib-vuetify/ui-notif.vue
+// when embedded it is transmitted to the parent as a native d-frame notification message
+// (['df-child', 'notif', notif]), or it can be displayed locally by @data-fair/lib-vuetify/ui-notif.vue
 
 import type { App } from 'vue'
 import { shallowRef, inject } from 'vue'
@@ -66,13 +66,41 @@ export function getFullNotif (notif: PartialUiNotif, defaultType: UiNotifBase['t
   } as UiNotifBase
 }
 
+// native d-frame child -> parent notification payload, mirrors the `Notif`
+// type from @data-fair/frame (lib/messages.ts), kept inline to avoid a
+// dependency on @data-fair/frame from this foundational package
+export type DFrameNotif = {
+  type: 'default' | 'info' | 'success' | 'warning' | 'error'
+  title: string
+  detail?: string
+}
+
+// convert a resolved UiNotif into the native d-frame Notif shape; mirrors
+// @data-fair/frame's convertVIframeUiNotif so the host renders notifications
+// identically to the former v-iframe-compat path
+export function toDFrameNotif (notif: UiNotif): DFrameNotif {
+  if (notif.type === 'error') {
+    return {
+      type: notif.clientError ? 'warning' : 'error',
+      title: notif.msg,
+      detail: notif.errorMsg
+    }
+  }
+  return {
+    type: notif.type ?? 'default',
+    title: notif.msg
+  }
+}
+
 export const getUiNotif = () => {
   const notification = shallowRef(null as null | UiNotif)
   function sendUiNotif (partialNotif: PartialUiNotif) {
     const notif = notification.value = getFullNotif(partialNotif)
     if (inIframe) {
-      if (notif.type === 'error') delete notif.error
-      window.top?.postMessage({ vIframe: true, uiNotification: notif }, '*')
+      // emit the native d-frame notification message consumed by an embedding
+      // <d-frame> host; v-iframe is deprecated so the legacy
+      // { vIframe: true, uiNotification } payload is no longer emitted
+      window.parent.postMessage(['df-child', 'notif', toDFrameNotif(notif)], '*')
     } else {
       console.log('iframe notification', notif)
     }
