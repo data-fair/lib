@@ -15,6 +15,7 @@
     "build": "cd .. && npm run build"
   },
   "peerDependencies": {
+    "@vueuse/core": ">=10",
     "dayjs": "1",
     "ofetch": "1",
     "reconnecting-websocket": "4",
@@ -22,6 +23,9 @@
     "vue-router": "4 || 5"
   },
   "peerDependenciesMeta": {
+    "@vueuse/core": {
+      "optional": true
+    },
     "reconnecting-websocket": {
       "optional": true
     },
