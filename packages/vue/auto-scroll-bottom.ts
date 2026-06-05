@@ -9,29 +9,36 @@ import { useScroll, useEventListener } from '@vueuse/core'
  * `target` is what actually scrolls — pass `window` (or the current document's
  * scroller) for a page that scrolls as a whole, or a getter returning the inner
  * scrollable element when the growing region lives inside an `overflow: auto`
- * container. VueUse's `arrivedState.bottom` carries a built-in 1px tolerance,
- * and appending content fires no scroll event, so following only ever turns off
- * on a real upward scroll — no manual threshold needed.
+ * container.
+ *
+ * Following is driven by the bottom being in view (`arrivedState.bottom`), not
+ * by scroll direction: when the content shrinks (a loader removed, a panel
+ * collapsed) the browser clamps scrollTop upward, and a direction-based check
+ * would mistake that for the user scrolling away and stop following for good.
+ *
+ * "In view" allows a small margin (`bottomThreshold`): exact scrollTop rarely
+ * reaches the very bottom (sub-pixel rounding) and live content keeps appending,
+ * so a 0px check could never re-arm following once the user had scrolled away.
  *
  * @param target the scroll container: `window`, an element, or a ref/getter to
  *   one (tolerates `null`/`undefined` while the element is not yet mounted)
  * @param growthSignal reactive getter for the content length (the growth signal)
  * @param isActive getter telling whether the source is still streaming/growing
+ * @param bottomThreshold px from the bottom still counted as "at the bottom"
  */
 export const useAutoScrollBottom = (
   target: MaybeRefOrGetter<HTMLElement | Window | null | undefined>,
   growthSignal: () => number,
-  isActive: () => boolean
+  isActive: () => boolean,
+  bottomThreshold = 48
 ) => {
   // Start following so a freshly opened, still-growing source pins to its tail
   // even though it usually mounts scrolled to the top.
   const following = ref(true)
 
-  const { arrivedState, directions, y } = useScroll(target, {
-    onScroll: () => {
-      if (directions.top) following.value = false // scrolled up → stop
-      else if (arrivedState.bottom) following.value = true // back at bottom → resume
-    }
+  const { arrivedState, y } = useScroll(target, {
+    offset: { bottom: bottomThreshold },
+    onScroll: () => { following.value = arrivedState.bottom } // near bottom → follow, else stop
   })
 
   // A wheel-up reaches us even when the target can't scroll (short content, or
