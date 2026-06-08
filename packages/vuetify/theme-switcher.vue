@@ -9,9 +9,10 @@
         <v-btn
           v-bind="props"
           :title="t('themeSwitch')"
-          :icon="mdiThemeLightDark"
           stacked
-        />
+        >
+          <v-icon :icon="mdiThemeLightDark" />
+        </v-btn>
       </template>
 
       <v-list>
