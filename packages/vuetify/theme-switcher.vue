@@ -1,20 +1,20 @@
 <template>
-  <v-toolbar-items class="theme-switcher" v-if="session.fullSite.value?.theme.dark || session.fullSite.value?.theme.hc || session.fullSite.value?.theme.hcDark">
+  <v-toolbar-items v-if="hasDark || hasHc || hasHcDark">
     <v-menu
       offset-y
       class="ml-n4"
       style="z-index: 2600; /* Higher than agent-chat's 2500 */"
     >
-      <template #activator="{props: activatorProps}">
+      <template #activator="{ props }">
         <v-btn
-          class="px-0"
-          :icon="mdiThemeLightDark"
+          v-bind="props"
           :title="t('themeSwitch')"
-          v-bind="activatorProps"
+          :icon="mdiThemeLightDark"
+          stacked
         />
       </template>
 
-      <v-list class="border-sm">
+      <v-list>
         <v-list-item density="compact" class="pl-0">
           <v-radio-group
             :model-value="session.theme.value"
@@ -22,12 +22,13 @@
             color="primary"
             hide-details
             :label="t('themeSwitch')"
-            @update:modelValue="value => session.switchTheme(value as 'default' | 'dark' | 'hc' | 'hc-dark')"
+            @update:modelValue="value => session.switchTheme(value as 'default' | 'dark' | 'hc' | 'hc-dark' | 'system')"
           >
+            <v-radio :label="t('theme.system')" value="system"></v-radio>
             <v-radio :label="t('theme.default')" value="default"></v-radio>
-            <v-radio v-if="session.fullSite.value?.theme.dark" :label="t('theme.dark')" value="dark"></v-radio>
-            <v-radio v-if="session.fullSite.value?.theme.hc":label="t('theme.hc')" value="hc"></v-radio>
-            <v-radio v-if="session.fullSite.value?.theme.hcDark" :label="t('theme.hcDark')" value="hc-dark"></v-radio>
+            <v-radio v-if="hasDark" :label="t('theme.dark')" value="dark"></v-radio>
+            <v-radio v-if="hasHc" :label="t('theme.hc')" value="hc"></v-radio>
+            <v-radio v-if="hasHcDark" :label="t('theme.hcDark')" value="hc-dark"></v-radio>
           </v-radio-group>
         </v-list-item>
       </v-list>
@@ -39,26 +40,41 @@
 fr:
   themeSwitch: Changer de thème
   theme:
-    default: par défaut
-    dark: sombre
-    hc: contraste élevé
-    hcDark: sombre et contraste élevé
+    system: Système
+    default: Par défaut
+    dark: Sombre
+    hc: Contraste élevé
+    hcDark: Sombre et contraste élevé
 en:
   themeSwitch: Change theme
   theme:
-    default: default
-    dark: dark
-    hc: high contrast
-    hcDark: dark and high contrast
+    system: System
+    default: Default
+    dark: Dark
+    hc: High contrast
+    hcDark: Dark and high contrast
 </i18n>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useSession } from '@data-fair/lib-vue/session.js'
 import { useI18n } from 'vue-i18n'
 import { mdiThemeLightDark } from '@mdi/js'
 
+// Optional `theme` lets hosts that don't expose their config through
+// session.fullSite (e.g. the public Nuxt portal, where the theme lives in
+// portalConfig) drive which radios are shown. Falls back to
+// session.fullSite.value?.theme — the historical behaviour for data-fair UIs.
+const props = defineProps<{
+  theme?: { dark?: boolean, hc?: boolean, hcDark?: boolean }
+}>()
 
 const session = useSession()
+
+const effectiveTheme = computed(() => props.theme ?? session.fullSite.value?.theme)
+const hasDark = computed(() => !!effectiveTheme.value?.dark)
+const hasHc = computed(() => !!effectiveTheme.value?.hc)
+const hasHcDark = computed(() => !!effectiveTheme.value?.hcDark)
 
 const { t } = useI18n({ useScope: 'local' })
 </script>

@@ -57,16 +57,16 @@ export interface Colors {
   'on-admin': string
 }
 
-interface FullSiteInfo {
+export interface FullSiteInfo {
   main?: boolean
   theme: {
     logo?: string
     colors: Colors
-    dark: boolean
+    dark?: boolean
     darkColors?: Colors
-    hc: boolean
+    hc?: boolean
     hcColors?: Colors
-    hcDark: boolean
+    hcDark?: boolean
     hcDarkColors?: Colors
   }
 }
@@ -82,7 +82,14 @@ export interface SiteInfo {
   owner: AccountKeys
 }
 
-type Theme = 'default' | 'dark' | 'hc' | 'hc-dark'
+export type AppliedTheme = 'default' | 'dark' | 'hc' | 'hc-dark'
+// `theme` cookie semantics:
+//  - absent: implicit 'system' (no choice made yet)
+//  - 'system': explicit "follow the OS preference"
+//  - other: explicit override
+// In both 'system' cases the applied theme is computed at runtime via
+// resolveTheme() using prefers-color-scheme + forced-colors.
+export type Theme = AppliedTheme | 'system'
 
 export interface Session {
   state: SessionState
@@ -120,10 +127,26 @@ export type SessionAuthenticated = Omit<Session, 'state' | 'user' | 'account' | 
 const debug = Debug('session')
 debug.log = console.log.bind(console)
 
-function getDefaultTheme (site: FullSiteInfo): Theme {
+// loose shape: hosts whose Colors are partially optional (e.g. portal config) can pass their own type
+export type ThemeOffers = {
+  theme: {
+    dark?: boolean
+    hc?: boolean
+    hcDark?: boolean
+  }
+}
+
+/**
+ * Resolves a user theme preference to a concrete AppliedTheme — returns the explicit choice when set,
+ * otherwise picks the best variant offered by `site` based on the OS `prefers-color-scheme` / `forced-colors`
+ * media queries. Always call this before handing a theme name to Vuetify: its built-in `'system'` defaultTheme
+ * bypasses custom themes and falls back to its own light/dark.
+ */
+export function resolveTheme (userTheme: Theme | null, site: ThemeOffers): AppliedTheme {
+  if (userTheme && userTheme !== 'system') return userTheme
   // see https://www.scottohara.me/blog/2021/10/01/detect-high-contrast-and-dark-modes.html
-  const preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-  const preferHC = window.matchMedia && window.matchMedia('(forced-colors: active)').matches
+  const preferDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  const preferHC = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(forced-colors: active)').matches
   if (site.theme.hcDark && preferDark && preferHC) return 'hc-dark'
   if (site.theme.hc && preferHC) return 'hc'
   if (site.theme.dark && preferDark) return 'dark'
@@ -194,7 +217,9 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   // cookies are the source of truth and this information is transformed into the state reactive object
   const cookies = initOptions?.cookies ?? new Cookies(options.req?.headers.cookie)
   const readState = () => {
-    theme.value = cookies.get('theme') ?? null
+    // absent cookie is treated as implicit 'system' so consumers (theme-switcher
+    // radios, host plugins) always have a meaningful value to bind to.
+    theme.value = (cookies.get('theme') as Theme | undefined) ?? 'system'
 
     const langCookie = cookies.get('i18n_lang')
     state.lang = langCookie ?? options.defaultLang
@@ -412,13 +437,13 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
         authOnlyOtherSite: siteInfo.authOnlyOtherSite,
         owner: siteInfo.owner
       }
-      if (theme.value == null) theme.value = getDefaultTheme(siteInfo)
-      if (theme.value === 'hc') partialSite.colors = siteInfo.theme.hcColors
-      if (theme.value === 'dark') {
+      const applied = resolveTheme(theme.value, siteInfo)
+      if (applied === 'hc') partialSite.colors = siteInfo.theme.hcColors
+      if (applied === 'dark') {
         partialSite.colors = siteInfo.theme.darkColors
         partialSite.dark = true
       }
-      if (theme.value === 'hc-dark') {
+      if (applied === 'hc-dark') {
         partialSite.colors = siteInfo.theme.hcDarkColors
         partialSite.dark = true
       }
@@ -432,6 +457,16 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
 
   // @ts-ignore
   if (!ssr && window.__PUBLIC_SITE_INFO) setSiteInfo(window.__PUBLIC_SITE_INFO)
+
+  // re-apply the theme when the OS preference changes while the user is on
+  // 'system'. Important for mobile devices that switch light/dark over the day.
+  if (!ssr && typeof window !== 'undefined' && window.matchMedia) {
+    const onOsPrefChange = () => {
+      if (theme.value === 'system' && fullSite.value) setSiteInfo(fullSite.value)
+    }
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onOsPrefChange)
+    window.matchMedia('(forced-colors: active)').addEventListener('change', onOsPrefChange)
+  }
 
   // immediately performs a keepalive, but only on top windows (not iframes or popups)
   // and only if it was not done very recently (maybe from a refreshed page next to this one)
