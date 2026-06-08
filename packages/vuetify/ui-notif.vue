@@ -1,69 +1,101 @@
 <template>
-  <v-snackbar
-    v-if="notification"
-    ref="notificationSnackbar"
-    v-model="showNotification"
-    class="ui-notif"
-    v-bind="fullSnackbarProps"
-    style="z-index: 2600; /* Higher than agent-chat's 2500 */"
+  <v-snackbar-queue
+    v-model="queue"
+    :timeout="5000"
+    :total-visible="5"
+    :z-index="2600 /* Higher than agent-chat's 2500 */"
+    location="bottom right"
+    display-strategy="overflow"
+    max-width="500"
+    max-height="500"
+    collapsed
+    closable
   >
-    <p v-if="notification.msg">{{ notification.msg }}</p>
-    <p
-      v-if="notification.type === 'error'"
-      :class="notification.msg ? 'ml-3' : ''"
-      v-text="notification.errorMsg"
-    />
-
-    <template #actions>
-      <v-btn
-        icon
-        @click.native="showNotification = false"
+    <template #text="{ item }">
+      <p v-if="item.msg">
+        {{ item.msg }}
+      </p>
+      <p
+        v-if="item.errorMsg"
+        :class="item.msg ? 'mt-1' : ''"
       >
-        <v-icon :icon="mdiClose" />
-      </v-btn>
+        {{ item.errorMsg }}
+      </p>
     </template>
-  </v-snackbar>
+    <template #actions="{ props: btnProps }">
+      <v-btn
+        v-bind="btnProps"
+        :title="t('ignore')"
+        :icon="mdiClose"
+        variant="text"
+        size="small"
+        class="mt-1"
+      />
+    </template>
+  </v-snackbar-queue>
 </template>
 
+<i18n lang="yaml">
+  en:
+    ignore: Dismiss
+  fr:
+    ignore: Ignorer
+</i18n>
+
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useUiNotif } from '@data-fair/lib-vue/ui-notif.js'
+import type { UiNotif } from '@data-fair/lib-vue/ui-notif.js'
 import inIframe from '@data-fair/lib-utils/in-iframe.js'
+import { useUiNotif } from '@data-fair/lib-vue/ui-notif.js'
+import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { mdiClose } from '@mdi/js'
 
+type QueueItem = {
+  msg: string
+  errorMsg?: string
+  color?: string
+  timeout?: number
+  class?: string
+  contentClass?: string
+}
+
+const { t } = useI18n()
 const uiNotif = useUiNotif()
+const queue = ref<QueueItem[]>([])
 
-const notification = computed(() => uiNotif.notification.value)
-const showNotification = ref(false)
-
-watch(() => notification.value, async () => {
-  showNotification.value = false
-  if (!inIframe && notification.value) {
-    await new Promise(resolve => setTimeout(resolve, 300))
-    showNotification.value = true
-  }
-}, {immediate: true})
-
-const { snackbarProps } = defineProps({
-  snackbarProps: {
-    type: Object,
-    default () {
-      return { tile: true, right: true, bottom: true, timeout: 30000 }
+/** Convert a UiNotif to a QueueItem, with some special handling for error notif */
+function toItem (notif: UiNotif): QueueItem {
+  if (notif.type === 'error') {
+    return {
+      msg: notif.msg,
+      errorMsg: notif.errorMsg,
+      color: notif.clientError ? 'warning' : 'error',
+      timeout: 30 * 1000, // 30 seconds for error notif
+      class: 'ui-notif',
+      contentClass: 'ui-notif__content'
     }
   }
-})
-
-const fullSnackbarProps = computed(() => {
-  const props = { ...snackbarProps }
-  if (!notification.value) return props
-  if (notification.value.type === 'error') {
-    props.timeout = -1
-    props.color = notification.value.clientError ? 'warning' : 'error'
-  } else {
-    props.color = notification.value.type
+  return {
+    msg: notif.msg,
+    color: notif.type === 'default' ? undefined : notif.type,
+    class: 'ui-notif'
   }
-  
-  return props
-})
+}
 
+watch(() => uiNotif.notification.value, (notif) => {
+  if (!notif || inIframe) return
+  queue.value.push(toItem(notif))
+})
 </script>
+
+<style>
+.ui-notif__content {
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ui-notif .v-snackbar__actions {
+  align-self: flex-start;
+}
+</style>
