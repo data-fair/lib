@@ -143,7 +143,13 @@ export type ThemeOffers = {
  * bypasses custom themes and falls back to its own light/dark.
  */
 export function resolveTheme (userTheme: Theme | null, site: ThemeOffers): AppliedTheme {
-  if (userTheme && userTheme !== 'system') return userTheme
+  // honor an explicit choice only while `site` still offers it; otherwise fall through to
+  // the OS-preference resolution below (a theme disabled after selection must not stick)
+  if (userTheme === 'default') return 'default'
+  if (userTheme === 'dark' && site.theme.dark) return 'dark'
+  if (userTheme === 'hc' && site.theme.hc) return 'hc'
+  if (userTheme === 'hc-dark' && site.theme.hcDark) return 'hc-dark'
+
   // see https://www.scottohara.me/blog/2021/10/01/detect-high-contrast-and-dark-modes.html
   const preferDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
   const preferHC = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(forced-colors: active)').matches
@@ -400,8 +406,13 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   }
 
   const switchTheme = (value: Theme) => {
-    const maxAge = 60 * 60 * 24 * 365 // 1 year
-    cookies.set('theme', value, { maxAge, path: cookiesPath })
+    // an absent cookie already means 'system' (see init above), so don't persist it explicitly
+    if (value === 'system') {
+      cookies.remove('theme', { path: cookiesPath })
+    } else {
+      const maxAge = 60 * 60 * 24 * 365 // 1 year
+      cookies.set('theme', value, { maxAge, path: cookiesPath })
+    }
     goTo(null)
   }
 
