@@ -243,23 +243,23 @@ export default {
     },
     assistedMode: {
       type: 'boolean',
-      title: 'mode de gestion des couleurs simplifié',
+      title: 'Mode de gestion des couleurs simplifié',
       'x-i18n-title': {
-        fr: 'mode de gestion des couleurs simplifié',
-        en: 'simplified color management mode',
-        es: 'modo de gestión de colores simplificado',
-        it: 'modalità di gestione semplificata dei colori',
-        pt: 'modo de gerenciamento simplificado de cores',
-        de: 'vereinfachteter Farbverwaltungsmodus'
+        fr: 'Mode de gestion des couleurs simplifié',
+        en: 'Simplified color management mode',
+        es: 'Modo de gestión de colores simplificado',
+        it: 'Modalità di gestione semplificata dei colori',
+        pt: 'Modo de gerenciamento simplificado de cores',
+        de: 'Vereinfachter Farbverwaltungsmodus'
       },
-      description: "Si activé vous ne devrez saisir que les couleurs principales du thème, d'autres couleurs seront affectées par défaut et les couleurs de texte seront automatiquement ajustées pour être lisibles sur les couleurs de fond.",
+      description: 'Ce mode permet de simplifier la gestion des couleurs. Avec, vous ne renseignez que les couleurs principales (primaire, secondaire, accentuée).\n\nLes autres couleurs sont calculées automatiquement en suivant des règles de contraste pour rester lisibles sur les fonds.\n\n**Attention** : activer ce mode réinitialise les couleurs détaillées définies manuellement en mode avancé.',
       'x-i18n-description': {
-        fr: "Si activé vous ne devrez saisir que les couleurs principales du thème, d'autres couleurs seront affectées par défaut et les couleurs de texte seront automatiquement ajustées pour être lisibles sur les couleurs de fond.",
-        en: 'If enabled, you will only need to enter the main theme colors, other colors will be assigned by default and text colors will be automatically adjusted to be readable on the background colors.',
-        es: 'Si está activado, solo deberá ingresar los colores principales del tema, otros colores se asignarán por defecto y los colores de texto se ajustarán automáticamente para ser legibles en los colores de fondo.',
-        it: 'Se abilitato, dovrai inserire solo i colori principali del tema, gli altri colori verranno assegnati per impostazione predefinita e i colori del testo verranno automaticamente regolati per essere leggibili sui colori di sfondo.',
-        pt: 'Se ativado, você só precisará inserir as cores principais do tema, outras cores serão atribuídas por padrão e as cores do texto serão ajustadas automaticamente para serem legíveis nas cores de fundo.',
-        de: 'Wenn aktiviert, müssen Sie nur die Hauptthemenfarben eingeben. Andere Farben werden standardmäßig zugewiesen und die Textfarben werden automatisch angepasst, um lesbar auf den Hintergrundfarben zu sein.'
+        fr: 'Ce mode permet de simplifier la gestion des couleurs. Avec, vous ne renseignez que les couleurs principales (primaire, secondaire, accentuée).\n\nLes autres couleurs sont calculées automatiquement en suivant des règles de contraste pour rester lisibles sur les fonds.\n\n**Attention** : activer ce mode réinitialise les couleurs détaillées définies manuellement en mode avancé.',
+        en: 'This mode simplifies color management: you only provide the main colors (primary, secondary, accent).\n\nThe other colors are computed automatically using contrast rules so they remain legible on backgrounds.\n\n**Warning**: enabling this mode resets any detailed colors that were set manually in advanced mode.',
+        es: 'Este modo simplifica la gestión de colores: solo indicas los colores principales (primario, secundario, acentuado).\n\nLos demás colores se calculan automáticamente siguiendo reglas de contraste para que sigan siendo legibles sobre los fondos.\n\n**Atención**: activar este modo restablece los colores detallados que se definieron manualmente en el modo avanzado.',
+        it: 'Questa modalità semplifica la gestione dei colori: fornisci solo i colori principali (primario, secondario, accento).\n\nGli altri colori vengono calcolati automaticamente seguendo regole di contrasto per restare leggibili sugli sfondi.\n\n**Attenzione**: abilitando questa modalità vengono reimpostati i colori dettagliati definiti manualmente nella modalità avanzata.',
+        pt: 'Esta modalidade simplifica a gestão de cores: você informa apenas as cores principais (primária, secundária, destaque).\n\nAs outras cores são calculadas automaticamente seguindo regras de contraste para se manterem legíveis sobre os fundos.\n\n**Atenção**: ativar este modo redefine quaisquer cores detalhadas definidas manualmente no modo avançado.',
+        de: 'Dieser Modus vereinfacht die Farbverwaltung: Sie geben nur die Hauptfarben an (Primär-, Sekundär- und Akzentfarbe).\n\nDie übrigen Farben werden automatisch nach Kontrastregeln berechnet, damit sie auf den Hintergründen lesbar bleiben.\n\n**Achtung**: Das Aktivieren dieses Modus setzt alle im erweiterten Modus manuell festgelegten Detailfarben zurück.'
       },
       default: true
     },
@@ -319,40 +319,40 @@ export default {
     colors: { $ref: '#/$defs/colors' },
     dark: {
       type: 'boolean',
-      title: 'proposer ce thème aux utilisateurs',
+      title: 'Proposer ce thème aux utilisateurs',
       'x-i18n-title': {
-        fr: 'proposer ce thème aux utilisateurs',
-        en: 'offer this theme to users',
-        es: 'ofrecer este tema a los usuarios',
-        it: 'offri questo tema agli utenti',
-        pt: 'oferecer este tema aos usuários',
-        de: 'bieten Sie dieses Thema den Benutzern an'
+        fr: 'Proposer ce thème aux utilisateurs',
+        en: 'Offer this theme to users',
+        es: 'Ofrecer este tema a los usuarios',
+        it: 'Offri questo tema agli utenti',
+        pt: 'Oferecer este tema aos usuários',
+        de: 'Bieten Sie dieses Thema den Benutzern an'
       }
     },
     darkColors: { $ref: '#/$defs/colors' },
     hc: {
       type: 'boolean',
-      title: 'proposer ce thème aux utilisateurs',
+      title: 'Proposer ce thème aux utilisateurs',
       'x-i18n-title': {
-        fr: 'proposer ce thème aux utilisateurs',
-        en: 'offer this theme to users',
-        es: 'ofrecer este tema a los usuarios',
-        it: 'offri questo tema agli utenti',
-        pt: 'oferecer este tema aos usuários',
-        de: 'bieten Sie dieses Thema den Benutzern an'
+        fr: 'Proposer ce thème aux utilisateurs',
+        en: 'Offer this theme to users',
+        es: 'Ofrecer este tema a los usuarios',
+        it: 'Offri questo tema agli utenti',
+        pt: 'Oferecer este tema aos usuários',
+        de: 'Bieten Sie dieses Thema den Benutzern an'
       }
     },
     hcColors: { $ref: '#/$defs/colors' },
     hcDark: {
       type: 'boolean',
-      title: 'proposer ce thème aux utilisateurs',
+      title: 'Proposer ce thème aux utilisateurs',
       'x-i18n-title': {
-        fr: 'proposer ce thème aux utilisateurs',
-        en: 'offer this theme to users',
-        es: 'ofrecer este tema a los usuarios',
-        it: 'offri questo tema agli utenti',
-        pt: 'oferecer este tema aos usuários',
-        de: 'bieten Sie dieses Thema den Benutzern an'
+        fr: 'Proposer ce thème aux utilisateurs',
+        en: 'Offer this theme to users',
+        es: 'Ofrecer este tema a los usuarios',
+        it: 'Offri questo tema agli utenti',
+        pt: 'Oferecer este tema aos usuários',
+        de: 'Bieten Sie dieses Thema den Benutzern an'
       }
     },
     hcDarkColors: { $ref: '#/$defs/colors' }
