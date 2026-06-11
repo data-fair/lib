@@ -241,6 +241,31 @@ export default {
       },
       type: 'string'
     },
+    preloadLinks: {
+      title: 'Liens de préchargement',
+      'x-i18n-title': {
+        fr: 'Liens de préchargement',
+        en: 'Preload links',
+        es: 'Enlaces de precarga',
+        it: 'Collegamenti di precaricamento',
+        pt: 'Links de pré-carregamento',
+        de: 'Vorlade-Links'
+      },
+      description: 'Liste des ressources (polices, etc.) à précharger via des balises <link rel="preload">. Généralement renseignée automatiquement.',
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: true,
+        required: ['href'],
+        properties: {
+          href: { type: 'string', title: 'URL' },
+          as: { type: 'string', title: 'Type de ressource (attribut as)' },
+          type: { type: 'string', title: 'Type MIME' },
+          crossorigin: { type: 'boolean', title: 'Requête CORS (crossorigin)' }
+        }
+      },
+      layout: 'none'
+    },
     assistedMode: {
       type: 'boolean',
       title: 'Mode de gestion des couleurs simplifié',

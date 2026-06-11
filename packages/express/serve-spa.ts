@@ -8,6 +8,7 @@ import { static as expressStatic, type Request } from 'express'
 import { reqSitePath, reqSiteUrl, reqOrigin } from '@data-fair/lib-express'
 import serialize from 'serialize-javascript'
 import axios from '@data-fair/lib-node/axios.js'
+import type { Theme } from '@data-fair/lib-common-types/theme/index.js'
 
 type CSPDirectives = Record<string, string | string[]>
 type CSPHeader = string | CSPDirectives | boolean
@@ -49,6 +50,23 @@ export function getCSPHeader (cspHeader: CSPHeader, nonce?: boolean) {
   else if (typeof cspHeader === 'object') return getCSPHeaderFromDirectives(cspHeader)
 }
 
+// the _hashes payload returns the theme's preload links verbatim
+type PreloadLink = NonNullable<Theme['preloadLinks']>[number]
+
+// escape values interpolated into HTML attributes — the href comes from
+// site-configured theme data, so it must not be able to break out of the attribute
+const escapeHtmlAttr = (value: string): string =>
+  value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+function buildPreloadLinks (links?: PreloadLink[]): string {
+  return (links ?? []).map(l => {
+    const as = l.as ? ` as="${escapeHtmlAttr(l.as)}"` : ''
+    const type = l.type ? ` type="${escapeHtmlAttr(l.type)}"` : ''
+    const crossorigin = l.crossorigin ? ' crossorigin' : ''
+    return `<link rel="preload"${as}${type} href="${escapeHtmlAttr(l.href)}"${crossorigin}>`
+  }).join('')
+}
+
 type ServeSpaOptions = {
   ignoreSitePath?: boolean,
   privateDirectoryUrl?: string,
@@ -78,8 +96,7 @@ async function createHtmlMiddleware (directory: string, baseParams: Record<strin
         html = microTemplate(html, siteExtraParams)
       }
       if (options?.privateDirectoryUrl) {
-        const hashes = await getSiteHashes(options.privateDirectoryUrl, siteUrl)
-        html = microTemplate(html, hashes)
+        html = microTemplate(html, await getSiteHashes(options.privateDirectoryUrl, siteUrl))
       }
     }
 
@@ -158,7 +175,7 @@ export function prepareUiConfig (uiConfig: any) {
   return { uiConfigStr, uiConfigJs, uiConfigPath }
 }
 
-type Hashes = { THEME_CSS_HASH: string, PUBLIC_SITE_INFO_HASH: string }
+type Hashes = { THEME_CSS_HASH: string, PUBLIC_SITE_INFO_HASH: string, PRELOAD_LINKS: string }
 const cache: Record<string, { hashes: Promise<Hashes>, ts: number }> = {}
 
 const minuteMS = 1000 * 60
@@ -167,13 +184,13 @@ const getSiteHashes = async (privateDirectoryUrl: string, siteUrl: string) => {
   const now = new Date().getTime()
   if (!cache[siteUrl] || cache[siteUrl].ts < (now - minuteMS)) {
     const url = new URL(siteUrl)
-    const hashes = axios.get<{ publicInfo: string, themeCss: string }>(privateDirectoryUrl + '/simple-directory/api/sites/_hashes', {
+    const hashes = axios.get<{ publicInfo: string, themeCss: string, preloadLinks?: PreloadLink[] }>(privateDirectoryUrl + '/simple-directory/api/sites/_hashes', {
       headers: {
         'x-forwarded-proto': url.protocol.slice(0, -1),
         'x-forwarded-host': url.hostname,
         'x-forwarded-port': url.port
       }
-    }).then(r => ({ THEME_CSS_HASH: r.data.themeCss + '/', PUBLIC_SITE_INFO_HASH: r.data.publicInfo + '/' }))
+    }).then(r => ({ THEME_CSS_HASH: r.data.themeCss + '/', PUBLIC_SITE_INFO_HASH: r.data.publicInfo + '/', PRELOAD_LINKS: buildPreloadLinks(r.data.preloadLinks) }))
     cache[siteUrl] = { ts: now, hashes }
   }
   return cache[siteUrl].hashes
