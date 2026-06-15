@@ -23,8 +23,8 @@ export const reqPerfWrap = (req: Request, res: Response) => {
   // @ts-ignore
   req[reqObserveKey] = { start, step: start }
   res.on('finish', () => {
-    exports.reqStep(req, 'finish')
-    exports.reqStep(req, 'total')
+    reqPerfStep(req, 'finish')
+    reqPerfStep(req, 'total')
   })
 }
 

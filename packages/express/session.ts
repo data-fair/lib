@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Account, SessionState, SessionStateAuthenticated, User } from '@data-fair/lib-common-types/session/index.js'
 import type { Request, Response, RequestHandler } from 'express'
 import cookie from 'cookie'
-import { validate, assertAdminMode, assertAuthenticated } from '@data-fair/lib-common-types/session/index.js'
+import { assertAdminMode, assertAuthenticated } from '@data-fair/lib-common-types/session/index.js'
 import { reqSitePathSafe } from '@data-fair/lib-express'
 import { SessionHandler } from '@data-fair/lib-node/session.js'
 
@@ -27,8 +27,10 @@ export class Session extends SessionHandler {
   async req (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
     // @ts-ignore
     if (req[sessionKey]) return req[sessionKey]
+    // note: no schema validation of the session state, the token signature was already verified
+    // and a previous ajv validation proved useless (its result was ignored and it could never pass
+    // anyway because the schema does not accept the exp/iat claims present in the payload)
     const sessionState = await this.readState(req, res)
-    validate(sessionState)
     // @ts-ignore
     req[sessionKey] = sessionState
     return sessionState
@@ -58,7 +60,10 @@ export class Session extends SessionHandler {
   }
 
   async readState (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
-    return this.readStateFromCookie(req.headers.cookie, this.onlyDecode?.(req), res && (() => this.unsetCookies(req, res)))
+    // reuse req.cookies if a cookie-parser middleware already populated it, to avoid re-parsing the Cookie header
+    // @ts-ignore - cookies is set by cookie-parser, absent on plain IncomingMessage
+    const cookies = req.cookies ?? req.headers.cookie
+    return this.readStateFromCookie(cookies, this.onlyDecode?.(req), res && (() => this.unsetCookies(req, res)))
   }
 
   middleware (options: { required?: boolean, adminOnly?: boolean } = {}): RequestHandler {
