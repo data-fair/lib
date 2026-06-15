@@ -152,15 +152,16 @@ describe('SessionHandler.readStateFromCookie', () => {
 })
 
 describe('SessionHandler.verifyToken', () => {
-  it('should verify a token and cache the signing key per kid', async () => {
+  it('should consult the JWKS on every verification but cache the parsed key per kid', async () => {
     const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
     const pem = publicKey.export({ format: 'pem', type: 'spki' }) as string
     const handler = new SessionHandler()
     let getSigningKeyCalls = 0
+    let getPublicKeyCalls = 0
     ;(handler as any)._jwksClient = {
       getSigningKey: async () => {
         getSigningKeyCalls++
-        return { getPublicKey: () => pem }
+        return { getPublicKey: () => { getPublicKeyCalls++; return pem } }
       }
     }
     const token = jwt.sign({ id: 'user1' }, privateKey, { algorithm: 'RS256', keyid: 'kid1' })
@@ -168,6 +169,30 @@ describe('SessionHandler.verifyToken', () => {
     assert.equal(payload1.id, 'user1')
     const payload2 = await handler.verifyToken(token)
     assert.equal(payload2.id, 'user1')
-    assert.equal(getSigningKeyCalls, 1)
+    // the signing key must be re-checked against the JWKS every time so that a key
+    // rotated out of the keyset stops being accepted (lib#41 regression)
+    assert.equal(getSigningKeyCalls, 2)
+    // but the expensive PEM export + parsing is cached per kid
+    assert.equal(getPublicKeyCalls, 1)
+  })
+
+  it('should reject a token whose signing key was rotated out of the JWKS', async () => {
+    const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
+    const pem = publicKey.export({ format: 'pem', type: 'spki' }) as string
+    const handler = new SessionHandler()
+    let keyPresent = true
+    ;(handler as any)._jwksClient = {
+      getSigningKey: async () => {
+        if (!keyPresent) throw Object.assign(new Error('key not found'), { name: 'SigningKeyNotFoundError' })
+        return { getPublicKey: () => pem }
+      }
+    }
+    const token = jwt.sign({ id: 'user1' }, privateKey, { algorithm: 'RS256', keyid: 'kid1' })
+    // first verification succeeds and would populate any key cache
+    assert.equal((await handler.verifyToken(token)).id, 'user1')
+    // the key is rotated out of the published keyset
+    keyPresent = false
+    // a cached parsed key must not let the rotated-out key keep verifying
+    await assert.rejects(handler.verifyToken(token))
   })
 })

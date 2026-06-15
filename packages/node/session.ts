@@ -18,25 +18,28 @@ export class SessionHandler {
 
   initJWKS (directoryUrl = 'http://simple-directory:8080') {
     this._jwksClient = JwksClient({ jwksUri: directoryUrl + '/.well-known/jwks.json' })
+    // the parsed key cache is derived from this jwks client (which enforces key rotation
+    // through its own ttl), so it must be dropped whenever the client is recreated
+    this._signingKeyObjects.clear()
   }
 
   // jwks-rsa caches the JWK per kid but it exports a new PEM string at every access
-  // and jsonwebtoken parses PEM strings again at every verification
-  // caching the parsed KeyObject per kid skips both costs
-  // the cache holds the pending promise so concurrent calls dedupe, and drops it on failure
-  private _signingKeyObjects = new Map<string, Promise<KeyObject>>()
-  private getSigningKeyObject (kid?: string): Promise<KeyObject> {
+  // and jsonwebtoken parses that PEM again at every verification: caching the parsed
+  // KeyObject per kid skips both costs.
+  // IMPORTANT: getSigningKey must still be awaited on every verification. It is the only
+  // thing that re-checks the kid against the current keyset, so a key rotated out of the
+  // JWKS stops being accepted. Short-circuiting it from a persistent cache would accept a
+  // rotated-out key forever (the lib#41 regression).
+  private _signingKeyObjects = new Map<string, KeyObject>()
+  private async getSigningKeyObject (kid?: string): Promise<KeyObject> {
+    const signingKey = await this.jwksClient.getSigningKey(kid)
     const cacheKey = kid ?? ''
-    let promise = this._signingKeyObjects.get(cacheKey)
-    if (!promise) {
-      promise = (async () => {
-        const signingKey = await this.jwksClient.getSigningKey(kid)
-        return createPublicKey(signingKey.getPublicKey())
-      })()
-      promise.catch(() => this._signingKeyObjects.delete(cacheKey))
-      this._signingKeyObjects.set(cacheKey, promise)
+    let keyObject = this._signingKeyObjects.get(cacheKey)
+    if (!keyObject) {
+      keyObject = createPublicKey(signingKey.getPublicKey())
+      this._signingKeyObjects.set(cacheKey, keyObject)
     }
-    return promise
+    return keyObject
   }
 
   // used for the main session token, but can also be used to use the jwks to verify other types of tokens
