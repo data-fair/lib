@@ -3,7 +3,6 @@ import { createPublicKey, type KeyObject } from 'node:crypto'
 import jwt from 'jsonwebtoken'
 import JwksClient from 'jwks-rsa'
 import cookie from 'cookie'
-import memoize from 'memoizee'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 
 type TokenSessionState = Omit<SessionState, 'lang' | 'dark'>
@@ -24,10 +23,21 @@ export class SessionHandler {
   // jwks-rsa caches the JWK per kid but it exports a new PEM string at every access
   // and jsonwebtoken parses PEM strings again at every verification
   // caching the parsed KeyObject per kid skips both costs
-  private getSigningKeyObject = memoize(async (kid?: string): Promise<KeyObject> => {
-    const signingKey = await this.jwksClient.getSigningKey(kid)
-    return createPublicKey(signingKey.getPublicKey())
-  }, { promise: true, primitive: true, maxAge: 600000 })
+  // the cache holds the pending promise so concurrent calls dedupe, and drops it on failure
+  private _signingKeyObjects = new Map<string, Promise<KeyObject>>()
+  private getSigningKeyObject (kid?: string): Promise<KeyObject> {
+    const cacheKey = kid ?? ''
+    let promise = this._signingKeyObjects.get(cacheKey)
+    if (!promise) {
+      promise = (async () => {
+        const signingKey = await this.jwksClient.getSigningKey(kid)
+        return createPublicKey(signingKey.getPublicKey())
+      })()
+      promise.catch(() => this._signingKeyObjects.delete(cacheKey))
+      this._signingKeyObjects.set(cacheKey, promise)
+    }
+    return promise
+  }
 
   // used for the main session token, but can also be used to use the jwks to verify other types of tokens
   async verifyToken (token: string): Promise<any> {
