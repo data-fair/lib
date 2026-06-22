@@ -73,7 +73,7 @@ export class EventsQueue {
           internalError('events-queue-push-notif', err)
           // retry later
           if (err.status >= 500 && (notifications.length + this.notificationsQueue.length) < 1000) {
-            this.notificationsQueue.unshift()
+            this.notificationsQueue.unshift(notification)
           }
         }
       }
