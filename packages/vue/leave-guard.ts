@@ -11,7 +11,8 @@ const messages: Record<string, string> = {
 
 type LeaveGuardOptions = {
   locale?: MaybeRefOrGetter<string>,
-  message?: string
+  message?: string,
+  onConfirmLeave?: () => void
 }
 
 export const useLeaveGuard = (isDirty: MaybeRefOrGetter<boolean>, options?: LeaveGuardOptions) => {
@@ -20,7 +21,9 @@ export const useLeaveGuard = (isDirty: MaybeRefOrGetter<boolean>, options?: Leav
   // vue router guard
   onBeforeRouteLeave(() => {
     if (!toValue(isDirty)) return
-    return window.confirm(getMessage())
+    const leave = window.confirm(getMessage())
+    if (leave) options?.onConfirmLeave?.()
+    return leave
   })
 
   // browser guard
