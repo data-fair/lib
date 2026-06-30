@@ -12,16 +12,18 @@ const getWS = (path: string) => {
   const ws = new ReconnectingWebSocket(url)
 
   const subscriptions = reactive({} as Record<string, ((message: any) => void)[]>)
+  const subscribeParams: Record<string, Record<string, any>> = {}
   const opened = ref(false)
 
   ws.addEventListener('open', () => {
     opened.value = true
     for (const channel of Object.keys(subscriptions)) {
       if (subscriptions[channel].length) {
-        ws.send(JSON.stringify({ type: 'subscribe', channel }))
+        ws.send(JSON.stringify({ type: 'subscribe', channel, ...subscribeParams[channel] }))
       } else {
         ws.send(JSON.stringify({ type: 'unsubscribe', channel }))
         delete subscriptions[channel]
+        delete subscribeParams[channel]
       }
     }
   })
@@ -39,10 +41,11 @@ const getWS = (path: string) => {
     }
   }
 
-  function subscribe <T> (channel: string, listener: (message: T) => void) {
+  function subscribe <T> (channel: string, listener: (message: T) => void, params?: Record<string, any>) {
     if (!subscriptions[channel]) {
       subscriptions[channel] = []
-      if (opened.value) ws.send(JSON.stringify({ type: 'subscribe', channel }))
+      if (params) subscribeParams[channel] = params
+      if (opened.value) ws.send(JSON.stringify({ type: 'subscribe', channel, ...params }))
     }
     subscriptions[channel].push(listener)
 
@@ -57,6 +60,7 @@ const getWS = (path: string) => {
       if (subscriptions[channel].length === 0 && opened.value) {
         ws.send(JSON.stringify({ type: 'unsubscribe', channel }))
         delete subscriptions[channel]
+        delete subscribeParams[channel]
       }
     }
   }
