@@ -127,6 +127,9 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     let importsCode = '/* eslint-disable */\n\n'
     let code = ''
     let dtsCode = ''
+    // serialized compiled layouts produced by the vjsf export (keyed by locale), so the
+    // compiledLayout export can reuse them instead of compiling+serializing a second time
+    const builtVjsfLayoutCodes: Record<string, string> = {}
     if (existsSync(path.join(dir, '.type'))) rmSync(path.join(dir, '.type'), { recursive: true })
     mkdirSync(path.join(dir, '.type'))
 
@@ -282,7 +285,7 @@ export declare function returnValid(data: any, options?: import('${validationImp
           let compName = key
 
           const vjsfDir = path.resolve(options.vjsfDir)
-          const compileVjsf = (await import('@koumoul/vjsf-compiler')).compile
+          const { compileParts } = await import('@koumoul/vjsf-compiler')
           const { resolveXI18n } = await import('@json-layout/core')
 
           for (const locale of vjsfLocales) {
@@ -301,7 +304,8 @@ export declare function returnValid(data: any, options?: import('${validationImp
             if (schema.$id) delete otherSchemas[schema.$id]
             schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
 
-            const vjsfCode = await compileVjsf(schema, { locale, ...schemaVjsfOpts })
+            const { code: vjsfCode, compiledLayoutCode } = await compileParts(schema, { locale, ...schemaVjsfOpts })
+            builtVjsfLayoutCodes[locale] = compiledLayoutCode
             const vjsfFilePath = path.join(vjsfDir, vjsfLocales.length > 1 ? `vjsf-${compName}-${locale}.vue` : `vjsf-${compName}.vue`)
             console.log(`  vjsf ${locale} component path : ${vjsfFilePath}`)
             writeFileSync(vjsfFilePath, vjsfCode)
@@ -359,27 +363,35 @@ const emit = defineEmits(emits)
         const { resolveXI18n } = await import('@json-layout/core')
 
         for (const locale of vjsfLocales) {
-          const schemaVjsfOpts = { ...schema['x-vjsf'] }
-          delete schemaVjsfOpts.compName
-          console.log(`  compiledLayout ${locale} options: ${JSON.stringify(schemaVjsfOpts)}`)
-          const otherSchemas = { ...schemas }
-          for (const [key, otherSchema] of Object.entries(schemas)) {
-            if (key === schema.$id) continue
-            otherSchemas[key] = clone(otherSchema)
-            resolveXI18n(otherSchemas[key], locale)
-          }
-          if (schema.$id) delete otherSchemas[schema.$id]
-          schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
+          // reuse the layout already compiled+serialized by the vjsf export when present
+          // (the vjsf compiler embeds the very same serialized compiled layout), otherwise
+          // compile it now
+          let compiledLayoutCode = builtVjsfLayoutCodes[locale]
+          if (compiledLayoutCode) {
+            console.log(`  compiledLayout ${locale}: reusing the layout compiled for the vjsf export`)
+          } else {
+            const schemaVjsfOpts = { ...schema['x-vjsf'] }
+            delete schemaVjsfOpts.compName
+            console.log(`  compiledLayout ${locale} options: ${JSON.stringify(schemaVjsfOpts)}`)
+            const otherSchemas = { ...schemas }
+            for (const [key, otherSchema] of Object.entries(schemas)) {
+              if (key === schema.$id) continue
+              otherSchemas[key] = clone(otherSchema)
+              resolveXI18n(otherSchemas[key], locale)
+            }
+            if (schema.$id) delete otherSchemas[schema.$id]
+            schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
 
-          const fullOptions = { pluginsImports: [] as string[], webmcp: false, locale, ...schemaVjsfOpts }
-          for (const pluginImport of fullOptions.pluginsImports) {
-            const componentInfo = (await import(pluginImport + '/info.js')).default
-            fullOptions.components = fullOptions.components ?? {}
-            fullOptions.components[componentInfo.name] = componentInfo
-          }
+            const fullOptions = { pluginsImports: [] as string[], webmcp: false, locale, ...schemaVjsfOpts }
+            for (const pluginImport of fullOptions.pluginsImports) {
+              const componentInfo = (await import(pluginImport + '/info.js')).default
+              fullOptions.components = fullOptions.components ?? {}
+              fullOptions.components[componentInfo.name] = componentInfo
+            }
 
-          const compiledLayout = compileLayout(schema, fullOptions)
-          let compiledLayoutCode = await serializeCompiledLayout(compiledLayout)
+            const compiledLayout = compileLayout(schema, fullOptions)
+            compiledLayoutCode = await serializeCompiledLayout(compiledLayout)
+          }
           // The serialized code declares `const compiledLayout = {...}`.
           // Make it an export.
           compiledLayoutCode = compiledLayoutCode.replace('const compiledLayout =', 'export const compiledLayout =')
