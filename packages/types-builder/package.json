@@ -9,7 +9,7 @@
     "build": "cd .. && npm run build"
   },
   "peerDependencies": {
-    "@koumoul/vjsf-compiler": "1"
+    "@koumoul/vjsf-compiler": "^1.5.0"
   },
   "peerDependenciesMeta": {
     "@koumoul/vjsf-compiler": {
