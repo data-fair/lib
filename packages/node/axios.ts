@@ -29,7 +29,13 @@ export function axiosBuilder (opts: CreateAxiosDefaults = {}, beforeInterceptors
   const ax = axios.create({
     httpAgent,
     httpsAgent,
-    ...opts
+    ...opts,
+    headers: {
+      // identifies requests coming from the data-fair stack, with a contact URL as
+      // recommended/required by policies like https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy
+      'User-Agent': 'Data-Fair (https://github.com/data-fair)',
+      ...opts.headers
+    }
   })
 
   if (beforeInterceptors) beforeInterceptors(ax)
