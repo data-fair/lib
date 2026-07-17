@@ -34,7 +34,11 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 
   debug('express error handler', status, err)
 
-  if (process.env.NODE_ENV === 'production') {
+  if (err.expose === true) {
+    // deliberate error whose message was explicitly marked as safe and useful for the client,
+    // send it whatever the status and environment
+    res.send(err.message)
+  } else if (process.env.NODE_ENV === 'production') {
     if (status < 500) res.send(err.message)
     else res.send() // server errors are mostly unplanned and could contain confidential information, only return error code
   } else {
