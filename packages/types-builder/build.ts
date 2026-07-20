@@ -302,7 +302,8 @@ export declare function returnValid(data: any, options?: import('${validationImp
               resolveXI18n(otherSchemas[key], locale)
             }
             if (schema.$id) delete otherSchemas[schema.$id]
-            schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
+            // preserve the ajv options a schema may define in its x-vjsf, only the schemas are imposed
+            schemaVjsfOpts.ajvOptions = { ...schemaVjsfOpts.ajvOptions, schemas: otherSchemas }
 
             const { code: vjsfCode, compiledLayoutCode } = await compileParts(schema, { locale, ...schemaVjsfOpts })
             builtVjsfLayoutCodes[locale] = compiledLayoutCode
@@ -380,7 +381,8 @@ const emit = defineEmits(emits)
               resolveXI18n(otherSchemas[key], locale)
             }
             if (schema.$id) delete otherSchemas[schema.$id]
-            schemaVjsfOpts.ajvOptions = { schemas: otherSchemas }
+            // preserve the ajv options a schema may define in its x-vjsf, only the schemas are imposed
+            schemaVjsfOpts.ajvOptions = { ...schemaVjsfOpts.ajvOptions, schemas: otherSchemas }
 
             const fullOptions = { pluginsImports: [] as string[], webmcp: false, locale, ...schemaVjsfOpts }
             for (const pluginImport of fullOptions.pluginsImports) {
