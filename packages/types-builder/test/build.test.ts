@@ -1,5 +1,6 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
+import { readFileSync } from 'node:fs'
 import * as simpleObject from './types/simple-object/index.js'
 import * as objectWithReference from './types/object-with-reference/index.js'
 
@@ -33,5 +34,17 @@ describe('build.js script', () => {
         str4: { type: 'string', const: 'Str 4' }
       }
     })
+  })
+
+  it('should reuse the vjsf layout for the compiledLayout export', async () => {
+    // site-patch exports both vjsf and compiledLayout: the compiledLayout export reuses the
+    // layout already compiled+serialized for the vjsf component, so both must stay in sync
+    const compiledLayoutCode = readFileSync(import.meta.dirname + '/types/site-patch/.type/compiled-layout-fr.js', 'utf8')
+      .replace('/* eslint-disable */\n// @ts-nocheck\n\n', '')
+      .replace('export const compiledLayout =', 'const compiledLayout =')
+    const vjsfCode = readFileSync(import.meta.dirname + '/vjsf/vjsf-site-patch.vue', 'utf8')
+
+    assert.ok(compiledLayoutCode.includes('const compiledLayout ='))
+    assert.ok(vjsfCode.includes(compiledLayoutCode), 'the compiledLayout export should be the very layout embedded in the vjsf component')
   })
 })
