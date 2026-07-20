@@ -762,7 +762,7 @@ return errors === 0;
 validate27.evaluated = {"dynamicProps":true,"dynamicItems":false};
 
 const schema40 = {"$id":"export2","$ref":"https://github.com/data-fair/simple-directory/site-patch#"};
-const schema41 = {"$id":"https://github.com/data-fair/simple-directory/site-patch","x-exports":["types","validate","resolvedSchema","vjsf"],"title":"site-patch","type":"object","additionalProperties":false,"required":["_id","authMode"],"properties":{"_id":{"readOnly":true,"$ref":"https://github.com/data-fair/simple-directory/site#/properties/_id","__pointer":"https://github.com/data-fair/simple-directory/site-patch#/properties/_id","errorMessage":{}},"authMode":{"$ref":"https://github.com/data-fair/simple-directory/site#/properties/authMode","__pointer":"https://github.com/data-fair/simple-directory/site-patch#/properties/authMode","errorMessage":{"oneOf":"choisissez une valeur"}},"authProviders":{"$ref":"https://github.com/data-fair/simple-directory/site#/properties/authProviders","__pointer":"https://github.com/data-fair/simple-directory/site-patch#/properties/authProviders","errorMessage":{}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch#","errorMessage":{"required":{"_id":"information obligatoire","authMode":"information obligatoire"}}};
+const schema41 = {"$id":"https://github.com/data-fair/simple-directory/site-patch","x-exports":["types","validate","resolvedSchema","vjsf","compiledLayout"],"title":"site-patch","type":"object","additionalProperties":false,"required":["_id","authMode"],"properties":{"_id":{"readOnly":true,"$ref":"https://github.com/data-fair/simple-directory/site#/properties/_id","__pointer":"https://github.com/data-fair/simple-directory/site-patch#/properties/_id","errorMessage":{}},"authMode":{"$ref":"https://github.com/data-fair/simple-directory/site#/properties/authMode","__pointer":"https://github.com/data-fair/simple-directory/site-patch#/properties/authMode","errorMessage":{"oneOf":"choisissez une valeur"}},"authProviders":{"$ref":"https://github.com/data-fair/simple-directory/site#/properties/authProviders","__pointer":"https://github.com/data-fair/simple-directory/site-patch#/properties/authProviders","errorMessage":{}}},"__pointer":"https://github.com/data-fair/simple-directory/site-patch#","errorMessage":{"required":{"_id":"information obligatoire","authMode":"information obligatoire"}}};
 const schema42 = {"type":"string","__pointer":"https://github.com/data-fair/simple-directory/site#/properties/_id","errorMessage":{}};
 const schema43 = {"default":"onlyBackOffice","title":"Mode d'authentification","type":"string","oneOf":[{"const":"onlyLocal","title":"uniquement sur le site lui même"},{"const":"onlyBackOffice","title":"uniquement sur le back-office"},{"const":"ssoBackOffice","title":"sur le site et sur le back-office par SSO"}],"__pointer":"https://github.com/data-fair/simple-directory/site#/properties/authMode","errorMessage":{"oneOf":"choisissez une valeur"}};
 const schema44 = {"type":"array","title":"Fournisseurs d'identité (SSO)","items":{"type":"object","required":["title","type"],"properties":{"title":{"type":"string","title":"Nom","__pointer":"https://github.com/data-fair/simple-directory/site#/properties/authProviders/items/properties/title","errorMessage":{}},"color":{"type":"string","title":"Couleur","x-display":"color-picket","__pointer":"https://github.com/data-fair/simple-directory/site#/properties/authProviders/items/properties/color","errorMessage":{}},"img":{"type":"string","title":"Lien vers logo (petite taille)","__pointer":"https://github.com/data-fair/simple-directory/site#/properties/authProviders/items/properties/img","errorMessage":{}}},"oneOf":[{"type":"object","title":"OpenID Connect","required":["discovery","client"],"properties":{"type":{"type":"string","title":"Type de founisseur","const":"oidc","__pointer":"https://github.com/data-fair/simple-directory/site#/properties/authProviders/items/oneOf/0/properties/type","errorMessage":{}},"discovery":{"type":"string","title":"URL de découverte OICD","description":"probablement de la forme http://mon-fournisseur/.well-known/openid-configuration","__pointer":"https://github.com/data-fair/simple-directory/site#/properties/authProviders/items/oneOf/0/properties/discovery","errorMessage":{}},"client":{"type":"object","required":["id","secret"],"properties":{"id":{"type":"string","title":"Identifiant du client","__pointer":"https://github.com/data-fair/simple-directory/site#/properties/authProviders/items/oneOf/0/properties/client/properties/id","errorMessage":{}},"secret":{"type":"string","title":"Secret","x-display":"textarea","writeOnly":true,"__pointer":"https://github.com/data-fair/simple-directory/site#/properties/authProviders/items/oneOf/0/properties/client/properties/secret","errorMessage":{}}},"__pointer":"https://github.com/data-fair/simple-directory/site#/properties/authProviders/items/oneOf/0/properties/client","errorMessage":{"required":{"id":"information obligatoire","secret":"information obligatoire"}}}},"__pointer":"https://github.com/data-fair/simple-directory/site#/properties/authProviders/items/oneOf/0","errorMessage":{"required":{"discovery":"information obligatoire","client":"information obligatoire"}}}],"__pointer":"https://github.com/data-fair/simple-directory/site#/properties/authProviders/items","errorMessage":{"oneOf":"choisissez une valeur","required":{"title":"information obligatoire"}}},"__pointer":"https://github.com/data-fair/simple-directory/site#/properties/authProviders","errorMessage":{}};
@@ -2018,31 +2018,13 @@ const compiledLayout = {
     confirm: "Confirmer",
     close: "Fermer",
     duplicate: "Dupliquer",
+    insertAfter: "Insérer après",
     copy: "Copier",
     paste: "Coller",
     sort: "Trier",
     up: "Décaler vers le haut",
     down: "Décaler vers le bas",
     showHelp: "Afficher un message d'aide",
-    mdeLink1: "[titre du lien",
-    mdeLink2: "](adresse du lien)",
-    mdeImg1: "![](",
-    mdeImg2: "adresse de l'image)",
-    mdeTable1: "",
-    mdeTable2: "\n\n| Colonne 1 | Colonne 2 | Colonne 3 |\n| -------- | -------- | -------- |\n| Texte     | Texte     | Texte     |\n\n",
-    bold: "Gras",
-    italic: "Italique",
-    heading: "Titre",
-    quote: "Citation",
-    unorderedList: "Liste à puce",
-    orderedList: "Liste numérotée",
-    createLink: "Créer un lien",
-    insertImage: "Insérer une image",
-    createTable: "Créer un tableau",
-    preview: "Preview",
-    mdeGuide: "Syntax documentation",
-    undo: "Défaire",
-    redo: "Refaire",
     default: "défaut : ",
     name: "nom : ",
     examples: "Exemples : ",
@@ -2117,7 +2099,7 @@ const compiledLayout = {
 
             items: {
               type: "string",
-              enum: ["add", "edit", "delete", "sort", "duplicate", "copy", "paste"]
+              enum: ["add", "edit", "delete", "sort", "duplicate", "insertAfter", "copy", "paste"]
             }
           },
 
@@ -2163,6 +2145,10 @@ const compiledLayout = {
               },
 
               duplicate: {
+                type: "string"
+              },
+
+              insertAfter: {
                 type: "string"
               },
 
@@ -2452,6 +2438,10 @@ const compiledLayout = {
             type: "boolean"
           },
 
+          autocomplete: {
+            type: "boolean"
+          },
+
           oneOfItems: {
             type: "array",
 
@@ -2505,6 +2495,7 @@ const { el, statefulLayout, stateTree } = useVjsf(
   null,
   computed(() => compiledLayout)
 )
+
 </script>
 
 <template>
