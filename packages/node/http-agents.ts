@@ -44,6 +44,9 @@ const requestCounter = new Counter({
   labelNames: ['protocol']
 })
 
+// unref'd so that importing this module never keeps a process alive on its own:
+// a server is kept running by its own handles and still gets the metrics, while
+// CLIs, tests and build tools can exit normally
 setInterval(() => {
   for (const _protocol of ['http', 'https']) {
     const protocol = _protocol as 'http' | 'https'
@@ -59,4 +62,4 @@ setInterval(() => {
     requestCounter.remove({ protocol })
     requestCounter.inc({ protocol }, agentStatus.requestCount)
   }
-}, 60000)
+}, 60000).unref()
