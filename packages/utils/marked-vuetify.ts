@@ -118,7 +118,7 @@ export function createMarkedVuetify (options?: MarkedVuetifyOptions): MarkedExte
         return `<h${depth + 1} class="${headingClasses[depth]}">${this.parser.parseInline(tokens)}</h${depth + 1}>\n`
       },
       hr () {
-        return '<hr class="v-divider v-theme--light" aria-orientation="horizontal" role="separator">'
+        return '<hr class="v-divider v-theme--light" aria-orientation="horizontal">'
       },
       paragraph ({ tokens }: Tokens.Paragraph) {
         return `<p class="${paragraphClass}">${this.parser.parseInline(tokens)}</p>\n`
