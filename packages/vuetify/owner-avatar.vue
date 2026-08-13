@@ -4,26 +4,21 @@
     location="top"
   >
     <template #activator="{ props: tooltipProps }">
-      <span
+      <v-avatar
         v-bind="tooltipProps"
-        class="text-body-medium"
-      >
-        <v-avatar
-          :size="size"
-          :image="avatarUrl"
-          class="bg-transparent"
-        />
-      </span>
+        :size="size"
+        :image="avatarUrl"
+        class="bg-transparent"
+      />
     </template>
     {{ label }}
   </v-tooltip>
-  <span v-else>
-    <v-avatar
-      :size="size"
-      :image="avatarUrl"
-      class="bg-transparent"
-    />
-  </span>
+  <v-avatar
+    v-else
+    :size="size"
+    :image="avatarUrl"
+    class="bg-transparent"
+  />
 </template>
 
 <script setup lang="ts">
