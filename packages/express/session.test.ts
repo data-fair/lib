@@ -197,6 +197,71 @@ describe('Session.middleware', () => {
   })
 })
 
+describe('Session.req IP binding', () => {
+  const boundAdminUser: User = { ...adminUser, boundIp: '1.2.3.4' }
+  const boundAdminState: SessionState = {
+    lang: 'fr',
+    user: boundAdminUser,
+    account: { type: 'user', id: boundAdminUser.id, name: boundAdminUser.name },
+    accountRole: 'admin'
+  }
+
+  it('should reject a session bound to another IP', async () => {
+    const session = new Session()
+    session.readState = async () => boundAdminState
+    const req = mockReq('GET', { 'x-forwarded-for': '5.6.7.8' })
+    await assert.rejects(session.req(req), (err: any) => err.status === 401)
+  })
+
+  it('should accept a session bound to the request IP', async () => {
+    const session = new Session()
+    session.readState = async () => boundAdminState
+    const req = mockReq('GET', { 'x-forwarded-for': '1.2.3.4' })
+    const state = await session.req(req)
+    assert.equal(state.user?.id, boundAdminUser.id)
+  })
+
+  it('should use only the first entry of x-forwarded-for', async () => {
+    const session = new Session()
+    session.readState = async () => boundAdminState
+    const req = mockReq('GET', { 'x-forwarded-for': '1.2.3.4, 10.0.0.1' })
+    const state = await session.req(req)
+    assert.equal(state.user?.id, boundAdminUser.id)
+  })
+
+  it('should reject a bound session with an explicit error when x-forwarded-for is missing', async () => {
+    const session = new Session()
+    session.readState = async () => boundAdminState
+    const req = mockReq('GET', {})
+    await assert.rejects(session.req(req), /X-Forwarded-For/)
+  })
+
+  it('should not check IP when the session has no boundIp', async () => {
+    const session = new Session()
+    session.readState = async () => ({
+      lang: 'fr',
+      user: adminUser,
+      account: { type: 'user', id: adminUser.id, name: adminUser.name },
+      accountRole: 'admin'
+    })
+    const req = mockReq('GET', { 'x-forwarded-for': '5.6.7.8' })
+    const state = await session.req(req)
+    assert.equal(state.user?.id, adminUser.id)
+  })
+
+  it('should clear session cookies when rejecting a bound session', async () => {
+    const session = new Session()
+    session.readState = async () => boundAdminState
+    const req = mockReq('GET', { 'x-forwarded-for': '5.6.7.8' })
+    let setCookieHeader: string[] | undefined
+    const res = {
+      setHeader: (_name: string, value: string[]) => { setCookieHeader = value }
+    }
+    await assert.rejects(session.req(req, res as any), (err: any) => err.status === 401)
+    assert.ok(setCookieHeader?.some(c => c.startsWith('id_token=;')))
+  })
+})
+
 describe('Session.readStateFromCookie', () => {
   it('should return default state when no cookies', async () => {
     const session = new Session()

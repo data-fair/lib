@@ -1,4 +1,5 @@
 import type { Request } from 'express'
+import type { IncomingMessage } from 'node:http'
 import { isIP } from 'node:net'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 
@@ -36,10 +37,13 @@ export const reqOrigin = (req: Request) => {
   }
 }
 
-export const reqIp = (req: Request) => {
-  let ip = req.get('x-forwarded-for')
+// read from req.headers and not req.get: this is also used on the plain IncomingMessage
+// of a websocket upgrade, where the express helpers are not available
+export const reqIp = (req: Request | IncomingMessage) => {
+  const forwardedFor = req.headers['x-forwarded-for']
+  let ip = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor
   if (!ip) throw new Error('The "X-Forwarded-For" header is required, please check the configuration of the reverse-proxy.')
-  ip = ip.split(',')[0]
+  ip = ip.split(',')[0].trim()
   if (!isIP(ip)) throw new Error(`The "X-Forwarded-For" header should contain an IP. "${ip}" is not valid.`)
   return ip
 }

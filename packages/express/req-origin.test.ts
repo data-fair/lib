@@ -2,9 +2,11 @@ import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
 import { reqOrigin, reqHost, reqIp, reqIsInternal, assertReqInternal, assertReqInternalSecret } from './req-origin.js'
 import type { Request } from 'express'
+import type { IncomingMessage } from 'node:http'
 
 function mockReq (headers: Record<string, string>, query: Record<string, string> = {}): Request {
   return {
+    headers,
     get: (name: string) => headers[name.toLowerCase()],
     query
   } as unknown as Request
@@ -99,6 +101,12 @@ describe('reqIp', () => {
   it('should throw on invalid IP', () => {
     const req = mockReq({ 'x-forwarded-for': 'not-an-ip' })
     assert.throws(() => reqIp(req), /not valid/)
+  })
+
+  // websocket upgrades are handled on plain IncomingMessage, without the express helpers
+  it('should work on a request without the express get method', () => {
+    const req = { headers: { 'x-forwarded-for': '10.0.0.1, 192.168.1.1' } } as unknown as IncomingMessage
+    assert.equal(reqIp(req), '10.0.0.1')
   })
 })
 

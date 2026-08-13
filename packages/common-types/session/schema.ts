@@ -119,6 +119,10 @@ export default {
         asAdminOrg: {
           $ref: '#/$defs/organizationMembership'
         },
+        boundIp: {
+          type: 'string',
+          title: 'the session is only valid for requests coming from this IP address'
+        },
         pd: {
           type: 'string',
           format: 'date'

@@ -3,7 +3,8 @@ import type { Account, SessionState, SessionStateAuthenticated, User } from '@da
 import type { Request, Response, RequestHandler } from 'express'
 import cookie from 'cookie'
 import { assertAdminMode, assertAuthenticated } from '@data-fair/lib-common-types/session/index.js'
-import { reqSitePathSafe } from '@data-fair/lib-express'
+import { httpError } from '@data-fair/lib-utils/http-errors.js'
+import { reqSitePathSafe, reqIp } from '@data-fair/lib-express'
 import { SessionHandler } from '@data-fair/lib-node/session.js'
 
 export * from '@data-fair/lib-common-types/session/index.js'
@@ -31,6 +32,18 @@ export class Session extends SessionHandler {
     // and a previous ajv validation proved useless (its result was ignored and it could never pass
     // anyway because the schema does not accept the exp/iat claims present in the payload)
     const sessionState = await this.readState(req, res)
+    if (sessionState.user?.boundIp) {
+      // hard IP binding: simple-directory stamps boundIp in the token of sensitive sessions
+      // (superadmins), a stolen token must not be usable from another address.
+      // reqIp reads the client IP as seen by our own reverse proxy, clients cannot spoof it
+      // there (the proxy overwrites the header). It throws when the header is missing or
+      // broken, and this error is left as is: it describes a reverse-proxy misconfiguration
+      // much better than the 401 below, and it rejects the request all the same
+      if (reqIp(req) !== sessionState.user.boundIp) {
+        if (res) this.unsetCookies(req, res)
+        throw httpError(401, 'session is bound to another IP address')
+      }
+    }
     // @ts-ignore
     req[sessionKey] = sessionState
     return sessionState
