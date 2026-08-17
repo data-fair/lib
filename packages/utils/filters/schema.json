@@ -99,6 +99,36 @@
               "title": "Valeur"
             }
           }
+        },
+        {
+          "title": "Exclure les valeurs vides ou non définies",
+          "required": [
+            "type",
+            "field"
+          ],
+          "properties": {
+            "type": {
+              "const": "exists"
+            },
+            "field": {
+              "$ref": "#/$defs/filterField"
+            }
+          }
+        },
+        {
+          "title": "Restreindre aux valeurs vides ou non définies",
+          "required": [
+            "type",
+            "field"
+          ],
+          "properties": {
+            "type": {
+              "const": "notExists"
+            },
+            "field": {
+              "$ref": "#/$defs/filterField"
+            }
+          }
         }
       ]
     },
