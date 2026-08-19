@@ -1,4 +1,4 @@
-# File templates — data-fair processing TS/ESM migration
+# File templates — data-fair processing
 
 Exact boilerplate for the modern template (Node 24, ESM, native `--experimental-strip-types`, no build step). Replace `<plugin-name>` (e.g. `transform-csv`) and `<Plugin title>`. Reference implementations: `processing-hello-world` (canonical), `processing-majic` (download-zip → transform-csv → upload, closest to most plugins).
 
@@ -12,7 +12,7 @@ Exact boilerplate for the modern template (Node 24, ESM, native `--experimental-
     "lint": "eslint .",
     "lint-fix": "eslint --fix .",
     "prepare": "husky || true",
-    "build-types": "export NODE_OPTIONS='--experimental-strip-types' && df-build-types ./config && df-build-types ./types",
+    "build-types": "export NODE_OPTIONS='--experimental-strip-types' && df-build-types ./",
     "test-base": "NODE_ENV=test node --experimental-strip-types --test-force-exit --test-concurrency=1 --test --test-reporter=spec --test-reporter-destination=stdout",
     "test": "npm run test-base test-it/*.ts"
   },

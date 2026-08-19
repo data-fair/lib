@@ -1,27 +1,14 @@
----
-name: migrate-data-fair-processing-to-typescript
-description: Use when porting a @data-fair processing plugin from CommonJS/JavaScript to the modern TypeScript+ESM template — repo still has `main: index.js`, `require(...)`, `module.exports`, mocha `test/`, `.eslintrc.js`/`standard`, or lacks `"type": "module"`. Covers Node 24, native `--experimental-strip-types` (no build step), df-build-types, neostandard, husky/commitlint, node:test, typed prepare/run/stop.
----
+# Migrating a processing to TypeScript + ESM
 
-# Migrate a data-fair processing to TypeScript + ESM
+Port an old CommonJS/JavaScript plugin to the modern template. Read this when the repo has `main: index.js`, `require(...)` / `module.exports`, a mocha `test/`, `.eslintrc.js` / `standard`, or no `"type": "module"`.
 
-## Overview
+**Not for:** plugins already on `main: index.ts` + `"type": "module"` (already migrated) — those only need the ordinary development guidance in SKILL.md.
 
-data-fair processing plugins run as **native TypeScript on Node 24** via `--experimental-strip-types` — there is **no build/emit step**, `.ts` files are executed and imported directly (imports keep the `.ts` extension). Migration is a mechanical port of a fixed set of files plus a JS→ESM rewrite of the business logic. The canonical template is `processing-hello-world`; the closest real-world reference for download→transform→upload plugins is `processing-majic` (commit `feat!: migrate plugin to TypeScript`).
-
-**All exact file contents live in `file-templates.md` (this skill's folder). Read it before editing.**
-
-## When to use
-
-- A processing repo whose `package.json` has `main: index.js` and no `"type": "module"`.
-- Source uses `require()` / `module.exports`, `mocha`, `standard`/`.eslintrc.js`.
-- You're asked to "migrate to TypeScript", "align on hello-world", "modernise the plugin".
-
-**Not for:** plugins already on `main: index.ts` + `"type": "module"` (already migrated); non-processing repos.
+Migration is a mechanical port of a fixed set of files plus a JS→ESM rewrite of the business logic. **All exact file contents live in [file-templates.md](./file-templates.md). Read it before editing.**
 
 ## Recipe (ordered)
 
-1. **Pick the reference.** Diff the current repo against `processing-hello-world`; for download/transform/upload plugins also open `processing-majic` — mirror its `lib/execute.ts` split. Do NOT invent structure.
+1. **Pick the reference.** Diff the current repo against `processing-hello-world`; for download/transform/upload plugins also open `processing-majic` (commit `feat!: migrate plugin to TypeScript`) — mirror its `lib/execute.ts` split. Do NOT invent structure.
 2. **package.json** — apply the template changes (`main`, `type: module`, scripts, `imports`, devDeps swap, `files`, license). Keep runtime deps; drop node-builtin shims (`util`, `path`, `iconv-lite` if unused); add `@types/*`. **Never touch `version`** (releases automated).
 3. **Config files** — add `tsconfig.json`, `eslint.config.mjs`, `commitlint.config.ts`, `.nvmrc` (`24`), `.husky/{pre-commit,commit-msg,pre-push}`, `.github/workflows/{publish-staging,publish-production}.yml`. Delete `.eslintrc.js`, `.eslintignore`.
 4. **config/** — `default.js` → `default.mjs`; convert `local-test.mjs` to `export default`; add `config/type/{schema.ts,index.ts}`.
@@ -29,7 +16,8 @@ data-fair processing plugins run as **native TypeScript on Node 24** via `--expe
 6. **index.ts** — thin entry exporting typed `prepare`/`run`/`stop` with dynamic `import('./lib/...ts')`. Delete `index.js`.
 7. **lib/** — split former `run()` into `lib/prepare.ts` (no-op if no secrets) + `lib/execute.ts`. Port every `lib/*.js` to `.ts` ESM (transforms, schemas, data files, download/process/upload). Wire graceful stop via a `shouldBeStopped` flag in the streaming module.
 8. **tests** — `test/test.js` → `test-it/index.ts` (+ optional `*.test.ts`). Delete `test/`.
-9. **Generate types & validate** — `npm i` then `npm run build-types`, `npm run lint`, `npm test`. `.type/` dirs are generated — confirm they are gitignored.
+9. **processing-config-schema.json** — a repo this old almost always still carries vjsf 2 `x-*` keywords, silently ignored by the current UI. Migrate them in the same pass: see [config-schema.md](./config-schema.md).
+10. **Generate types & validate** — `npm i` then `npm run build-types`, `npm run lint`, `npm test`. `.type/` dirs are generated — confirm they are gitignored.
 
 ## Multi-variant plugins (more than one transform/schema)
 
@@ -58,6 +46,7 @@ The reference (`majic`) has ONE transform. Many plugins (e.g. `transform-csv`) d
 | `exec(\`unzip ... ${x}\`)` | `execFile('unzip', ['-o', file, '-d', dir])` — no shell injection |
 | Stop mid-run publishes a truncated dataset | In a `pump` chain, in the `Transform` cb: `if (isStopped()) return next()` (drops rows); check `isStopped()` before upload; return early; close fds/streams |
 | Changing the output dataset schema | Keep it identical unless that's the explicit goal — live datasets depend on it |
+| Leaving vjsf 2 `x-*` keywords in the config schema | Silently ignored by the current UI — migrate (see config-schema.md) |
 | `@types/pkg` version | Must match the runtime major (`@types/fs-extra@^11` ⇒ `fs-extra@^11`) — bumping the type may force a runtime major bump |
 | Heterogeneous transforms typed `any` (trips `no-explicit-any`) | Shared type `type Transform = (item: Record<string, string>) => Record<string, unknown>`; guard regex matches instead of `match![1]` |
 | `csv` combined package | Prefer `csv-parse` + `csv-stringify` (proven ESM named exports: `import { parse } from 'csv-parse'`, `import { stringify } from 'csv-stringify'`) |
@@ -70,10 +59,4 @@ The reference (`majic`) has ONE transform. Many plugins (e.g. `transform-csv`) d
 
 ## Validation = the test
 
-This is a reference skill; validate by **applying it to a real repo** and running `npm run build-types && npm run lint && npm test`. Any step the skill left ambiguous or any error surfaced there is a skill gap — fix `file-templates.md`/this file, don't just patch the repo. Confirm the migrated plugin still produces the **same dataset schema/output** as before (diff against the live dataset when possible).
-
-## Common mistakes
-
-- Writing a build step / `tsc` emit — there is none; `noEmit: true`, run `.ts` directly.
-- Guessing file contents instead of copying from `hello-world`/`majic` — always mirror a working sibling.
-- Forgetting `prepare`/`stop` exports in `index.ts` — the runtime expects the typed trio (prepare may be a no-op).
+Validate by **applying this to a real repo** and running `npm run build-types && npm run lint && npm test`. Any step left ambiguous or any error surfaced there is a gap in these files — fix them, don't just patch the repo. Confirm the migrated plugin still produces the **same dataset schema/output** as before (diff against the live dataset when possible).

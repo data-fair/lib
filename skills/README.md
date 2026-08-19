@@ -8,6 +8,7 @@ Skills for AI coding agents working in the data-fair stack.
 | --- | --- |
 | [`data-fair-session`](./data-fair-session/SKILL.md) | Consuming sessions in a data-fair service: reading user identity, checking permissions, protecting routes, and using session middleware on Express/Node and Vue. |
 | [`data-fair-ws`](./data-fair-ws/SKILL.md) | Real-time websocket integration: server-side setup, emitting events, Vue subscriptions, and Node clients for integration tests. |
+| [`data-fair-processings`](./data-fair-processings/SKILL.md) | Developing a processing plugin: anatomy of the repo, the `prepare`/`run`/`stop` contract and `ProcessingContext`, writing `processing-config-schema.json` with the vjsf 3+ / json-layout vocabulary (and migrating vjsf 2 `x-*` keywords), generated types, graceful stop, and porting an old CommonJS plugin to TypeScript+ESM. |
 | [`upgrade-scripts`](./upgrade-scripts/SKILL.md) | Writing database migrations with `@data-fair/lib-node/upgrade-scripts`: which version goes in the folder name (the common gotcha), idempotency patterns, fresh-install handling, and debugging. |
 | [`pr-ready`](./pr-ready/SKILL.md) | Pre-PR flight check. A macro pass that re-anchors on the original intent and reviews the branch against it for scope, completeness, and drift, flags risky or sensitive changes, and drafts a compact PR title (conventional-commit style) and description. Manual invocation only. |
 
