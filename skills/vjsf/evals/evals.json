@@ -1,0 +1,35 @@
+{
+  "skill_name": "vjsf",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm maintaining an old data-fair processing plugin. Its processing-config-schema.json still uses keywords like \"x-display\": \"tabs\", \"x-if\": \"parent.value.datasetMode === 'update'\", and a dataset picker with \"x-fromUrl\": \"{context.dataFairUrl}/api/v1/datasets?q={q}&{context.ownerFilter}\", \"x-itemsProp\": \"results\", \"x-itemTitle\": \"title\", \"x-itemKey\": \"id\". The form renders but the tabs are collapsed into one long form and the dataset picker shows two raw text fields. Migrate this schema fragment to the current form vocabulary and explain why there was no error message.",
+      "expected_output": "Should explain that vjsf 2 `x-*` keywords are silently ignored by vjsf 3+/json-layout (no warning, fields render with inferred defaults — which is exactly why tabs collapsed and the picker degraded). Migration must produce: `\"layout\": \"tabs\"`; `\"layout\": { \"if\": \"parent.data.datasetMode === 'update'\" }` (parent.value → parent.data); `layout.getItems` with `url: \"${context.dataFairUrl}/api/v1/datasets?q={q}&${context.ownerFilter}\"` ({context.x} → ${context.x} template literal, {q} stays as-is), `itemsResults: \"data.results\"`, `itemTitle: \"item.title\"`, `itemKey: \"item.id\"` (property paths become JS expressions with the item./data. prefix). Bonus: suggest detecting leftovers with grep '\"x-' while excluding still-valid x-exports and x-i18n-*.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "In the config schema of my data-fair visualization app I need an opacity setting, integer 0 to 100 in steps of 10, default 100. It must render as a slider that shows tick marks and the current value while dragging. The config form is displayed in a narrow sidebar, so the label must sit above the slider instead of being squeezed next to it. Give me the JSON schema fragment.",
+      "expected_output": "Should produce the canonical slider pattern used across the app fleet: `layout: { \"comp\": \"slider\", \"step\": 10, \"label\": \"\", \"slots\": { \"before\": \"Opacité\" }, \"props\": { \"showTicks\": \"always\", \"thumbLabel\": true } }` with `minimum: 0`, `maximum: 100`, `default: 100`. Key points: `step` is a layout-level keyword (not props), the label is emptied with `label: \"\"` and the visible label moved above via `slots.before`, ticks via props.showTicks: \"always\", value display via props.thumbLabel: true.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Add an icon picker to my data-fair application's config schema: the user should be able to search MDI icons by name, see the actual glyphs in the dropdown, and my app then renders the chosen icon in an SVG without importing the whole @mdi/js package. It has to work on any data-fair instance, not just koumoul.com.",
+      "expected_output": "Should produce the unified icon-selector pattern: an object field with properties { name, svg, svgPath } (all strings), `layout.getItems` on the icons-mdi-latest dataset with a RELATIVE url `api/v1/datasets/icons-mdi-latest/lines?q={q}&size=50&select=name,svg,svgPath` (relative so it works on any instance; size raised because data-fair's default page size is only 12), `itemKey: \"data.name\"`, `itemTitle: \"data.name\"`, `itemIcon: \"data.svg\"` (this is what shows the glyph in the dropdown), `itemsResults: \"data.results\"`. Rendering: use `icon.svgPath` as the `d` of an SVG `<path>` (or `:icon=\"icon.svgPath\"` with Vuetify) — no @mdi/js runtime import.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "My data-fair catalog plugin's config schema is a mess: some titles are in English, some in French. I want it properly internationalized (French and English), but I also generate TypeScript types from this schema with df-build-types and I don't want ugly type names. Show me how to handle a oneOf branch whose displayed label should be \"List the available layers\" / \"Lister les différentes couches\".",
+      "expected_output": "Should use the json-layout `x-i18n-<keyword>` mechanism (works on any keyword: title, description, markdown, placeholder, itemTitle, label — including inside layout/getItems/props/oneOfLayout), resolution `value[locale] ?? value[defaultLocale] ?? base keyword` with defaultLocale 'en', activated by the xI18n option. English lives in the base keyword, French in x-i18n-<keyword>.fr. For the type-name problem: keep a short technical NOUN-PHRASE title in the base (it names the generated TS type), e.g. `\"title\": \"Layers list\"` giving type LayersList, and put the user-facing imperative English in the override: `\"x-i18n-title\": { \"en\": \"List the available layers\", \"fr\": \"Lister les différentes couches\" }`. Should also note the half-translated state is the one to fix (either full French with no x-i18n, or fully internationalized).",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "The page editor of my data-fair portal-like service uses a config schema where an array item is a oneOf over ~35 element types, each with a \"type\" property. Opening the form is slow, and the variant selector is a plain unlabeled select. How should the schema be structured to make this fast and give the selector a proper bilingual label?",
+      "expected_output": "Should recommend `discriminator: { propertyName: \"type\" }` next to the oneOf, with each branch declaring `\"type\": { \"const\": \"...\" }` and a branch `title` — the discriminator lets json-layout/ajv resolve the active branch directly instead of trying all ~35 branches, a major performance point on large oneOf. If ajv validation is involved, the discriminator option must be enabled in ajv options. The selector label is customized with `oneOfLayout: { \"label\": \"Type of element\", \"x-i18n-label\": { \"fr\": \"Type d'élément\" } }` (x-i18n works inside oneOfLayout); `oneOfLayout.autocomplete: true` is worth mentioning for ~35 entries. A `default` selecting an initial branch is a plus.",
+      "files": []
+    }
+  ]
+}

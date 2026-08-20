@@ -1,38 +1,14 @@
-# processing-config-schema.json — the vjsf 3+ / json-layout reference
+# processing-config-schema.json — the processings-specific parts
 
 The user-facing configuration form of a processing. It is a **JSON Schema** annotated with **json-layout `layout` keywords**, rendered by the processings UI with `@koumoul/vjsf` v4.
+
+**REQUIRED BACKGROUND: the [vjsf skill](../vjsf/SKILL.md).** It holds everything generic: the layout vocabulary and component inference, `getItems` (and the `size=50` rule on data-fair URLs), conditionals, discriminated `oneOf`, `x-i18n-*` internationalization and the technical-title rules, label casing, and the full vjsf 2 → 3+ migration table (`../vjsf/references/migration-v2-to-v3.md` — legacy `x-*` keywords are **silently ignored**, detect them with `grep -n '"x-'` excluding `x-exports` / `x-i18n-*`). This file only covers what is specific to processings.
 
 Two independent jobs, same file:
 1. **Validation + typing** — `df-build-types` turns it into `types/processingConfig/.type/` (the `ProcessingConfig` type + an ajv validator). Rerun `npm run build-types` after **every** edit.
 2. **Form rendering** — everything under `layout` drives the UI and nothing else.
 
 **Canonical examples:** `processing-hello-world` (template), `processing-gtfs` (tabs, list, `if`/`then`), `ademe-rge` (many dataset pickers), `processing-import-api` (conditional field groups).
-
----
-
-## Legacy `x-*` keywords are silently ignored
-
-vjsf 2 keywords (`x-display`, `x-fromUrl`, `x-itemsProp`, `x-itemTitle`, `x-itemKey`, `x-if`, `x-options`) are **not** part of json-layout. vjsf 3+ does not warn, does not error — it just renders the field with defaults. Symptoms: tabs collapse into one long form, a dataset picker becomes a raw id/title text pair, a field that should be hidden shows up.
-
-Detect with `grep -n '"x-' processing-config-schema.json`, then exclude the two families that are still valid: `x-exports` (a df-build-types keyword) and `x-i18n-*` (a json-layout keyword — see *Internationalized schemas* below).
-
-### Migration table
-
-| vjsf 2 | vjsf 3+ / json-layout |
-|---|---|
-| `"x-display": "tabs"` | `"layout": "tabs"` |
-| `"x-display": "switch"` | `"layout": "switch"` |
-| `"x-display": "card"` | `"layout": "card"` |
-| `"x-display": "password"` | `"layout": { "props": { "type": "password" } }` |
-| `"x-if": "parent.value.a === 'b'"` | `"layout": { "if": "parent.data.a === 'b'" }` — **`parent.value` → `parent.data`** |
-| `"x-options": { "evalMethod": "evalExpr" }` | drop it — expressions are `js-eval` by default |
-| `"x-fromUrl": "{context.dataFairUrl}/…{q}…{context.ownerFilter}"` | `"layout": { "getItems": { "url": "${context.dataFairUrl}/…{q}…${context.ownerFilter}" } }` — **`{context.x}` → `${context.x}`**, `{q}` stays |
-| `"x-itemsProp": "results"` | `"itemsResults": "data.results"` (inside `getItems`) |
-| `"x-itemTitle": "title"` | `"itemTitle": "item.title"` (inside `getItems`) |
-| `"x-itemKey": "id"` | `"itemKey": "item.id"` (inside `getItems`) |
-| `"x-itemTitle": "key"` on an **array** | `"layout": { "itemTitle": "item.key" }` — list item label, *not* inside `getItems` |
-
-The `x-*` values were **property paths**; the json-layout ones are **JS expressions** over `item` (for item\*) or template literals (for `url`). Forgetting the `item.` prefix or the `$` on `${context…}` is the usual breakage.
 
 ---
 
@@ -83,7 +59,7 @@ Every plugin that produces a dataset exposes the same discriminated union on `da
           "title": "Jeu de données",
           "layout": {
             "getItems": {
-              "url": "${context.dataFairUrl}/api/v1/datasets?select=id,title&${context.ownerFilter}&raw=true",
+              "url": "${context.dataFairUrl}/api/v1/datasets?select=id,title&size=50&${context.ownerFilter}&raw=true",
               "qSearchParam": "q",
               "itemsResults": "data.results",
               "itemTitle": "item.title",
@@ -127,117 +103,21 @@ The `create` branch is only ever used once: `run` must call `patchConfig({ datas
 | `context.directoryUrl` | simple-directory base URL |
 | `context.utcs` | list of timezones |
 
-## `getItems` fields
+Note the **absolute** `${context.dataFairUrl}` prefix on data-fair URLs: the processings UI is not served under the data-fair origin, so relative `api/v1/…` URLs (the application-schema habit) do not work here.
 
-| Field | Meaning |
-|---|---|
-| `url` | template literal (`${…}`); `{q}` marks the search param |
-| `qSearchParam` | explicit search param name — alternative to `{q}` |
-| `itemsResults` | expression over the response, alias `data` (e.g. `"data.results"`) |
-| `itemTitle` / `itemKey` / `itemValue` / `itemIcon` | expressions over one raw item, alias `item` |
-| `searchParams` / `headers` | extra request params |
+## Secrets
 
-Either `{q}` in the url **or** `qSearchParam` makes the component an `autocomplete` (server-side search). Without both it is a `select` — every item fetched once. Always give one of them for dataset pickers.
+A field holding a real secret (password, API key) must pair its schema declaration (`layout: { props: { type: "password", autocomplete: "suppress" } }` — see the vjsf skill's patterns) with handling in `lib/prepare.ts`, which moves the value out of the config into `secrets`. A secret with no `prepare.ts` handling stays readable in the config.
 
----
+## Internationalization policy
 
-## Layout vocabulary
-
-`layout` accepts a component name (`"layout": "tabs"`), an object, an array of children, or `{ "switch": [ … ] }`.
-
-**Component names:** `none` `slot` `composite-slot` `section` `tabs` `vertical-tabs` `expansion-panels` `stepper` `card` `list` `text-field` `textarea` `number-field` `checkbox` `switch` `slider` `date-picker` `date-time-picker` `time-picker` `color-picker` `select` `autocomplete` `combobox` `number-combobox` `checkbox-group` `switch-group` `radio-group` `file-input` `one-of-select`.
-
-The component is **inferred** from the schema (object → `section`, `oneOf` → `one-of-select`, `enum` → `select`, >20 items → `autocomplete`, array → `list`…). Only set `comp` when the inference is wrong.
-
-**Object form, the fields that matter here:**
-
-| Key | Use |
-|---|---|
-| `comp` | force the component |
-| `if` | JS expression; the field renders only when truthy |
-| `props` | passed to the Vuetify component (`type: "password"`, `autocomplete: "suppress"`, `rows`, …) |
-| `cols` | width, 0–12, or `{ xs, sm, md, lg, xl }` |
-| `itemTitle` / `itemSubtitle` | label of a list row, alias `item` |
-| `listEditMode` | `inline` \| `inline-single` \| `menu` \| `dialog` |
-| `listActions` | subset of `add` `edit` `delete` `sort` `duplicate` `insertAfter` `copy` `paste` |
-| `messages` | override UI strings, e.g. `{ "addItem": "Ajouter un jeu de données" }` |
-| `items` / `oneOfItems` | explicit choice lists |
-| `getItems` | remote choice list (above) |
-| `slots` | `{ "before": { "markdown": "…" } }` for inline help |
-| `defaultData` / `constData` / `transformData` | value plumbing |
-| `separator` | turns a string into a multi-value combobox |
-
-### Password fields
-
-```json
-"password": {
-  "type": "string",
-  "title": "Mot de passe",
-  "layout": { "props": { "type": "password", "autocomplete": "suppress" } }
-}
-```
-
-Add `autocomplete: "suppress"` on the matching username too, or browsers autofill it. A field holding a real secret must also be handled in `lib/prepare.ts`.
-
-### Conditional fields
-
-`layout.if` expressions receive `data` (this node's value), `value`, `parent` (`{ data, parent }` — chain `parent.parent.data` for a grandparent), `rootData`, `context`, `options`, `display`, `readOnly`, `summary`.
-
-```json
-"backupDir": {
-  "type": "string",
-  "title": "Dossier d'archive",
-  "layout": { "if": "parent.data.sourceAction === 'move'" }
-}
-```
-
-`layout.if` only **hides** the field; it does not remove it from validation. When a field must be *required* under a condition, express it in the schema with `if`/`then` or `oneOf`, not in `layout`.
-
-### Schema-level conditionals
-
-- **`oneOf` with a `const` discriminator** — the way to model exclusive modes; renders as `one-of-select`. Give each branch a `title`.
-- **`if` / `then`** on an `allOf` entry — add fields when a condition holds (see `processing-gtfs`).
-- **`dependentSchemas`** (or the legacy `dependencies` object form, still supported) — add fields once a property is filled. Used with `$ref` for recursive structures.
-
-`$ref: "#/definitions/x"` works; recursive definitions render fine (see `processing-json-file`'s `block`/`expand`).
-
----
-
-## Internationalized schemas
-
-`x-i18n-<keyword>` is **not** a vjsf 2 leftover — it is a supported json-layout mechanism (`resolveXI18n`), active because the processings UI passes `xI18n: true` and `locale: session.lang`. It works on any keyword: `x-i18n-title`, `x-i18n-description`, `x-i18n-markdown`, `x-i18n-examples`.
-
-Resolution is `value[locale] ?? value[defaultLocale] ?? <the base keyword>`, with `defaultLocale = 'en'`.
-
-### Which mode a plugin is in
+The mechanism (`x-i18n-<keyword>`, technical titles naming the generated types) is in the vjsf skill. The per-plugin policy:
 
 | Situation | What to do |
 |---|---|
-| Config entirely in French | **Leave it in French.** No `x-i18n-*` at all. Don't translate a working French-only plugin for the sake of it. |
-| Config in English, or half French / half English | **Internationalize it fully to French** — every user-facing `title`, `description` and `markdown` gets its `x-i18n-*.fr`. A half-translated config is the state to fix. |
-| New plugin | **EN + fr** from the start. |
-
-English always lives in the **base** keyword, French in `x-i18n-<keyword>.fr`.
-
-### The technical-title variant (valid)
-
-The base `title` is also what `df-build-types` uses to name the generated TypeScript type — every tab and every `oneOf` branch title becomes a type in `ProcessingConfig`. So it is legitimate to keep a short **technical** English title in the base and put the user-facing English in `x-i18n-title.en`:
-
-```json
-"title": "Layers list",
-"x-i18n-title": { "fr": "Lister les différentes couches", "en": "List the available layers" }
-```
-
-Generated type `LayersList`; the branch displays "List the available layers" / "Lister les différentes couches".
-
-Rules for the technical title:
-
-- **Noun phrase, not verb phrase** — it names a type, not an action. `LayersList`, not `ListLayers`. Push the imperative wording into `x-i18n-title.en`.
-- **Short and plain.** `Datasets`, not `DatasetMode` or `DatasetSelectionMode`.
-- **Check it doesn't clash with a hand-written type** in `lib/` before choosing it. `gpkg` now generates a `LayersList` (the oneOf branch) while `lib/context.ts` exports its own `LayersList` (one row of `processingConfig.layers`) — two unrelated types, one name.
-- When the technical name and the displayed English are the same word, **drop the `en` key** — it would only duplicate the base.
-
-So an `"en"` key is **not** a smell by itself. What to check instead: when a base title is not the user-facing English, is there an `x-i18n-title.en` covering it? A base title that is neither the displayed English nor a deliberate type name is the actual defect.
+| Config entirely in French | **Leave it in French.** No `x-i18n-*` at all. |
+| Config in English, or half French / half English | **Internationalize it fully** — every user-facing label gets its `x-i18n-*.fr`. |
+| New plugin | EN + fr from the start. |
 
 ## Writing good descriptions
 
@@ -247,19 +127,15 @@ The `description` is rendered as **markdown** and is the only documentation most
 
 ## Gotchas
 
+Generic schema traps (leftover `x-*`, `${context…}` templates, `item.` prefixes, `parent.data`, missing `{q}`/`qSearchParam`/`size`, `layout.if` vs conditional required) are in the **vjsf skill's gotchas table**. Processings-specific:
+
 | Trap | Correct move |
 |---|---|
-| Any `x-*` keyword left in the file | Silently ignored — migrate it (table above) |
-| `{context.dataFairUrl}` in a `getItems.url` | `${context.dataFairUrl}` — it's a template literal |
-| `"itemTitle": "title"` | `"itemTitle": "item.title"` — it's an expression |
-| `parent.value.x` in an `if` | `parent.data.x` |
-| Dataset picker with neither `{q}` nor `qSearchParam` | Becomes a `select` that loads every dataset — add one |
 | `dataset` object in the **create** branch | Flat `datasetTitle` string — the object renders an over-titled section around one field |
-| `description` on a single-field object wrapper | It becomes an always-visible `subtitle` block; on a plain field it becomes a discreet `help` |
+| Relative `api/v1/…` URL in a `getItems` | The processings UI is not on the data-fair origin — prefix with `${context.dataFairUrl}` |
 | Editing the schema without `npm run build-types` | `ProcessingConfig` drifts from the form |
 | Renaming a config property | Existing processings keep the old key; `removeAdditional: true` in the UI then **drops** their value on next save. Rename only with an upgrade path |
 | Adding a `required` property with no `default` | Every existing processing becomes invalid |
-| `layout.if` used to make a field conditionally mandatory | Hiding ≠ optional; model it with `oneOf` / `if`-`then` |
 | Secret field with no `lib/prepare.ts` handling | The secret stays readable in the config |
 
 ## Checklist before committing a schema change

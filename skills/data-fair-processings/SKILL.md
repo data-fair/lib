@@ -100,7 +100,7 @@ Then in `execute.ts`, check `isStopped()` **before uploading** and return early 
 
 The legacy `x-display` / `x-fromUrl` / `x-itemsProp` / `x-itemTitle` / `x-itemKey` keywords (vjsf 2) are **silently ignored** by vjsf 3+: no error, just a form that quietly loses its tabs or its dataset autocomplete. Any schema still carrying an `x-*` keyword needs migrating.
 
-**READ [config-schema.md](./config-schema.md)** before writing or reviewing a schema — it holds the layout vocabulary, the standard `datasetMode` create/update block, the available `context` variables, and the full vjsf2 → vjsf3 mapping table.
+**REQUIRED BACKGROUND: the [vjsf skill](../vjsf/SKILL.md)** — layout vocabulary, `getItems`, conditionals, `x-i18n-*`, and the vjsf2 → vjsf3 migration table. Then **READ [config-schema.md](./config-schema.md)** for what is processings-specific: the standard `datasetMode` create/update block, the available `context` variables, secrets, and the schema-change gotchas.
 
 ## Types are generated, never hand-written
 
@@ -129,7 +129,7 @@ Run tests against a real instance by filling `config/local-test.mjs` (gitignored
 
 | File | When to read it |
 |---|---|
-| [config-schema.md](./config-schema.md) | writing/reviewing `processing-config-schema.json`, or migrating a vjsf2 schema |
+| [config-schema.md](./config-schema.md) | writing/reviewing `processing-config-schema.json` (with the [vjsf skill](../vjsf/SKILL.md) as background) |
 | [typescript-migration.md](./typescript-migration.md) | the repo still has `main: index.js`, `require()`, `mocha`, or no `"type": "module"` |
 | [file-templates.md](./file-templates.md) | exact contents of every boilerplate file |
 
