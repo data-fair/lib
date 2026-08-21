@@ -50,7 +50,7 @@ One canonical shape — an object `{ name, svg, svgPath }` fed by the `icons-mdi
   "default": { "name": "circle", "svg": "<svg …>", "svgPath": "M12,2A10,10 …" },
   "layout": {
     "getItems": {
-      "url": "api/v1/datasets/icons-mdi-latest/lines?q={q}&size=50&select=name,svg,svgPath",
+      "url": "https://koumoul.com/data-fair/api/v1/datasets/icons-mdi-latest/lines?q={q}&size=50&select=name,svg,svgPath",
       "itemKey": "data.name",
       "itemTitle": "data.name",
       "itemIcon": "data.svg",
@@ -66,10 +66,10 @@ One canonical shape — an object `{ name, svg, svgPath }` fed by the `icons-mdi
 ```
 
 - **`itemIcon: "data.svg"` is what shows the glyph in the dropdown.**
-- **URL**: relative (`api/v1/…`) in an application schema, so it works on any data-fair instance. Only a schema rendered outside a data-fair origin (e.g. the portals service) needs the absolute `https://koumoul.com/data-fair/api/v1/…` form. Always keep `size=50` (default page size is 12) and the `select` — never `size=10000`.
+- **URL**: always the absolute `https://koumoul.com/data-fair/api/v1/…` form — **never relative**. `icons-mdi-latest` is a public dataset published on koumoul.com (open CORS); a relative URL resolves against whatever data-fair instance renders the form, where that dataset does not exist, and the picker silently returns nothing. This is the one `getItems` URL that is hardcoded on purpose. Always keep `size=50` (default page size is 12) and the `select` — never `size=10000`.
 - `default` avoids an empty-icon state; `required` makes partial objects invalid.
 - **Rendering**: use `icon.svgPath` (the `d` of a `<path>`) — no `@mdi/js` at runtime. Custom SVG: `<path :d="icon.svgPath">`; Vuetify: `:icon="icon.svgPath"`.
-- Closed lists (e.g. fixed filter icons) can query directly: `…/icons-mdi-latest/lines?name_in=cart,school&select=name,svg,svgPath`.
+- Closed lists (e.g. fixed filter icons) can query directly, same absolute host: `https://koumoul.com/data-fair/api/v1/datasets/icons-mdi-latest/lines?name_in=cart,school&select=name,svg,svgPath`.
 
 ## Tabs (`allOf` + `title`)
 
