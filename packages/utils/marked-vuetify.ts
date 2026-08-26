@@ -58,30 +58,33 @@ export interface MarkedVuetifyOptions {
   headingClasses?: Record<number, string>
 }
 
+// Vuetify 4 replaced the legacy typography utilities (text-h1..text-h6,
+// text-subtitle-*, text-body-1/2) with the MD3 scale; the old classes no longer
+// exist in the stylesheet, so only the MD3 names below have any effect.
 const headingClassesByDensity: Record<MarkedVuetifyDensity, Record<number, string>> = {
   default: {
-    1: 'text-h2 text-display-medium text-primary mt-12 mb-8',
-    2: 'text-h4 text-headline-large mt-10 mb-6',
-    3: 'text-h5 text-headline-medium mt-8 mb-4',
-    4: 'text-h6 text-headline-small mt-6 mb-4',
-    5: 'text-subtitle-1 text-body-large mt-6 mb-4',
-    6: 'text-subtitle-2 text-label-large mt-6 mb-4'
+    1: 'text-display-medium text-primary mt-12 mb-8',
+    2: 'text-headline-large mt-10 mb-6',
+    3: 'text-headline-medium mt-8 mb-4',
+    4: 'text-headline-small mt-6 mb-4',
+    5: 'text-body-large mt-6 mb-4',
+    6: 'text-label-large mt-6 mb-4'
   },
   comfortable: {
-    1: 'text-h2 text-display-medium text-primary mt-8 mb-4',
-    2: 'text-h4 text-headline-large mt-6 mb-3',
-    3: 'text-h5 text-headline-medium mt-4 mb-2',
-    4: 'text-h6 text-headline-small mt-3 mb-2',
-    5: 'text-subtitle-1 text-body-large mt-3 mb-2',
-    6: 'text-subtitle-2 text-label-large mt-3 mb-2'
+    1: 'text-display-medium text-primary mt-8 mb-4',
+    2: 'text-headline-large mt-6 mb-3',
+    3: 'text-headline-medium mt-4 mb-2',
+    4: 'text-headline-small mt-3 mb-2',
+    5: 'text-body-large mt-3 mb-2',
+    6: 'text-label-large mt-3 mb-2'
   },
   compact: {
-    1: 'text-h3 text-headline-large text-primary mt-4 mb-2',
-    2: 'text-h5 text-headline-medium mt-3 mb-1',
-    3: 'text-h6 text-headline-small mt-2 mb-1',
-    4: 'text-subtitle-1 text-body-large mt-2 mb-1',
-    5: 'text-subtitle-2 text-label-large mt-2 mb-1',
-    6: 'text-body-2 text-label-medium mt-2 mb-1'
+    1: 'text-headline-large text-primary mt-4 mb-2',
+    2: 'text-headline-medium mt-3 mb-1',
+    3: 'text-headline-small mt-2 mb-1',
+    4: 'text-body-large mt-2 mb-1',
+    5: 'text-label-large mt-2 mb-1',
+    6: 'text-label-medium mt-2 mb-1'
   }
 }
 
@@ -118,7 +121,10 @@ export function createMarkedVuetify (options?: MarkedVuetifyOptions): MarkedExte
         return `<h${depth + 1} class="${headingClasses[depth]}">${this.parser.parseInline(tokens)}</h${depth + 1}>\n`
       },
       hr () {
-        return '<hr class="v-divider v-theme--light" aria-orientation="horizontal">'
+        // no v-theme-- class: the divider inherits the border color and opacity of
+        // the surrounding theme scope, whereas hardcoding the light theme made the
+        // rule barely visible on a dark background.
+        return '<hr class="v-divider" aria-orientation="horizontal">'
       },
       paragraph ({ tokens }: Tokens.Paragraph) {
         return `<p class="${paragraphClass}">${this.parser.parseInline(tokens)}</p>\n`
@@ -146,7 +152,14 @@ export function createMarkedVuetify (options?: MarkedVuetifyOptions): MarkedExte
         }
         if (body) body = `<tbody>${body}</tbody>`
 
-        return `<div class="v-table ${tableClass}">
+        // v-table--gridlines-horizontal: until Vuetify 4.1 the row separators were
+        // part of the base .v-table styles; they now live behind the modifier class
+        // emitted by VTable's `gridlines` prop (which defaults to 'horizontal'), so
+        // handwritten markup has to spell it out or the table renders borderless.
+        // markdown-table: hook for the styles shipped in @data-fair/lib-vuetify
+        // (horizontal scrolling), and for consumers wanting to restyle these tables
+        // without touching the VTable components of the same page.
+        return `<div class="v-table markdown-table v-table--gridlines-horizontal ${tableClass}">
   <div class="v-table__wrapper">
     <table>
       <thead>
