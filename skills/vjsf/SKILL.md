@@ -55,7 +55,8 @@ The component is **inferred** from the schema (object → `section`, `oneOf` →
 |---|---|
 | `comp` | force the component |
 | `if` | JS expression; the field renders only when truthy |
-| `props` | passed to the Vuetify component (`type: "password"`, `showTicks`, `rows`, …) |
+| `props` | passed to the Vuetify component (`type: "password"`, `showTicks`, `rows`, `noDataText`...) |
+| `getProps` | JS expression returning dynamic props passed to the Vuetify component (e.g. dynamic `noDataText` based on selected mode) |
 | `label` | override the field label — `""` removes the inline label (see the slider pattern) |
 | `step` | slider/number step — a **layout-level** keyword, not a Vuetify prop |
 | `cols` | width, 0–12, or `{ xs, sm, md, lg, xl }` |

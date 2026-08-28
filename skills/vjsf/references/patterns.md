@@ -171,6 +171,42 @@ Inside a list item, climb with `${parent.parent.data.dataset.href}`.
 }
 ```
 
+### Custom empty message (`props.noDataText` / `getProps`)
+
+When a select or autocomplete has no matching options (e.g. filtered by capability or type), Vuetify displays the default « Aucune donnée disponible » / « No data available ». Use `layout.props.noDataText` (or dynamic `layout.getProps`) to provide a clear, contextual explanation:
+
+- **Static message** via `props.noDataText`:
+```json
+"field": {
+  "type": "object",
+  "title": "Champ numérique",
+  "layout": {
+    "props": { "noDataText": "Aucun champ numérique disponible." },
+    "getItems": {
+      "url": "${rootData.datasets[0].href}/schema?calculated=false&type=integer,number",
+      "itemKey": "data.key",
+      "itemTitle": "data.label"
+    }
+  }
+}
+```
+
+- **Dynamic message** via `getProps` (expression evaluated against form data, e.g. `rootData`):
+```json
+"field": {
+  "type": "object",
+  "title": "Champ textuel",
+  "layout": {
+    "getProps": "rootData.metricType?.type === 'words' ? { noDataText: 'Aucune colonne avec la capacité « Statistiques de mots ».' } : { noDataText: 'Aucune colonne textuelle disponible.' }",
+    "getItems": {
+      "url": "${rootData.datasets[0].href}/schema?calculated=false&${rootData.metricType?.type === 'words' ? 'capability=textAgg' : 'type=string&capability=values'}",
+      "itemKey": "data.key",
+      "itemTitle": "data.label"
+    }
+  }
+}
+```
+
 ## Advanced arrays
 
 ```json
