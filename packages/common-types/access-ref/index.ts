@@ -10,7 +10,8 @@ export const matchAccessRef = (session: SessionStateAuthenticated, accessRef: Ac
   // Check by user, not active account
   if (accessRef.type === 'user') {
     if ('id' in accessRef) return session.user.id === accessRef.id
-    if ('email' in accessRef) return session.user.email === accessRef.email
+    // non-human identities have no email, they must never match an email based access ref
+    if ('email' in accessRef) return !!session.user.email && session.user.email === accessRef.email
     return false
   }
 
@@ -48,9 +49,14 @@ export const matchAccessRef = (session: SessionStateAuthenticated, accessRef: Ac
 export const mongoFilterAccessRef = (session: SessionStateAuthenticated): Record<string, any> => {
   const userFilter: Record<'$or', Record<string, any>[]> = {
     $or: [
-      { 'access.type': 'user', 'access.id': session.user.id },
-      { 'access.type': 'user', 'access.email': session.user.email }
+      { 'access.type': 'user', 'access.id': session.user.id }
     ]
+  }
+
+  // non-human identities have no email, an undefined value here is dropped by the mongo
+  // driver (ignoreUndefined) and the branch would then match every user permission
+  if (session.user.email) {
+    userFilter.$or.push({ 'access.type': 'user', 'access.email': session.user.email })
   }
 
   if (session.account.type === 'user') return userFilter
