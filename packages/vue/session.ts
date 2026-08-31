@@ -370,7 +370,7 @@ export async function getSession (initOptions: Partial<SessionOptions>): Promise
   const setAdminMode = async (adminMode: boolean, redirect?: string) => {
     if (adminMode) {
       const params: Record<string, string> = { adminMode: 'true' }
-      if (state.user != null) params.email = state.user.email
+      if (state.user?.email) params.email = state.user.email
       // preserve current active org/dep
       if (state.organization) {
         params.org = state.organization.id
