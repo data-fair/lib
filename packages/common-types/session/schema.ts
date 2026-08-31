@@ -83,7 +83,6 @@ export default {
       type: 'object',
       additionalProperties: false,
       required: [
-        'email',
         'id',
         'name',
         'organizations'
@@ -91,7 +90,8 @@ export default {
       properties: {
         email: {
           type: 'string',
-          format: 'email'
+          format: 'email',
+          description: 'absent for non-human identities (see nhi flag)'
         },
         id: {
           type: 'string'
@@ -140,6 +140,12 @@ export default {
         os: {
           type: 'integer',
           title: 'short for orgStorage',
+          enum: [1]
+        },
+        nhi: {
+          type: 'integer',
+          title: 'short for non-human identity',
+          description: 'service account: no email, single org membership, short-lived non-refreshable session — services should not propose mail-based actions or account switching',
           enum: [1]
         },
         rememberMe: {
