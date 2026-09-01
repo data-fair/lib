@@ -10,13 +10,14 @@ const humanUser: User = {
   organizations: [{ id: 'org1', name: 'Test Org', role: 'admin' }]
 }
 
-// non-human identity: service account, no email claim
-const nhiUser: User = {
-  nhi: 1,
+// non-human identity: service account, no email claim. The session type requires `email`
+// again (the nhi / optional-email change was reverted once simple-directory started emitting
+// a synthetic email), so cast to represent the emailless runtime shape this guard must handle.
+const nhiUser = {
   id: 'svc1',
   name: 'Service Account',
   organizations: [{ id: 'org1', name: 'Test Org', role: 'admin' }]
-}
+} as unknown as User
 
 const session = (user: User): SessionStateAuthenticated => ({
   user,
