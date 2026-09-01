@@ -142,6 +142,12 @@ export default {
           title: 'short for orgStorage',
           enum: [1]
         },
+        nhi: {
+          type: 'integer',
+          title: 'short for non-human identity',
+          description: 'service account: single org membership, short-lived non-refreshable session, carries a synthetic non-deliverable email — services should not propose mail-based actions or account switching',
+          enum: [1]
+        },
         rememberMe: {
           type: 'integer',
           enum: [1]

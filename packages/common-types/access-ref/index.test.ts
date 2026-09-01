@@ -10,10 +10,11 @@ const humanUser: User = {
   organizations: [{ id: 'org1', name: 'Test Org', role: 'admin' }]
 }
 
-// non-human identity: service account, no email claim. The session type requires `email`
-// again (the nhi / optional-email change was reverted once simple-directory started emitting
-// a synthetic email), so cast to represent the emailless runtime shape this guard must handle.
+// non-human identity: service account. `email` is required on the User type (NHI tokens carry
+// a synthetic non-deliverable email), so cast to represent the emailless runtime shape this
+// guard defends against — an access ref must never match a session whose email is absent.
 const nhiUser = {
+  nhi: 1,
   id: 'svc1',
   name: 'Service Account',
   organizations: [{ id: 'org1', name: 'Test Org', role: 'admin' }]
