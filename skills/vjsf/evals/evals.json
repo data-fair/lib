@@ -30,6 +30,12 @@
       "prompt": "The page editor of my data-fair portal-like service uses a config schema where an array item is a oneOf over ~35 element types, each with a \"type\" property. Opening the form is slow, and the variant selector is a plain unlabeled select. How should the schema be structured to make this fast and give the selector a proper bilingual label?",
       "expected_output": "Should recommend `discriminator: { propertyName: \"type\" }` next to the oneOf, with each branch declaring `\"type\": { \"const\": \"...\" }` and a branch `title` — the discriminator lets json-layout/ajv resolve the active branch directly instead of trying all ~35 branches, a major performance point on large oneOf. If ajv validation is involved, the discriminator option must be enabled in ajv options. The selector label is customized with `oneOfLayout: { \"label\": \"Type of element\", \"x-i18n-label\": { \"fr\": \"Type d'élément\" } }` (x-i18n works inside oneOfLayout); `oneOfLayout.autocomplete: true` is worth mentioning for ~35 entries. A `default` selecting an initial branch is a plus.",
       "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "Opening a vjsf configuration form takes about 5 seconds, on a schema of a few hundred fields, and it costs that again every time the form is mounted. A CPU profile puts the whole time inside ajv codegen (optimizeNames, optimizeNodes, subschema) called from json-layout's compile. The schema file served to the form is 1.8 MB and contains no $ref at all, although the source it is generated from is full of them. What is going on?",
+      "expected_output": "Should identify that the served schema has been dereferenced: json-layout compiles one skeleton tree per distinct subschema and resolves internal $refs itself, so a subschema referenced N times is compiled once — inlining it hands json-layout N subschemas and multiplies the codegen accordingly, on every mount of the form rather than once per session. Should give an order of magnitude (measured case: 48 kB vs 402 kB, 99 vs 569 skeleton trees, ~390 ms vs ~5100 ms) and note that the rendered form and the produced object are the same either way. Should NOT turn this into an absolute rule that a project must serve the unresolved schema — whether a build pipeline resolves is that project's call, and $refs to external schemas cannot be resolved at runtime so they have to be brought into the file somehow. Should not offer precompiling the layout, upgrading vjsf/json-layout, or splitting the form as the primary explanation.",
+      "files": []
     }
   ]
 }

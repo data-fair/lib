@@ -8,7 +8,8 @@ description: >
   x-fromUrl, x-if, x-itemsProp...), a form that renders wrong with no error
   (collapsed tabs, picker turned into raw text fields), selects fed by
   layout.getItems, sliders, icon pickers, conditional fields, discriminated
-  oneOf, slow forms with a large oneOf, or schema translations with x-i18n-*.
+  oneOf, a form that takes seconds to open (large oneOf, dereferenced schema),
+  or schema translations with x-i18n-*.
 ---
 
 # vjsf / json-layout form schemas
@@ -142,6 +143,20 @@ The pattern for exclusive variants (chart types, element types, filter types):
 - The variant selector is labelled through **`oneOfLayout`** — a sibling of `oneOf`, not a `title` on the container (that renders a section heading, not the select label): `oneOfLayout: { "label": "…", "x-i18n-label": { "fr": "…" } }`. For long lists add `"autocomplete": true` to `oneOfLayout`.
 - A `default` selecting the initial branch avoids an empty form state.
 
+## Compilation cost and `$ref`s
+
+json-layout compiles one skeleton tree per distinct subschema and resolves internal `$ref`s itself, so a subschema referenced from ten places is compiled once. **Dereferenced** — every `$ref` replaced by a copy of its target, what `df-build-types`' `resolvedSchema` / `resolvedSchemaJson` exports produce — the same schema gives it ten subschemas, and the compilation runs on **every mount of the form**, not once per session. `$ref`s to external schemas are the exception: they cannot be resolved at runtime, so they have to be brought into the file one way or another.
+
+Order of magnitude, on one large application schema whose shared definitions were referenced up to 9 times each:
+
+| | `$ref`s kept | dereferenced |
+|---|---|---|
+| file | 48 kB | 402 kB |
+| skeleton trees compiled | 99 | 569 |
+| Ajv codegen per mount | ~390 ms | ~5 100 ms |
+
+Same rendered form and same produced object either way. When a form takes seconds to open and the profile points at Ajv codegen (`optimizeNames`, `optimizeNodes`, `subschema`) under json-layout's `compile`, check which of the two it is being fed.
+
 ## Internationalization — `x-i18n-<keyword>`
 
 `x-i18n-<keyword>` is a supported json-layout mechanism (`resolveXI18n`), active when the rendering UI passes the `xI18n: true` option (all data-fair UIs do) with `locale: session.lang`. It works on **any keyword**, including inside `layout`, `getItems`, `props` and `oneOfLayout`: `x-i18n-title`, `x-i18n-description`, `x-i18n-markdown`, `x-i18n-placeholder`, `x-i18n-itemTitle`, `x-i18n-label`, `x-i18n-errorMessage`…
@@ -195,6 +210,7 @@ Two exceptions only: technical identifiers rendered as-is (`h1`, a dataset field
 | Picker with neither `{q}` nor `qSearchParam` | Becomes a `select` that loads everything at once — add one |
 | data-fair URL without `size` | Only 12 results come back — add `&size=50` |
 | Large `oneOf` without `discriminator` | Every branch is tried — the form gets slow; add it (and `ajvOptions: { discriminator: true }` where ajv runs) |
+| Form takes seconds to open, profile full of Ajv codegen | Check whether the schema it is fed was dereferenced — inlined `$ref`s multiply the subschemas compiled |
 | Labelling a `oneOf` selector with a container `title` | That renders a section heading — use `oneOfLayout.label` |
 | `layout.if` used to make a field conditionally mandatory | Hiding ≠ optional; model it with `oneOf` / `if`-`then` |
 | Slider label squeezed next to the track | `label: ""` + `slots.before` (see `references/patterns.md`) |
