@@ -28,12 +28,29 @@ describe('build.js script', () => {
       $id: 'https://github.com/data-fair/lib-test/object-with-reference-resolved',
       title: 'object with reference',
       type: 'object',
-      'x-exports': ['types', 'validate', 'resolvedSchema'],
+      'x-exports': ['types', 'validate', 'resolvedSchema', 'localDefsSchemaJson'],
       properties: {
         str: { type: 'string', default: 'val1' },
         str4: { type: 'string', const: 'Str 4' }
       }
     })
+  })
+
+  it('should keep the references in the localDefsSchemaJson export', async () => {
+    // the counterpart of resolvedSchema: external references are brought into a single $defs
+    // instead of being inlined at each use site. A schema rendered as a form has to keep them
+    // — dereferencing a shared subschema referenced N times gives json-layout N subschemas to
+    // compile, which costs seconds on a large schema.
+    const localDefsSchema = JSON.parse(readFileSync(import.meta.dirname + '/types/object-with-reference/.type/local-defs-schema.json', 'utf8'))
+    assert.deepEqual(localDefsSchema.properties, {
+      str: { $ref: '#/$defs/str3' },
+      str4: { $ref: '#/$defs/str4' }
+    })
+    assert.deepEqual(localDefsSchema.$defs, {
+      str3: { type: 'string', default: 'val1' },
+      str4: { type: 'string', const: 'Str 4' }
+    })
+    assert.equal(localDefsSchema['x-exports'], undefined)
   })
 
   it('should reuse the vjsf layout for the compiledLayout export', async () => {

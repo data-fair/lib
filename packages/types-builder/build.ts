@@ -188,8 +188,13 @@ export const localDefsSchema = ${JSON.stringify(localDefsSchema, null, 2)}
 export declare const localDefsSchema: any
         `
       } else if (schemaExport === 'localDefsSchemaJson') {
-        delete resolvedSchema['x-exports']
-        writeFileSync(path.join(dir, '.type', 'local-defs-schema.json'), JSON.stringify(resolvedSchema, null, 2))
+        // localDefsSchema, not resolvedSchema: the whole point of this export is to keep the
+        // $refs and gather what they point at under a single $defs. Dereferencing instead
+        // duplicates every shared subschema at each use site, which is what makes a form
+        // schema explode — and resolvedSchema is undefined unless it was also exported.
+        const localDefsSchemaJson = { ...localDefsSchema }
+        delete localDefsSchemaJson['x-exports']
+        writeFileSync(path.join(dir, '.type', 'local-defs-schema.json'), JSON.stringify(localDefsSchemaJson, null, 2))
       } else if (schemaExport === 'validate') {
         const Ajv = (await import('ajv')).default
         const addFormats = (await import('ajv-formats')).default
