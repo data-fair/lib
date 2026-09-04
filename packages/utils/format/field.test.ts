@@ -122,3 +122,30 @@ describe('formatFieldValue — multivalue', () => {
     assert.equal(formatFieldValue(field, 'A,I'), 'Actif, Inactif')
   })
 })
+
+describe('formatFieldValue — concepts', () => {
+  it('renders the file name of an attachment column', () => {
+    const field = f({ 'x-concept': { id: 'attachment' } })
+    assert.equal(formatFieldValue(field, 'https://example.com/files/rapport%202024.pdf?x=1'), 'rapport 2024.pdf')
+  })
+  it('falls back to x-refersTo for an attachment column', () => {
+    const field = f({ 'x-refersTo': 'http://schema.org/DigitalDocument' })
+    assert.equal(formatFieldValue(field, 'docs/annexe.pdf'), 'annexe.pdf')
+  })
+  it('renders the host name of a web page column', () => {
+    const field = f({ 'x-concept': { id: 'webPage' } })
+    assert.equal(formatFieldValue(field, 'https://www.data.gouv.fr/foo'), 'data.gouv.fr')
+  })
+  it('falls back to x-refersTo for a web page column', () => {
+    const field = f({ 'x-refersTo': 'https://schema.org/WebPage' })
+    assert.equal(formatFieldValue(field, 'data.gouv.fr/foo'), 'data.gouv.fr')
+  })
+  it('keeps an x-label over the concept', () => {
+    const field = f({ 'x-concept': { id: 'webPage' }, 'x-labels': { 'https://a.fr': 'Site A' } })
+    assert.equal(formatFieldValue(field, 'https://a.fr'), 'Site A')
+  })
+  it('renders the raw string for a concept the lib does not know', () => {
+    const field = f({ 'x-concept': { id: 'siret' }, type: 'string' })
+    assert.equal(formatFieldValue(field, '82898347800014'), '82898347800014')
+  })
+})

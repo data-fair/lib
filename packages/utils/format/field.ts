@@ -1,5 +1,6 @@
 import type { Field } from '@data-fair/lib-common-types/application/index.js'
 import { dateTimeInOwnTimeZone } from './date-tz.js'
+import { attachmentFilename, webPageLabel } from './attachment.js'
 
 export interface FormatFieldOptions {
   /** BCP 47 tag, usually session.lang. */
@@ -26,6 +27,15 @@ const coerce = (field: Field, value: unknown): unknown => {
   return value
 }
 
+const conceptIdByUri: Record<string, string> = {
+  'http://schema.org/DigitalDocument': 'attachment',
+  'https://schema.org/WebPage': 'webPage'
+}
+
+/** Concept id of a column, from x-concept or the deprecated x-refersTo. */
+const conceptId = (field: Field): string | undefined =>
+  field['x-concept']?.id ?? conceptIdByUri[field['x-refersTo'] ?? '']
+
 const formatSingleValue = (field: Field, value: unknown, opts: FormatFieldOptions): string => {
   if (value === undefined || value === null || value === '') return ''
   const locale = opts.locale ?? 'fr'
@@ -34,6 +44,10 @@ const formatSingleValue = (field: Field, value: unknown, opts: FormatFieldOption
   // labels first: a coded column whose codes happen to be numbers must read as its labels
   const label = field['x-labels']?.['' + value] ?? field['x-labels']?.['' + coerced]
   if (label) return label
+
+  const concept = conceptId(field)
+  if (concept === 'attachment') return attachmentFilename('' + coerced)
+  if (concept === 'webPage') return webPageLabel('' + coerced)
 
   // trigger on `format`, like data-fair's own table does, and always render in French
   if (field.format === 'date-time') return dateTimeInOwnTimeZone(coerced).format('DD/MM/YYYY, HH[h]mm')
