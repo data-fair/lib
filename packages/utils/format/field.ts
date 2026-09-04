@@ -2,7 +2,7 @@ import type { Field } from '@data-fair/lib-common-types/application/index.js'
 import { dateTimeInOwnTimeZone } from './date-tz.js'
 
 export interface FormatFieldOptions {
-  /** BCP 47 tag, usually session.lang. Reading it is a cached computed, hoist it per render. */
+  /** BCP 47 tag, usually session.lang. */
   locale?: string
 }
 
@@ -11,8 +11,7 @@ const booleanLabels: Record<string, [string, string]> = {
   en: ['Yes', 'No']
 }
 
-// a values_agg bucket key and a URL param both hand the value back as a string, while the
-// schema knows what it really is
+// a bucket key or a URL param hands the value back as a string, the schema knows what it is
 const coerce = (field: Field, value: unknown): unknown => {
   if (typeof value !== 'string') return value
   if (field.type === 'boolean') {
@@ -41,7 +40,7 @@ export function formatFieldValue (field: Field, value: unknown, opts: FormatFiel
   if (field.format === 'date') return dateTimeInOwnTimeZone(coerced).format('DD/MM/YYYY')
 
   if (typeof coerced === 'boolean') {
-    const [yes, no] = booleanLabels[locale] ?? booleanLabels.fr
+    const [yes, no] = booleanLabels[locale.split('-')[0]] ?? booleanLabels.fr
     return coerced ? yes : no
   }
   if (typeof coerced === 'number') return coerced.toLocaleString(locale)

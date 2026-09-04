@@ -41,6 +41,9 @@ describe('formatFieldValue — booleens', () => {
     assert.equal(formatFieldValue(field, true, { locale: 'en' }), 'Yes')
     assert.equal(formatFieldValue(field, false, { locale: 'en' }), 'No')
   })
+  it('follows the primary subtag of a regional locale', () => {
+    assert.equal(formatFieldValue(field, true, { locale: 'en-US' }), 'Yes')
+  })
   it('coerces the stringified value a values_agg bucket or a URL param hands back', () => {
     assert.equal(formatFieldValue(field, 'true'), 'Oui')
     assert.equal(formatFieldValue(field, 'false'), 'Non')
