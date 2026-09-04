@@ -28,7 +28,7 @@ test('attachmentFilename: query et fragment ignorés', () => {
   assert.equal(attachmentFilename('/a/b/file.pdf?v=2#section'), 'file.pdf')
 })
 
-test('attachmentFilename: encodage URLURI décodé', () => {
+test('attachmentFilename: encodage URI décodé', () => {
   assert.equal(attachmentFilename('/files/photo%20finale.png'), 'photo finale.png')
 })
 

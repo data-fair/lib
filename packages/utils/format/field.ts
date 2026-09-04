@@ -27,8 +27,11 @@ const coerce = (field: Field, value: unknown): unknown => {
   return value
 }
 
+// both schemes are in use in the wild, schema.org serves the same concepts on either
 const conceptIdByUri: Record<string, string> = {
   'http://schema.org/DigitalDocument': 'attachment',
+  'https://schema.org/DigitalDocument': 'attachment',
+  'http://schema.org/WebPage': 'webPage',
   'https://schema.org/WebPage': 'webPage'
 }
 
@@ -42,16 +45,20 @@ const formatSingleValue = (field: Field, value: unknown, opts: FormatFieldOption
   const coerced = coerce(field, value)
 
   // labels first: a coded column whose codes happen to be numbers must read as its labels
+  // typeof guard: a value like 'toString' would otherwise pick a member up from the prototype chain
   const label = field['x-labels']?.['' + value] ?? field['x-labels']?.['' + coerced]
-  if (label) return label
+  if (typeof label === 'string' && label) return label
 
   const concept = conceptId(field)
   if (concept === 'attachment') return attachmentFilename('' + coerced)
   if (concept === 'webPage') return webPageLabel('' + coerced)
 
   // trigger on `format`, like data-fair's own table does, and always render in French
-  if (field.format === 'date-time') return dateTimeInOwnTimeZone(coerced).format('DD/MM/YYYY, HH[h]mm')
-  if (field.format === 'date') return dateTimeInOwnTimeZone(coerced).format('DD/MM/YYYY')
+  if (field.format === 'date-time' || field.format === 'date') {
+    const d = dateTimeInOwnTimeZone(coerced)
+    if (!d.isValid()) return '' + coerced
+    return d.format(field.format === 'date-time' ? 'DD/MM/YYYY, HH[h]mm' : 'DD/MM/YYYY')
+  }
 
   if (typeof coerced === 'boolean') {
     const [yes, no] = booleanLabels[locale.split('-')[0]] ?? booleanLabels.fr

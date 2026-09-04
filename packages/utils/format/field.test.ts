@@ -29,6 +29,10 @@ describe('formatFieldValue — x-labels', () => {
     const padded = f({ type: 'integer', 'x-labels': { '01': 'Janvier' } })
     assert.equal(formatFieldValue(padded, '01'), 'Janvier')
   })
+  it('ignores a value that only matches a prototype member', () => {
+    const coded = f({ 'x-labels': { A: 'Actif' } })
+    assert.equal(formatFieldValue(coded, 'toString'), 'toString')
+  })
 })
 
 describe('formatFieldValue — booleens', () => {
@@ -77,6 +81,9 @@ describe('formatFieldValue — dates', () => {
   it('still formats a column that only carries a date concept', () => {
     const field = f({ 'x-refersTo': 'http://schema.org/Date', format: 'date' })
     assert.equal(formatFieldValue(field, '2024-01-15'), '15/01/2024')
+  })
+  it('falls back to the raw value when the date cannot be parsed', () => {
+    assert.equal(formatFieldValue(f({ format: 'date' }), 'n/a'), 'n/a')
   })
 })
 
@@ -130,6 +137,10 @@ describe('formatFieldValue — concepts', () => {
   })
   it('falls back to x-refersTo for an attachment column', () => {
     const field = f({ 'x-refersTo': 'http://schema.org/DigitalDocument' })
+    assert.equal(formatFieldValue(field, 'docs/annexe.pdf'), 'annexe.pdf')
+  })
+  it('accepts the mirror scheme of the attachment concept uri', () => {
+    const field = f({ 'x-refersTo': 'https://schema.org/DigitalDocument' })
     assert.equal(formatFieldValue(field, 'docs/annexe.pdf'), 'annexe.pdf')
   })
   it('renders the host name of a web page column', () => {
