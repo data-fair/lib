@@ -47,6 +47,15 @@ export function formatFieldValue (field: Field, value: unknown, opts: FormatFiel
   return '' + coerced
 }
 
+/** Kept for the callers that hold a whole row; delegates to formatFieldValue. */
+export function formatField (
+  item: Record<string, unknown>,
+  field: Field,
+  opts?: FormatFieldOptions
+): string {
+  return formatFieldValue(field, item[field.key], opts)
+}
+
 export function getFieldLabel (field: Field): string {
   return field.title || field['x-originalName'] || field.key
 }

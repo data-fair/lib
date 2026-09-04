@@ -1,7 +1,7 @@
 import type { Field } from '@data-fair/lib-common-types/application/index.js'
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
-import { formatFieldValue } from '@data-fair/lib-utils/format/field.js'
+import { formatField, formatFieldValue } from '@data-fair/lib-utils/format/field.js'
 
 const f = (props: Partial<Field>): Field => ({ key: 'k', type: 'string', ...props } as Field)
 
@@ -77,5 +77,21 @@ describe('formatFieldValue — dates', () => {
   it('still formats a column that only carries a date concept', () => {
     const field = f({ 'x-refersTo': 'http://schema.org/Date', format: 'date' })
     assert.equal(formatFieldValue(field, '2024-01-15'), '15/01/2024')
+  })
+})
+
+describe('formatField — compatibilite', () => {
+  it('still reads the value out of the item', () => {
+    const field = f({ key: 'statut', 'x-labels': { A: 'Actif' } })
+    assert.equal(formatField({ statut: 'A' }, field), 'Actif')
+  })
+  it('still groups a number in French by default', () => {
+    assert.equal(formatField({ k: 1234 }, f({ type: 'integer' })), (1234).toLocaleString('fr'))
+  })
+  it('still renders an empty string for a missing key', () => {
+    assert.equal(formatField({}, f({ key: 'absent' })), '')
+  })
+  it('takes the locale when it is given one', () => {
+    assert.equal(formatField({ k: true }, f({ type: 'boolean' }), { locale: 'en' }), 'Yes')
   })
 })
