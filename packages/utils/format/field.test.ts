@@ -1,7 +1,7 @@
 import type { Field } from '@data-fair/lib-common-types/application/index.js'
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
-import { formatField, formatFieldValue } from '@data-fair/lib-utils/format/field.js'
+import { formatField, formatFieldValue, formatFieldValues } from '@data-fair/lib-utils/format/field.js'
 
 const f = (props: Partial<Field>): Field => ({ key: 'k', type: 'string', ...props } as Field)
 
@@ -93,5 +93,32 @@ describe('formatField — compatibilite', () => {
   })
   it('takes the locale when it is given one', () => {
     assert.equal(formatField({ k: true }, f({ type: 'boolean' }), { locale: 'en' }), 'Yes')
+  })
+})
+
+describe('formatFieldValues', () => {
+  it('returns a single entry for a plain column', () => {
+    assert.deepEqual(formatFieldValues(f({}), 'seul'), ['seul'])
+  })
+  it('splits a multi-valued column and formats each item', () => {
+    const field = f({ separator: ',', 'x-labels': { A: 'Actif', I: 'Inactif' } })
+    assert.deepEqual(formatFieldValues(field, 'A,I'), ['Actif', 'Inactif'])
+  })
+  it('trims the items around the separator', () => {
+    assert.deepEqual(formatFieldValues(f({ separator: ';' }), 'a ; b'), ['a', 'b'])
+  })
+  it('drops empty items', () => {
+    assert.deepEqual(formatFieldValues(f({ separator: ',' }), 'a,,b'), ['a', 'b'])
+  })
+  it('returns an empty array for an empty value', () => {
+    assert.deepEqual(formatFieldValues(f({ separator: ',' }), ''), [])
+    assert.deepEqual(formatFieldValues(f({}), null), [])
+  })
+})
+
+describe('formatFieldValue — multivalue', () => {
+  it('joins the items so a single-string caller keeps working', () => {
+    const field = f({ separator: ',', 'x-labels': { A: 'Actif', I: 'Inactif' } })
+    assert.equal(formatFieldValue(field, 'A,I'), 'Actif, Inactif')
   })
 })

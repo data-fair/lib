@@ -26,7 +26,7 @@ const coerce = (field: Field, value: unknown): unknown => {
   return value
 }
 
-export function formatFieldValue (field: Field, value: unknown, opts: FormatFieldOptions = {}): string {
+const formatSingleValue = (field: Field, value: unknown, opts: FormatFieldOptions): string => {
   if (value === undefined || value === null || value === '') return ''
   const locale = opts.locale ?? 'fr'
   const coerced = coerce(field, value)
@@ -45,6 +45,23 @@ export function formatFieldValue (field: Field, value: unknown, opts: FormatFiel
   }
   if (typeof coerced === 'number') return coerced.toLocaleString(locale)
   return '' + coerced
+}
+
+/** Every value of a column: one entry, or one per item on a multi-valued column. */
+export function formatFieldValues (field: Field, value: unknown, opts: FormatFieldOptions = {}): string[] {
+  if (value === undefined || value === null || value === '') return []
+  if (!field.separator || typeof value !== 'string') {
+    const single = formatSingleValue(field, value, opts)
+    return single === '' ? [] : [single]
+  }
+  return value.split(field.separator)
+    .map(v => formatSingleValue(field, v.trim(), opts))
+    .filter(v => v !== '')
+}
+
+export function formatFieldValue (field: Field, value: unknown, opts: FormatFieldOptions = {}): string {
+  if (!field.separator || typeof value !== 'string') return formatSingleValue(field, value, opts)
+  return formatFieldValues(field, value, opts).join(', ')
 }
 
 /** Kept for the callers that hold a whole row; delegates to formatFieldValue. */

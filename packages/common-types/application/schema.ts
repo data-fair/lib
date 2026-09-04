@@ -104,6 +104,9 @@ export default {
         format: {
           type: 'string'
         },
+        separator: {
+          type: 'string'
+        },
         title: {
           type: 'string'
         },
