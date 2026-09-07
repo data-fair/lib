@@ -7,10 +7,11 @@ export interface FormatFieldOptions {
   locale?: string
 }
 
-const booleanLabels: Record<string, [string, string]> = {
-  fr: ['Oui', 'Non'],
-  en: ['Yes', 'No']
-}
+// Map, not an object literal: a lookup on a key like 'toString' must miss, not walk the prototype chain
+const booleanLabels = new Map<string, [string, string]>([
+  ['fr', ['Oui', 'Non']],
+  ['en', ['Yes', 'No']]
+])
 
 // a bucket key or a URL param hands the value back as a string, the schema knows what it is
 const coerce = (field: Field, value: unknown): unknown => {
@@ -28,32 +29,36 @@ const coerce = (field: Field, value: unknown): unknown => {
 }
 
 // both schemes are in use in the wild, schema.org serves the same concepts on either
-const conceptIdByUri: Record<string, string> = {
-  'http://schema.org/DigitalDocument': 'attachment',
-  'https://schema.org/DigitalDocument': 'attachment',
-  'http://schema.org/WebPage': 'webPage',
-  'https://schema.org/WebPage': 'webPage'
-}
+const conceptIdByUri = new Map<string, string>([
+  ['http://schema.org/DigitalDocument', 'attachment'],
+  ['https://schema.org/DigitalDocument', 'attachment'],
+  ['http://schema.org/WebPage', 'webPage'],
+  ['https://schema.org/WebPage', 'webPage']
+])
 
 /** Concept id of a column, from x-concept or the deprecated x-refersTo. */
 const conceptId = (field: Field): string | undefined =>
-  field['x-concept']?.id ?? conceptIdByUri[field['x-refersTo'] ?? '']
+  field['x-concept']?.id ?? conceptIdByUri.get(field['x-refersTo'] ?? '')
 
 const formatSingleValue = (field: Field, value: unknown, opts: FormatFieldOptions): string => {
   if (value === undefined || value === null || value === '') return ''
   const locale = opts.locale ?? 'fr'
-  const coerced = coerce(field, value)
 
-  // labels first: a coded column whose codes happen to be numbers must read as its labels
-  // typeof guard: a value like 'toString' would otherwise pick a member up from the prototype chain
-  const label = field['x-labels']?.['' + value] ?? field['x-labels']?.['' + coerced]
+  // labels first: a coded column whose codes happen to be numbers must read as its labels.
+  // x-labels comes from the schema, so it is a plain object: guard the prototype chain by hand
+  const label = field['x-labels']?.['' + value]
   if (typeof label === 'string' && label) return label
 
+  const coerced = coerce(field, value)
   const concept = conceptId(field)
   if (concept === 'attachment') return attachmentFilename('' + coerced)
   if (concept === 'webPage') return webPageLabel('' + coerced)
 
-  // trigger on `format`, like data-fair's own table does, and always render in French
+  // trigger on `format`, like data-fair's own table does
+  // TODO: localize the date patterns. data-fair does not hardcode them either: its
+  // ui/src/composables/dataset/format-date-logic.ts takes the dayjs factory as an argument and the
+  // caller passes @data-fair/lib-vue's `localeDayjs.dayjs`, so `.format('lll'|'L')` resolves through
+  // the localizedFormat plugin. Same move here (an injected factory) rather than a locale table.
   if (field.format === 'date-time' || field.format === 'date') {
     const d = dateTimeInOwnTimeZone(coerced)
     if (!d.isValid()) return '' + coerced
@@ -61,7 +66,7 @@ const formatSingleValue = (field: Field, value: unknown, opts: FormatFieldOption
   }
 
   if (typeof coerced === 'boolean') {
-    const [yes, no] = booleanLabels[locale.split('-')[0]] ?? booleanLabels.fr
+    const [yes, no] = booleanLabels.get(locale.split('-')[0]) ?? booleanLabels.get('fr')!
     return coerced ? yes : no
   }
   if (typeof coerced === 'number') return coerced.toLocaleString(locale)
@@ -81,7 +86,6 @@ export function formatFieldValues (field: Field, value: unknown, opts: FormatFie
 }
 
 export function formatFieldValue (field: Field, value: unknown, opts: FormatFieldOptions = {}): string {
-  if (!field.separator || typeof value !== 'string') return formatSingleValue(field, value, opts)
   return formatFieldValues(field, value, opts).join(', ')
 }
 

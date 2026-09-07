@@ -5,7 +5,7 @@ import { formatField, formatFieldValue, formatFieldValues } from '@data-fair/lib
 
 const f = (props: Partial<Field>): Field => ({ key: 'k', type: 'string', ...props } as Field)
 
-describe('formatFieldValue — vide', () => {
+describe('formatFieldValue — empty', () => {
   it('renders an empty string for null, undefined and ""', () => {
     assert.equal(formatFieldValue(f({}), null), '')
     assert.equal(formatFieldValue(f({}), undefined), '')
@@ -25,7 +25,7 @@ describe('formatFieldValue — x-labels', () => {
     const coded = f({ type: 'integer', 'x-labels': { 1000: 'Faible' } })
     assert.equal(formatFieldValue(coded, 1000), 'Faible')
   })
-  it('looks the raw value up before the coerced one', () => {
+  it('looks the raw value up, not the coerced one', () => {
     const padded = f({ type: 'integer', 'x-labels': { '01': 'Janvier' } })
     assert.equal(formatFieldValue(padded, '01'), 'Janvier')
   })
@@ -35,7 +35,7 @@ describe('formatFieldValue — x-labels', () => {
   })
 })
 
-describe('formatFieldValue — booleens', () => {
+describe('formatFieldValue — booleans', () => {
   const field = f({ type: 'boolean' })
   it('renders Oui/Non in French', () => {
     assert.equal(formatFieldValue(field, true), 'Oui')
@@ -57,7 +57,7 @@ describe('formatFieldValue — booleens', () => {
   })
 })
 
-describe('formatFieldValue — nombres', () => {
+describe('formatFieldValue — numbers', () => {
   it('groups according to the locale', () => {
     assert.equal(formatFieldValue(f({ type: 'integer' }), 1234), (1234).toLocaleString('fr'))
     assert.equal(formatFieldValue(f({ type: 'integer' }), 1234, { locale: 'en' }), '1,234')
@@ -87,7 +87,7 @@ describe('formatFieldValue — dates', () => {
   })
 })
 
-describe('formatField — compatibilite', () => {
+describe('formatField — backward compatibility', () => {
   it('still reads the value out of the item', () => {
     const field = f({ key: 'statut', 'x-labels': { A: 'Actif' } })
     assert.equal(formatField({ statut: 'A' }, field), 'Actif')
@@ -123,7 +123,7 @@ describe('formatFieldValues', () => {
   })
 })
 
-describe('formatFieldValue — multivalue', () => {
+describe('formatFieldValue — multi-valued', () => {
   it('joins the items so a single-string caller keeps working', () => {
     const field = f({ separator: ',', 'x-labels': { A: 'Actif', I: 'Inactif' } })
     assert.equal(formatFieldValue(field, 'A,I'), 'Actif, Inactif')
