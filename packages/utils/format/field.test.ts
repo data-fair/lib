@@ -121,12 +121,33 @@ describe('formatFieldValues', () => {
     assert.deepEqual(formatFieldValues(f({ separator: ',' }), ''), [])
     assert.deepEqual(formatFieldValues(f({}), null), [])
   })
+  it('formats each item of an array, the shape arrays=true and geojson hand back', () => {
+    const field = f({ separator: ',', 'x-labels': { A: 'Actif', I: 'Inactif' } })
+    assert.deepEqual(formatFieldValues(field, ['A', 'I']), ['Actif', 'Inactif'])
+  })
+  it('formats an array item by item rather than stringifying the array', () => {
+    assert.deepEqual(formatFieldValues(f({ type: 'integer', separator: ',' }), [1234, 5678]),
+      [(1234).toLocaleString('fr'), (5678).toLocaleString('fr')])
+  })
+  it('drops the empty items of an array', () => {
+    assert.deepEqual(formatFieldValues(f({ separator: ',' }), ['a', '', null, 'b']), ['a', 'b'])
+  })
+  it('returns an empty array for an empty array', () => {
+    assert.deepEqual(formatFieldValues(f({ separator: ',' }), []), [])
+  })
+  it('keeps the separator raw so a value is not split inside an item', () => {
+    assert.deepEqual(formatFieldValues(f({ separator: ' - ' }), 'Jean-Pierre - Marie'), ['Jean-Pierre', 'Marie'])
+  })
 })
 
 describe('formatFieldValue — multi-valued', () => {
   it('joins the items so a single-string caller keeps working', () => {
     const field = f({ separator: ',', 'x-labels': { A: 'Actif', I: 'Inactif' } })
     assert.equal(formatFieldValue(field, 'A,I'), 'Actif, Inactif')
+  })
+  it('joins the items of an array the same way', () => {
+    const field = f({ separator: ',', 'x-labels': { A: 'Actif', I: 'Inactif' } })
+    assert.equal(formatFieldValue(field, ['A', 'I']), 'Actif, Inactif')
   })
 })
 

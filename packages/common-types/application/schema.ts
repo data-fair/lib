@@ -102,7 +102,7 @@ export default {
           type: 'string'
         },
         format: {
-          type: 'string'
+          type: ['string', 'null']
         },
         separator: {
           type: 'string'
@@ -111,9 +111,10 @@ export default {
           type: 'string'
         },
         'x-originalName': {
-          type: 'string'
+          type: ['string', 'null']
         },
         'x-group': { type: 'string' },
+        'x-display': { type: 'string' },
         'x-refersTo': {
           deprecated: true,
           type: ['string', 'null']

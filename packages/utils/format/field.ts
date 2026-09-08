@@ -76,6 +76,12 @@ const formatSingleValue = (field: Field, value: unknown, opts: FormatFieldOption
 /** Every value of a column: one entry, or one per item on a multi-valued column. */
 export function formatFieldValues (field: Field, value: unknown, opts: FormatFieldOptions = {}): string[] {
   if (value === undefined || value === null || value === '') return []
+  // a multi-valued column reaches us in either shape: an array from `arrays=true` and the geojson
+  // outputs, a string elsewhere — the default /lines output joins the indexed array back with the
+  // column's own separator (data-fair's getFlatten). Hence the raw separator below, symmetric with
+  // that join: trimming it, as data-fair's index-time parsing of the source file does, would split
+  // a value on a separator like ' - '.
+  if (Array.isArray(value)) return value.map(v => formatSingleValue(field, v, opts)).filter(v => v !== '')
   if (!field.separator || typeof value !== 'string') {
     const single = formatSingleValue(field, value, opts)
     return single === '' ? [] : [single]
