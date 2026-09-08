@@ -124,7 +124,7 @@ See SKILL.md § Discriminated oneOf for the performance rationale (`ajvOptions: 
   "type": "array",
   "layout": {
     "getItems": {
-      "url": "api/v1/datasets?status=finalized&q={q}&select=id,title,schema&size=50&sort=createdAt:-1",
+      "url": "api/v1/datasets?status=finalized&q={q}&select=id,title,schema&size=50",
       "itemKey": "data.href",
       "itemTitle": "data.title",
       "itemsResults": "data.results"
@@ -139,6 +139,12 @@ See SKILL.md § Discriminated oneOf for the performance rationale (`ajvOptions: 
   }
 }
 ```
+
+No `sort` on a search-driven `getItems` URL, whichever data-fair endpoint it queries: the relevance
+score is appended *after* the sort keys the request carries (Mongo on `/datasets`, ElasticSearch on
+`/lines`), so any explicit sort outranks it and typing more words stops improving the results. What
+the datasets endpoint ranks by, and the parameters an application's dataset picker should carry, is
+the apps skill's subject, not this one's.
 
 **Field picker from a selected dataset** — chain through `rootData` or `parent`:
 
