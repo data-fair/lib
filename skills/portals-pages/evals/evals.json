@@ -1,0 +1,30 @@
+{
+  "skill_name": "portals-pages",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Je veux créer une page de contenu sur le portail v2 de démonstration (id d5902565-a54d-4981-99cd-42534bd6c793) qui présente un cas d'usage, avec un titre, une intro, un diagramme Mermaid et la carte STAR embarquée. Je suis dans le navigateur via Playwright, connecté sur koumoul.com. Comment tu t'y prends ?",
+      "expected_output": "Should use the manager API in same-origin fetch from the koumoul.com origin (not from the portal subdomain), and the 3-step flow: POST /portals-manager/api/pages (type generic, owner account with type/id/name — name is mandatory, otherwise 400 with empty body —, minimal config), PATCH /pages/:id with { draftConfig, portals }, POST /pages/:id/draft to publish. Should mention checking permissions first (publishing to the demo portal requires admin on its owner Koumoul/marketing; the current user may only be admin of another department) and using the public GET /portals-manager/api/portals/:id/public to confirm the portal identity/URL. Should mention slug (genericMetadata.slug or auto-generated from title) and the URL /pages/<slug>."
+    },
+    {
+      "id": 2,
+      "prompt": "Mon diagramme Mermaid s'affiche tout petit et illisible dans la page du portail. Le SVG a un viewBox de 1869 et fait 668 px de large à l'écran. Comment je le rends lisible ?",
+      "expected_output": "Should explain that the mermaid block inserts the SVG with width:100% capped at the natural width, so a wide diagram (typically flowchart LR with many parallel columns) is scaled down to ~0.36 and its font with it. Fixes: switch to flowchart TB, shorten node labels (one node width follows its text), aim for a natural width <= ~750 px so scale >= ~0.9 and effective font >= 11 px, keep fontSize 16px (raising it scales the viewBox proportionally and gains nothing), prefer linking to subgraph ids instead of every inner node. Should also mention the base theme's yellow/orange cluster fills and the %%{init: ...}%% directive with themeVariables (primaryColor/secondaryColor/clusterBkg white, clusterBorder grey) to neutralize them."
+    },
+    {
+      "id": 3,
+      "prompt": "Je veux intégrer la carte STAR qui est sur demo.koumoul.com dans une page d'un portail servi par koumoul.com (instance DataFair koumoul.com). Quel bloc utiliser et que faut-il configurer ?",
+      "expected_output": "Should distinguish the two blocks: application (same DataFair instance as the portal, resolves /data-fair/api/v1/applications/<id> and /data-fair/app/<slug>?d-frame=true, no CSP setup, displayMode/height and actionButtons) vs iframe (external URL, requires the domain in the portal config allowedFrameSources, otherwise the frame-src CSP blocks it; no height field). Here the app lives on another instance than the portal host, so use the iframe block with the app exposedUrl and add https://demo.koumoul.com to allowedFrameSources via PATCH /portals-manager/api/portals/:id {draftConfig} then POST /portals/:id/draft. Should mention verifying the app is public and testing in an anonymous browser context."
+    },
+    {
+      "id": 4,
+      "prompt": "J'ai créé la page dans le département test du portail v2, comme demandé, et maintenant je veux la publier sur le portail de démonstration qui appartient au département marketing de la même organisation. Que faut-il faire ?",
+      "expected_output": "Should explain that publishing on a portal requires admin on the portal's owner (Koumoul/marketing), not just on the page owner (test): either get admin on the marketing department/portal, or have the department listed in the portal's contributorDepartments so a contrib can request publication (requestedPortals) and a portal admin validates it. Moving = PATCH /pages/:id with the new portals array (remove old id, add target id) then POST /pages/:id/draft. Should mention that a department is a distinct account (org:test vs org:marketing), that an organization-level role covers all departments, and that after a role change in Simple Directory the browser session JWT must be refreshed by reloading a page on the host."
+    },
+    {
+      "id": 5,
+      "prompt": "Je veux la même page, avec le diagramme Mermaid, sur koumoul.com (le site commercial actuel à la racine). Tu peux la créer directement ?",
+      "expected_output": "Should recognize that koumoul.com root is currently served by portals v1 (legacy Nuxt 2, no /portals-manager page model, no mermaid block; raw <iframe> was tolerated in v1 markdown), out of this skill's scope. Should not attempt the v1 page with the v2 API. Should propose the v2 route: create the page in a v2 portal (manager at /portals-manager, front on a dedicated domain) and/or, if the page must be on v1, render the Mermaid diagram upstream (mermaid-cli or mermaid.ink) and embed it as an image, using a raw iframe in a text block for embeds."
+    }
+  ]
+}
