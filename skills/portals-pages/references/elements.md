@@ -28,7 +28,7 @@ Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 ```
 
 - `titleSize` (requis) pilote l'apparence : `h1`…`h6` → `text-h1`…`text-h6` (Vuetify). `titleTag` pilote la balise HTML : `h1`…`h6` ou `div`.
-- Le layout du portail rend le titre du portail en `<h1>` : garder **un seul `<h1>`** par document et viser `titleSize: 'h3'` + `titleTag: 'h2'` pour un titre de page (convention des pages existantes).
+- Le layout rend le titre du portail en `<h1>` **seulement si l'entête est affichée** (`config.header.show`) : vérifier dans `GET /portal/api/portal`. Héros d'accueil : `titleSize: 'h2'` + `titleTag: 'h1'`. Page de contenu : `titleSize: 'h3'` + `titleTag: 'h2'` (ou `h1` si aucun autre h1).
 - `anchor.enabled` génère un lien direct ; `anchor.inToc` ajoute l'entrée au sommaire ; `anchor.label` raccourcit le libellé du sommaire.
 - Autres : `color`, `icon`, `line { position, color, growOnHover? }`, `link` (lien simple).
 
@@ -118,7 +118,7 @@ Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 
 - `two-columns` : `disposition` (`equal`/`left`/`right`), `align`, `gutter`, `children`, `children2`.
 - `responsive-grid` : `columns` (2/3/4/6), `gutter`, `align`, `centered`, `children`.
-- `card` : `children`, `title`, `elevation`, `rounded`, `border`, `keepTextSize`, `hover`, `thumbnail`, `link`, `actions[]`, `background`.
+- `card` : `children`, `title`, `elevation`, `rounded`, `border`, `keepTextSize`, `hover`, `thumbnail`, `link`, `actions[]`, `background`. `children` et `actions` sont **requis** (tableaux, même vides). `link` est une variante sans libellé (`{ type: 'external', href, target }`) : toute la carte devient cliquable.
 - `banner` : `children`, `fullWidth`, `background { color, image, tintStrength }`, `pt/pb/pl/pr`, `overflowTop/Bottom`.
 - `tabs` : `tabs[] { title, icon, children }`, `grow`, `border`, `keepTextSize`.
 - `expansion-panels` : `panels[] { title, icon, children }`, `multiple`, `openFirst`, `openAll`.

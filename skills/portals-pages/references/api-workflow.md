@@ -12,12 +12,13 @@ Elles s'appellent en **same-origin** depuis une page de `<hôte>` (session en co
 | `GET` | `/portals/:id/public` | **public** | `{_id, title, owner, url}` — identifier un portail |
 | `PATCH` | `/portals/:id` | admin sur `portal.owner` | modifier la config (ex. `allowedFrameSources`) |
 | `POST` | `/portals/:id/draft` | admin sur `portal.owner` | valider le brouillon de portail |
-| `GET` | `/pages?size=100&select=_id,title,type,owner,portals` | admin du compte courant | lister les pages accessibles |
+| `GET` | `/pages?size=100&select=_id,title,type,owner,portals` | admin du compte courant | lister les pages accessibles, y compris les pages standard (`type: home`, `contact`…) |
 | `GET` | `/pages/:id` | admin ou contrib sur `page.owner` | lire `config` + `draftConfig` |
 | `POST` | `/pages` | admin sur `owner` | créer une page |
-| `PATCH` | `/pages/:id` | admin ou contrib sur `page.owner` | modifier le brouillon, publier/dépublier, déplacer |
+| `PATCH` | `/pages/:id` | admin ou contrib sur `page.owner` | modifier le brouillon, publier/dépublier, déplacer, changer d'`owner` |
 | `POST` | `/pages/:id/draft` | admin ou contrib sur `page.owner` | publier le brouillon (`204`) |
 | `DELETE` | `/pages/:id/draft` | admin ou contrib sur `page.owner` | annuler le brouillon |
+| `POST` | `/images` | admin sur le compte courant | uploader une image (multipart `body` + `image`) |
 
 L'API DataFair de l'instance est sur `https://<hôte>/data-fair/api/v1/...`.
 
@@ -127,6 +128,67 @@ async () => {
 ```
 
 Le déplacement n'altère pas le propriétaire de la page : une page owned par le département `test` peut vivre sur un portail du département `marketing`, à condition d'avoir le rôle admin sur ce portail (ou une validation par un admin après demande).
+
+## Pages standard (accueil, contact…)
+
+Les pages standard sont créées avec le portail et listées comme les autres :
+
+```js
+async () => {
+  const r = await fetch('/portals-manager/api/pages?size=100&select=_id,title,type,owner,portals', { headers: { Accept: 'application/json' } })
+  const { results } = await r.json()
+  return results.filter(p => ['home', 'contact', 'datasets', 'applications'].includes(p.type))
+}
+```
+
+L'édition est identique à une page `generic` (pas de `genericMetadata`). L'accueil se lit publiquement sur `/portal/api/pages/home/home`. Attention : attacher une page standard à un portail détache automatiquement la page du même type déjà publiée (`switchStandardPages`) et une page `home` ne peut plus être dépubliée.
+
+## Uploader une image
+
+`POST /portals-manager/api/images`, multipart avec un champ `body` (JSON) et un fichier `image` :
+
+```js
+async () => {
+  const file = window.__dropped[0] // File obtenu par drag & drop dans la page
+  const fd = new FormData()
+  fd.append('body', JSON.stringify({ resource: { type: 'page', _id: '<pageId>' } }))
+  fd.append('image', file, file.name)
+  const r = await fetch('/portals-manager/api/images', { method: 'POST', body: fd })
+  const img = await r.json() // { _id, name, mimeType, width, height, mobileAlt? }
+  return img
+}
+```
+
+La réponse se met directement dans `config.thumbnail` (`{ _id, name, mimeType }`) ou dans un bloc `image`. Le serveur reconvertit en webp et crée une variante mobile si la largeur dépasse ~1536 px.
+
+## Transférer une page vers un autre département
+
+Enchaînement (chaque étape échoue si les droits manquent) :
+
+```js
+async () => {
+  const api = '/portals-manager/api'
+  const headers = { 'Content-Type': 'application/json', Accept: 'application/json' }
+  const id = '<pageId>'
+
+  // 1. transférer le propriétaire (admin requis sur l'ancien ET le nouveau)
+  let r = await fetch(api + '/pages/' + id, {
+    method: 'PATCH', headers,
+    body: JSON.stringify({ owner: { type: 'organization', id: '<orgId>', name: 'Koumoul', department: 'marketing', departmentName: 'Marketing' } })
+  })
+  if (!r.ok) return { step: 'owner', status: r.status, error: (await r.text()).slice(0, 500) }
+
+  // 2. attacher au portail cible (remplace la page standard du même type si `home`)
+  r = await fetch(api + '/pages/' + id, { method: 'PATCH', headers, body: JSON.stringify({ portals: ['<targetPortalId>'] }) })
+  if (!r.ok) return { step: 'portals', status: r.status, error: (await r.text()).slice(0, 500) }
+
+  // 3. publier le contenu du brouillon si nécessaire
+  r = await fetch(api + '/pages/' + id + '/draft', { method: 'POST', headers: { Accept: 'application/json' } })
+  return { ownerStatus: 200, publishStatus: r.status }
+}
+```
+
+Si l'agent n'a pas les droits sur le département cible, il prépare le contenu dans son département sandbox (page ou page standard d'un portail de test), vérifie l'URL publique, puis transmet ids et payloads à un admin du département cible.
 
 ## Vérifier le rendu
 
