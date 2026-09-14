@@ -1,20 +1,20 @@
 ---
 name: portals-pages
 description: >
-  Use when creating or editing a content page on a data-fair **portals v2**
-  portal ("page de portail", "page de contenu", page libre) from the manager
-  served at `/portals-manager`: page-config API, admin/contrib permission
-  model, page element blocks (title, text, alert, Mermaid diagram,
-  application embed, iframe, button), editing standard pages (home,
-  contact…), publishing and moving/transferring a page between portals or
-  departments, annotated screenshots for documentation pages, image upload
-  and sizing, table of contents and breadcrumbs, sorted listings, and live
-  browser verification. Triggers: "page de portail", "page de contenu",
-  "élément de page", "diagramme Mermaid", "/portals-manager", bloc
-  application/iframe, "publier une page", "déplacer une page", "accueil du
-  portail", "transférer une page", sommaire d'une page, "capture annotée",
-  "fil d'Ariane", page de cours/tutoriel. Use ONLY for portals v2 (manager +
-  portal service major 2); portals v1 (legacy Nuxt 2 pages) is out of scope.
+  Use when creating/editing a content page on a **portals v2** portal ("page
+  de portail", "page de contenu", page libre) from `/portals-manager`:
+  page-config API, permissions, element blocks (title, text, alert, Mermaid,
+  application/iframe embed, button), composing a beautiful page (hero,
+  banners, section rhythm, card grids, theme-safe colors, dark/high-contrast),
+  standard pages (home, contact…), publishing/moving a page across
+  portals/departments, annotated screenshots, image upload/sizing, table of
+  contents/breadcrumbs, sorted listings, live verification. Triggers: "page
+  de portail", "page de contenu", "élément de page", "diagramme Mermaid",
+  "/portals-manager", bloc application/iframe, "publier une page", "déplacer
+  une page", "accueil du portail", "transférer une page", sommaire, "capture
+  annotée", "fil d'Ariane", page de cours/tutoriel, "belle page", "page
+  harmonieuse", hero, "mise en page", "rendu visuel". Use ONLY for portals v2
+  (manager + service major 2); portals v1 (legacy Nuxt 2) is out of scope.
 ---
 
 # Pages de contenu Portals v2
@@ -142,7 +142,9 @@ Quand on n'a des droits que sur un département (ex. `test`) et que la cible est
 
 ## 5. Contenu de la page
 
-Le catalogue des blocs et leurs champs sont dans `references/elements.md`. À retenir d'emblée :
+Deux références se complètent : **`references/design.md`** pour *composer* une page qui rend bien (parti pris, recettes hero/sections/grille/FAQ, table « propriété → rendu », rythme, thèmes, relecture visuelle) et **`references/elements.md`** pour le *catalogue des champs*. Lire `design.md` avant toute page d'accueil, page « vitrine » ou page longue ; garder `elements.md` ouvert pendant l'écriture des blocs.
+
+À retenir d'emblée :
 
 - Chaque bloc porte un `uuid` (généré à la création : `crypto.randomUUID()`) ; l'`uuid` sert aussi d'identifiant de synchronisation d'URL pour les applications.
 - `text` et `alert` acceptent du **markdown sanitisé** (gras, liens, listes, tableaux) mais **pas d'iframe** — le sanitizer la retire ; pour intégrer, utiliser les blocs `application` ou `iframe`.
@@ -193,7 +195,8 @@ Après publication, vérifier **le rendu réel**, pas seulement la réponse API 
 6. tuiles de carte : requêtes `/tileserver/...` en `200` ;
 7. console : aucune erreur hors `favicon.ico` ;
 8. capture d'écran en viewport desktop (1440 px) **et** mobile pour juger les tailles de titre et les grilles ;
-9. tester en **contexte anonyme** (`browser.newContext()`) : HTTP 200, diagramme et intégration rendus.
+9. tester en **contexte anonyme** (`browser.newContext()`) : HTTP 200, diagramme et intégration rendus ;
+10. **relecture visuelle** (`references/design.md`, §9) : captures desktop (1440 px) **et** mobile, hiérarchie (un seul H1, pas de saut de niveau), rythme (aucun bloc collé ni trou), débordements (titres longs, tableaux, iframes), contraste en thème sombre — au minimum `default` et `dark`.
 
 ## 10. Déléguer à un sous-agent
 
@@ -224,11 +227,18 @@ Toute page qui nomme une application DataFair emploie le **libellé de l'applica
 - **Sommaire vide** malgré `_toc` → les titres n'ont pas `anchor.enabled`/`inToc` ; la clé `toc` de page est inerte.
 - **Fil d'Ariane qui ne remonte pas au listing** → `rootPage` absent de l'objet groupe (`PATCH /groups/:id` avec `title` + `rootPage`).
 - **Formulaire re-rempli avec des valeurs concaténées** → `browser_type` / `browser_fill_form` ajoutent au contenu existant ; recharger le formulaire avant de le re-remplir.
+- **Trait de titre invisible** → `line` demandé sans `line.color` : la couleur CSS est invalide, aucun trait n'est rendu (`references/design.md`, §5).
+- **Teinte inopérante** → `tintStrength` n'agit qu'avec `background.color` **et** `background.image` ; l'un des deux manque.
+- **`cover: true` sans `height`** → `height:100%` dans un parent auto : aucun recadrage visible, l'image garde son ratio.
+- **Titre markdown (`#`) au lieu d'un bloc `title`** → rendu `text-display-medium text-primary` avec `mt-12 mb-8`, taille et marges non maîtrisables ; préférer les blocs `title`.
+- **Page illisible en thème sombre** → titre coloré posé sur un fond coloré, ou texte sur une image trop peu teintée ; contrôler au moins `default` et `dark`.
+- **Hero qui ne colle pas en haut** → `banner` et `image` racines reçoivent déjà `mt-n4`/`mb-n4` ; ne pas ajouter de marge, corriger plutôt le bloc précédent.
 
 ## Références
 
 - `references/api-workflow.md` — endpoints et payloads exacts, script de création complet, découverte des droits, déplacement de page, snippets de vérification.
 - `references/elements.md` — catalogue des blocs utiles : champs requis, propriétés courantes, conventions de contenu.
+- `references/design.md` — composition et rendu : parti pris, recettes (hero, sections, grilles, FAQ), table « propriété → rendu » et pièges visuels, typographie/hiérarchie, rythme, thèmes et contraste, relecture visuelle.
 - `references/mermaid.md` — règles de lisibilité, directive de thème, exemple de diagramme de bout en bout.
 - `references/embeds.md` — `application` vs `iframe`, CSP, multi-instance, boutons d'action.
 - `references/screenshots.md` — convention de capture, flux `ANNO`, codes de rejet, réglages de viewport et contrôle à l'œil.
