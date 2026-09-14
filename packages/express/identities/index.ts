@@ -4,7 +4,7 @@
 import type { PostIdentityReq } from './types/post-req/index.js'
 import type { DeleteIdentityReq } from './types/delete-req/index.js'
 import { Router } from 'express'
-import { assertReqInternalSecret } from '../req-origin.js'
+import { assertReqInternalSecret } from '@data-fair/lib-express'
 import * as postReq from './types/post-req/index.js'
 import * as deleteReq from './types/delete-req/index.js'
 
