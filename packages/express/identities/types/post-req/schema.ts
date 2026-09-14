@@ -62,6 +62,22 @@ export default {
               }
             }
           }
+        },
+        // established partnerships of an organization (pending invitations are not sent)
+        partners: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['id', 'name'],
+            properties: {
+              id: {
+                type: 'string'
+              },
+              name: {
+                type: 'string'
+              }
+            }
+          }
         }
       }
     }
