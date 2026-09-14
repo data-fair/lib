@@ -25,6 +25,21 @@
       "id": 5,
       "prompt": "Je veux la même page, avec le diagramme Mermaid, sur koumoul.com (le site commercial actuel à la racine). Tu peux la créer directement ?",
       "expected_output": "Should recognize that koumoul.com root is currently served by portals v1 (legacy Nuxt 2, no /portals-manager page model, no mermaid block; raw <iframe> was tolerated in v1 markdown), out of this skill's scope. Should not attempt the v1 page with the v2 API. Should propose the v2 route: create the page in a v2 portal (manager at /portals-manager, front on a dedicated domain) and/or, if the page must be on v1, render the Mermaid diagram upstream (mermaid-cli or mermaid.ink) and embed it as an image, using a raw iframe in a text block for embeds."
+    },
+    {
+      "id": 6,
+      "prompt": "Je dois illustrer une page de cours avec des captures du formulaire de configuration d'un connecteur, avec des numéros qui pointent les champs à remplir. Je suis dans le navigateur MCP Playwright. Comment tu produis ces captures ?",
+      "expected_output": "Should apply the screenshot convention (light theme, 1440 px wide viewport, no scrollbar, red rectangles + numbered square badges) via scripts/annotate.js loaded with browser_evaluate, then a single second browser_evaluate call doing ANNO.reset(), ANNO.mark(ANNO.field(...)/ANNO.sel(...), n) and return ANNO.commit(). Should state that a non-empty commit() result means do not capture and fix first (ghost target hidden in a stepper, touching rectangles → frame the parent block, badge too far → pass a container to commit). Should set the viewport height before annotating so every target fits, re-install the script after each navigation, capture with browser_take_screenshot, and re-read the PNG to check badges over icons, absurd numeric values and product noise."
+    },
+    {
+      "id": 7,
+      "prompt": "J'ai uploadé une capture 1440x520 dans la médiathèque de la page et posé un bloc image avec height: 300. Sur le portail l'image apparaît coupée sur les côtés, et sur mobile elle est cassée. Pourquoi ?",
+      "expected_output": "Should explain that height on a wide image crops it: the content column is ~896 px wide, so an image flatter than the imposed ratio is scaled up then cut; compute height ≈ 896 × (520/1440) ≈ 324 or, for very wide banners (ratio > ~2.5), use cover: true without height. Should explain the mobile breakage by image.mobileAlt: the portal loads <id>-mobile which only exists when the server produced a mobile variant (width > ~1536 px), so set mobileAlt: false. Should mention verifying naturalWidth > 0, no -mobile in src and the displayed ratio equal to naturalWidth/naturalHeight."
+    },
+    {
+      "id": 8,
+      "prompt": "Ma page de cours a bien config._toc rempli mais le sommaire ne s'affiche pas, et le fil d'Ariane ne remonte pas à la page de listing du groupe. J'ai ajouté toc: true dans la config de la page, sans effet.",
+      "expected_output": "Should say there is no page-level or portal-level toc option (the page-config schema has unevaluatedProperties: false; the API silently accepts an unknown key which stays inert) and that the table of contents is enabled title block by title block with anchor: { enabled: true, inToc: true } on each H2/H3 (never the H1); the server recomputes _toc (readOnly, never written by hand) on PATCH. For the breadcrumb, should point to the group's rootPage (a page slug, not an id) set with PATCH /portals-manager/api/groups/:id with title mandatory in the body, propagated to genericMetadata.group.rootPage of every page of the group."
     }
   ]
 }

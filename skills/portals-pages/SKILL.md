@@ -7,12 +7,14 @@ description: >
   model, page element blocks (title, text, alert, Mermaid diagram,
   application embed, iframe, button), editing standard pages (home,
   contact…), publishing and moving/transferring a page between portals or
-  departments, and live browser verification. Triggers: "page de portail",
-  "page de contenu", "élément de page", "diagramme Mermaid", "/portals-manager",
-  bloc application/iframe, "publier une page", "déplacer une page",
-  "accueil du portail", "transférer une page", sommaire d'une page. Use ONLY
-  for portals v2 (manager + portal service major 2); portals v1 (legacy
-  Nuxt 2 pages) is out of scope.
+  departments, annotated screenshots for documentation pages, image upload
+  and sizing, table of contents and breadcrumbs, sorted listings, and live
+  browser verification. Triggers: "page de portail", "page de contenu",
+  "élément de page", "diagramme Mermaid", "/portals-manager", bloc
+  application/iframe, "publier une page", "déplacer une page", "accueil du
+  portail", "transférer une page", sommaire d'une page, "capture annotée",
+  "fil d'Ariane", page de cours/tutoriel. Use ONLY for portals v2 (manager +
+  portal service major 2); portals v1 (legacy Nuxt 2 pages) is out of scope.
 ---
 
 # Pages de contenu Portals v2
@@ -31,7 +33,7 @@ Cet skill couvre :
 
 Cet skill ne couvre **pas** :
 
-- **portals v1** (ancien module Nuxt 2, par ex. `koumoul.com` à la racine pendant la migration) : pas de gestionnaire v2, pas de bloc Mermaid, iframe brut toléré dans le markdown. Si la page est demandée sur un site v1, le dire et proposer soit une page v2, soit un rendu Mermaid en image ;
+- **portals v1** (ancien module Nuxt 2, par ex. `koumoul.com` à la racine pendant la migration) : pas de gestionnaire v2, pas de bloc Mermaid, iframe brut toléré dans le markdown. Si la page est demandée sur un site v1, le dire et proposer soit une page v2, soit un rendu Mermaid en image. **Vérifier quel service sert l'hôte avant d'éditer** : chercher `/portal/api` (v2) ou `/data-fair-portals/` (v1) dans le HTML servi. Le gestionnaire peut contenir un portail homonyme **sans `ingress`** qui n'est qu'une copie de migration : l'éditer ne change rien en ligne ;
 - la configuration du portail elle-même (thème, menu, en-tête, pied de page) hors `allowedFrameSources` ;
 - le contenu des pages catalogue / réutilisation / événement / actualité (hors pages standard d'accueil de catalogue) ;
 - le développement du code de portals (dépôt `data-fair/portals`).
@@ -75,7 +77,7 @@ Points d'attention :
 
 ## 3. Créer / modifier une page
 
-Le chemin fiable est l'**API du gestionnaire appelée en same-origin depuis la session Playwright** (cookies inclus automatiquement) : plus rapide et déterministe que de remplir les formulaires VJSF. Voir `references/api-workflow.md` pour le script complet et les payloads exacts.
+Le chemin fiable est l'**API du gestionnaire appelée en same-origin depuis la session Playwright** (cookies inclus automatiquement) : plus rapide et déterministe que de remplir les formulaires VJSF. Voir `references/api-workflow.md` pour le script complet et les payloads exacts. L'API refuse les clés d'API ; quand le navigateur passe par le proxy NHI, l'identité est fixée par le profil du proxy et se choisit en posant `owner` à la création (`references/api-workflow.md`, « Session fournie par le proxy NHI »).
 
 Séquence en trois appels :
 
@@ -145,7 +147,19 @@ Le catalogue des blocs et leurs champs sont dans `references/elements.md`. À re
 - Chaque bloc porte un `uuid` (généré à la création : `crypto.randomUUID()`) ; l'`uuid` sert aussi d'identifiant de synchronisation d'URL pour les applications.
 - `text` et `alert` acceptent du **markdown sanitisé** (gras, liens, listes, tableaux) mais **pas d'iframe** — le sanitizer la retire ; pour intégrer, utiliser les blocs `application` ou `iframe`.
 - `title` : `titleSize` visuel (`h1`…`h6` → classes `text-h1`…`text-h6`) et `titleTag` sémantique (`h1`…`h6`, `div`) sont indépendants. Le layout rend le titre du portail en `<h1>` **uniquement si l'entête est affichée** (`GET /portal/api/portal` → `config.header.show`) : vérifier avant de choisir `titleTag`. Pour un hero d'accueil (long titre), viser `titleSize: 'h2'` + `titleTag: 'h1'` ; pour une page de contenu, `titleSize: 'h3'` + `titleTag: 'h2'` (et pas de `<h1>` si l'entête en affiche déjà un).
-- `title` avec `anchor: { enabled: true, inToc: true }` alimente le sommaire (`_toc`) affiché par le portail.
+- **Sommaire** : il n'existe **aucune** option `toc` au niveau de la page ni du portail (le schéma `page-config` est en `unevaluatedProperties: false`, mais l'API accepte une clé inventée sans broncher : elle reste inerte). Le sommaire s'active **bloc titre par bloc titre** avec `anchor: { enabled: true, inToc: true, label? }` ; le serveur recalcule `config._toc` à chaque PATCH, dédoublonne les slugs et pose `anchor._slug`. `_toc` est `readOnly` : ne jamais l'écrire. Contrôle : `config._toc.length` = nombre de titres ancrés. Convention : ancres sur les H2/H3, jamais sur le H1 (doublon avec le titre de page).
+- **Fil d'Ariane** : porté par le `rootPage` du **groupe** de pages (slug de page), voir `references/api-workflow.md`.
+- **Images** : uploadées dans la médiathèque de la page, toujours `mobileAlt: false`, `height` calculée depuis le ratio du PNG sinon l'image est rognée — règles dans `references/elements.md`.
+- **Listings** : une page dont un bloc texte (souvent dans un `two-columns`) contient une ligne markdown par entrée. Ajouter puis **re-trier** avant de publier :
+
+  ```js
+  const lines = e.content.split('\n').map(l => l.trim()).filter(Boolean)
+  const key = l => { const m = l.match(/\[([^\]]+)\]/); return (m ? m[1] : l).toLowerCase().trim() }
+  lines.sort((a, b) => key(a).localeCompare(key(b), 'fr'))
+  e.content = lines.join('\n'); delete e._html
+  ```
+
+  Un listing peut aussi être une application DataFair (`list-details`) branchée sur un jeu de données : une entrée s'y ajoute comme **une ligne du jeu**, pas comme du contenu de page.
 - Structure éditoriale éprouvée : titre → alerte « Pour qui ? » → intro (enjeu/réglementation) → diagramme Mermaid → une section par étape du cas d'usage → intégration(s) → « Pour aller plus loin » (liens) → bouton CTA.
 - Renseigner `config.description` (SEO, cartes de partage) et `config.thumbnail` (og:image) ; garder les libellés en **casse de phrase** française.
 - Blocs `card` (utilisés dans les grilles) : `children` et `actions` sont **requis** (tableaux, même vides) ; le lien de carte est `link` (variante sans libellé) et la carte entière devient cliquable.
@@ -163,7 +177,11 @@ Le piège principal est la **mise à l'échelle** : le SVG est affiché à `widt
 
 Détails et checklist dans `references/embeds.md`.
 
-## 8. Vérifier
+## 8. Captures d'écran annotées
+
+Toute capture destinée à une page de portail suit une convention unique (thème clair, 1440 px, sans barre de défilement, rectangles rouges + badges numérotés) appliquée par `scripts/annotate.js`, dont `commit()` **refuse** une géométrie mauvaise (cible fantôme, cadres jointifs, badge recadré ou trop loin de sa cible). Flux, codes de rejet, réglages de viewport/thème et contrôle à l'œil dans `references/screenshots.md`.
+
+## 9. Vérifier
 
 Après publication, vérifier **le rendu réel**, pas seulement la réponse API (voir `references/api-workflow.md` pour les snippets) :
 
@@ -177,7 +195,15 @@ Après publication, vérifier **le rendu réel**, pas seulement la réponse API 
 8. capture d'écran en viewport desktop (1440 px) **et** mobile pour juger les tailles de titre et les grilles ;
 9. tester en **contexte anonyme** (`browser.newContext()`) : HTTP 200, diagramme et intégration rendus.
 
-## 9. Pièges déjà rencontrés
+## 10. Déléguer à un sous-agent
+
+Le pipeline est mécanique, donc délégable à un modèle plus léger. **Une page par sous-agent, en séquence** : les opérations navigateur partagent une seule session MCP, jamais en parallèle. Donner au sous-agent les constantes du portail (ids, `owner`, groupe), le chemin de ce skill et le gabarit du type de page ; vérifier son rendu (§9) avant de lancer le suivant.
+
+## 11. Nommer les applications
+
+Toute page qui nomme une application DataFair emploie le **libellé de l'application de base** en production (`GET /data-fair/api/v1/base-applications`), qui fait référence. Ce libellé est un override stocké dans DataFair, posé **par version** : la méta `title` de l'`index.html` des dépôts garde souvent l'ancien nom, et le libellé peut régresser à une release tant que l'override n'est pas reposé. Ne jamais déduire le nom d'une application de son dépôt ni de son `index.html`. Les **slugs** de page existants gardent les anciens noms : ne pas les renommer.
+
+## 12. Pièges déjà rencontrés
 
 - **`owner` sans `name`** → `400` avec un corps vide : toujours fournir `{ type, id, name, department?, departmentName? }`.
 - **API appelée sur la mauvaise origine** → réponse HTML/`Unexpected end of JSON input` : l'API n'existe que sur l'hôte du gestionnaire. Piège fréquent : naviguer vers le portail pour vérifier le rendu, puis enchaîner un appel API sans revenir sur l'hôte du gestionnaire.
@@ -191,6 +217,13 @@ Après publication, vérifier **le rendu réel**, pas seulement la réponse API 
 - **Fonds jaune/orange sur le diagramme** → le thème `base` de Mermaid dérive ses fonds de grappes du thème du portail ; neutraliser avec une directive `%%{init: ...}%%` (voir `references/mermaid.md`).
 - **Publication cross-département impossible** → être admin du propriétaire du portail visé, ou passer par `contributorDepartments` + validation par un admin du portail ; pour un transfert durable, transférer l'`owner` de la page (admin requis des deux côtés).
 - **Iframe externe bloquée** → ajouter le domaine dans `allowedFrameSources` ; pour une app de la même instance, préférer le bloc `application`.
+- **`linked page not found` / `403` à l'édition** → le portail appartient à un autre compte que celui de la session ; vérifier `portal.owner` et le rôle de l'identité courante.
+- **Page absente de la liste** → les pages sont **cloisonnées par département** : une page du portail n'est listée que depuis le département qui la possède ; une page absente peut très bien exister (`GET /pages/:id` par son id).
+- **Image cassée après publication** → `mobileAlt` absent ou `true` sur une image sans variante mobile ; poser `mobileAlt: false`.
+- **Image rognée** → `height` incompatible avec le ratio ; recalculer (`references/elements.md`).
+- **Sommaire vide** malgré `_toc` → les titres n'ont pas `anchor.enabled`/`inToc` ; la clé `toc` de page est inerte.
+- **Fil d'Ariane qui ne remonte pas au listing** → `rootPage` absent de l'objet groupe (`PATCH /groups/:id` avec `title` + `rootPage`).
+- **Formulaire re-rempli avec des valeurs concaténées** → `browser_type` / `browser_fill_form` ajoutent au contenu existant ; recharger le formulaire avant de le re-remplir.
 
 ## Références
 
@@ -198,3 +231,5 @@ Après publication, vérifier **le rendu réel**, pas seulement la réponse API 
 - `references/elements.md` — catalogue des blocs utiles : champs requis, propriétés courantes, conventions de contenu.
 - `references/mermaid.md` — règles de lisibilité, directive de thème, exemple de diagramme de bout en bout.
 - `references/embeds.md` — `application` vs `iframe`, CSP, multi-instance, boutons d'action.
+- `references/screenshots.md` — convention de capture, flux `ANNO`, codes de rejet, réglages de viewport et contrôle à l'œil.
+- `scripts/annotate.js` — couche d'annotation à charger dans la page via `browser_evaluate`.

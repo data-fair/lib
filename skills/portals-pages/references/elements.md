@@ -109,10 +109,55 @@ Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 - `link` est un `linkItem` discriminé : `external` (`href`), `standard` (`subtype`: home, contact, datasets…), `generic` (`pageRef {slug,title}`), `event`, `news`.
 - `usePortalConfig: true` reprend le style de bouton du portail ; sinon `config` porte les couleurs/variantes.
 
-### `divider` / `image`
+### `divider`
 
-- `divider` : `content`, `inset`, `rounded`, `opacity`, `thickness`, `color`.
-- `image` : `url` ou upload `image`/`wideImage`, `banner`, `cover`, `alignment`, `height`, `zoomable`, `title` (alt), `legend`, `link`. La miniature et les images passent par la médiathèque du portail (upload), pas par des URL externes pour les assets produits.
+`content`, `inset`, `rounded`, `opacity`, `thickness`, `color`. Séparateur discret éprouvé : `{ rounded: true, opacity: 0.2, thickness: 1 }`.
+
+### `image`
+
+```json
+{
+  "type": "image", "uuid": "…", "mb": 4,
+  "image": { "_id": "<id médiathèque>", "name": "01-config.png", "mimeType": "image/webp", "mobileAlt": false },
+  "height": 520, "cover": false, "zoomable": true,
+  "title": "Formulaire de configuration du connecteur", "legend": "Légende sous l'image"
+}
+```
+
+- `url` ou upload `image`/`wideImage` (référence médiathèque, voir `api-workflow.md`), `banner`, `cover`, `alignment`, `height`, `zoomable`, `title` (alt), `legend`, `link`, `isPresentation` (image décorative, ignorée par les lecteurs d'écran). La miniature et les images passent par la médiathèque du portail (upload), pas par des URL externes pour les assets produits.
+- **Toujours `image.mobileAlt: false`** sur une image uploadée, sinon le portail charge `<id>-mobile`, qui n'existe que si le serveur a produit une variante mobile (largeur > ~1536 px) → image cassée.
+- **`height` sur une image large la rogne.** La colonne de contenu fait ~896 px ; une image plus plate que le rapport imposé est agrandie puis coupée sur les côtés. Calculer `height ≈ 896 × (hauteurPNG / largeurPNG)`. Au-delà d'un ratio ~2.5 (bandes larges), passer en `cover: true` **sans** `height`.
+- Vérification après publication : pour chaque `main img`, `naturalWidth > 0`, pas de `-mobile` dans `src`, et `naturalWidth/naturalHeight` égal au ratio affiché — sinon elle est rognée.
+
+### Bandeau logo (`two-columns`)
+
+Titre de page avec le logo de la source à droite (cours, fiche de connecteur) :
+
+```js
+{ type: 'two-columns', uuid: u(), mb: 0, disposition: 'left', gutter: 'default', align: { right: 'center' },
+  children: [ /* title h1 non centré, text d'intro */ ],
+  children2: [ { type: 'image', uuid: u(), height: 200, cover: false, isPresentation: true, image: { _id, name, mimeType, mobileAlt: false } } ] }
+```
+
+Sans logo disponible : titre centré seul, pas de bandeau vide.
+
+### Builders
+
+Pour construire une page longue par script, des fabriques courtes évitent les oublis (`uuid`, `mobileAlt`) :
+
+```js
+const u = () => crypto.randomUUID()
+const H1 = c => ({ uuid: u(), type: 'title', centered: true, titleSize: 'h3', titleTag: 'h1', line: { position: 'none' }, content: c, color: 'primary' })
+const H2 = c => ({ uuid: u(), type: 'title', centered: false, titleSize: 'h5', titleTag: 'h2', line: { position: 'none' }, content: c, color: 'primary', anchor: { enabled: true, inToc: true } })
+const H3 = c => ({ uuid: u(), type: 'title', centered: false, titleSize: 'h6', titleTag: 'h3', line: { position: 'none' }, content: c, color: 'primary', anchor: { enabled: true, inToc: true } })
+const T = c => ({ uuid: u(), type: 'text', centered: false, mb: 4, content: c })   // ne jamais poser _html : régénéré au PATCH
+const DIV = () => ({ uuid: u(), type: 'divider', rounded: true, opacity: 0.2, thickness: 1 })
+const IMG = (img, alt, legend, height) => ({ uuid: u(), type: 'image', mb: 4, height, cover: false, zoomable: true, image: { ...img, mobileAlt: false }, title: alt, legend })
+const IMGC = (img, alt, legend) => ({ uuid: u(), type: 'image', mb: 4, cover: true, zoomable: false, image: { ...img, mobileAlt: false }, title: alt, legend })
+const BTN = (slug, title, label) => ({ uuid: u(), type: 'button', centered: true, mb: 0, usePortalConfig: true, link: { type: 'generic', pageRef: { slug, title }, title: label, target: false } })
+```
+
+`titleTag: 'h1'` sur le H1 de page seulement si l'entête du portail n'en rend pas déjà un (voir `title`).
 
 ## Conteneurs
 

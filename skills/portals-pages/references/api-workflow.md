@@ -1,7 +1,17 @@
 # API du gestionnaire — workflow et payloads
 
 Toutes les routes ci-dessous sont relatives à l'API du gestionnaire : `https://<hôte>/portals-manager/api`.
-Elles s'appellent en **same-origin** depuis une page de `<hôte>` (session en cookies), par exemple via `browser_evaluate` du MCP Playwright. Aucun en-tête d'authentification à gérer.
+Elles s'appellent en **same-origin** depuis une page de `<hôte>` (session en cookies), par exemple via `browser_evaluate` du MCP Playwright. Aucun en-tête d'authentification à gérer. L'API du gestionnaire **refuse les clés d'API** (`401`) : la session navigateur est la seule voie d'écriture.
+
+## Session fournie par le proxy NHI
+
+Quand le navigateur MCP est lancé derrière `@data-fair/nhi-proxy` (`browser.launchOptions.proxy` dans la config du MCP Playwright) :
+
+- le proxy injecte les cookies de session (`id_token`, `id_token_sign`, `id_token_org`, `id_token_dep`…) sur **l'hôte cible seulement** ; les autres hôtes sont tunnelés tels quels. Le sous-domaine du portail se voit donc en **visiteur anonyme** — c'est le bon contexte pour vérifier le rendu public, et une raison de plus de ne jamais appeler l'API depuis le portail ;
+- l'identité (organisation, département, rôle) est **fixée par le profil du proxy** ; les cookies injectés écrasent ceux posés par `document.cookie`, donc **aucune bascule de contexte par cookie** n'est possible. Pour créer une ressource ailleurs que dans le contexte courant, poser `owner` (avec `department`) **à la création** ;
+- la session (30 min) est **renouvelée automatiquement** par le proxy ; un `401`/`403` persistant signale un rôle manquant sur l'identité, pas une session expirée.
+
+Sonde de session valable partout : `GET /simple-directory/api/auth/me` → `200` + le compte. `/auth/me` sans le préfixe répond `404` même connecté : ne pas s'en servir comme sonde. Certaines opérations d'administration (renommer une application de base, par ex.) exigent en plus le **mode admin** du compte.
 
 ## Endpoints
 
@@ -19,6 +29,8 @@ Elles s'appellent en **same-origin** depuis une page de `<hôte>` (session en co
 | `POST` | `/pages/:id/draft` | admin ou contrib sur `page.owner` | publier le brouillon (`204`) |
 | `DELETE` | `/pages/:id/draft` | admin ou contrib sur `page.owner` | annuler le brouillon |
 | `POST` | `/images` | admin sur le compte courant | uploader une image (multipart `body` + `image`) |
+| `GET` | `/groups?size=100` | admin du compte courant | lister les groupes de pages (`slug`, `title`, `rootPage`) |
+| `PATCH` | `/groups/:id` | admin sur `group.owner` | modifier un groupe ; `title` **obligatoire** dans le corps (`400` sinon) |
 
 L'API DataFair de l'instance est sur `https://<hôte>/data-fair/api/v1/...`.
 
@@ -143,9 +155,29 @@ async () => {
 
 L'édition est identique à une page `generic` (pas de `genericMetadata`). L'accueil se lit publiquement sur `/portal/api/pages/home/home`. Attention : attacher une page standard à un portail détache automatiquement la page du même type déjà publiée (`switchStandardPages`) et une page `home` ne peut plus être dépubliée.
 
+## Groupes et fil d'Ariane
+
+Une page `generic` appartient à un groupe (`genericMetadata.group`) qui préfixe son URL (`/pages-<groupe>/<slug>`). Le fil d'Ariane remonte au **`rootPage` du groupe**, qui attend un **slug de page**, pas un id :
+
+```js
+async () => {
+  const r = await fetch('/portals-manager/api/groups/<groupId>', {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ title: 'Catalogues distants', rootPage: 'catalogs' })   // title obligatoire
+  })
+  return r.status
+}
+```
+
+Le serveur propage ensuite `rootPage` dans `genericMetadata.group.rootPage` de **toutes** les pages du groupe. Si le fil d'Ariane ne remonte pas au listing, c'est presque toujours `rootPage` absent de l'objet groupe.
+
 ## Uploader une image
 
-`POST /portals-manager/api/images`, multipart avec un champ `body` (JSON) et un fichier `image` :
+`POST /portals-manager/api/images`, multipart avec un champ `body` (JSON) et un fichier `image`. Trois façons d'obtenir le `File`/`Blob` :
+
+- **fichier local** : créer un `<input type="file">` dans le DOM, l'alimenter avec `browser_file_upload`, lire `input.files[0]` ;
+- **drag & drop** dans la page (`window.__dropped[0]` ci-dessous) ;
+- **depuis une URL same-origin** (miniature du registre, image d'un autre service) : `await (await fetch(url, { credentials: 'include' })).blob()`.
 
 ```js
 async () => {
@@ -159,7 +191,7 @@ async () => {
 }
 ```
 
-La réponse se met directement dans `config.thumbnail` (`{ _id, name, mimeType }`) ou dans un bloc `image`. Le serveur reconvertit en webp et crée une variante mobile si la largeur dépasse ~1536 px.
+La réponse se met directement dans `config.thumbnail` (`{ _id, name, mimeType }`) ou dans un bloc `image` — avec **`mobileAlt: false`** (voir `elements.md`). Le serveur reconvertit en webp et crée une variante mobile si la largeur dépasse ~1536 px. Une image uploadée sur une page n'est résolue que depuis cette page : uploader **après** avoir créé la page cible.
 
 ## Transférer une page vers un autre département
 
