@@ -5,13 +5,7 @@ Elles s'appellent en **same-origin** depuis une page de `<hôte>` (session en co
 
 ## Session fournie par le proxy NHI
 
-Quand le navigateur MCP est lancé derrière `@data-fair/nhi-proxy` (`browser.launchOptions.proxy` dans la config du MCP Playwright) :
-
-- le proxy injecte les cookies de session (`id_token`, `id_token_sign`, `id_token_org`, `id_token_dep`…) sur **l'hôte cible seulement** ; les autres hôtes sont tunnelés tels quels. Le sous-domaine du portail se voit donc en **visiteur anonyme** — c'est le bon contexte pour vérifier le rendu public, et une raison de plus de ne jamais appeler l'API depuis le portail ;
-- l'identité (organisation, département, rôle) est **fixée par le profil du proxy** ; les cookies injectés écrasent ceux posés par `document.cookie`, donc **aucune bascule de contexte par cookie** n'est possible. Pour créer une ressource ailleurs que dans le contexte courant, poser `owner` (avec `department`) **à la création** ;
-- la session (30 min) est **renouvelée automatiquement** par le proxy ; un `401`/`403` persistant signale un rôle manquant sur l'identité, pas une session expirée.
-
-Sonde de session valable partout : `GET /simple-directory/api/auth/me` → `200` + le compte. `/auth/me` sans le préfixe répond `404` même connecté : ne pas s'en servir comme sonde. Certaines opérations d'administration (renommer une application de base, par ex.) exigent en plus le **mode admin** du compte.
+L'identité NHI, ce que le proxy injecte et où, la sonde de session et le mode admin : voir le skill `data-fair-browse` (§1). Le seul point à retenir ici : l'identité est **figée par le profil du proxy**, donc pour créer une page dans un autre compte ou département il faut poser `owner` **à la création**.
 
 ## Endpoints
 

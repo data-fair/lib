@@ -36,7 +36,8 @@ Cet skill ne couvre **pas** :
 - **portals v1** (ancien module Nuxt 2, par ex. `koumoul.com` à la racine pendant la migration) : pas de gestionnaire v2, pas de bloc Mermaid, iframe brut toléré dans le markdown. Si la page est demandée sur un site v1, le dire et proposer soit une page v2, soit un rendu Mermaid en image. **Vérifier quel service sert l'hôte avant d'éditer** : chercher `/portal/api` (v2) ou `/data-fair-portals/` (v1) dans le HTML servi. Le gestionnaire peut contenir un portail homonyme **sans `ingress`** qui n'est qu'une copie de migration : l'éditer ne change rien en ligne ;
 - la configuration du portail elle-même (thème, menu, en-tête, pied de page) hors `allowedFrameSources` ;
 - le contenu des pages catalogue / réutilisation / événement / actualité (hors pages standard d'accueil de catalogue) ;
-- le développement du code de portals (dépôt `data-fair/portals`).
+- le développement du code de portals (dépôt `data-fair/portals`) ;
+- la mécanique d'interaction avec la plateforme au navigateur — identité NHI, outils WebMCP de la page, appels d'API, check-list de vérification générique : voir le skill **`data-fair-browse`**, dont celui-ci est le prolongement éditorial.
 
 **Version minimale** : le bloc `mermaid` existe depuis portals **2.33.0**. Le gestionnaire et le portail d'une cible se mettent à jour ensemble (image `:2`), donc vérifier la disponibilité du bloc avant de le proposer, et prévoir un repli en image si la cible est plus ancienne.
 
@@ -77,7 +78,7 @@ Points d'attention :
 
 ## 3. Créer / modifier une page
 
-Le chemin fiable est l'**API du gestionnaire appelée en same-origin depuis la session Playwright** (cookies inclus automatiquement) : plus rapide et déterministe que de remplir les formulaires VJSF. Voir `references/api-workflow.md` pour le script complet et les payloads exacts. L'API refuse les clés d'API ; quand le navigateur passe par le proxy NHI, l'identité est fixée par le profil du proxy et se choisit en posant `owner` à la création (`references/api-workflow.md`, « Session fournie par le proxy NHI »).
+Le chemin fiable est l'**API du gestionnaire appelée en same-origin depuis la session Playwright** (cookies inclus automatiquement) : plus rapide et déterministe que de remplir les formulaires VJSF. Voir `references/api-workflow.md` pour le script complet et les payloads exacts. L'API refuse les clés d'API ; quand le navigateur passe par le proxy NHI, l'identité est fixée par le profil du proxy et se choisit en posant `owner` à la création (`data-fair-browse` §1).
 
 Séquence en trois appels :
 
@@ -185,18 +186,15 @@ Toute capture destinée à une page de portail suit une convention unique (thèm
 
 ## 9. Vérifier
 
-Après publication, vérifier **le rendu réel**, pas seulement la réponse API (voir `references/api-workflow.md` pour les snippets) :
+La check-list générique (anti-cache, console, images chargées, `<d-frame>` et son shadow root, contexte anonyme, captures desktop et mobile) est dans `data-fair-browse` §4. Après publication, vérifier **le rendu réel** de la page publique (accueil `/` pour une page `home`) et en plus, pour une page de portail :
 
-1. ouvrir la page publique (accueil `/` pour une page `home`) avec un paramètre anti-cache (`?v=N`) ;
-2. SEO : `<title>`, meta description, **un seul H1** (compter aussi le `<h1>` du bandeau si l'entête est affichée), `og:image` présent, JSON-LD ;
-3. images : toutes chargées (`naturalWidth > 0`) — une image `404` signale une référence média d'une autre instance ;
-4. diagramme : `[role="img"][aria-label*="..."] svg` présent et sans `.error-icon` ;
-5. intégration : un élément `<d-frame>` avec un iframe dans son **shadow root**, canvas de carte chargé, compteur temps réel (`N véhicules`) ;
-6. tuiles de carte : requêtes `/tileserver/...` en `200` ;
-7. console : aucune erreur hors `favicon.ico` ;
-8. capture d'écran en viewport desktop (1440 px) **et** mobile pour juger les tailles de titre et les grilles ;
-9. tester en **contexte anonyme** (`browser.newContext()`) : HTTP 200, diagramme et intégration rendus ;
-10. **relecture visuelle** (`references/design.md`, §9) : captures desktop (1440 px) **et** mobile, hiérarchie (un seul H1, pas de saut de niveau), rythme (aucun bloc collé ni trou), débordements (titres longs, tableaux, iframes), contraste en thème sombre — au minimum `default` et `dark`.
+1. SEO : `<title>`, meta description, **un seul H1** (compter aussi le `<h1>` du bandeau si l'entête est affichée), `og:image` présent, JSON-LD ;
+2. diagramme : `[role="img"][aria-label*="..."] svg` présent et sans `.error-icon` ;
+3. intégration : contenu réellement rendu dans le `<d-frame>` (canvas de carte chargé, compteur temps réel `N véhicules`…) ;
+4. tuiles de carte : requêtes `/tileserver/...` en `200` ;
+5. **relecture visuelle** (`references/design.md`, §9) : hiérarchie (un seul H1, pas de saut de niveau), rythme (aucun bloc collé ni trou), débordements (titres longs, tableaux, iframes), contraste en thème sombre — au minimum `default` et `dark`.
+
+Snippets dans `references/api-workflow.md`.
 
 ## 10. Déléguer à un sous-agent
 
@@ -226,7 +224,6 @@ Toute page qui nomme une application DataFair emploie le **libellé de l'applica
 - **Image rognée** → `height` incompatible avec le ratio ; recalculer (`references/elements.md`).
 - **Sommaire vide** malgré `_toc` → les titres n'ont pas `anchor.enabled`/`inToc` ; la clé `toc` de page est inerte.
 - **Fil d'Ariane qui ne remonte pas au listing** → `rootPage` absent de l'objet groupe (`PATCH /groups/:id` avec `title` + `rootPage`).
-- **Formulaire re-rempli avec des valeurs concaténées** → `browser_type` / `browser_fill_form` ajoutent au contenu existant ; recharger le formulaire avant de le re-remplir.
 - **Trait de titre invisible** → `line` demandé sans `line.color` : la couleur CSS est invalide, aucun trait n'est rendu (`references/design.md`, §5).
 - **Teinte inopérante** → `tintStrength` n'agit qu'avec `background.color` **et** `background.image` ; l'un des deux manque.
 - **`cover: true` sans `height`** → `height:100%` dans un parent auto : aucun recadrage visible, l'image garde son ratio.
@@ -236,6 +233,7 @@ Toute page qui nomme une application DataFair emploie le **libellé de l'applica
 
 ## Références
 
+- `data-fair-browse` — identité NHI, outils WebMCP d'une page, échelle outil → API → Playwright, vérification d'un rendu.
 - `references/api-workflow.md` — endpoints et payloads exacts, script de création complet, découverte des droits, déplacement de page, snippets de vérification.
 - `references/elements.md` — catalogue des blocs utiles : champs requis, propriétés courantes, conventions de contenu.
 - `references/design.md` — composition et rendu : parti pris, recettes (hero, sections, grilles, FAQ), table « propriété → rendu » et pièges visuels, typographie/hiérarchie, rythme, thèmes et contraste, relecture visuelle.
