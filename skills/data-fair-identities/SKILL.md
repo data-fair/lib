@@ -103,9 +103,21 @@ simple-directory does not send `partners`):
 - **partners** (services granting permissions to other organizations) — a
   permission `{ type: 'organization', id: X }` on a resource of organization `A`
   with `X` ∉ `A.partners` and `X ≠ A` is removed: the partnership ended.
-- **departments** — a deleted department is not acted upon today: resources keep
-  their `owner.department`, remain reachable by the organization admins, and the
-  old `departmentName` stays as a label.
+- **departments** — a resource whose `owner.department` is not in `departments`
+  belongs to a deleted department: keep the id (the organization admins still
+  reach the resource) but `$unset` `owner.departmentName`, on every collection
+  where it is renamed. The UI then labels it "Former department - {id}"
+  (`useDisplayOwner()` in the services, passed to `owner-avatar`).
+
+```ts
+if (identity.departments) {
+  for (const department of identity.departments) { /* rename owner.departmentName */ }
+  await collection.updateMany(
+    { 'owner.type': type, 'owner.id': id, 'owner.department': { $exists: true, $nin: identity.departments.map(d => d.id) } },
+    { $unset: { 'owner.departmentName': 1 } }
+  )
+}
+```
 
 ## What `onDelete` must do
 
@@ -161,6 +173,7 @@ that the hooks are awaited.
 | Permissive guard when the secret is unset | any caller can delete every resource |
 | Missing `await` on a `deleteMany` | 200 returned before deletion, silent failures |
 | Renaming `owner.name` but not `permissions[].name` or `departmentName` | stale names in lists and filters |
+| Renaming the remaining departments but keeping the name of a missing one | a deleted department keeps showing under its old name |
 | Deleting the main document but not what hangs off it | orphans (runs, publications, files, indexes) |
 | Storing `created.name` / `updated.name` | a deleted user's name survives on other owners' resources |
 | Reimplementing the router instead of using the lib | the two services that did (data-fair, taxman) were the two with defects |
@@ -169,6 +182,6 @@ that the hooks are awaited.
 
 - [ ] `createIdentitiesRouter` from the lib, mounted on `/api/identities`, secret from `SECRET_IDENTITIES`
 - [ ] every collection reviewed: owner, department, permissions, sender/recipient, created/updated
-- [ ] `onUpdate` reconciles memberships and partners when the lists are present
+- [ ] `onUpdate` reconciles memberships, partners and departments when the lists are present
 - [ ] `onDelete` covers owned, referencing and traceability data, all awaited
 - [ ] `identities.api.spec.ts` with a rename case and a delete case asserting immediately
