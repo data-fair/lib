@@ -10,10 +10,10 @@ const formerDepartment: Record<string, string> = {
   en: 'Former department'
 }
 
-/** Label of a department: its name, or "Former department - <id>" once it was deleted. */
+/** Label of a department: its name, or "Former department (<id>)" once it was deleted. */
 export function formatDepartmentLabel (lang: string, department?: string, departmentName?: string): string | undefined {
   if (!department) return undefined
-  return departmentName || `${formerDepartment[lang] ?? formerDepartment.en} - ${department}`
+  return departmentName || `${formerDepartment[lang] ?? formerDepartment.en} (${department})`
 }
 
 /** Department labels in the language of the current session. */

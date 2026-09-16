@@ -13,11 +13,11 @@ describe('formatDepartmentLabel', () => {
   })
 
   it('labels a deleted department with its id, in the requested language', () => {
-    assert.strictEqual(formatDepartmentLabel('fr', 'head', undefined), 'Ancien département - head')
-    assert.strictEqual(formatDepartmentLabel('en', 'head', undefined), 'Former department - head')
+    assert.strictEqual(formatDepartmentLabel('fr', 'head', undefined), 'Ancien département (head)')
+    assert.strictEqual(formatDepartmentLabel('en', 'head', undefined), 'Former department (head)')
   })
 
   it('falls back on english for an unknown language', () => {
-    assert.strictEqual(formatDepartmentLabel('de', 'head'), 'Former department - head')
+    assert.strictEqual(formatDepartmentLabel('de', 'head'), 'Former department (head)')
   })
 })

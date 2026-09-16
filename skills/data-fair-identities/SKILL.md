@@ -106,7 +106,7 @@ simple-directory does not send `partners`):
 - **departments** — a resource whose `owner.department` is not in `departments`
   belongs to a deleted department: keep the id (the organization admins still
   reach the resource) but `$unset` `owner.departmentName`, on every collection
-  where it is renamed. The UI then labels it "Former department - {id}"
+  where it is renamed. The UI then labels it "Former department ({id})"
   (`useDisplayOwner()` from `@data-fair/lib-vue/owner.js` for text labels;
   `owner-avatar` from `@data-fair/lib-vuetify` ≥ 2.5.0 does it by itself).
 
