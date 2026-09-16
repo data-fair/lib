@@ -171,6 +171,20 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
 ```
 
+### useDisplayOwner
+
+A department deleted in simple-directory keeps its id on the resources it owned but loses its `departmentName` (the identity webhook removed it). `useDisplayOwner` builds the label to display in that case, in the language of the session: `Ancien département (<id>)` / `Former department (<id>)`.
+
+```ts
+import { useDisplayOwner } from '@data-fair/lib-vue/owner.js'
+
+const { departmentLabel, displayOwner } = useDisplayOwner()
+departmentLabel(owner.department, owner.departmentName) // "Direction" | "Former department (head)" | undefined
+displayOwner(owner) // same owner, with departmentName filled when the department was deleted
+```
+
+`@data-fair/lib-vuetify/owner-avatar.vue` applies it by itself: pass the raw owner. Use `departmentLabel` for text labels and `displayOwner` only for a component that reads `departmentName` directly. The pure `formatDepartmentLabel(lang, department, departmentName)` is exported for code outside a component.
+
 ## Nuxt
 
 We provide a Nuxt module to help bootstrap a nuxt project with vuetify and our own composables.
