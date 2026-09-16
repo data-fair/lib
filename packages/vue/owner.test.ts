@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
-import { formatDepartmentLabel } from './owner.ts'
+import { formatDepartmentLabel } from './owner.js'
 
 describe('formatDepartmentLabel', () => {
   it('returns undefined without a department', () => {
