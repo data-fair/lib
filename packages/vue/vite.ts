@@ -30,6 +30,7 @@ export const autoImports = [
     '@data-fair/lib-vue/fetch.js': ['useFetch'],
     '@data-fair/lib-vue/edit-fetch.js': ['useEditFetch'],
     '@data-fair/lib-vue/ws.js': ['useWS'],
+    '@data-fair/lib-vue/owner.js': ['useDisplayOwner'],
     '@data-fair/lib-vue/async-action.js': ['useAsyncAction'],
     '@data-fair/lib-vue/leave-guard.js': ['useLeaveGuard'],
     '@data-fair/lib-vue/deep-diff.js': ['computedDeepDiff', 'watchDeepDiff'],
