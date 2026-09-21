@@ -7,9 +7,10 @@ description: >
   page/portal config. Triggers include: legacy x-* keywords (x-display,
   x-fromUrl, x-if, x-itemsProp...), a form that renders wrong with no error
   (collapsed tabs, picker turned into raw text fields), selects fed by
-  layout.getItems, sliders, icon pickers, conditional fields, discriminated
-  oneOf, a form that takes seconds to open (large oneOf, dereferenced schema),
-  or schema translations with x-i18n-*.
+  layout.getItems, a select that should be an autocomplete, sliders, icon
+  pickers, conditional fields, discriminated oneOf, a form that takes seconds
+  to open (large oneOf, dereferenced schema), or schema translations with
+  x-i18n-*.
 ---
 
 # vjsf / json-layout form schemas
@@ -48,7 +49,7 @@ Full migration table, expression traps and the `v2compat` helper: **`references/
 
 **Component names:** `none` `slot` `composite-slot` `section` `tabs` `vertical-tabs` `expansion-panels` `stepper` `card` `list` `text-field` `textarea` `number-field` `checkbox` `switch` `slider` `date-picker` `date-time-picker` `time-picker` `color-picker` `select` `autocomplete` `combobox` `number-combobox` `checkbox-group` `switch-group` `radio-group` `file-input` `one-of-select`.
 
-The component is **inferred** from the schema (object → `section`, `oneOf` → `one-of-select`, `enum` → `select`, >20 items → `autocomplete`, array → `list`…). Only set `comp` when the inference is wrong.
+The component is **inferred** from the schema (object → `section`, `oneOf` → `one-of-select`, `enum` → `select`, >20 items → `autocomplete`, array → `list`…). Only set `comp` when the inference is wrong — which it often is for choice lists, see § Select or autocomplete.
 
 **Object form, the keys that matter:**
 
@@ -78,20 +79,40 @@ Ready-to-copy examples (tabs, sliders, icon picker, arrays, hidden and password 
 
 | Field | Meaning |
 |---|---|
-| `url` | template literal (`${…}`); `{q}` marks the search param |
+| `url` | template literal (`${…}`) |
 | `expr` | JS expression over existing data (`rootData.datasets`, `context.attachments`) — no HTTP call |
-| `qSearchParam` | explicit search param name — alternative to `{q}` |
+| `qSearchParam` | name of the search param the typed text is sent as (`"q"` on data-fair endpoints) — makes the field an `autocomplete` with server-side search |
 | `itemsResults` | expression over the response, alias `data` (e.g. `"data.results"`) |
 | `itemTitle` / `itemKey` / `itemValue` / `itemIcon` | expressions over one raw item, alias `item` (or `data` in app schemas — both are exposed) |
 | `searchParams` / `headers` | extra request params |
 
-Either `{q}` in the url **or** `qSearchParam` makes the component an `autocomplete` (server-side search). Without both it is a `select` — every item fetched once. Always give one of them for dataset pickers.
+`qSearchParam` is the current form. The older `{q}` placeholder inside the url (`&q={q}`) still works and is equivalent, but it is only worth it when the typed text must be embedded in a larger value (`qs=title:{q}*`). New schemas use `qSearchParam`.
+
+### Select or autocomplete
+
+Inference (`@json-layout/vocabulary` `normalize.js`): a static list — `enum`, `oneOf` of simple values, `layout.items`, `items.enum` of an array — becomes a `select` up to **20 items** and an `autocomplete` beyond (hard-coded threshold, not configurable). `getItems.expr` and a `getItems.url` without `qSearchParam`/`{q}` are **always** a `select`, whatever the size of the list. A discriminated `oneOf` of objects (`one-of-select`) is never inferred as autocomplete: set `oneOfLayout.autocomplete: true`.
+
+Both components get the list the same way (fetched or computed once, cached); the difference is what the user can do with it:
+
+- `select`: the whole list is displayed, nothing to type.
+- `autocomplete`: the typed text is handed to json-layout. With `qSearchParam` it goes to the server (one request per keystroke, no debounce; the param is dropped when empty). Without it the full list is fetched or computed once and **filtered client-side** on `item.title` (case-insensitive `includes`).
+
+Which one to write:
+
+| Source | What to do |
+|---|---|
+| `getItems.url` on a paginated endpoint (datasets, lines, applications…) | `qSearchParam` — server-side search, mandatory |
+| `getItems.url` with no search param, `getItems.expr` | force `"comp": "autocomplete"` — strongly recommended, the list is bounded but still searched |
+| `enum` / `oneOf` of values / `layout.items` | force `"comp": "autocomplete"` unless the list is under ~10 simple, well-known choices (a mode, a sort order, a level) |
+
+The 20-item default threshold is too high for our schemas: a dataset's fields, a list of concepts or projections is *searched*, not scanned. Keep `select` (or `radio-group`) for short, fixed enumerations only.
 
 **Always set an explicit `size` on data-fair URLs.** data-fair search endpoints (`/api/v1/datasets`, `…/lines`, applications listing) return **12 results by default** — too few for a usable select or autocomplete. Append `&size=50` (a good default across the stack) unless the list is known to be tiny, and add `&select=…` to fetch only the fields you use:
 
 ```json
 "getItems": {
-  "url": "api/v1/datasets?status=finalized&q={q}&select=id,title&size=50",
+  "url": "api/v1/datasets?status=finalized&select=id,title&size=50",
+  "qSearchParam": "q",
   "itemKey": "data.id",
   "itemTitle": "data.title",
   "itemsResults": "data.results"
@@ -207,7 +228,9 @@ Two exceptions only: technical identifiers rendered as-is (`h1`, a dataset field
 | `{context.dataFairUrl}` in a `getItems.url` | `${context.dataFairUrl}` — it's a template literal |
 | `"itemTitle": "title"` | `"itemTitle": "item.title"` — it's an expression |
 | `parent.value.x` in an `if` | `parent.data.x` |
-| Picker with neither `{q}` nor `qSearchParam` | Becomes a `select` that loads everything at once — add one |
+| Picker on a paginated endpoint without `qSearchParam` | Becomes a `select` that loads one page at once — add `qSearchParam` |
+| `select` inferred on a list the user has to search in (dataset fields, `getItems.expr`, 10–20 item `enum`) | The 20-item threshold is too high — force `comp: "autocomplete"` (client-side filtering) |
+| `&q={q}` in a new `getItems.url` | Older syntax — use `qSearchParam: "q"` unless the text must be embedded (`qs=title:{q}*`) |
 | data-fair URL without `size` | Only 12 results come back — add `&size=50` |
 | Large `oneOf` without `discriminator` | Every branch is tried — the form gets slow; add it (and `ajvOptions: { discriminator: true }` where ajv runs) |
 | Form takes seconds to open, profile full of Ajv codegen | Check whether the schema it is fed was dereferenced — inlined `$ref`s multiply the subschemas compiled |
@@ -221,7 +244,8 @@ Two exceptions only: technical identifiers rendered as-is (`h1`, a dataset field
 ## Checklist before committing a schema change
 
 - [ ] `grep -n '"x-'` returns nothing but `x-exports` / `x-i18n-*`
-- [ ] Every `getItems` on a data-fair endpoint has `{q}` or `qSearchParam`, an explicit `size` (≈50) and a `select`
+- [ ] Every `getItems` on a data-fair endpoint has `qSearchParam`, an explicit `size` (≈50) and a `select`
+- [ ] Every other choice list (`enum`, `layout.items`, `getItems.expr`, url without search) is either under ~10 fixed choices or forced to `comp: "autocomplete"`
 - [ ] Exclusive variants use `oneOf` + `const` + `discriminator` (+ branch `title`s, `oneOfLayout` label)
 - [ ] No half-translated schema: either full French, or full base-EN + `x-i18n-*.fr`
 - [ ] Every user-facing label starts with a capital, in sentence case
