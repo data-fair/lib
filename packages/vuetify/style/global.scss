@@ -18,6 +18,16 @@
   }
 }
 
+// the color pack is off, and this is the one utility of it that we need: an app or a
+// component embedded in a page, a card or a panel takes the background of its host
+// instead of painting the theme background over it. Same layer as the color pack's
+// version, so it outranks the component styles the way Vuetify's own utilities do.
+@layer vuetify-utilities.theme-background {
+  .bg-transparent {
+    background-color: transparent;
+  }
+}
+
 // v-icon has an opacity when it is prepended in a list of items.
 // ref: https://github.com/vuetifyjs/vuetify/issues/18760
 .v-icon {
