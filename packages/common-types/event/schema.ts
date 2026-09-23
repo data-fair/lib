@@ -132,6 +132,18 @@ export default {
       type: 'object',
       description: 'Free properties that varie depending on the type of event'
     },
+    channels: {
+      type: 'array',
+      title: 'Delivery channels',
+      description: 'Where the events service delivers the event: stored in the owner\'s event history (events), one notification per matching subscriber (notifications), one delivery per matching webhook subscription (webhooks). Absent means all channels.',
+      uniqueItems: true,
+      items: { type: 'string', enum: ['events', 'notifications', 'webhooks'] }
+    },
+    coalesce: {
+      type: 'boolean',
+      title: 'Coalesce webhook deliveries',
+      description: 'A pending webhook delivery for the same webhook subscription and topic key is replaced by this one instead of queuing another.'
+    },
     resource: {
       type: 'object',
       title: 'The main resource concerned by the event',
