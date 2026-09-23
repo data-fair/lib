@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import eventSchema from './schema.ts'
+import eventSchema from './schema.js'
 
 test('event schema declares delivery channels', () => {
   const channels = eventSchema.properties.channels
