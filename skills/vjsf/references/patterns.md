@@ -124,7 +124,8 @@ See SKILL.md § Discriminated oneOf for the performance rationale (`ajvOptions: 
   "type": "array",
   "layout": {
     "getItems": {
-      "url": "api/v1/datasets?status=finalized&q={q}&select=id,title,schema&size=50",
+      "url": "api/v1/datasets?status=finalized&select=id,title,schema&size=50",
+      "qSearchParam": "q",
       "itemKey": "data.href",
       "itemTitle": "data.title",
       "itemsResults": "data.results"

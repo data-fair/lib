@@ -75,7 +75,9 @@ type ServeSpaOptions = {
     header: CSPHeader | ((req: Request) => CSPHeader),
     nonce?: boolean
   },
-  getSiteExtraParams?: (siteUrl: string) => Promise<Record<string, string>>
+  getSiteExtraParams?: (siteUrl: string) => Promise<Record<string, string>>,
+  // back-offices and internal services never belong in search results, opt out only for a public SPA
+  noindex?: boolean
 }
 
 async function createHtmlMiddleware (directory: string, baseParams: Record<string, string>, options?: ServeSpaOptions): Promise<import('express').RequestHandler> {
@@ -142,6 +144,7 @@ function createStaticMiddleware (directory: string): import('express').RequestHa
 export async function createSpaMiddleware (directory: string, uiConfig: any, options?: ServeSpaOptions): Promise<import('express').RequestHandler> {
   const { uiConfigStr, uiConfigJs, uiConfigPath } = prepareUiConfig(uiConfig)
   const baseParams = { UI_CONFIG: uiConfigStr, UI_CONFIG_PATH: uiConfigPath }
+  const noindex = options?.noindex ?? true
 
   const staticMiddleware = createStaticMiddleware(directory)
   const htmlMiddleware = await createHtmlMiddleware(directory, baseParams, options)
@@ -149,6 +152,7 @@ export async function createSpaMiddleware (directory: string, uiConfig: any, opt
     if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(404).send()
     // force buffering, necessary for caching of source files in the reverse proxy
     res.setHeader('X-Accel-Buffering', 'yes')
+    if (noindex) res.setHeader('X-Robots-Tag', 'noindex')
     if (req.url.startsWith('/index.html')) {
       await htmlMiddleware(req, res, next)
     } else if (req.url === uiConfigPath) {

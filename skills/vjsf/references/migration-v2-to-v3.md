@@ -31,7 +31,7 @@ Detection: `grep -n '"x-' <schema>` and migrate everything it finds **except** `
 | `"x-options": { "evalMethod": "evalExpr" }` | drop it — expressions are `js-eval` by default |
 | `"x-options": { "hideInArrayItem": true }` | `"layout": { "if": "!summary" }` |
 | `"x-fromData": "expr"` | `"layout": { "getItems": { "expr": "…" } }` |
-| `"x-fromUrl": "{context.dataFairUrl}/…{q}…{context.ownerFilter}"` | `"layout": { "getItems": { "url": "${context.dataFairUrl}/…{q}…${context.ownerFilter}" } }` — **`{context.x}` → `${context.x}`**, `{q}` stays |
+| `"x-fromUrl": "{context.dataFairUrl}/…{q}…{context.ownerFilter}"` | `"layout": { "getItems": { "url": "${context.dataFairUrl}/…{q}…${context.ownerFilter}" } }` — **`{context.x}` → `${context.x}`**, `{q}` stays (still supported; or drop it and add `qSearchParam: "q"`, the current form) |
 | `"x-itemsProp": "results"` | `"itemsResults": "data.results"` (inside `getItems`) |
 | `"x-itemTitle": "title"` | `"itemTitle": "item.title"` (inside `getItems`) |
 | `"x-itemKey": "id"` | `"itemKey": "item.id"` (inside `getItems`) |

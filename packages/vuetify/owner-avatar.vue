@@ -23,6 +23,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useDisplayOwner } from '@data-fair/lib-vue/owner.js'
 
 const props = withDefaults(defineProps<{
   owner: Record<string, any>
@@ -37,6 +38,8 @@ const props = withDefaults(defineProps<{
   omitOwnerName: false
 })
 
+const { departmentLabel } = useDisplayOwner()
+
 const avatarUrl = computed(() => {
   if (props.owner.department) return `/simple-directory/api/avatars/${props.owner.type}/${props.owner.id}/${props.owner.department}/avatar.png`
   else return `/simple-directory/api/avatars/${props.owner.type}/${props.owner.id}/avatar.png`
@@ -45,7 +48,7 @@ const avatarUrl = computed(() => {
 const label = computed(() => {
   let label = ''
   if (!props.omitOwnerName || !props.owner.department) label += props.owner.name
-  if (props.owner.department) label += (!props.omitOwnerName ? ' - ' : '') + (props.owner.departmentName || props.owner.department)
+  if (props.owner.department) label += (!props.omitOwnerName ? ' - ' : '') + departmentLabel(props.owner.department, props.owner.departmentName)
   if (props.owner.role) label += ` (${props.owner.role})`
   return label
 })
