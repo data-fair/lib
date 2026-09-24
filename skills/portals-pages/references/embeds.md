@@ -85,7 +85,7 @@ Le même réglage existe dans le gestionnaire : portail → **Paramètres géné
 Le bloc `application` ne résout que sur l'instance du portail. Pour une app d'une autre instance DataFair (autre tenant, `demo.koumoul.com` depuis un portail de `koumoul.com`, etc.) : utiliser le bloc `iframe` avec l'`exposedUrl` de l'app et autoriser le domaine dans `allowedFrameSources`.
 
 - URL publique d'une app DataFair : `https://<instance>/data-fair/app/<slug ou id>` (ajouter `?d-frame=true` pour le comportement d-frame complet).
-- Si l'app est protégée par un lien de partage (clé d'accès), l'URL porte la clé préfixée : `/data-fair/app/<accessKey>%3A<appId>`. Vérifier le rendu en anonyme avant de publier — détails dans le skill `skill-apps` (`references/embeds-params.md`).
+- Si l'app est protégée par un lien de partage (clé d'accès), l'URL porte la clé préfixée : `/data-fair/app/<accessKey>%3A<appId>`. Vérifier le rendu en anonyme avant de publier — détails dans le skill `data-fair-app` (`references/embeds-params.md`).
 - Vérifier la portabilité lors d'un **déplacement de page** : une page conçue pour `demo.koumoul.com` (bloc `application` sur une app de cette instance) reste valable si l'instance ne change pas ; en cas de changement d'instance, repasser par un `iframe` ou reconfigurer le bloc.
 
 ## Vérifier

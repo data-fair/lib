@@ -21,7 +21,7 @@ A vjsf form is driven by a **JSON Schema** annotated with the **json-layout `lay
 
 Version naming: "vjsf 3+" and "vjsf 4" share the same vocabulary — v4 is the Vuetify 4 port of v3, no schema-level breaking change. The current lib is 4.5.x. Anything written here applies to both.
 
-**Not covered here** (see the consumer skills): the `df:vjsf` meta and `df-build-types` pipeline of applications (skill-apps), the `datasetMode` create/update pattern and processing context variables (data-fair-processings), the portals compiled mode (`x-vjsf`, `--vjsf-dir`).
+**Not covered here** (see the consumer skills): the `df:vjsf` meta and `df-build-types` pipeline of applications (data-fair-app), the `datasetMode` create/update pattern and processing context variables (data-fair-processing), the portals compiled mode (`x-vjsf`, `--vjsf-dir`).
 
 ## When to use
 

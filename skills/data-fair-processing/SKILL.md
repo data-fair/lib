@@ -1,5 +1,5 @@
 ---
-name: data-fair-processings
+name: data-fair-processing
 description: Use when working on a @data-fair processing plugin (a `processing-*` repo, a `data-fair-processings-plugin` package) — writing or reviewing `processing-config-schema.json`, wiring `prepare`/`run`/`stop`, using the ProcessingContext (log, axios, ws, patchConfig, tmpDir, secrets), generating types with df-build-types, writing `test-it` tests, handling graceful stop, or porting an old CommonJS/JavaScript plugin to the TypeScript+ESM template.
 ---
 
