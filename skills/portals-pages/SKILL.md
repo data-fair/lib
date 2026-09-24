@@ -7,12 +7,12 @@ description: >
   application/iframe embed, button), composing a beautiful page (hero,
   banners, section rhythm, card grids, theme-safe colors, dark/high-contrast),
   standard pages (home, contact…), publishing/moving a page across
-  portals/departments, annotated screenshots, image upload/sizing, table of
+  portals/departments, image upload/sizing, table of
   contents/breadcrumbs, sorted listings, live verification. Triggers: "page
   de portail", "page de contenu", "élément de page", "diagramme Mermaid",
   "/portals-manager", bloc application/iframe, "publier une page", "déplacer
-  une page", "accueil du portail", "transférer une page", sommaire, "capture
-  annotée", "fil d'Ariane", page de cours/tutoriel, "belle page", "page
+  une page", "accueil du portail", "transférer une page", sommaire,
+  "fil d'Ariane", page de cours/tutoriel, "belle page", "page
   harmonieuse", hero, "mise en page", "rendu visuel". Use ONLY for portals v2
   (manager + service major 2); portals v1 (legacy Nuxt 2) is out of scope.
 ---
@@ -180,9 +180,9 @@ Le piège principal est la **mise à l'échelle** : le SVG est affiché à `widt
 
 Détails et checklist dans `references/embeds.md`.
 
-## 8. Captures d'écran annotées
+## 8. Captures d'écran
 
-Toute capture destinée à une page de portail suit une convention unique (thème clair, 1440 px, sans barre de défilement, rectangles rouges + badges numérotés) appliquée par `scripts/annotate.js`, dont `commit()` **refuse** une géométrie mauvaise (cible fantôme, cadres jointifs, badge recadré ou trop loin de sa cible). Flux, codes de rejet, réglages de viewport/thème et contrôle à l'œil dans `references/screenshots.md`.
+Les captures annotées (cadres, pastilles numérotées) ne relèvent pas de ce skill : leur outillage et leur convention vivent dans le dépôt du site qui les publie (pour docs.koumoul.com, le dépôt `koumoul/documentation`). Ici, seulement leur insertion : upload dans la médiathèque de la page (`references/api-workflow.md`) et dimensionnement (`references/elements.md`, `image`).
 
 ## 9. Vérifier
 
@@ -239,5 +239,3 @@ Toute page qui nomme une application DataFair emploie le **libellé de l'applica
 - `references/design.md` — composition et rendu : parti pris, recettes (hero, sections, grilles, FAQ), table « propriété → rendu » et pièges visuels, typographie/hiérarchie, rythme, thèmes et contraste, relecture visuelle.
 - `references/mermaid.md` — règles de lisibilité, directive de thème, exemple de diagramme de bout en bout.
 - `references/embeds.md` — `application` vs `iframe`, CSP, multi-instance, boutons d'action.
-- `references/screenshots.md` — convention de capture, flux `ANNO`, codes de rejet, réglages de viewport et contrôle à l'œil.
-- `scripts/annotate.js` — couche d'annotation à charger dans la page via `browser_evaluate`.
