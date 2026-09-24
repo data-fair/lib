@@ -25,7 +25,13 @@ Cet skill ne couvre **pas** le développement des services (→ `data-fair-sessi
 
 ## 1. L'identité NHI
 
-Le navigateur est lancé derrière `@data-fair/nhi-proxy`, qui échange une clé NHI contre des sessions simple-directory courtes et injecte les cookies. Le **câblage** (profils, `--proxy`, pin SPKI, CA) est documenté dans `nhi-proxy/docs/usage.md` — ne pas le redécouvrir. Ce qu'il faut savoir côté agent :
+Le navigateur est lancé derrière `@data-fair/nhi-proxy`, qui échange une clé NHI contre des sessions simple-directory courtes et injecte les cookies. Le câblage détaillé est dans `nhi-proxy/docs/usage.md`, qui n'est pas publié dans le paquet npm. L'essentiel :
+
+- **Lancer** un proxy par identité : `npx @data-fair/nhi-proxy serve --profile "<profil>"` (profils : `nhi-proxy profiles`, un port chacun, 7331 pour le premier). Au démarrage, il affiche la config Playwright MCP et le pin SPKI. Sonde : `curl --proxy http://127.0.0.1:7331 --cacert ~/.config/nhi-proxy/<profil>/ca.crt https://koumoul.com/simple-directory/api/auth/me`.
+- **Script Playwright autonome** (captures, tests, tournage) : `chromium.launch({ proxy: { server: 'http://127.0.0.1:7331' } })`, puis `browser.newContext({ ignoreHTTPSErrors: true })`, car le proxy re-signe l'hôte cible avec sa propre CA. Le navigateur reçoit la session sous forme de cookies ordinaires dès la première navigation : pas de `storageState` à récolter. Ajouter `bypassCSP: true` pour injecter du style dans la page (annotations), que le CSP des services interdit.
+- **Ne jamais lire** `~/.config/nhi-proxy/**` au-delà de `config.json` : la clé de signature y est stockée.
+
+Ce qu'il faut savoir côté agent :
 
 - les cookies (`id_token`, `id_token_sign`, `id_token_org`, `id_token_dep`…) sont injectés sur **l'hôte cible uniquement** ; tout autre hôte est tunnelé tel quel. Un sous-domaine de portail est donc vu en **visiteur anonyme** — c'est le bon contexte pour vérifier un rendu public, et la raison pour laquelle un appel d'API lancé depuis cette page part sans session ;
 - l'identité (organisation, département, rôle) est **figée par le profil du proxy** ; les cookies injectés écrasent ceux posés par `document.cookie`, donc **aucune bascule de contexte par cookie**. Pour créer une ressource dans un autre compte, poser `owner` (avec `department`) **à la création** ;
