@@ -187,6 +187,9 @@ async () => {
 
 La réponse se met directement dans `config.thumbnail` (`{ _id, name, mimeType }`) ou dans un bloc `image` — avec **`mobileAlt: false`** (voir `elements.md`). Le serveur reconvertit en webp et crée une variante mobile si la largeur dépasse ~1536 px. Une image uploadée sur une page n'est résolue que depuis cette page : uploader **après** avoir créé la page cible.
 
+- **Pas de route de suppression** (`DELETE /images/<id>` répond `404 unknown api endpoint`), et pas besoin : **publier le brouillon** (`POST /pages/<id>/draft`) supprime de la médiathèque de la page les images qu'aucun bloc ni la `thumbnail` ne référence plus. Un essai d'upload ou une capture remplacée disparaît donc à la publication suivante ; tant que la page n'est pas republiée, l'image reste servie.
+- **GIF animé** : envoyé en `image/gif`, il est converti en **webp animé** (toutes les images conservées) ; la réponse annonce une hauteur qui empile les images (`height` = hauteur × nombre d'images) : calculer la `height` du bloc depuis les dimensions du GIF lui-même.
+
 ## Transférer une page vers un autre département
 
 Enchaînement (chaque étape échoue si les droits manquent) :
