@@ -119,6 +119,14 @@ The 20-item default threshold is too high for our schemas: a dataset's fields, a
 }
 ```
 
+### Lists of dataset values: show the label, store the raw value
+
+A select or list fed by a column's values (a filter value, a colour or icon per value) shows the column's `x-labels` label, never the raw code; the stored value stays raw (`itemKey` / `value`), so no config breaks.
+
+- Fetch from `…/values-labels/<field>` (`{ value, label }`, label falls back on the value), not `…/values` (raw only): `"itemKey": "data.value"`, `"itemTitle": "data.label"`.
+- A `list` fed by `getItems` without `listActions` reuses `getItems.itemTitle` as its row header, evaluated on the **stored** item. Set an explicit `"itemTitle": "data.label || data.value"` when `listActions` is set, or when items saved before `label` was stored must not render an empty header.
+- `values_agg` has no label (keep it when the top-N-by-count order matters): resolve it from the dataset schema kept in the config, `rootData.datasets?.[0]?.schema?.find(f => f.key === <field key>)?.['x-labels']?.[data.value] || data.value` (or `parent.data.field?.['x-labels']?.[…]` when the field object is stored).
+
 ## Conditional display
 
 `layout.if` expressions receive `data` (this node's value), `value`, `parent` (`{ data, parent }` — chain `parent.parent.data` for a grandparent), `rootData`, `context`, `options`, `display`, `readOnly`, `summary`.
@@ -246,6 +254,7 @@ Two exceptions only: technical identifiers rendered as-is (`h1`, a dataset field
 - [ ] `grep -n '"x-'` returns nothing but `x-exports` / `x-i18n-*`
 - [ ] Every `getItems` on a data-fair endpoint has `qSearchParam`, an explicit `size` (≈50) and a `select`
 - [ ] Every other choice list (`enum`, `layout.items`, `getItems.expr`, url without search) is either under ~10 fixed choices or forced to `comp: "autocomplete"`
+- [ ] Lists of dataset values show the `x-labels` label (`values-labels`, list row header `data.label || data.value`) and store the raw value
 - [ ] Exclusive variants use `oneOf` + `const` + `discriminator` (+ branch `title`s, `oneOfLayout` label)
 - [ ] No half-translated schema: either full French, or full base-EN + `x-i18n-*.fr`
 - [ ] Every user-facing label starts with a capital, in sentence case

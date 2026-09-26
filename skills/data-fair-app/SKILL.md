@@ -1091,7 +1091,9 @@ ligne entière. Ne pas réécrire un lookup `x-labels` maison, ni un `dayjs(valu
 rendrait dans le fuseau du navigateur).
 
 - **Afficher le libellé, jamais la valeur brute**, partout où la valeur est visible : axes, légendes,
-  infobulles, cartes, récapitulatifs, textes de partage, `aria-label`.
+  infobulles, cartes, récapitulatifs, textes de partage, `aria-label`. **Formulaire de configuration
+  compris** : sélecteurs et listes de valeurs (filtres, couleurs par valeur) montrent le libellé et
+  stockent la valeur brute (skill vjsf, « Lists of dataset values »).
 - **Conserver la valeur brute** partout où elle sert de clé, d'identité, de valeur de filtre, ou
   repart vers l'URL ou l'API (`_in`, `_eq`, `qs`). Le couple `{ raw, formatted }` est la bonne forme.
 - **Comparer et dédoublonner sur ce qui est affiché** quand la logique porte sur ce que l'utilisateur
