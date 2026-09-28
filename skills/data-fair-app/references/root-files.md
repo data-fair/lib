@@ -21,7 +21,20 @@ Ces fichiers ne se devinent pas et se recopient mal : reprendre celui d'une appl
 - `"dev": "df-dev-env && dotenv -- zellij --layout .zellij.kdl"` **suppose que `.zellij.kdl` existe** — sans lui le script échoue. 24 applications du parc l'ont ; c'est la convention, pas une option. `df-dev-env` génère le `.env` au premier lancement (cf. « Ports de développement »), `dotenv --` le rend visible de tous les panes. Ni `dev-app` ni `dev-server` ne portent plus de variable en préfixe : `vite` lit le `.env` par `loadEnv`, `df-dev-server` par `dotenv`.
 - `build-types` doit tourner **avant** `type-check` et `build` sur un clone neuf : `src/config/.type/` est git-ignoré et `src/config/index.ts` le réexporte. Ordonner la CI en conséquence (`build-types` → `lint` → `type-check` → `build`) — le `"build": "vite build"` nu ne le garantit pas seul.
 - **Scripts de test au tiret comme les services** : `test` / `test-unit` / `test-e2e` (`playwright test --max-failures=1`, `--project unit` / `--project e2e`). La plupart des apps legacy utilisent encore la variante `test:e2e` / `test:unit` (deux-points) — adopter la forme tiret en reprise. Pas de variante `--ui` en script : le flag se passe à la volée (`npm run test-e2e -- --ui`). `test` et `test-e2e` sont préfixés de `df-dev-env && dotenv --` (ils ont besoin d'`E2E_PORT`) ; `test-unit` ne lance pas de `webServer` et n'a besoin d'aucun port.
-- **État du parc** : `quality`, `lint-fix` et `lint` sans `--fix` n'existent que dans bar-chart-race. **Toutes les autres apps ont `"lint": "eslint . --fix"`** — un `lint` qui réécrit les fichiers, y compris dans un hook pre-commit : à scinder en `lint`/`lint-fix` dès qu'on touche au dépôt.
+- **E2E contre `df-dev-server` : l'exception, pas le modèle.** Le modèle ci-dessus ne lance que Vite et mocke tout (`window.APPLICATION`, session, données) : l'e2e est hermétique et tourne au `pre-push` sans rien d'autre. Une application dont l'e2e lit la config live (`GET /config` de `df-dev-server`, alimenté par `.dev-config.json`) et interroge un vrai data-fair — aujourd'hui `app-dashboards` — dépend de deux serveurs : `df-dev-server` ne sert pas l'application, il **relaie `/app/*` vers Vite** sur `APP_PORT`. Le `webServer` doit alors être un tableau qui démarre Vite **puis** `df-dev-server`, sinon la sonde `/app/` n'aboutit jamais sans `npm run dev` ouvert à côté (« Timed out waiting 60000ms from config.webServer », typiquement au `pre-push`) :
+
+```ts
+webServer: isUnitOnly
+  ? undefined
+  : [
+      { command: 'PUBLIC_URL= npm run dev-app', url: `http://localhost:${APP_PORT}/app/`, reuseExistingServer: !process.env.CI },
+      { command: 'npm run dev-server', url: `http://localhost:${DEV_SERVER_PORT}/app/`, reuseExistingServer: !process.env.CI }
+    ]
+```
+
+`baseURL` pointe sur `DEV_SERVER_PORT`, et `base` doit valoir `/app/` (le `||` de `vite.config.ts`, ou `PUBLIC_URL=/app/` dans la commande tant que la config porte `??`). Un tel e2e dépend du réseau et des données de l'instance distante : en reprise, préférer le ramener au modèle mocké.
+
+**État du parc** (septembre 2026) : la grande majorité des apps suit le modèle (projets `unit`/`e2e`, Vite seul, `PUBLIC_URL=`). Écarts restants : unitaire sous **vitest** (`app-table`, `app-calendar`, `app-indicators`) ; unitaire `node --test` colocalisé dans `src/` (`app-explore-map`) ; un seul projet `chromium` sans `test-unit`, specs dans `tests-e2e/` (`app-agg-table`, `app-timelines`, et `app-calendar`) ; e2e sur un build + `vite preview` au lieu du Vite de dev (`app-catalog`, `app-indicators`) ; e2e via `df-dev-server` (`app-dashboards`, voir ci-dessus) ; aucun test (`app-carousel`, `app-pie-chart`, `app-minimal`, les `app-game-*`). En reprise, ramener l'app au modèle plutôt que de copier sa voisine. Les services suivent une convention différente (projets discriminés par suffixe `*.unit.spec.ts` / `*.api.spec.ts` / `*.e2e.spec.ts`, pas de `webServer` — leur stack démarre en docker) : ne pas la transposer aux apps.
 
 ## Husky, commitlint et `npm run quality`
 
@@ -247,7 +260,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const port = Number(env.APP_PORT ?? 3000)
   return {
-    base: env.PUBLIC_URL ?? '/app/',
+    base: env.PUBLIC_URL || '/app/',
     plugins: [
       vue({ template: { transformAssetUrls } }),
       vueI18n({}),
@@ -274,6 +287,8 @@ export default defineConfig(({ mode }) => {
 > **⚠️ `hmr.port` aligné sur `port`.** C'est l'oubli le plus coûteux : sans lui Vite laisse son websocket sur 3000, l'application tient deux ports au lieu d'un, et le décalage ne sert plus à rien. Le contrôle qui l'attrape : `ss -ltnp` ne doit montrer aucun port hors du triplet du `.env`.
 
 `base` vaut `/app/` par défaut, ce qu'attend `df-dev-server` ; la CI le surcharge par `PUBLIC_URL`.
+
+> **⚠️ `||`, pas `??`, pour `base`.** Le `webServer` Playwright lance Vite avec `PUBLIC_URL=` (vide, voir « Tests »). `??` ne remplace que `null`/`undefined` : avec `env.PUBLIC_URL ?? '/app/'` la base devient `''` et Vite sert ses modules à la racine (`/@vite/client`, `/src/main.ts`). Vite seul s'en sort par son fallback SPA, mais derrière `df-dev-server`, qui ne relaie que `/app/*` vers Vite, ces modules reviennent en `text/html` : page blanche, console « Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text/html" ». `||` ramène la chaîne vide sur `/app/`. Le parc porte encore `??` : sans conséquence tant que l'e2e tourne sur Vite seul, à corriger dès qu'il passe par `df-dev-server`.
 
 ## Tests — Playwright, dans `tests/`
 
@@ -334,7 +349,7 @@ Le plafond ne vise donc que la machine de développement et le hook `pre-push`. 
 
 Trois détails du modèle qui se perdent facilement :
 
-- **`PUBLIC_URL=` vidé dans la commande du `webServer`** — protège d'un `PUBLIC_URL` exporté dans le shell du dev, qui casserait la `base` de Vite.
+- **`PUBLIC_URL=` vidé dans la commande du `webServer`** — protège d'un `PUBLIC_URL` exporté dans le shell du dev (l'URL CDN du build, par exemple). Ne fonctionne que si `vite.config.ts` écrit `base: env.PUBLIC_URL || '/app/'` (voir « vite.config.ts ») : c'est ce `||` qui ramène la valeur vide sur `/app/`.
 - **`E2E_PORT` vient du `.env`**, pas d'un `$RANDOM` dans le script ni d'un fichier `tests/.test-port`. Les deux formes se croisent encore dans le parc — elles réimplémentaient, en double, le « tire une fois, persiste, réutilise » que porte désormais le `.env` (cf. « Ports de développement »). En reprise, supprimer `tests/helpers/port.ts` et la ligne `tests/.test-port` du `.gitignore`.
 - **`APP_PORT` passé par `webServer.env`, jamais par `--port`.** Un `vite --port` ne change pas `hmr.port`, qui viendrait toujours d'`APP_PORT` et pointerait à côté : le HMR se connecterait au serveur de développement pendant que les tests tournent ailleurs.
 - **`tests/e2e/fixtures.ts`** centralise les mocks (`mockSite`, `buildApplication`, dataset de test, config de base) pour des e2e sans instance data-fair réelle.
