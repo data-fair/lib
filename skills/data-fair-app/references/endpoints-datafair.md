@@ -193,7 +193,7 @@ Pour les cartes (tuiles vectorielles ou géométries agrégées).
 |-----------|-------------|
 | `*_eq` | Filtre d'égalité sur un champ (ex: `departement_eq=75`) |
 | `*_in` | Filtre IN sur un champ (ex: `type_in=A,B,C`) |
-| `finalizedAt` | Timestamp de la version du dataset (pour le cache navigateur) |
+| `finalizedAt` | Timestamp de la version du dataset (pour le cache navigateur). Jamais vide : l'omettre s'il manque (voir SKILL.md, « Paramètres communs ») |
 | `draft` | `true` pour utiliser le brouillon du dataset (mode édition) |
 
 **Suffixes de filtres disponibles** : `_eq`, `_neq`, `_gt`, `_gte`, `_lt`, `_lte`, `_in`, `_nin`, `_starts`, `_contains`, `_exists`, `_nexists`, `_search`
