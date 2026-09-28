@@ -112,7 +112,7 @@ Le fichier est généré **une fois**, au premier `npm run dev`, puis laissé te
 3. **`vite.config`** : passer à la forme factory `loadEnv`, avec `hmr.port` aligné sur `server.port` — code exact au § « vite.config.ts » ci-dessus, ne pas le reproduire ici.
 4. **`playwright.config.ts`** : lire `E2E_PORT`, passer `APP_PORT` par `webServer.env` — code exact au § « Tests — Playwright » ci-dessus.
 5. Supprimer `tests/helpers/port.ts` et la ligne `tests/.test-port` du `.gitignore` : le port vient désormais du `.env`.
-6. **`.gitignore`** : ajouter `.env` et `.dev-config.json`, **puis** `git rm --cached .dev-config.json` — une ligne de `.gitignore` n'a aucun effet sur un fichier déjà suivi. 27 applications du parc suivent `.dev-config.json` aujourd'hui, dont 8 qui l'ont pourtant déjà dans leur `.gitignore`.
+6. **`.gitignore`** : ajouter `.env`, `.dev-config.json` et `.dev-attachments`, **puis** `git rm -r --cached --ignore-unmatch .dev-config.json .dev-attachments` — une ligne de `.gitignore` n'a aucun effet sur un fichier déjà suivi. 27 applications du parc suivent `.dev-config.json` aujourd'hui, dont 8 qui l'ont pourtant déjà dans leur `.gitignore`.
 7. **`.zellij.kdl`** : ajouter le bandeau d'URL en dernière ligne (§ « .zellij.kdl » ci-dessous).
 
 **Trois pièges** :
@@ -352,6 +352,7 @@ node_modules
 dist
 .env
 .dev-config.json
+.dev-attachments
 src/config/.type
 tests/output
 playwright-report
@@ -359,7 +360,7 @@ playwright-report
 
 `src/config/.type/` est généré par `df-build-types` ; `public/config-schema.json`, lui, **est commité**.
 
-`.env` et `.dev-config.json` sont de l'**état local**, jamais commités. Attention en reprise : **un `.gitignore` n'a aucun effet sur un fichier déjà suivi**. 27 apps du parc suivent `.dev-config.json` dans git, dont 8 qui l'ont pourtant dans leur `.gitignore` depuis des mois. La ligne ne suffit pas, il faut `git rm --cached .dev-config.json`.
+`.env`, `.dev-config.json` et `.dev-attachments/` (pièces jointes de l'application stockées par `df-dev-server`) sont de l'**état local**, jamais commités. Attention en reprise : **un `.gitignore` n'a aucun effet sur un fichier déjà suivi**. 27 apps du parc suivent `.dev-config.json` dans git, dont 8 qui l'ont pourtant dans leur `.gitignore` depuis des mois. La ligne ne suffit pas, il faut `git rm -r --cached --ignore-unmatch .dev-config.json .dev-attachments`.
 
 ## CI
 
