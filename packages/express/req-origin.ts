@@ -1,6 +1,7 @@
 import type { Request } from 'express'
 import type { IncomingMessage } from 'node:http'
 import { isIP } from 'node:net'
+import { createHash, timingSafeEqual } from 'node:crypto'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 
 export const reqHost = (req: Request) => {
@@ -58,6 +59,12 @@ export const assertReqInternal = (req: Request) => {
   if (!reqIsInternal(req)) throw httpError(421, 'This endpoint should only be used internally.')
 }
 
+// constant-time: a plain !== returns as soon as a character differs, which lets a caller able to
+// time many requests recover the key one character at a time. The digests have equal lengths
+// (timingSafeEqual requires it) and comparing them leaks neither the key nor its length.
+const digest = (value: string) => createHash('sha256').update(value).digest()
+const secretKeyMatches = (secretKey: string, expectedSecretKey: string) => timingSafeEqual(digest(secretKey), digest(expectedSecretKey))
+
 export const assertReqInternalSecret = (req: Request, expectedSecretKey: string) => {
   assertReqInternal(req)
   let secretKey = req.get('x-secret-key')
@@ -65,7 +72,8 @@ export const assertReqInternalSecret = (req: Request, expectedSecretKey: string)
     console.warn('passing internal secret key through query parameter is not recommended, use x-secret-key header')
     secretKey = req.query.key
   }
-  if (!secretKey || expectedSecretKey !== secretKey) throw httpError(401, 'Bad secret key')
+  // an unconfigured secret never matches, whatever the caller sends
+  if (!secretKey || !expectedSecretKey || !secretKeyMatches(secretKey, expectedSecretKey)) throw httpError(401, 'Bad secret key')
 }
 
 export default reqOrigin

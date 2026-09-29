@@ -160,6 +160,20 @@ describe('assertReqInternalSecret', () => {
     }
   })
 
+  it('should throw 401 with a secret of a different length, or a prefix of the right one', () => {
+    for (const wrong of ['my-secret-longer', 'my-secre', 'my-secreT']) {
+      const req = mockReq({ 'x-secret-key': wrong })
+      assert.throws(() => assertReqInternalSecret(req, 'my-secret'), (err: any) => err.status === 401, wrong)
+    }
+  })
+
+  it('should throw 401 when no secret is configured, whatever is sent', () => {
+    for (const sent of ['', 'anything']) {
+      const req = mockReq({ 'x-secret-key': sent })
+      assert.throws(() => assertReqInternalSecret(req, ''), (err: any) => err.status === 401)
+    }
+  })
+
   it('should throw 421 for external requests', () => {
     const req = mockReq({ 'x-forwarded-host': 'example.com', 'x-secret-key': 'my-secret' })
     try {
