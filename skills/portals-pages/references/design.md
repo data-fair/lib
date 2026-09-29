@@ -103,7 +103,7 @@ Puis construire : builders d'`elements.md`, trois appels API de `api-workflow.md
 ```js
 { type: 'responsive-grid', uuid: u(), columns: 3, gutter: 'default', align: 'stretch',
   children: [
-    { type: 'card', uuid: u(), mb: 0, border: true, rounded: 'lg', elevation: 1, contentAlign: 'start',
+    { type: 'card', uuid: u(), mb: 0, border: true, elevation: 0, contentAlign: 'start',
       hover: { effects: ['darken', 'elevate', 'titleUnderlineAnimated', 'imageZoom'], color: 'primary' },
       children: [ { type: 'title', uuid: u(), titleSize: 'h6', titleTag: 'h3', content: '…' },
                   { type: 'text', uuid: u(), mb: 0, content: '…' } ],
@@ -120,6 +120,7 @@ Puis construire : builders d'`elements.md`, trois appels API de `api-workflow.md
   | 4 | 4 | 4 | 3 | 1 |
   | 6 | 6 | 4 | 3 | 2 |
 
+- Ne pas poser `rounded` : la carte suit alors `config.defaults` du portail. Les cartes plates et bordées (`border: true`, `elevation: 0`, arrondi par défaut du portail) sont le style des portails Koumoul (docs, opendata, datafair.cloud) ; un `rounded: 'lg'` ou une carte surélevée casse cette cohérence.
 - `align: 'stretch'` + `contentAlign: 'start'` = cartes de même hauteur, contenu aligné en haut (le défaut centre, ce qui flotte mal dans une grille).
 - Une carte n'a d'effet de survol **que si elle porte un `link`** (`page-element-card.vue:4-7`) ; sans lien, rester sobre.
 - `link` rend toute la carte cliquable via un overlay : les liens et boutons internes restent cliquables.
@@ -132,7 +133,7 @@ Puis construire : builders d'`elements.md`, trois appels API de `api-workflow.md
 ### FAQ / détails
 
 ```js
-{ type: 'expansion-panels', uuid: u(), multiple: true, rounded: 'lg', elevation: 1,
+{ type: 'expansion-panels', uuid: u(), multiple: true,
   panels: [ { title: 'Question ?', children: [ /* texte */ ] } ] }
 ```
 
