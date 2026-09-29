@@ -207,6 +207,7 @@ Toute page qui nomme une application DataFair emploie le **libellé de l'applica
 ## 12. Pièges déjà rencontrés
 
 - **`owner` sans `name`** → `400` avec un corps vide : toujours fournir `{ type, id, name, department?, departmentName? }`.
+- **`409` (E11000) à la création d'une page générique** → son slug (`genericMetadata.slug`) est unique **par propriétaire** (type + id, départements confondus), tous portails confondus ; même règle pour les actualités et les événements (`api/src/mongo.ts`). Prévoir des slugs distincts quand une organisation a plusieurs portails.
 - **API appelée sur la mauvaise origine** → réponse HTML/`Unexpected end of JSON input` : l'API n'existe que sur l'hôte du gestionnaire. Piège fréquent : naviguer vers le portail pour vérifier le rendu, puis enchaîner un appel API sans revenir sur l'hôte du gestionnaire.
 - **Rôle modifié mais toujours refusé** → le JWT en cookie est périmé ; recharger une page de l'hôte pour déclencher le keepalive.
 - **Deux `<h1>`** → seulement si l'entête du portail affiche son titre (`header.show && header.showTitle && !header.logoPrimaryCentered`) ; dans ce cas utiliser `titleTag: 'h2'` pour les titres de page.
