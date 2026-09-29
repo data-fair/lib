@@ -117,6 +117,20 @@ Key points:
   or similar guards. A script that has already done its work must be a no-op,
   not a failure.
 
+### Only scripts in the folder, no indexes
+
+- **Every file** of `upgrade/X.Y.Z/` is imported and run as a script — the
+  runner lists the folder with a bare `readdirSync`, no extension filter, then
+  reads `.default.description`. A shared helper (or any non-script file)
+  placed there has no default `UpgradeScript` and throws at **service
+  startup**. Put helpers outside `upgrade/` and import them.
+- **Indexes are not migrations.** Declare them in the service's
+  `mongo.configure({ <collection>: { <indexName>: <key> | [key, options] } })`
+  (`@data-fair/lib-node/mongo`), which runs at every startup: it creates
+  missing indexes, drops and recreates a named index whose definition changed
+  (Mongo errors 85/86), and drops one declared as `null`. An upgrade script
+  only reshapes documents.
+
 ## Idempotency patterns
 
 Scripts must be safe to re-run. Re-runs happen on every staging deploy until
@@ -215,5 +229,7 @@ If a script seems to not run, double-check:
       install upgrading several versions at once.
 - [ ] If multiple scripts in the same folder must run in order, prefix the
       filenames with `01-`, `02-`, etc.
+- [ ] The folder contains only scripts (no helper file); new indexes go in
+      `mongo.configure()`, not in a script.
 - [ ] Tested against a database snapshot of the old shape (or at minimum
       manually walked through with a sample document).

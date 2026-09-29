@@ -34,7 +34,7 @@ Cet skill couvre :
 Cet skill ne couvre **pas** :
 
 - **portals v1** (ancien module Nuxt 2, par ex. `koumoul.com` à la racine pendant la migration) : pas de gestionnaire v2, pas de bloc Mermaid, iframe brut toléré dans le markdown. Si la page est demandée sur un site v1, le dire et proposer soit une page v2, soit un rendu Mermaid en image. **Vérifier quel service sert l'hôte avant d'éditer** : chercher `/portal/api` (v2) ou `/data-fair-portals/` (v1) dans le HTML servi. Le gestionnaire peut contenir un portail homonyme **sans `ingress`** qui n'est qu'une copie de migration : l'éditer ne change rien en ligne ;
-- la configuration du portail elle-même (thème, menu, en-tête, pied de page) hors `allowedFrameSources` ;
+- la configuration du portail elle-même (thème, menu, en-tête, pied de page, vignettes, création du portail) hors `allowedFrameSources` : voir le skill **`portals-portals`** ;
 - le contenu des pages catalogue / réutilisation / événement / actualité (hors pages standard d'accueil de catalogue) ;
 - le développement du code de portals (dépôt `data-fair/portals`) ;
 - la mécanique d'interaction avec la plateforme au navigateur — identité NHI, outils WebMCP de la page, appels d'API, check-list de vérification générique : voir le skill **`data-fair-browse`**, dont celui-ci est le prolongement éditorial.
@@ -94,7 +94,7 @@ Séquence en trois appels :
    ```
 
    - `owner.name` est **obligatoire** dans le schéma `Account` : l'omettre produit un `400` avec un corps souvent vide.
-   - Le `slug` de la page est auto-généré depuis le titre ; pour le fixer, passer `config.genericMetadata.slug` (minuscules, tirets). URL finale : `/pages/<slug>` (ou `/pages-<groupe>/<slug>` si la page est dans un groupe).
+   - Le `slug` de la page est auto-généré depuis le titre ; pour le fixer, passer `config.genericMetadata.slug` (minuscules, tirets). URL finale : `/pages/<slug>`, ou `/pages-<groupe>/<slug>` si la page est dans un groupe (c'est l'URL générée par les menus et liens). Le portail ne vérifie pas le groupe : la page répond aussi sur `/pages/<slug>` et sur `/pages-<n'importe quoi>/<slug>` (seul le fil d'Ariane change) ; la balise `canonical` reprend l'URL courante, donc toujours lier l'URL groupée.
 
 2. **Remplir le brouillon** — `PATCH /portals-manager/api/pages/<id>`
 
@@ -117,11 +117,11 @@ Autres opérations :
 
 ### Pages standard (types prédéfinis)
 
-Les types `home`, `contact`, `accessibility`, `terms-of-service`, `legal-notice`, `privacy-policy`, `cookie-policy`, `datasets`, `applications`, `reuses`, `event-catalog`, `news-catalog` existent **déjà** pour chaque portail (créées avec lui), propriété du propriétaire du portail. Il n'y a **qu'une page publiée par type et par portail**.
+Types : `home`, `contact`, `accessibility`, `terms-of-service`, `legal-notice`, `privacy-policy`, `cookie-policy`, `datasets`, `applications`, `reuses`, `event-catalog`, `news-catalog`. Il n'y a **qu'une page publiée par type et par portail**. Elles **ne sont pas créées avec le portail** : l'assistant du gestionnaire crée `home` et, si on les choisit, `datasets` / `applications` ; un portail créé par l'API n'en a aucune, et une page standard absente répond « Page not found » (création et rattachement : skill `portals-portals` §3). Vérifier : `GET https://<portail>/portal/api/pages/standard-exists`.
 
 - Les lister : `GET /portals-manager/api/pages?size=100&select=_id,title,type,owner,portals` puis filtrer sur `type`.
 - Leur contenu est exposé publiquement sur `/portal/api/pages/<type>/<slug>` (accueil : `/portal/api/pages/home/home`, page standard : `<slug>` = type, ex. `/portal/api/pages/contact/contact`).
-- URL standard : accueil = `/`, les autres = `/<type>` (`/contact`, `/mentions-legales`… selon la config du portail).
+- URL standard, fixes : accueil = `/`, `/contact`, `/legal-notice`, `/privacy-policy`, `/cookie-policy`, `/accessibility`, `/terms-of-service`, `/datasets`, `/applications`, `/reuses`, `/event`, `/news` (`portal/app/utils/nav-active.ts`).
 - `showBreadcrumbs` est **toujours masqué sur l'accueil**, quel que soit le réglage.
 - SEO de page : `description` (meta) et `thumbnail` (image de partage, référence médiathèque) sont supportés par toutes les pages ; `genericMetadata` (slug, groupe) n'existe que pour `generic`.
 
@@ -149,7 +149,7 @@ Deux références se complètent : **`references/design.md`** pour *composer* un
 
 - Chaque bloc porte un `uuid` (généré à la création : `crypto.randomUUID()`) ; l'`uuid` sert aussi d'identifiant de synchronisation d'URL pour les applications.
 - `text` et `alert` acceptent du **markdown sanitisé** (gras, liens, listes, tableaux) mais **pas d'iframe** — le sanitizer la retire ; pour intégrer, utiliser les blocs `application` ou `iframe`.
-- `title` : `titleSize` visuel (`h1`…`h6` → classes `text-h1`…`text-h6`) et `titleTag` sémantique (`h1`…`h6`, `div`) sont indépendants. Le layout rend le titre du portail en `<h1>` **uniquement si l'entête est affichée** (`GET /portal/api/portal` → `config.header.show`) : vérifier avant de choisir `titleTag`. Pour un hero d'accueil (long titre), viser `titleSize: 'h2'` + `titleTag: 'h1'` ; pour une page de contenu, `titleSize: 'h3'` + `titleTag: 'h2'` (et pas de `<h1>` si l'entête en affiche déjà un).
+- `title` : `titleSize` visuel (`h1`…`h6` → classes `text-h1`…`text-h6`) et `titleTag` sémantique (`h1`…`h6`, `div`) sont indépendants. Le layout rend le titre du portail en `<h1>` **uniquement si l'entête est affichée avec son titre** (`GET /portal/api/portal` → `config.header.show && config.header.showTitle && !config.header.logoPrimaryCentered`) : vérifier avant de choisir `titleTag`. Pour un hero d'accueil (long titre), viser `titleSize: 'h2'` + `titleTag: 'h1'` ; pour une page de contenu, `titleSize: 'h3'` + `titleTag: 'h2'` (et pas de `<h1>` si l'entête en affiche déjà un).
 - **Sommaire** : il n'existe **aucune** option `toc` au niveau de la page ni du portail (le schéma `page-config` est en `unevaluatedProperties: false`, mais l'API accepte une clé inventée sans broncher : elle reste inerte). Le sommaire s'active **bloc titre par bloc titre** avec `anchor: { enabled: true, inToc: true, label? }` ; le serveur recalcule `config._toc` à chaque PATCH, dédoublonne les slugs et pose `anchor._slug`. `_toc` est `readOnly` : ne jamais l'écrire. Contrôle : `config._toc.length` = nombre de titres ancrés. Convention : ancres sur les H2/H3, jamais sur le H1 (doublon avec le titre de page).
 - **Fil d'Ariane** : porté par le `rootPage` du **groupe** de pages (slug de page), voir `references/api-workflow.md`.
 - **Images** : uploadées dans la médiathèque de la page, toujours `mobileAlt: false`, `height` calculée depuis le ratio du PNG sinon l'image est rognée — règles dans `references/elements.md`.
@@ -207,9 +207,10 @@ Toute page qui nomme une application DataFair emploie le **libellé de l'applica
 ## 12. Pièges déjà rencontrés
 
 - **`owner` sans `name`** → `400` avec un corps vide : toujours fournir `{ type, id, name, department?, departmentName? }`.
+- **`409` (E11000) à la création d'une page générique** → son slug (`genericMetadata.slug`) est unique **par propriétaire** (type + id, départements confondus), tous portails confondus ; même règle pour les actualités et les événements (`api/src/mongo.ts`). Prévoir des slugs distincts quand une organisation a plusieurs portails.
 - **API appelée sur la mauvaise origine** → réponse HTML/`Unexpected end of JSON input` : l'API n'existe que sur l'hôte du gestionnaire. Piège fréquent : naviguer vers le portail pour vérifier le rendu, puis enchaîner un appel API sans revenir sur l'hôte du gestionnaire.
 - **Rôle modifié mais toujours refusé** → le JWT en cookie est périmé ; recharger une page de l'hôte pour déclencher le keepalive.
-- **Deux `<h1>`** → seulement si l'entête du portail est affichée (`config.header.show`) ; dans ce cas utiliser `titleTag: 'h2'` pour les titres de page.
+- **Deux `<h1>`** → seulement si l'entête du portail affiche son titre (`header.show && header.showTitle && !header.logoPrimaryCentered`) ; dans ce cas utiliser `titleTag: 'h2'` pour les titres de page.
 - **`og:image` relatif** → la `thumbnail` de page est rendue en chemin relatif (`/portal/api/pages/...`) dans `og:image` ; la plupart des robots sociaux ne le résolvent pas. Aucun contournement par le gestionnaire (la `thumbnail` n'accepte qu'une référence média) : le signaler et prévoir une correction dans `portals/portal/app/composables/use-image-src.ts`.
 - **Pas d'injection JSON-LD personnalisée** → la config du portail n'expose pas de champ `head`/JSON-LD ; seuls les schémas automatiques (WebSite, WebPage, BreadcrumbList) sont émis. Ne pas promettre un JSON-LD `SoftwareApplication` via le gestionnaire.
 - **Page standard attachée au mauvais portail** → `switchStandardPages` détache automatiquement la page du même type déjà publiée ; une page `home` ne peut plus être dépubliée. Ne jamais tester une page d'accueil sur un portail de production.
@@ -230,6 +231,12 @@ Toute page qui nomme une application DataFair emploie le **libellé de l'applica
 - **Titre markdown (`#`) au lieu d'un bloc `title`** → rendu `text-display-medium text-primary` avec `mt-12 mb-8`, taille et marges non maîtrisables ; préférer les blocs `title`.
 - **Page illisible en thème sombre** → titre coloré posé sur un fond coloré, ou texte sur une image trop peu teintée ; contrôler au moins `default` et `dark`.
 - **Hero qui ne colle pas en haut** → `banner` et `image` racines reçoivent déjà `mt-n4`/`mb-n4` ; ne pas ajouter de marge, corriger plutôt le bloc précédent.
+- **Lien « texte + flèche » à la ODS impossible avec un bouton** → `button` n'a pas de variante texte (`buttonConfig.variant` : `default`, `outlined`, `tonal`) ; utiliser un bloc `title` avec `link` et `icon { mdi, color }` (l'icône se place **avant** le texte).
+- **Espace sous un titre impossible à régler** → `title` n'a pas de `mb` ; intercaler un bloc `text` vide avec le `mb` voulu.
+- **Onglets refusés à la validation** → `tabs` exige `align` (`start`/`center`/`end`), même avec `grow`. Pas d'option de fond (seulement `border`) ; `mb` existe.
+- **`imageZoom` sans effet** → le zoom au survol d'une carte ne s'applique qu'à sa `thumbnail`, jamais à un bloc `image` enfant ; mettre l'illustration dans `thumbnail` (`crop: false` garde le ratio dans les 170 px).
+- **Logo ou pictogramme flou** → uploader le SVG (type `image/svg+xml`) : il est stocké tel quel, net à toute taille ; les autres formats sont convertis en webp.
+- **Trait sous une carte blanche** → carte sans bordure sur fond clair + effet `elevate` : l'ombre MD3 (ombre « clé » décalée vers le bas) se lit comme un filet ; garder `border: true`, ou préférer `border`/`background` comme effet de survol.
 
 ## Références
 

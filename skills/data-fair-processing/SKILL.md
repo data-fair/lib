@@ -64,7 +64,7 @@ processing-<name>/
 | `processingId` | e.g. for `extras` on the produced dataset |
 | `tmpDir` | **the working directory** — per-run temp dir, the only one to use |
 | `log` | `step`, `task`, `progress(task, n, total)`, `info`, `debug`, `warning`, `error` |
-| `axios` | pre-authenticated against data-fair |
+| `axios` | pre-authenticated against data-fair — defaults below, override when in doubt |
 | `ws` | data-fair websocket client (wait for dataset finalization) |
 | `sendMail` | notification |
 | `patchConfig({ datasetMode, dataset })` | **the create→update switch**: after creating a dataset, persist it so the next run updates instead of re-creating |
@@ -81,6 +81,30 @@ processing-<name>/
 `tmpDir` is the only directory a plugin can count on. Anything that must persist belongs in a dataset, not on disk.
 
 **Secrets:** never leave a secret readable in `processingConfig`. `prepare` moves it to `secrets` and writes `'********'` back; an empty value deletes it from `secrets`. `run` reads it from `context.secrets`.
+
+### `context.axios` — what the service sets, what to override
+
+Built by the worker (`processings/worker/src/task/axios.ts`); `@data-fair/lib-processing-dev` (`tests-utils.ts`) mimics it only partly.
+
+| Default | Worker | processing-dev (tests) |
+|---|---|---|
+| Base URL | no `baseURL`: a request interceptor prefixes relative urls with `dataFairUrl` | same |
+| Auth | `x-apiKey` (+ `x-account` in admin mode, `User-Agent: @data-fair/processings (<plugin>)`) added **only on data-fair urls** — external hosts never get the key | `x-apiKey` only |
+| `maxRedirects` | **`0`** (large-upload memory issue): any 3xx is thrown as an error | `0` |
+| Timeout | none (axios default) | none |
+| Retry | `axios-retry`, 3 retries, exponential delay honouring `Retry-After`, on network errors and 429/5xx **for GET/HEAD/OPTIONS/PUT/DELETE only — never POST/PATCH**; each retry logs a warning | **none** |
+| Error shape | raw `AxiosError`: `err.status`, body in `err.response.data` (`err.data` is undefined) | rejects with the trimmed `response`: `err.status`, `err.data`, no `err.response` |
+
+What to do with it:
+
+- **External sources:** pass per-request options (`{ maxRedirects: 5, timeout: 60000 }`) or create a dedicated `axios.create(...)`; a remote host that redirects (http→https, CDN, download link) otherwise fails with a 3xx.
+- **POST/PATCH to data-fair** (bulk lines, file upload) are not retried: wrap them in a small helper retrying 429/5xx, with the body rebuilt by a thunk on each attempt. Reference: `processing-ods/lib/utils.ts` `withRetry429` / `dfRetry` (429 only, 3 retries, fixed 10 s pause, logs each pause). Don't wrap GETs — the built-in retry already applies, the two stack.
+- **Reading an error in code that runs in both worker and tests:** `err.status ?? err.response?.status`, `err.data ?? err.response?.data`.
+- **Logging:** an error thrown from `run` is already turned by the worker into `log.error("<status> - <statusText> - <body> (<url>)")` plus a `log.debug` of the trimmed error — just rethrow. When you catch to add context, `await log.error('what failed', err.response?.data ?? err.data)` (the second argument is a real `extra`), then rethrow.
+
+### API key and vocabulary
+
+The worker calls data-fair with one global API key (`DATA_FAIR_API_KEY`), never a per-processing key. data-fair `/api/v1/settings` accepts **no API key at all** (session only), so a plugin cannot read an owner's private vocabulary. `/api/v1/vocabulary` is anonymous and, with an API key, returns only the standard concepts of `data-fair/api/contract/vocabulary.js`. Only those URIs (or the owner's private ones) are recognised in `x-refersTo`; an unknown URI is **silently** kept without `x-concept` — check the URI against that list.
 
 **Graceful stop:** keep the flag in the streaming module, not in `execute.ts` alone.
 

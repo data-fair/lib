@@ -231,10 +231,25 @@ const ws = new DataFairWsClient({
   log: console
 })
 
-// Wait for a dataset to finish indexing
-const event = await ws.waitForJournal(datasetId, 'finalize-end', 60000)
+// Start waiting BEFORE triggering the work, await it after
+const finalized = ws.waitForJournal(datasetId, 'finalize-end', 60000)
+await uploadNewFile(datasetId) // the request that triggers processing
+await finalized
 // Throws if an 'error' event arrives before the expected event
 ```
+
+`waitForJournal` only listens: it subscribes to `datasets/{id}/journal` and
+resolves on the next matching event. Nothing is replayed, and it never checks
+the dataset's current status, so an event emitted before the subscription is
+lost and the call hangs until its timeout. Two consequences:
+
+- start it before the request that triggers the processing (above), never after;
+- don't use it after small REST writes. A REST dataset is created already
+  `finalized` (read `status` in the POST response), and line writes / small
+  `_bulk_lines` are indexed inside the request itself; the finalize pass that
+  follows ends within seconds, often before a late subscription. Use the
+  response (`indexedAt` of `_bulk_lines`) or poll `GET /datasets/{id}` until
+  `status === 'finalized'`.
 
 #### Integration testing with `WsClient`
 

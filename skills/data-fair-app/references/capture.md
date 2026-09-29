@@ -163,7 +163,19 @@ Ce cas, et lui seul :
   la réponse est une redirection vers `/no-preview.png`.
 
 Toute autre capture est en `x-capture-cache-status: BYPASS` et **limitée en débit** :
-`appCaptures` = 5 par 60 s (`api/config/default.cjs`), 429 au-delà.
+`appCaptures` = 5 par 60 s (`api/config/default.cjs`), 429 au-delà. C'est un seau de 5 jetons
+rechargé d'un jeton toutes les 12 s, **partagé avec `/print`**, et compté par client
+(`rateLimitClientId`, `api/src/misc/utils/rate-limiting.ts`) : par utilisateur pour une session ou
+une clé d'API, **par IP** pour un accès anonyme **et pour un accès par clé d'application**
+(`rateLimitUser` écarte volontairement le pseudo-utilisateur de la clé d'application). Tous les
+visiteurs d'une application partagée par clé derrière une même IP de sortie (NAT, proxy
+d'entreprise) se partagent donc les 5 jetons.
+
+**`/print` n'est jamais mis en cache côté data-fair** (`capture.print`, `api/src/misc/utils/capture.ts`) :
+aucun fichier sur disque, contrairement à la miniature par défaut — chaque appel relance le rendu
+par le service `capture` et consomme un jeton `appCaptures`. Seuls les en-têtes HTTP de
+`cacheHeaders.resourceBased()` s'appliquent (`Last-Modified`, 304 sur un `If-Modified-Since`
+identique, répondu avant la consommation du jeton).
 
 Où cette miniature est-elle affichée ?
 
@@ -291,7 +303,8 @@ Les différences qui restent, à connaître avant de conclure :
 3. rien de l'environnement Chrome headless n'est reproduit : ni `onlySameHost`, ni les bornes à
    3000 px, ni les cookies, ni `lang` / `timezone` (`Accept-Language`, `navigator.language`,
    `emulateTimezone`) — l'iframe hérite de la locale du navigateur du développeur ;
-4. ni le cache disque de la miniature, ni son unique réessai, ni le rate limit `appCaptures`.
+4. ni le cache disque de la miniature, ni son unique réessai, ni le rate limit `appCaptures`
+   (compté par IP pour un accès par clé d'application, cf. § 5).
 
 **La simulation ne remplace pas un test.** En Playwright, `page.addInitScript(...)` +
 `page.setViewportSize({ width: 1050, height: 450 })`, puis assertion sur la capture :

@@ -77,9 +77,9 @@ export const colorDefinition = {
 //   type: 'object',
 //   properties: {
 //     accentColor: simpleColor,                       // string hex simple
-//     badgeColor: { $ref: '#/definitions/color' }     // thème OU custom
+//     badgeColor: { $ref: '#/$defs/color' }           // thème OU custom
 //   },
-//   definitions: { color: colorDefinition }
+//   $defs: { color: colorDefinition }          // $defs, pas definitions (draft 2019-09)
 // }
 //
 // Côté code (récupération uniforme) :

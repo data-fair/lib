@@ -6,7 +6,7 @@ Tous les blocs acceptent :
 
 - `type` (requis) ;
 - `uuid` (recommandé : `crypto.randomUUID()`) — identité du bloc, sert aussi de préfixe de synchronisation d'URL pour les applications ;
-- `mb` : marge basse, entier 0-16 (défaut 4).
+- `mb` : marge basse, entier 0-16 (défaut 4) — **sauf `title` et `divider`**, qui n'en ont pas. Pour espacer sous un titre, intercaler un bloc `text` vide portant le `mb` voulu.
 
 Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 
@@ -28,9 +28,10 @@ Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 ```
 
 - `titleSize` (requis) pilote l'apparence : `h1`…`h6` → `text-h1`…`text-h6` (Vuetify). `titleTag` pilote la balise HTML : `h1`…`h6` ou `div`.
-- Le layout rend le titre du portail en `<h1>` **seulement si l'entête est affichée** (`config.header.show`) : vérifier dans `GET /portal/api/portal`. Héros d'accueil : `titleSize: 'h2'` + `titleTag: 'h1'`. Page de contenu : `titleSize: 'h3'` + `titleTag: 'h2'` (ou `h1` si aucun autre h1).
+- Le layout rend le titre du portail en `<h1>` **seulement si l'entête affiche son titre** (`config.header.show && showTitle && !logoPrimaryCentered`) : vérifier dans `GET /portal/api/portal`. Héros d'accueil : `titleSize: 'h2'` + `titleTag: 'h1'`. Page de contenu : `titleSize: 'h3'` + `titleTag: 'h2'` (ou `h1` si aucun autre h1).
 - `anchor.enabled` génère un lien direct ; `anchor.inToc` ajoute l'entrée au sommaire ; `anchor.label` raccourcit le libellé du sommaire.
 - Autres : `color`, `icon`, `line { position, color, growOnHover? }`, `link` (lien simple).
+- **Lien texte avec flèche** (style ODS « Voir tous les jeux → ») : un `title` avec `link` et `icon: { mdi: { name, svg, svgPath }, color }` ; l'icône est rendue **avant** le texte et fait partie du lien. Le bloc `button` ne peut pas le faire (pas de variante texte, voir `button`).
 
 ### `text`
 
@@ -108,6 +109,8 @@ Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 
 - `link` est un `linkItem` discriminé : `external` (`href`), `standard` (`subtype`: home, contact, datasets…), `generic` (`pageRef {slug,title}`), `event`, `news`.
 - `usePortalConfig: true` reprend le style de bouton du portail ; sinon `config` porte les couleurs/variantes.
+- `config.variant` ne connaît que `default` (plein), `outlined` et `tonal` : **pas de bouton texte sans fond**. Pour un lien discret, utiliser un `title` avec `link` (voir `title`) ou un lien markdown dans un `text`.
+- `fullWidth` (après 2.33.1, commit `50457b1b`) : bouton pleine largeur, `centered` alors ignoré.
 
 ### `divider`
 
@@ -125,6 +128,7 @@ Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 ```
 
 - `url` ou upload `image`/`wideImage` (référence médiathèque, voir `api-workflow.md`), `banner`, `cover`, `alignment`, `height`, `zoomable`, `title` (alt), `legend`, `link`, `isPresentation` (image décorative, ignorée par les lecteurs d'écran). La miniature et les images passent par la médiathèque du portail (upload), pas par des URL externes pour les assets produits.
+- **SVG** : uploadé avec le type `image/svg+xml`, il est stocké tel quel (net à toute taille) ; la réponse annonce `width`/`height` à `0`, donc calculer la `height` depuis le `viewBox`. Préférer le SVG pour les logos et pictogrammes.
 - **Toujours `image.mobileAlt: false`** sur une image uploadée, sinon le portail charge `<id>-mobile`, qui n'existe que si le serveur a produit une variante mobile (largeur > ~1536 px) → image cassée.
 - **`height` sur une image large la rogne.** La colonne de contenu fait ~896 px ; une image plus plate que le rapport imposé est agrandie puis coupée sur les côtés. Calculer `height ≈ 896 × (hauteurPNG / largeurPNG)`. Au-delà d'un ratio ~2.5 (bandes larges), passer en `cover: true` **sans** `height`.
 - Vérification après publication : pour chaque `main img`, `naturalWidth > 0`, pas de `-mobile` dans `src`, et `naturalWidth/naturalHeight` égal au ratio affiché — sinon elle est rognée.
@@ -164,8 +168,10 @@ const BTN = (slug, title, label) => ({ uuid: u(), type: 'button', centered: true
 - `two-columns` : `disposition` (`equal`/`left`/`right`), `align`, `gutter`, `children`, `children2`.
 - `responsive-grid` : `columns` (2/3/4/6), `gutter`, `align`, `centered`, `children`.
 - `card` : `children`, `title`, `elevation`, `rounded`, `border`, `keepTextSize`, `hover`, `thumbnail`, `link`, `actions[]`, `background`. `children` et `actions` sont **requis** (tableaux, même vides). `link` est une variante sans libellé (`{ type: 'external', href, target }`) : toute la carte devient cliquable.
+  - `hover.effects: ['imageZoom']` ne zoome **que la `thumbnail`** de la carte, jamais un bloc `image` placé dans `children` : mettre l'illustration dans `thumbnail { image, location: 'top'|'center'|'left', crop }` (`top`/`center` = 170 px de haut ; `crop: false` garde le ratio).
+  - Carte blanche **sans bordure** + effet `elevate` : sur fond clair, l'ombre MD3 se lit comme un trait sous la carte. Garder `border: true` ou préférer les effets `border`/`background`.
 - `banner` : `children`, `fullWidth`, `background { color, image, tintStrength }`, `pt/pb/pl/pr`, `overflowTop/Bottom`.
-- `tabs` : `tabs[] { title, icon, children }`, `grow`, `border`, `keepTextSize`.
+- `tabs` : `tabs[] { title, icon, children }`, **`align` requis** (`start`/`center`/`end`, même avec `grow`), `grow`, `border` (défaut `true`), `keepTextSize`, `mb`. Aucune option de fond ni de couleur : la carte des onglets prend le fond `surface`.
 - `expansion-panels` : `panels[] { title, icon, children }`, `multiple`, `openFirst`, `openAll`.
 
 Le serveur traverse récursivement `card`, `banner`, `responsive-grid`, `two-columns`, `tabs`, `expansion-panels` (et `advancedFilters` des catalogues) pour le rendu markdown, le sommaire et le nettoyage des images.

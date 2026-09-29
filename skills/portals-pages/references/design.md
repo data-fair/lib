@@ -103,8 +103,8 @@ Puis construire : builders d'`elements.md`, trois appels API de `api-workflow.md
 ```js
 { type: 'responsive-grid', uuid: u(), columns: 3, gutter: 'default', align: 'stretch',
   children: [
-    { type: 'card', uuid: u(), mb: 0, border: true, rounded: 'lg', elevation: 1, contentAlign: 'start',
-      hover: { effects: ['darken', 'elevate', 'titleUnderlineAnimated', 'imageZoom'], color: 'primary' },
+    { type: 'card', uuid: u(), mb: 0, border: true, elevation: 0, contentAlign: 'start',
+      hover: { effects: ['border', 'titleUnderlineAnimated', 'imageZoom'], color: 'primary' },
       children: [ { type: 'title', uuid: u(), titleSize: 'h6', titleTag: 'h3', content: '…' },
                   { type: 'text', uuid: u(), mb: 0, content: '…' } ],
       actions: [] } // requis, même vide
@@ -120,6 +120,7 @@ Puis construire : builders d'`elements.md`, trois appels API de `api-workflow.md
   | 4 | 4 | 4 | 3 | 1 |
   | 6 | 6 | 4 | 3 | 2 |
 
+- Ne pas poser `rounded` : la carte suit alors `config.defaults` du portail. Les cartes plates et bordées (`border: true`, `elevation: 0`, arrondi par défaut du portail) sont le style des portails Koumoul (docs, opendata, datafair.cloud) ; un `rounded: 'lg'` ou une carte surélevée casse cette cohérence.
 - `align: 'stretch'` + `contentAlign: 'start'` = cartes de même hauteur, contenu aligné en haut (le défaut centre, ce qui flotte mal dans une grille).
 - Une carte n'a d'effet de survol **que si elle porte un `link`** (`page-element-card.vue:4-7`) ; sans lien, rester sobre.
 - `link` rend toute la carte cliquable via un overlay : les liens et boutons internes restent cliquables.
@@ -132,7 +133,7 @@ Puis construire : builders d'`elements.md`, trois appels API de `api-workflow.md
 ### FAQ / détails
 
 ```js
-{ type: 'expansion-panels', uuid: u(), multiple: true, rounded: 'lg', elevation: 1,
+{ type: 'expansion-panels', uuid: u(), multiple: true,
   panels: [ { title: 'Question ?', children: [ /* texte */ ] } ] }
 ```
 
@@ -163,12 +164,12 @@ Une ligne markdown par entrée, **re-triée** avant publication (voir `SKILL.md`
 | Marges des titres | automatiques selon `titleSize` | `h6` → `mb-2` (8 px) … `h1` → `mb-7` (28 px), et `my-*` si le titre n'est pas le premier (`page-element-title.vue:68-85`) | Ne pas essayer de régler `mb` sur un titre : la clé est guérie à la validation |
 | Alerte colorée libre | `alertType: 'none'` + `color` + `icon` | Bandeau à la couleur du thème | Avec un `alertType` sémantique, `color` est **ignoré** (`page-element-alert.vue:6`) |
 | Filet / séparateur | `divider` (recommandé : `opacity: 0.2`, `thickness: 1`, `rounded: true`) | `my-4` (16 px) de part et d'autre, toujours | Pas de `mb` pour l'espacer autrement |
-| Carte cliquable + survol | `link` + `hover.effects` | Défaut `darken` (assombrit) ; `elevate` (+2, plafond 5) ; `grow` (échelle 1.02) ; `titleUnderlineAnimated`, `imageZoom` (1.05) ; `background`/`border` teintent | Effets **inertes sans `link`** ; `darken` par défaut, `effects: []` pour couper ; `prefers-reduced-motion` neutralise tout |
+| Carte cliquable + survol | `link` + `hover.effects` | Défaut `darken` (assombrit) ; `elevate` (+2, plafond 5) ; `grow` (échelle 1.02) ; `titleUnderlineAnimated`, `imageZoom` (1.05, **`thumbnail` seulement**) ; `background`/`border` teintent | Effets **inertes sans `link`** ; `imageZoom` ignore les blocs `image` enfants ; `elevate` sur une carte blanche sans bordure dessine un trait d'ombre sous la carte ; `darken` par défaut, `effects: []` pour couper ; `prefers-reduced-motion` neutralise tout |
 | Élévation / arrondi | `elevation` (0–3), `rounded` (`0`, `default`, `lg`, `xl`) | Hérités de `config.defaults` du portail quand absents | Portail neuf sans `defaults` → VCard plate bordée |
 | Chevauchement de sections | `banner.overflowTop` / `overflowBottom` | Le fond mord sur le bloc précédent/suivant | `mb` est masqué dans l'éditeur quand `overflowBottom` ; c'est voulu |
 | Premier / dernier bloc racine | — | `banner` et `image` racines reçoivent `mt-n4` / `mb-n4` (`page-element-banner.vue:7-8`) | Ne pas ajouter de marge pour « coller » le hero en haut |
 | Priorité de chargement | `image.fetchPriority: true` | `fetchpriority="high"` | Réservé aux images visibles au premier écran ; partout ailleurs c'est contre-productif |
-| Onglets | `tabs` | `v-tabs color="primary"`, `grow`/`align`/`border` | La couleur des onglets n'est pas configurable |
+| Onglets | `tabs` | `v-tabs color="primary"`, `grow`/`align`/`border` | `align` requis ; ni couleur d'onglet ni fond configurables (seulement `border`) |
 | Panneaux dépliants | `expansion-panels` | Variante accordéon non configurable | Seuls `multiple`, `openFirst`, `openAll`, couleurs de fond sont réglables |
 
 ## 6. Typographie, hiérarchie, ancres

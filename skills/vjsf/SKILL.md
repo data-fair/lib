@@ -167,7 +167,8 @@ The pattern for exclusive variants (chart types, element types, filter types):
 }
 ```
 
-- Each branch declares the discriminant as a `const` directly in its `properties`, plus a branch `title` (the option label).
+- Each branch declares the discriminant as a `const` directly in its `properties`, plus a branch `title` (the option label). Without `discriminator`, json-layout infers one from a string `const` distinct in every branch; with no such `const` the first branch whose schema validates wins, and data matching several branches leaves the form invalid with no visible error.
+- Put the discriminant in `required` too: otherwise empty data validates the first branch, which is silently auto-selected (and its `const` written) instead of letting the user choose.
 - `discriminator` is a **major performance point on large `oneOf`**: it lets json-layout and ajv resolve the active branch directly instead of trying every branch. The portals page editor (a ~38-type element `oneOf`) relies on it; without it, opening the form costs seconds. When ajv validates the schema, the option must also be enabled: `ajvOptions: { discriminator: true }`.
 - The variant selector is labelled through **`oneOfLayout`** — a sibling of `oneOf`, not a `title` on the container (that renders a section heading, not the select label): `oneOfLayout: { "label": "…", "x-i18n-label": { "fr": "…" } }`. For long lists add `"autocomplete": true` to `oneOfLayout`.
 - A `default` selecting the initial branch avoids an empty form state.
@@ -188,7 +189,7 @@ Same rendered form and same produced object either way. When a form takes second
 
 ## Internationalization — `x-i18n-<keyword>`
 
-`x-i18n-<keyword>` is a supported json-layout mechanism (`resolveXI18n`), active when the rendering UI passes the `xI18n: true` option (all data-fair UIs do) with `locale: session.lang`. It works on **any keyword**, including inside `layout`, `getItems`, `props` and `oneOfLayout`: `x-i18n-title`, `x-i18n-description`, `x-i18n-markdown`, `x-i18n-placeholder`, `x-i18n-itemTitle`, `x-i18n-label`, `x-i18n-errorMessage`…
+`x-i18n-<keyword>` is a supported json-layout mechanism (`resolveXI18n`), active only when the rendering UI passes the `xI18n: true` option (default `false`) with `locale: session.lang`. The processings UI and the data-fair settings forms do; the data-fair **application config** form does not (`locale: 'fr'`, no `xI18n`), so app schemas show their base keywords. It works on **any keyword**, including inside `layout`, `getItems`, `props` and `oneOfLayout`: `x-i18n-title`, `x-i18n-description`, `x-i18n-markdown`, `x-i18n-placeholder`, `x-i18n-itemTitle`, `x-i18n-label`, `x-i18n-errorMessage`…
 
 Resolution is `value[locale] ?? value[defaultLocale] ?? <the base keyword>`, with `defaultLocale = 'en'`.
 
@@ -247,6 +248,15 @@ Two exceptions only: technical identifiers rendered as-is (`h1`, a dataset field
 | Slider label squeezed next to the track | `label: ""` + `slots.before` (see `references/patterns.md`) |
 | `"format": "hexcolor"` (or any invented format) | Not a JSON Schema format — vjsf warns `unknown format ignored`; use `layout: "color-picker"` |
 | `description` on a single-field object wrapper | Renders an always-visible subtitle block; put it on the field, where it becomes a help icon |
+| `enum` / `examples` / all-`const` `oneOf` on a property that has `layout.getItems` | The schema list silently replaces `getItems` (a `url` one even fails layout validation and falls back to the enum). Drop the schema keyword; only `layout.items` wins over schema items |
+| `if` on a slot child (`{ "markdown": "…", "if": … }` in `children`) | Silently dropped — wrap it in a composite child `{ "children": [ … ], "if": … }` |
+| Top-level `if` next to a `switch` | Each case is `{ ...topLevel, ...case }`: a case's own `if` replaces the top-level one, cases without `if` inherit it |
+| `layout: { "comp": "none", … }` with other keys | `comp: none` discards every other layout key (`if`, `defaultData`, `transformData`…); only schema `default`/`const` apply. In a `switch`, `{ "if": X, "comp": "none" }` loses its `if` and always wins: hide the field by giving the *visible* case the `if` |
+| `props` / `getProps` on a `list` | Ignored by the list component — style it through vjsf component defaults (`VjsfList-*`) |
+| `sort` in `listActions` of an indexed list (`patternProperties`) | Does nothing, object key order is kept — use an array when order matters |
+| `cols` tuned against the window size | Breakpoints use the **form's** width (nested sections: their share of it). `cols: 6` = `{ xs: 12, sm: 6 }`, so full width in any form under 600px (dialog, side panel) |
+| Long `inline-single` list (default for arrays of objects) | Non-edited items render the whole item form read-only with `summary` true — hide heavy fields with `if: "!summary"` and set `itemTitle` |
+| Guidance written in `$comment` | Read by neither vjsf nor the WebMCP tools: users and agents never see it. Keep it for maintainer notes; user/agent text goes in a field `description` or `layout.help` (both become the help agents read; a titled section's `description` is a subtitle agents don't get) |
 | Verb-phrase base `title` feeding a type generator | Types get named `ListLayers`-style; use a noun phrase, move the verb to `x-i18n-title.en` |
 
 ## Checklist before committing a schema change

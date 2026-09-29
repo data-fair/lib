@@ -36,6 +36,7 @@ Ce qu'il faut savoir côté agent :
 - les cookies (`id_token`, `id_token_sign`, `id_token_org`, `id_token_dep`…) sont injectés sur **l'hôte cible uniquement** ; tout autre hôte est tunnelé tel quel. Un sous-domaine de portail est donc vu en **visiteur anonyme** — c'est le bon contexte pour vérifier un rendu public, et la raison pour laquelle un appel d'API lancé depuis cette page part sans session ;
 - l'identité (organisation, département, rôle) est **figée par le profil du proxy** ; les cookies injectés écrasent ceux posés par `document.cookie`, donc **aucune bascule de contexte par cookie**. Pour créer une ressource dans un autre compte, poser `owner` (avec `department`) **à la création** ;
 - la session est **renouvelée automatiquement**. Un `401`/`403` persistant signale un **rôle manquant sur l'identité**, pas une session expirée : demander le rôle à un admin plutôt que réessayer ;
+- un **`502` dont le corps commence par `nhi-proxy:`** vient du proxy, pas de la cible : l'échange de session (`POST /simple-directory/api/auth/nhi-token`) a échoué, en général un `429` du limiteur d'authentification de simple-directory (`authRateLimit` : 5 échanges par 60 s, compté **par IP et par `client_id`**, succès comme échecs). Le proxy s'interdit alors tout nouvel échange pendant 60 s (ou `Retry-After`) et répond `502` à toutes les requêtes qui ne peuvent plus servir la session en main. Les appels d'API eux-mêmes ne consomment rien : c'est le nombre d'échanges qui compte — proxys relancés en boucle, plusieurs proxys (sessions parallèles) sur la même machine ou le même profil, version antérieure à 0.2.2 qui échangeait à chaque requête. Parade : attendre 60 s sans insister, un seul proxy par profil et par machine, écritures séquentielles et scripts idempotents (relançables sans doublon) ;
 - certaines opérations d'administration exigent en plus le **mode admin** du compte (`user.adminMode`) ;
 - sonde valable partout : `GET /simple-directory/api/auth/me` → `200` + le compte. `/auth/me` sans préfixe répond `404` même connecté : ne pas s'en servir comme sonde ;
 - **cible en local** (`http://localhost:5600`) : curl et Chromium contournent le proxy pour localhost, la requête part sans cookies et la réponse anonyme ressemble à un bug. Voir les deux contournements dans `nhi-proxy/docs/usage.md`.
@@ -64,6 +65,8 @@ Quand aucun outil ne couvre l'opération, ou pour un travail en volume / déterm
 - **`curl --proxy` depuis le shell** : plus court pour une lecture ponctuelle, indépendant de l'état de la page.
 
 Dans les deux cas l'authentification vient de la session injectée par le proxy — pas d'en-tête à poser. Certaines API n'acceptent d'ailleurs **que** la session : celle du gestionnaire de portails refuse les clés d'API (`401`).
+
+Les comportements de l'API des jeux de données qui piègent un script (slug, `409` pendant un traitement, lectures en cache, types inférés, extensions, limites de débit, métadonnées) sont dans `references/datasets-api.md`.
 
 **Piège numéro un** : l'origine. Une API n'existe que sur l'hôte qui la sert (`/portals-manager/api` sur l'hôte du gestionnaire, jamais sur le sous-domaine du portail). Après avoir navigué ailleurs pour vérifier un rendu, un `fetch` relatif part sur la mauvaise origine et renvoie le HTML de la SPA → `Unexpected end of JSON input`. Revenir sur l'hôte de l'API, ou passer une URL absolue avec `curl`.
 
@@ -111,5 +114,6 @@ Une réponse `200` n'est pas une vérification. Pour tout résultat visible par 
 ## Références
 
 - `references/webmcp.md` — snippets (attente, listing, appel, appel dans une iframe, `fetch` same-origin, `curl` via proxy), inventaire des outils par surface, outils des formulaires VJSF.
+- `references/datasets-api.md` — résolution des slugs, cycle de vie et `409`, caches de lecture, types inférés, extensions et `_geopoint`, applications sur un portail, limites de débit, métadonnées (`modified`, `datasetsMetadata`).
 - `nhi-proxy/docs/usage.md` — câblage du proxy (profils, Playwright MCP, curl, pièges localhost).
 - `portals-pages` — contenu des pages de portail, qui applique cette échelle.
