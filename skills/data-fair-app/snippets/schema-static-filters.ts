@@ -12,8 +12,9 @@
 // rend les dates utilisables sans date-picker dans VJSF, et `filters2params` les
 // transmet telles quelles en `_gte`/`_lte`.
 //
-// À insérer dans les `definitions` du schema.json d'une app, puis référencer :
-//   "staticFilters": { "$ref": "#/definitions/filters" }
+// À insérer dans les `$defs` du config-schema.json d'une app (jamais `definitions`,
+// cf. SKILL.md « Pipeline de build »), puis référencer :
+//   "staticFilters": { "$ref": "#/$defs/filters" }
 //
 // ⚠️ Runtime : ne PAS convertir en `qs`. Utiliser `filters2params` et spreader
 // les params REST suffixés (_in, _nin, _gte, _lte, _starts, _exists, _nexists).
@@ -45,7 +46,7 @@ export default {
           additionalProperties: false,
           properties: {
             type: { const: 'in' },
-            field: { $ref: '#/definitions/filterField' },
+            field: { $ref: '#/$defs/filterField' },
             values: {
               type: 'array',
               title: 'Valeurs',
@@ -66,7 +67,7 @@ export default {
           additionalProperties: false,
           properties: {
             type: { const: 'out' },
-            field: { $ref: '#/definitions/filterField' },
+            field: { $ref: '#/$defs/filterField' },
             values: {
               type: 'array',
               title: 'Valeurs à exclure',
@@ -87,7 +88,7 @@ export default {
           additionalProperties: false,
           properties: {
             type: { const: 'interval' },
-            field: { $ref: '#/definitions/filterField' },
+            field: { $ref: '#/$defs/filterField' },
             minValue: {
               type: 'string',
               title: 'Valeur min',
@@ -119,7 +120,7 @@ export default {
           additionalProperties: false,
           properties: {
             type: { const: 'starts' },
-            field: { $ref: '#/definitions/filterField' },
+            field: { $ref: '#/$defs/filterField' },
             value: {
               type: 'string',
               title: 'Valeur',
@@ -132,7 +133,7 @@ export default {
           additionalProperties: false,
           properties: {
             type: { const: 'exists' },
-            field: { $ref: '#/definitions/filterField' }
+            field: { $ref: '#/$defs/filterField' }
           }
         },
         {
@@ -140,7 +141,7 @@ export default {
           additionalProperties: false,
           properties: {
             type: { const: 'notExists' },
-            field: { $ref: '#/definitions/filterField' }
+            field: { $ref: '#/$defs/filterField' }
           }
         }
       ]
