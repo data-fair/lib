@@ -166,11 +166,15 @@ const processingContext = {
 processingContext.ws.close()
 ```
 
-Processing plugins then use `ws.waitForJournal()` to wait for dataset indexing:
+Processing plugins then use `ws.waitForJournal()` to wait for dataset indexing.
+It only listens (no replay, no status check): start it before the upload, not
+after, and don't use it for small REST writes (see SKILL.md, `DataFairWsClient`):
 
 ```ts
-// Wait for the dataset to be fully indexed before asserting
-await context.ws.waitForJournal(datasetId, 'finalize-end', 120000)
+// Start waiting before the upload, then await: a finalize-end sent before the subscription is lost
+const finalized = context.ws.waitForJournal(datasetId, 'finalize-end', 120000)
+await uploadNewFile(datasetId) // the request that triggers processing
+await finalized
 ```
 
 ### Generic service integration test pattern

@@ -170,7 +170,8 @@ export class WsClient extends EventEmitter {
 // Specialized client for Data Fair dataset journal events.
 export class DataFairWsClient extends WsClient {
   // Subscribes to `datasets/${datasetId}/journal` and waits for the given
-  // eventType. Throws if an 'error' event arrives first.
+  // eventType. Throws if an 'error' event arrives first. Listens only: events
+  // emitted before the subscription are not replayed.
   async waitForJournal(datasetId: string, eventType: string, timeout = 300000) { /* ... */ }
 }
 ```
