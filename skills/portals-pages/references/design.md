@@ -164,12 +164,12 @@ Une ligne markdown par entrée, **re-triée** avant publication (voir `SKILL.md`
 | Marges des titres | automatiques selon `titleSize` | `h6` → `mb-2` (8 px) … `h1` → `mb-7` (28 px), et `my-*` si le titre n'est pas le premier (`page-element-title.vue:68-85`) | Ne pas essayer de régler `mb` sur un titre : la clé est guérie à la validation |
 | Alerte colorée libre | `alertType: 'none'` + `color` + `icon` | Bandeau à la couleur du thème | Avec un `alertType` sémantique, `color` est **ignoré** (`page-element-alert.vue:6`) |
 | Filet / séparateur | `divider` (recommandé : `opacity: 0.2`, `thickness: 1`, `rounded: true`) | `my-4` (16 px) de part et d'autre, toujours | Pas de `mb` pour l'espacer autrement |
-| Carte cliquable + survol | `link` + `hover.effects` | Défaut `darken` (assombrit) ; `elevate` (+2, plafond 5) ; `grow` (échelle 1.02) ; `titleUnderlineAnimated`, `imageZoom` (1.05) ; `background`/`border` teintent | Effets **inertes sans `link`** ; `darken` par défaut, `effects: []` pour couper ; `prefers-reduced-motion` neutralise tout |
+| Carte cliquable + survol | `link` + `hover.effects` | Défaut `darken` (assombrit) ; `elevate` (+2, plafond 5) ; `grow` (échelle 1.02) ; `titleUnderlineAnimated`, `imageZoom` (1.05, **`thumbnail` seulement**) ; `background`/`border` teintent | Effets **inertes sans `link`** ; `imageZoom` ignore les blocs `image` enfants ; `elevate` sur une carte blanche sans bordure dessine un trait d'ombre sous la carte ; `darken` par défaut, `effects: []` pour couper ; `prefers-reduced-motion` neutralise tout |
 | Élévation / arrondi | `elevation` (0–3), `rounded` (`0`, `default`, `lg`, `xl`) | Hérités de `config.defaults` du portail quand absents | Portail neuf sans `defaults` → VCard plate bordée |
 | Chevauchement de sections | `banner.overflowTop` / `overflowBottom` | Le fond mord sur le bloc précédent/suivant | `mb` est masqué dans l'éditeur quand `overflowBottom` ; c'est voulu |
 | Premier / dernier bloc racine | — | `banner` et `image` racines reçoivent `mt-n4` / `mb-n4` (`page-element-banner.vue:7-8`) | Ne pas ajouter de marge pour « coller » le hero en haut |
 | Priorité de chargement | `image.fetchPriority: true` | `fetchpriority="high"` | Réservé aux images visibles au premier écran ; partout ailleurs c'est contre-productif |
-| Onglets | `tabs` | `v-tabs color="primary"`, `grow`/`align`/`border` | La couleur des onglets n'est pas configurable |
+| Onglets | `tabs` | `v-tabs color="primary"`, `grow`/`align`/`border` | `align` requis ; ni couleur d'onglet ni fond configurables (seulement `border`) |
 | Panneaux dépliants | `expansion-panels` | Variante accordéon non configurable | Seuls `multiple`, `openFirst`, `openAll`, couleurs de fond sont réglables |
 
 ## 6. Typographie, hiérarchie, ancres
