@@ -104,7 +104,7 @@ Puis construire : builders d'`elements.md`, trois appels API de `api-workflow.md
 { type: 'responsive-grid', uuid: u(), columns: 3, gutter: 'default', align: 'stretch',
   children: [
     { type: 'card', uuid: u(), mb: 0, border: true, elevation: 0, contentAlign: 'start',
-      hover: { effects: ['darken', 'elevate', 'titleUnderlineAnimated', 'imageZoom'], color: 'primary' },
+      hover: { effects: ['border', 'titleUnderlineAnimated', 'imageZoom'], color: 'primary' },
       children: [ { type: 'title', uuid: u(), titleSize: 'h6', titleTag: 'h3', content: '…' },
                   { type: 'text', uuid: u(), mb: 0, content: '…' } ],
       actions: [] } // requis, même vide
