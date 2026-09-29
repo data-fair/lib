@@ -193,6 +193,20 @@ Same rendered form and same produced object either way. When a form takes second
 
 Resolution is `value[locale] ?? value[defaultLocale] ?? <the base keyword>`, with `defaultLocale = 'en'`.
 
+**Activating it in a UI** (the form component, not the schema): pass both options to vjsf, as the processings UI does (`processings/ui/src/pages/processings/[id]/index.vue`) and the data-fair settings forms (`ui/src/components/settings/settings-*.vue`):
+
+```ts
+const vjsfOptions = computed(() => ({
+  // …
+  locale: session.lang.value, // the user's language from the session
+  xI18n: true                  // resolve x-i18n-* (off by default)
+}))
+```
+
+Without `xI18n: true` the `x-i18n-*` keywords are ignored and the base keywords are shown. Before writing `x-i18n-*` in a schema, check that the UI that renders it sets the option — otherwise the translations are dead text (see the data-fair app config exception above, and the `data-fair-app` skill).
+
+**Recommendation:** where the rendering UI supports it (processings plugins, data-fair settings), write new schemas bilingual — base keyword in English, `x-i18n-*.fr` next to it — so the form follows the user's language; existing French-only schemas can stay as they are (table below).
+
 **Which mode a schema is in:**
 
 | Situation | What to do |
