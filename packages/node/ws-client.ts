@@ -142,6 +142,8 @@ export class WsClient extends EventEmitter {
         reject(error)
       }, timeout)
       const messageCb = (message: any) => {
+        // subscribe confirmations carry no data, ex: when channels are re-subscribed after a reconnection
+        if (!fullMessage && message.type !== 'message') return
         if (message.channel === channel && (!filter || filter(fullMessage ? message : message.data))) {
           clearTimeout(_timeout)
           this.off('message', messageCb)

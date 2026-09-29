@@ -44,6 +44,8 @@ describe('ws client', () => {
         await client.subscribe('channel1')
 
         const [serverWs] = server.subscriptions.keys()
+        // pending during the disconnection, like a processing waiting for a journal event
+        const received = client.waitFor('channel1', (data: any) => data.value === 'hello', 4000)
         const reconnected = once(server.wss, 'connection')
         disconnect(serverWs)
         await reconnected
@@ -53,9 +55,8 @@ describe('ws client', () => {
         assert.notEqual(newServerWs, serverWs)
         assert.deepEqual([...server.subscriptions.get(newServerWs)!], ['channel1'])
 
-        const received = client.waitFor('channel1', undefined, 1000, true)
-        server.publish('channel1', 'hello')
-        assert.equal(await received, 'hello')
+        server.publish('channel1', { value: 'hello' })
+        assert.deepEqual(await received, { value: 'hello' })
       } finally {
         client.close()
         server.wss.close()
