@@ -34,6 +34,7 @@ export type FullWsClientOpts = WsClientOpts & Required<Pick<WsClientOpts, 'log'>
 export class WsClient extends EventEmitter {
   private _channels: string[]
   private _ws: WebSocket | undefined
+  private _closed = false
   opts: FullWsClientOpts
 
   constructor (opts: WsClientOpts) {
@@ -50,8 +51,11 @@ export class WsClient extends EventEmitter {
       this._ws = ws
       ws.on('error', (err: any) => {
         debug('WS encountered an error', err.message)
-        this._reconnect()
         reject(err)
+      })
+      // emitted after an error too, and when the server closes the connection
+      ws.on('close', () => {
+        if (this._ws === ws) this._reconnect()
       })
       ws.once('open', () => {
         debug('WS is opened')
@@ -66,12 +70,18 @@ export class WsClient extends EventEmitter {
   }
 
   private async _reconnect () {
-    if (!this._ws) return
+    if (this._closed) return
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    if (this._closed) return
     debug('reconnect')
-    this._ws.terminate()
-    await this._connect()
-    for (const channel of this._channels) {
-      await this.subscribe(channel, true)
+    try {
+      await this._connect()
+      for (const channel of this._channels) {
+        await this.subscribe(channel, true)
+      }
+    } catch (err: any) {
+      // a failed connection is closed and schedules its own reconnection
+      debug('WS failed to reconnect', err.message)
     }
   }
 
@@ -106,7 +116,7 @@ export class WsClient extends EventEmitter {
       error.stack += '\nSubscribe context:\n' + errorContext.stack
       throw error
     }
-    if (this._channels.includes(channel)) this._channels.push(channel)
+    if (!this._channels.includes(channel)) this._channels.push(channel)
   }
 
   async waitFor (channel: string, filter?: (message: Message) => boolean, timeout = 300000, skipSubscribe = false, fullMessage = false, _errorContext?: WsClientError): Promise<Message> {
@@ -132,6 +142,8 @@ export class WsClient extends EventEmitter {
         reject(error)
       }, timeout)
       const messageCb = (message: any) => {
+        // subscribe confirmations carry no data, ex: when channels are re-subscribed after a reconnection
+        if (!fullMessage && message.type !== 'message') return
         if (message.channel === channel && (!filter || filter(fullMessage ? message : message.data))) {
           clearTimeout(_timeout)
           this.off('message', messageCb)
@@ -143,6 +155,7 @@ export class WsClient extends EventEmitter {
   }
 
   close () {
+    this._closed = true
     if (this._ws) this._ws.terminate()
   }
 }
