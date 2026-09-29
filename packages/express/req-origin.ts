@@ -59,11 +59,23 @@ export const assertReqInternal = (req: Request) => {
   if (!reqIsInternal(req)) throw httpError(421, 'This endpoint should only be used internally.')
 }
 
-// constant-time: a plain !== returns as soon as a character differs, which lets a caller able to
-// time many requests recover the key one character at a time. The digests have equal lengths
-// (timingSafeEqual requires it) and comparing them leaks neither the key nor its length.
 const digest = (value: string) => createHash('sha256').update(value).digest()
-const secretKeyMatches = (secretKey: string, expectedSecretKey: string) => timingSafeEqual(digest(secretKey), digest(expectedSecretKey))
+
+/**
+ * Compare a received secret with the configured one, in constant time.
+ *
+ * Use it instead of `===` / `!==`, which return as soon as a character differs and let a caller
+ * able to time many requests recover the key one character at a time. Both values are hashed so
+ * the compared buffers have equal lengths (timingSafeEqual requires it), which leaks neither the
+ * key nor its length.
+ *
+ * Takes the raw values: anything but a non-empty string on either side never matches, so an
+ * unconfigured secret or a missing / repeated query parameter (`req.query.key`) is a refusal.
+ */
+export const secretKeyMatches = (secretKey: unknown, expectedSecretKey: unknown): boolean => {
+  if (typeof secretKey !== 'string' || typeof expectedSecretKey !== 'string' || !secretKey || !expectedSecretKey) return false
+  return timingSafeEqual(digest(secretKey), digest(expectedSecretKey))
+}
 
 export const assertReqInternalSecret = (req: Request, expectedSecretKey: string) => {
   assertReqInternal(req)
@@ -72,8 +84,7 @@ export const assertReqInternalSecret = (req: Request, expectedSecretKey: string)
     console.warn('passing internal secret key through query parameter is not recommended, use x-secret-key header')
     secretKey = req.query.key
   }
-  // an unconfigured secret never matches, whatever the caller sends
-  if (!secretKey || !expectedSecretKey || !secretKeyMatches(secretKey, expectedSecretKey)) throw httpError(401, 'Bad secret key')
+  if (!secretKeyMatches(secretKey, expectedSecretKey)) throw httpError(401, 'Bad secret key')
 }
 
 export default reqOrigin

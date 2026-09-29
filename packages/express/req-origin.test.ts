@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
-import { reqOrigin, reqHost, reqIp, reqIsInternal, assertReqInternal, assertReqInternalSecret } from './req-origin.js'
+import { reqOrigin, reqHost, reqIp, reqIsInternal, assertReqInternal, assertReqInternalSecret, secretKeyMatches } from './req-origin.js'
 import type { Request } from 'express'
 import type { IncomingMessage } from 'node:http'
 
@@ -136,6 +136,25 @@ describe('assertReqInternal', () => {
     } catch (err: any) {
       assert.equal(err.status, 421)
     }
+  })
+})
+
+describe('secretKeyMatches', () => {
+  it('should match the same secret only', () => {
+    assert.equal(secretKeyMatches('my-secret', 'my-secret'), true)
+    for (const wrong of ['my-secret-longer', 'my-secre', 'my-secreT', '']) {
+      assert.equal(secretKeyMatches(wrong, 'my-secret'), false, wrong)
+    }
+  })
+
+  it('should never match an unconfigured secret or a non-string value', () => {
+    for (const expected of ['', undefined, null]) {
+      assert.equal(secretKeyMatches('', expected), false)
+      assert.equal(secretKeyMatches(undefined, expected), false)
+    }
+    // e.g. a repeated ?key= query parameter
+    assert.equal(secretKeyMatches(['my-secret'], 'my-secret'), false)
+    assert.equal(secretKeyMatches(undefined, 'my-secret'), false)
   })
 })
 
