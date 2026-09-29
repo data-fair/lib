@@ -1,6 +1,7 @@
 import type { Request } from 'express'
 import type { IncomingMessage } from 'node:http'
 import { isIP } from 'node:net'
+import { createHash, timingSafeEqual } from 'node:crypto'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 
 export const reqHost = (req: Request) => {
@@ -58,6 +59,24 @@ export const assertReqInternal = (req: Request) => {
   if (!reqIsInternal(req)) throw httpError(421, 'This endpoint should only be used internally.')
 }
 
+const digest = (value: string) => createHash('sha256').update(value).digest()
+
+/**
+ * Compare a received secret with the configured one, in constant time.
+ *
+ * Use it instead of `===` / `!==`, which return as soon as a character differs and let a caller
+ * able to time many requests recover the key one character at a time. Both values are hashed so
+ * the compared buffers have equal lengths (timingSafeEqual requires it), which leaks neither the
+ * key nor its length.
+ *
+ * Takes the raw values: anything but a non-empty string on either side never matches, so an
+ * unconfigured secret or a missing / repeated query parameter (`req.query.key`) is a refusal.
+ */
+export const secretKeyMatches = (secretKey: unknown, expectedSecretKey: unknown): boolean => {
+  if (typeof secretKey !== 'string' || typeof expectedSecretKey !== 'string' || !secretKey || !expectedSecretKey) return false
+  return timingSafeEqual(digest(secretKey), digest(expectedSecretKey))
+}
+
 export const assertReqInternalSecret = (req: Request, expectedSecretKey: string) => {
   assertReqInternal(req)
   let secretKey = req.get('x-secret-key')
@@ -65,7 +84,7 @@ export const assertReqInternalSecret = (req: Request, expectedSecretKey: string)
     console.warn('passing internal secret key through query parameter is not recommended, use x-secret-key header')
     secretKey = req.query.key
   }
-  if (!secretKey || expectedSecretKey !== secretKey) throw httpError(401, 'Bad secret key')
+  if (!secretKeyMatches(secretKey, expectedSecretKey)) throw httpError(401, 'Bad secret key')
 }
 
 export default reqOrigin
