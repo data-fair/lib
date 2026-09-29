@@ -106,7 +106,7 @@ export class WsClient extends EventEmitter {
       error.stack += '\nSubscribe context:\n' + errorContext.stack
       throw error
     }
-    if (this._channels.includes(channel)) this._channels.push(channel)
+    if (!this._channels.includes(channel)) this._channels.push(channel)
   }
 
   async waitFor (channel: string, filter?: (message: Message) => boolean, timeout = 300000, skipSubscribe = false, fullMessage = false, _errorContext?: WsClientError): Promise<Message> {
