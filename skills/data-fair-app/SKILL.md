@@ -415,6 +415,10 @@ DataFair utilise [VJSF](https://koumoul-dev.github.io/vuetify-jsonschema-form/) 
 
 > **Note** : `df-build-types` est fourni par le package **`@data-fair/lib-types-builder`** (à installer en `devDependencies`).
 
+### Langue : tout en français, pas de `x-i18n-*`
+
+Le formulaire de configuration d'application de data-fair **ne supporte pas encore `x-i18n-*`** : il est monté avec `locale: 'fr'` sans l'option `xI18n` (`data-fair/ui/src/components/application/application-config.vue`), donc les traductions `x-i18n-*` sont ignorées et seuls les mots-clés de base s'affichent. Pour le moment, `config-schema.json` s'écrit **entièrement en français** dans les mots-clés de base (`title`, `description`, `markdown`, libellés des `oneOf`, `layout`…), sans aucun `x-i18n-*`. Le mécanisme, et la façon de l'activer dans une UI qui le supporte, sont décrits dans le skill `vjsf`.
+
 ### Libellés : majuscule initiale, casse de phrase
 
 La règle complète (majuscule initiale, casse de phrase française, exceptions identifiants techniques et noms propres) est dans le **skill `vjsf`**. Point propre aux applications : elle porte sur **toute chaîne visible, où qu'elle vive** — pas seulement les schémas. Dans l'état actuel du parc, l'immense majorité des textes sont des chaînes françaises en dur dans les templates : elles sont concernées au premier chef. Ne pas attendre un passage à l'i18n pour appliquer la casse ; quand des blocs `<i18n>` existent, la majuscule est portée dans chaque langue.
