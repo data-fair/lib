@@ -91,4 +91,5 @@ For every major you declined, write down **the specific blocker** — "the image
 - Adding an `overrides` entry and assuming it applied. Confirm with `npm ls <pkg>`; in an existing lockfile an override often resolves to nothing.
 - Reporting "0 vulnerabilities" from npm audit alone, without scanning the image.
 - Deleting a dependency because grep found no import, before checking ambient `.d.ts`, `optimizeDeps` and dynamic `import()`.
+- Trusting a peer range to catch an incompatible pairing. `@data-fair/lib-vuetify` 2.4.0–2.5.0 imports `resolveTheme` from `@data-fair/lib-vue/session.js`, which only exists since lib-vue 1.29.0, yet declares `lib-vue: ^1.15.0`: `npm ci` passes, `vite build` fails with `MISSING_EXPORT`. Bump the two together (2.5.1+ declares `^1.31`), and prove a bump with a real build.
 - A lockfile diff far larger than your change. Note it, and say whether it is intended drift absorption or accidental churn.
