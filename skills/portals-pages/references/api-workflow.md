@@ -137,7 +137,7 @@ Le déplacement n'altère pas le propriétaire de la page : une page owned par l
 
 ## Pages standard (accueil, contact…)
 
-Les pages standard **ne sont pas créées avec le portail** par l'API (seul l'assistant du gestionnaire crée `home`, et `datasets` / `applications` si on les choisit ; voir `portals-portals` §3). Celles qui existent sont listées comme les autres :
+Les pages standard **ne sont pas créées avec le portail** par l'API (seul l'assistant du gestionnaire crée `home`, et `datasets` / `applications` si on les choisit ; voir `portals-config` §3). Celles qui existent sont listées comme les autres :
 
 ```js
 async () => {

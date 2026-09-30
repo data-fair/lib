@@ -34,7 +34,7 @@ Cet skill couvre :
 Cet skill ne couvre **pas** :
 
 - **portals v1** (ancien module Nuxt 2, par ex. `koumoul.com` à la racine pendant la migration) : pas de gestionnaire v2, pas de bloc Mermaid, iframe brut toléré dans le markdown. Si la page est demandée sur un site v1, le dire et proposer soit une page v2, soit un rendu Mermaid en image. **Vérifier quel service sert l'hôte avant d'éditer** : chercher `/portal/api` (v2) ou `/data-fair-portals/` (v1) dans le HTML servi. Le gestionnaire peut contenir un portail homonyme **sans `ingress`** qui n'est qu'une copie de migration : l'éditer ne change rien en ligne ;
-- la configuration du portail elle-même (thème, menu, en-tête, pied de page, vignettes, création du portail) hors `allowedFrameSources` : voir le skill **`portals-portals`** ;
+- la configuration du portail elle-même (thème, menu, en-tête, pied de page, vignettes, création du portail) hors `allowedFrameSources` : voir le skill **`portals-config`** ;
 - le contenu des pages catalogue / réutilisation / événement / actualité (hors pages standard d'accueil de catalogue) ;
 - le développement du code de portals (dépôt `data-fair/portals`) ;
 - la mécanique d'interaction avec la plateforme au navigateur — identité NHI, outils WebMCP de la page, appels d'API, check-list de vérification générique : voir le skill **`data-fair-browse`**, dont celui-ci est le prolongement éditorial.
@@ -117,7 +117,7 @@ Autres opérations :
 
 ### Pages standard (types prédéfinis)
 
-Types : `home`, `contact`, `accessibility`, `terms-of-service`, `legal-notice`, `privacy-policy`, `cookie-policy`, `datasets`, `applications`, `reuses`, `event-catalog`, `news-catalog`. Il n'y a **qu'une page publiée par type et par portail**. Elles **ne sont pas créées avec le portail** : l'assistant du gestionnaire crée `home` et, si on les choisit, `datasets` / `applications` ; un portail créé par l'API n'en a aucune, et une page standard absente répond « Page not found » (création et rattachement : skill `portals-portals` §3). Vérifier : `GET https://<portail>/portal/api/pages/standard-exists`.
+Types : `home`, `contact`, `accessibility`, `terms-of-service`, `legal-notice`, `privacy-policy`, `cookie-policy`, `datasets`, `applications`, `reuses`, `event-catalog`, `news-catalog`. Il n'y a **qu'une page publiée par type et par portail**. Elles **ne sont pas créées avec le portail** : l'assistant du gestionnaire crée `home` et, si on les choisit, `datasets` / `applications` ; un portail créé par l'API n'en a aucune, et une page standard absente répond « Page not found » (création et rattachement : skill `portals-config` §3). Vérifier : `GET https://<portail>/portal/api/pages/standard-exists`.
 
 - Les lister : `GET /portals-manager/api/pages?size=100&select=_id,title,type,owner,portals` puis filtrer sur `type`.
 - Leur contenu est exposé publiquement sur `/portal/api/pages/<type>/<slug>` (accueil : `/portal/api/pages/home/home`, page standard : `<slug>` = type, ex. `/portal/api/pages/contact/contact`).

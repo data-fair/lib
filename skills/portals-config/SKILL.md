@@ -1,5 +1,5 @@
 ---
-name: portals-portals
+name: portals-config
 description: >
   Use when configuring a **portals v2 portal itself** through the
   portals-manager API (`/portals-manager/api/portals`): creating or
