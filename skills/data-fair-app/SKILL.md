@@ -891,6 +891,8 @@ L'attribut `sync-params` du `<d-frame>` traduit les clés du parent vers l'enfan
 
 **Conséquence** : votre code n'a besoin de connaître que la convention **parent**. C'est `:sync-params` qui adapte ce qui est passé à l'enfant. Voir `references/embeds-params.md` pour le détail par type d'embed.
 
+**Le thème ne se transmet pas** : `sync-params` ne sait que traduire des clés, pas poser une valeur (`dark:1` se lit comme le motif `dark` avec le préfixe parent `1`, et ne passe rien). Il n'y a d'ailleurs rien à passer : l'enfant est servi depuis la même origine et résout lui-même son thème (cookie `theme`, `prefers-color-scheme`, `prefers-contrast`). Une valeur fixe pour l'enfant se met dans le `src`.
+
 ### Paramètres réactifs
 
 Deux mécanismes complémentaires, **à utiliser ensemble** :
