@@ -414,7 +414,7 @@ Aucune de ces divergences n'est théorique : la panne de police décrite plus ha
 #### Stratégie de tests et console propre
 
 - **Les tests unitaires d'abord** : la logique vit dans les utilitaires et les composables (cf. « Notes pour les agents »), c'est là qu'elle se teste, sans navigateur. Les e2e ne servent qu'aux **parcours complets** et aux **visuels**, et ne rejouent jamais ce qu'un test unitaire couvre déjà : un e2e par parcours, pas un par règle.
-- **Console propre, vérifiée par les e2e** : une fixture Playwright automatique fait échouer tout test sur une erreur ou un avertissement console, une exception de page, ou un événement `error` de `window` (celui-ci n'atteint ni la console ni `pageerror`, cas de `ResizeObserver loop…`). Les exceptions sont nommées et commentées, jamais un filtre large :
+- **Console propre, vérifiée par les e2e** : une fixture Playwright automatique fait échouer tout test sur une erreur ou un avertissement console, ou une exception de page. Les exceptions sont nommées et commentées, jamais un filtre large :
 
 ```ts
 // tests/e2e/fixtures.ts
@@ -432,9 +432,6 @@ export const test = base.extend<{ consoleGuard: void }>({
       if (err.message === "Unexpected token '%'") return
       messages.push(`[pageerror] ${err.message}`)
     })
-    await page.addInitScript(() => {
-      window.addEventListener('error', (e) => { if (!e.error) console.error('[window error] ' + e.message) })
-    })
     await use()
     expect(messages, 'console must stay clean').toEqual([])
   }, { auto: true }]
@@ -442,7 +439,7 @@ export const test = base.extend<{ consoleGuard: void }>({
 export { expect }
 ```
 
-Les specs importent alors `test` et `expect` depuis `./fixtures`. Seule exception connue à ce jour, hors application : `@koumoul/vjsf` (constaté en 4.6.0) émet `ResizeObserver loop completed with undelivered notifications` au montage de chaque formulaire (il mesure sa racine avec `useElementSize` et rend dans la même image) — à exclure nommément. **À chaque montée de vjsf, retirer l'exception et relancer les e2e** : si l'avertissement a disparu, supprimer l'exception de l'app et cette mention du skill (et la ligne correspondante du skill `vjsf`).
+Les specs importent alors `test` et `expect` depuis `./fixtures`. Ne pas écouter les événements `error` de `window` sans exception derrière (`ResizeObserver loop…`) : ils n'atteignent pas la console, ne se voient pas et ne sont que du bruit.
 
 ## Schéma de configuration (VJSF)
 
