@@ -253,7 +253,9 @@ DataFair capture les apps (miniature de galerie et de carte, bouton « Capturer 
 
 **Que masquer dans une capture ?** Le critère n'est pas « c'est cliquable » mais **« est-ce que ça porte de l'information dans une image fixe ? »**. Masquer les commandes dont l'image ne peut rien faire et qui ne disent rien de l'état : boutons lecture/pause, curseur d'animation, boutons d'export, barres d'outils, infobulles, aides « cliquez pour… ». **Garder** ce qui documente l'état capturé : barre de filtres avec ses valeurs courantes, période sélectionnée, légende, titre, unité. `app-dashboards` n'a aucun rendu spécifique à la capture, et c'est le bon choix — ses filtres affichent les valeurs qui ont produit les graphiques. Le dépouillement plus poussé se justifie surtout sous `?thumbnail=true` (vignette de galerie de 1050×450), pas sur une capture manuelle qu'un utilisateur a demandée pour illustrer un état précis. Détail dans `references/capture.md` § 6 bis.
 
-> **⚠️ Piège de timing** : si l'app annonce une attente explicite (`df:capture-delay` ou `x-capture: trigger`) mais n'appelle jamais `triggerCapture` (ex. appel conditionné à une ressource qui n'existe pas), chaque capture attend le **timeout complet** du service. Appeler `triggerCapture` de façon fiable — y compris sur résultat vide, erreur de données et configuration invalide.
+> **⚠️ Piège de timing** : une app qui déclare `x-capture: trigger` (déprécié) sans jamais appeler `triggerCapture` (ex. appel conditionné à une ressource qui n'existe pas) fait attendre à chaque capture le **timeout complet** du service. Avec `df:capture-delay`, l'attente est bornée par ce délai (`Math.min(délai, screenshotTimeout)`, `capture/api/utils/page.ts`). Appeler `triggerCapture` de façon fiable — y compris sur résultat vide, erreur de données et configuration invalide.
+
+> **Contenu embarqué dont l'app ne voit pas le rendu** (un `<d-frame>` vers une vue data-fair, une autre application) : l'app ne sait pas quand ce contenu est peint, et un `triggerCapture` appelé au montage photographie une zone vide. Ne l'appeler alors que sur les écrans statiques (configuration incomplète, erreur) ; pour les écrans de données, déclarer `df:capture-delay` et ne pas appeler `triggerCapture` : le service capture après l'inactivité réseau de la page, iframes comprises, puis le délai. Vérifiable avec la simulation de capture du dev-server (`[capture] network idle sans triggerCapture…`).
 
 > **⚠️ Piège de contenu — le plus fréquent** : la miniature par défaut est une **image fixe prise à l'état initial** de l'app. Une visu qui démarre vide (animation à t=0, carte pas encore centrée, formulaire pas encore rempli) produit une vignette vide, affichée partout dans le back-office et les portails avant même l'ouverture de l'app. Utiliser le booléen retourné par `triggerCapture` : `false` = image fixe, donc se placer sur l'état **final ou représentatif** ; `true` = gif, donc repartir du début. Le dev-server ≥ 2.4.0 sait simuler le chemin png (format `png` dans son dialogue de capture) ; les versions antérieures animaient toujours et ne montraient jamais ce cas.
 
@@ -408,6 +410,39 @@ Aucune de ces divergences n'est théorique : la panne de police décrite plus ha
 
 > **Vite 8 embarque rolldown** (`rolldown ~1.2.4` en dépendance de `vite`), plus Rollup. Conséquence visible au build : `<script src="/simple-directory/api/sites/_public.js"> in "/index.html" can't be bundled without type="module" attribute`. **Cet avertissement est normal et le script est bien conservé dans `dist/index.html`** — vérifié sur les sept applications. Ne pas le « corriger » en ajoutant `type="module"` : le script doit rester classique pour être exécuté avant le module `main.ts`, qui est différé, sans quoi `window.__PUBLIC_SITE_INFO` n'est pas posé quand `createSession` le teste.
 - **Pas de `.editorconfig`** — aucun dépôt maison n'en a ; le supprimer sur une reprise, une fois `neostandard` en place.
+
+#### Stratégie de tests et console propre
+
+- **Les tests unitaires d'abord** : la logique vit dans les utilitaires et les composables (cf. « Notes pour les agents »), c'est là qu'elle se teste, sans navigateur. Les e2e ne servent qu'aux **parcours complets** et aux **visuels**, et ne rejouent jamais ce qu'un test unitaire couvre déjà : un e2e par parcours, pas un par règle.
+- **Console propre, vérifiée par les e2e** : une fixture Playwright automatique fait échouer tout test sur une erreur ou un avertissement console, une exception de page, ou un événement `error` de `window` (celui-ci n'atteint ni la console ni `pageerror`, cas de `ResizeObserver loop…`). Les exceptions sont nommées et commentées, jamais un filtre large :
+
+```ts
+// tests/e2e/fixtures.ts
+import { test as base, expect } from '@playwright/test'
+
+export const test = base.extend<{ consoleGuard: void }>({
+  consoleGuard: [async ({ page }, use) => {
+    const messages: string[] = []
+    page.on('console', (msg) => {
+      if (msg.type() === 'error' || msg.type() === 'warning') messages.push(`[${msg.type()}] ${msg.text()}`)
+    })
+    page.on('pageerror', (err) => {
+      // harness artifact, only when index.html is served without substituting `%APPLICATION%`
+      // (window.APPLICATION then comes from page.addInitScript)
+      if (err.message === "Unexpected token '%'") return
+      messages.push(`[pageerror] ${err.message}`)
+    })
+    await page.addInitScript(() => {
+      window.addEventListener('error', (e) => { if (!e.error) console.error('[window error] ' + e.message) })
+    })
+    await use()
+    expect(messages, 'console must stay clean').toEqual([])
+  }, { auto: true }]
+})
+export { expect }
+```
+
+Les specs importent alors `test` et `expect` depuis `./fixtures`. Seule exception connue à ce jour, hors application : `@koumoul/vjsf` émet `ResizeObserver loop completed with undelivered notifications` au montage de chaque formulaire (il mesure sa racine avec `useElementSize` et rend dans la même image) — à exclure nommément tant que vjsf n'est pas corrigé.
 
 ## Schéma de configuration (VJSF)
 
@@ -825,6 +860,14 @@ Points de détail qui comptent :
 la sortie est française — c'est la seule façon de distinguer un formatage correct d'un formatage qui
 marche par coïncidence sur la machine du développeur.
 
+### Conventions d'interface
+
+- **Classes utilitaires Vuetify plutôt que CSS maison** : ne garde de CSS `scoped` que ce qui n'a pas d'équivalent (une couleur de thème sur fond translucide, `min-height: 0` d'un enfant flex, `scrollbar-gutter`).
+- **Pas de hauteur fixe** (en px ou en %), ni de hauteur calculée par un observateur maison : les hauteurs suivent le contenu. Seule exception, le choix d'une app à hauteur fixe (`h-screen` sur `<v-main>`, défilement interne en flex), qui suit l'écran sans calcul.
+- **Pas de variant `tonal` sur les alertes** (`v-alert`) : variant par défaut.
+- **Espacements `pl` / `pr` / `ml` / `mr`** plutôt que les variantes logiques `ps` / `pe` / `ms` / `me`.
+- **Une barre d'actions qui doit passer à la ligne** n'est pas un `v-card-actions` (flex sans retour à la ligne) : une ligne `d-flex flex-wrap align-center ga-2`, sans `v-row` / `v-col` quand il n'y a pas de grille.
+
 ### États de chargement et d'erreur (UX)
 
 - Gérer l'état de chargement (`loading` de `useFetch` ou `useAsyncAction`).
@@ -981,6 +1024,8 @@ if (window.parent !== window) {
 }
 ```
 
+> **⚠️ Envoyer une copie simple, jamais un objet issu de `useConfig()`.** `postMessage` clone son message (algorithme *structured clone*) et lève `DataCloneError` sur un proxy réactif de Vue — or tout ce qui sort de `config.value` (un dataset, un sous-objet) en est un. L'erreur part dans le `catch` de l'appelant et le parent ne reçoit rien : vu sur app-contribs, dont le jeu de contributions était créé mais jamais inscrit dans la configuration. Copier le message avant de l'envoyer : `window.parent.postMessage(JSON.parse(JSON.stringify(message)), origin)`.
+
 ### d-frame
 
 Utiliser `@data-fair/frame` (composant `d-frame`) pour intégrer des vues DataFair (tableau, carte, formulaire) dans l'app.
@@ -1048,6 +1093,8 @@ Le redimensionnement des embeds d-frame remplace l'ancien `iframe-resizer` (chem
   />
 </template>
 ```
+
+> **Sans attribut `resize`, le mode vaut `auto`** (`DFrameElement.js`, `@data-fair/frame` 0.18) : un `<d-frame>` suit la hauteur annoncée par son contenu. Une app **à hauteur fixe** (`df:overflow="false"`, qui remplit son viewport et défile à l'intérieur) qui embarque une vue data-fair pose donc `resize="no"` sans `height` ni `aspect-ratio` : le `<d-frame>` occupe alors toute la hauteur de son conteneur (un enfant flex en `flex-grow-1` avec `min-height: 0`). Une telle app ne pose ni `data-iframe-height` ni `window.iFrameResizer`.
 
 > **⚠️ Le parent décide, l'enfant annonce.** Une app qui déclare `df:overflow="true"` **annonce** qu'elle peut grandir, mais c'est le `resize` du `<d-frame>` parent qui **active** la prise en compte (`resize="auto"`). C'est ainsi que `app-dashboards` pilote ses éléments : il lit la meta `df:overflow` de l'app embarquée pour choisir entre hauteur contrainte et hauteur fluide (`src/components/element-dframe.vue`).
 
@@ -1184,6 +1231,7 @@ const { data } = useFetch(() => datasetUrl + '/lines', { query: params })
 - [ ] `index.html` : `<!DOCTYPE html>` obligatoire, pas de `lang` sur `<html>`, `charset` en premier, un seul `<title>` lisible, une seule `<meta name="description">`, `<div id="app">` (si `<v-main>`) ou `<main id="app">`, `<link>` vers `_theme.css` et déclaration `@layer`
 - [ ] `App.vue` : `<v-app :class="{ 'bg-transparent': embedded }">` avec `embedded = window.self !== window.top` — jamais `bg-transparent` inconditionnel, jamais de règle sur `.v-application`
 - [ ] `<script src="/simple-directory/api/sites/_public.js">` présent **et** `main.ts` en `siteInfo: !window.__PUBLIC_SITE_INFO` — les deux, jamais l'un sans l'autre. Contrôle : lancer les e2e et grepper `refreshSiteInfo is deprecated` dans la sortie ; un seul hit signifie que la session paie encore le fetch bloquant. Attention au faux négatif inverse : un mock qui répond du JSON à tout `**/simple-directory/**` sert du JSON pour `_public.js` aussi, le global reste vide et l'app repasse en silence par le chemin déprécié alors que le code est bon
+- [ ] console propre pendant les e2e : fixture `consoleGuard` en place (cf. « Stratégie de tests et console propre »), aucune exception non commentée
 - [ ] aucun avertissement `[intlify]` en console pendant les e2e (cf. « Un bloc `<i18n>` local casse `n(v, 'percent')` »)
 - [ ] `application-name` = nom du dépôt = nom du paquet, en `[a-z0-9-]`
 - [ ] aucune méta morte (`keywords`, `thumbnail`, `vocabulary-*`, `version`, `title`, `x-capture`, `{VERSION}`)
