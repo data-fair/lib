@@ -442,7 +442,7 @@ export const test = base.extend<{ consoleGuard: void }>({
 export { expect }
 ```
 
-Les specs importent alors `test` et `expect` depuis `./fixtures`. Seule exception connue à ce jour, hors application : `@koumoul/vjsf` émet `ResizeObserver loop completed with undelivered notifications` au montage de chaque formulaire (il mesure sa racine avec `useElementSize` et rend dans la même image) — à exclure nommément tant que vjsf n'est pas corrigé.
+Les specs importent alors `test` et `expect` depuis `./fixtures`. Seule exception connue à ce jour, hors application : `@koumoul/vjsf` (constaté en 4.6.0) émet `ResizeObserver loop completed with undelivered notifications` au montage de chaque formulaire (il mesure sa racine avec `useElementSize` et rend dans la même image) — à exclure nommément. **À chaque montée de vjsf, retirer l'exception et relancer les e2e** : si l'avertissement a disparu, supprimer l'exception de l'app et cette mention du skill (et la ligne correspondante du skill `vjsf`).
 
 ## Schéma de configuration (VJSF)
 
@@ -864,7 +864,7 @@ marche par coïncidence sur la machine du développeur.
 
 - **Classes utilitaires Vuetify plutôt que CSS maison** : ne garde de CSS `scoped` que ce qui n'a pas d'équivalent (une couleur de thème sur fond translucide, `min-height: 0` d'un enfant flex, `scrollbar-gutter`).
 - **Pas de hauteur fixe** (en px ou en %), ni de hauteur calculée par un observateur maison : les hauteurs suivent le contenu. Seule exception, le choix d'une app à hauteur fixe (`h-screen` sur `<v-main>`, défilement interne en flex), qui suit l'écran sans calcul.
-- **Pas de variant `tonal` sur les alertes** (`v-alert`) : variant par défaut.
+- **Éviter le variant `tonal` pour porter une couleur de la palette** (recommandation, pas une obligation) : le contraste de `primary`, `secondary`, `accent`, `error`, `info`, `warning`, `success` n'est que faiblement garanti sur le fond teinté du `tonal`. Préférer le variant par défaut pour une alerte colorée ; une chip neutre peut rester `tonal`.
 - **Espacements `pl` / `pr` / `ml` / `mr`** plutôt que les variantes logiques `ps` / `pe` / `ms` / `me`.
 - **Une barre d'actions qui doit passer à la ligne** n'est pas un `v-card-actions` (flex sans retour à la ligne) : une ligne `d-flex flex-wrap align-center ga-2`, sans `v-row` / `v-col` quand il n'y a pas de grille.
 
