@@ -9,17 +9,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTheme } from 'vuetify'
+import { themeSvgSource } from './themed-svg-source.js'
 
 const { source, color = 'primary' } = defineProps<{ source: string, color?: string }>()
 const theme = useTheme()
 
-const themedSource = computed(() => {
-  return source
-    .replace(/#6C63FF/gi, theme.current.value.colors[color] as string) // default undraw color
-    .replace(/#68E1FD/gi, theme.current.value.colors[color] as string) // default manypixels color
-    .replace(/#FFD200/gi, theme.current.value.colors.secondary as string)
-    .replace(/style="isolation: isolate;"/gi, 'class="isolated-svg"')
-})
+const themedSource = computed(() => themeSvgSource(source, theme.current.value.colors as Record<string, string>, color))
 </script>
 
 <style lang="css">
