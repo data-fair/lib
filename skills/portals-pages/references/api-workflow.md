@@ -1,7 +1,7 @@
 # API du gestionnaire — workflow et payloads
 
 Toutes les routes ci-dessous sont relatives à l'API du gestionnaire : `https://<hôte>/portals-manager/api`.
-Elles s'appellent en **same-origin** depuis une page de `<hôte>` (session en cookies), par exemple via `browser_evaluate` du MCP Playwright. Aucun en-tête d'authentification à gérer. L'API du gestionnaire **refuse les clés d'API** (`401`) : la session navigateur est la seule voie d'écriture.
+Elles s'appellent en **same-origin** depuis une page de `<hôte>` (session en cookies), par exemple via `evaluate_script` (chrome-devtools) ou `browser_evaluate` (Playwright). Aucun en-tête d'authentification à gérer. L'API du gestionnaire **refuse les clés d'API** (`401`) : la session navigateur est la seule voie d'écriture.
 
 ## Session fournie par le proxy NHI
 
@@ -169,7 +169,7 @@ Le serveur propage ensuite `rootPage` dans `genericMetadata.group.rootPage` de *
 
 `POST /portals-manager/api/images`, multipart avec un champ `body` (JSON) et un fichier `image`. Trois façons d'obtenir le `File`/`Blob` :
 
-- **fichier local** : créer un `<input type="file">` dans le DOM, l'alimenter avec `browser_file_upload`, lire `input.files[0]` ;
+- **fichier local** : créer un `<input type="file">` dans le DOM, l'alimenter avec `upload_file` (chrome-devtools) ou `browser_file_upload` (Playwright), lire `input.files[0]` ;
 - **drag & drop** dans la page (`window.__dropped[0]` ci-dessous) ;
 - **depuis une URL same-origin** (miniature du registre, image d'un autre service) : `await (await fetch(url, { credentials: 'include' })).blob()`.
 

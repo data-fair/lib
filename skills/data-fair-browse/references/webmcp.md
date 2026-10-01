@@ -4,7 +4,7 @@
 
 Les interfaces data-fair utilisent le standard **WebMCP** (`navigator.modelContext`, polyfill `@mcp-b/webmcp-polyfill`), via `useAgentTool` / `useAgentSubAgent` de `@data-fair/lib-vue-agents`. `useFrameServer(serverId)` remplace ensuite `navigator.modelContext` par un `BrowserMcpServer` branché sur un `BroadcastChannel` propre à l'onglet, pour que le chat de la plateforme puisse agréger les outils de toutes les frames.
 
-API utile depuis `browser_evaluate` :
+API utile depuis l'outil d'évaluation du MCP (`evaluate_script` côté chrome-devtools, `browser_evaluate` côté Playwright) :
 
 | Appel | Retour |
 | --- | --- |
@@ -18,7 +18,7 @@ Le résultat métier est en général du **texte dans `content[0].text`** (souve
 L'enregistrement est asynchrone (imports dynamiques, montage de composants). Ne pas conclure à l'absence d'un outil sur une première lecture.
 
 ```js
-// browser_evaluate — attend jusqu'à 15 s l'apparition d'un outil, puis liste tout
+// evaluate_script / browser_evaluate — attend jusqu'à 15 s l'apparition d'un outil, puis liste tout
 async () => {
   const deadline = Date.now() + 15000
   const has = n => {
@@ -125,14 +125,14 @@ Ajoutés selon la route :
 
 ### Simple Directory
 
-Aucun outil WebMCP. Barreau ② (API) ou ③ (Playwright).
+Aucun outil WebMCP. Barreau ② (API) ou ③ (navigateur brut).
 
 ## Barreau ② : appels d'API
 
 ### `fetch` same-origin depuis la page
 
 ```js
-// browser_evaluate, sur une page de l'hôte qui sert l'API visée
+// evaluate_script / browser_evaluate, sur une page de l'hôte qui sert l'API visée
 async () => {
   const res = await fetch('/data-fair/api/v1/datasets?size=5', { headers: { accept: 'application/json' } })
   if (!res.ok) return { status: res.status, body: await res.text() }

@@ -1,6 +1,6 @@
 # Scripts — configuration d'un portail
 
-Tous les appels au gestionnaire se font en **same-origin depuis l'hôte du gestionnaire** (ex. `https://koumoul.com/data-fair/...` ou `/portals-manager`), session en cookies, via `browser_evaluate`. Les appels `/portal/api/...` se font sur **l'hôte du portail**.
+Tous les appels au gestionnaire se font en **same-origin depuis l'hôte du gestionnaire** (ex. `https://koumoul.com/data-fair/...` ou `/portals-manager`), session en cookies, via `evaluate_script` (chrome-devtools) ou `browser_evaluate` (Playwright). Les appels `/portal/api/...` se font sur **l'hôte du portail**.
 
 ## Lire → modifier → publier
 
@@ -58,7 +58,7 @@ La session doit être sur le compte **et le département** propriétaires du por
 
 ```js
 async () => {
-  // exemple : un SVG récupéré en same-origin ; pour un fichier local, passer par <input type=file> + browser_file_upload
+  // exemple : un SVG récupéré en same-origin ; pour un fichier local, passer par <input type=file> + upload_file / browser_file_upload
   const svgText = await (await fetch('<url same-origin du svg>')).text()
   const file = new File([svgText], 'logo.svg', { type: 'image/svg+xml' })   // type MIME obligatoire, sinon rastérisé en webp
   const fd = new FormData()

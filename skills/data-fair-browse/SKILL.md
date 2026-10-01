@@ -2,10 +2,10 @@
 name: data-fair-browse
 description: >
   Use when an agent drives a running data-fair platform through a browser
-  (Playwright MCP) under a non-human identity provided by
-  `@data-fair/nhi-proxy`: how to pick the right level of interaction —
-  in-page WebMCP tools first (`navigator.modelContext.listTools()` /
-  `callTool()`), then direct HTTP API calls, and raw Playwright clicks last —
+  MCP (chrome-devtools or Playwright), usually under a non-human identity
+  provided by `@data-fair/nhi-proxy`: how to pick the right level of
+  interaction — in-page WebMCP tools first (`navigator.modelContext.listTools()` /
+  `callTool()`), then direct HTTP API calls, and raw browser clicks last —
   which WebMCP tools each surface exposes (portail public, back-office
   data-fair, portals-manager, simple-directory), what the NHI proxy session
   implies (cookies on the target host only, identity fixed by the profile,
@@ -19,7 +19,7 @@ description: >
 
 # Piloter une plateforme data-fair au navigateur
 
-Pour un agent qui **utilise** une plateforme data-fair déployée via un navigateur (MCP Playwright) sous une **identité non humaine** (NHI). Le fil conducteur : la page connaît déjà ses propres opérations, il faut les lui demander avant de simuler un humain.
+Pour un agent qui **utilise** une plateforme data-fair déployée via un navigateur MCP (chrome-devtools ou Playwright), le plus souvent sous une **identité non humaine** (NHI). Le fil conducteur : la page connaît déjà ses propres opérations, il faut les lui demander avant de simuler un humain.
 
 Cet skill ne couvre **pas** le développement des services (→ `data-fair-session`, `data-fair-ws`, `vjsf`), ni le contenu éditorial des pages de portail (→ `portals-pages`, qui s'appuie sur celui-ci).
 
@@ -28,6 +28,8 @@ Cet skill ne couvre **pas** le développement des services (→ `data-fair-sessi
 Le navigateur est lancé derrière `@data-fair/nhi-proxy`, qui échange une clé NHI contre des sessions simple-directory courtes et injecte les cookies. Le câblage détaillé est dans `nhi-proxy/docs/usage.md`, qui n'est pas publié dans le paquet npm. L'essentiel :
 
 - **Lancer** un proxy par identité : `npx @data-fair/nhi-proxy serve --profile "<profil>"` (profils : `nhi-proxy profiles`, un port chacun, 7331 pour le premier). Au démarrage, il affiche la config Playwright MCP et le pin SPKI. Sonde : `curl --proxy http://127.0.0.1:7331 --cacert ~/.config/nhi-proxy/<profil>/ca.crt https://koumoul.com/simple-directory/api/auth/me`.
+- **Page publique** (portail, rendu visiteur) : elle peut se consulter avec le navigateur MCP normal, sans NHI ni proxy.
+- **Navigateur MCP derrière le proxy** : chrome-devtools (`--proxyServer=http://127.0.0.1:<port> --chromeArg=--ignore-certificate-errors-spki-list=<pin>`) ou Playwright (config `--config` affichée au démarrage du proxy). Ces options sont lues au lancement du MCP : il ne répond que tant que son proxy tourne (sinon `ERR_PROXY_CONNECTION_FAILED`) et n'accepte que la CA du profil dont il porte le pin. Ne pas en installer un de sa propre initiative.
 - **Script Playwright autonome** (captures, tests, tournage) : `chromium.launch({ proxy: { server: 'http://127.0.0.1:7331' } })`, puis `browser.newContext({ ignoreHTTPSErrors: true })`, car le proxy re-signe l'hôte cible avec sa propre CA. Le navigateur reçoit la session sous forme de cookies ordinaires dès la première navigation : pas de `storageState` à récolter. Ajouter `bypassCSP: true` pour injecter du style dans la page (annotations), que le CSP des services interdit.
 - **Ne jamais lire** `~/.config/nhi-proxy/**` au-delà de `config.json` : la clé de signature y est stockée.
 
@@ -50,7 +52,7 @@ Trois barreaux, du plus fiable au plus coûteux. **Ne pas descendre d'un barreau
 Les interfaces data-fair enregistrent leurs propres opérations sur `navigator.modelContext` (standard WebMCP). Elles partagent l'état de la page : un `setFieldValue` met à jour le formulaire affiché, passe par la validation du schéma et renvoie les erreurs — là où un `browser_type` se contente d'écrire du texte dans un input.
 
 ```js
-// dans browser_evaluate
+// dans evaluate_script (chrome-devtools) ou browser_evaluate (Playwright)
 navigator.modelContext.listTools().map(t => t.name)
 await navigator.modelContext.callTool({ name: 'list_datasets', arguments: { size: 10 } })
 ```
@@ -61,7 +63,7 @@ await navigator.modelContext.callTool({ name: 'list_datasets', arguments: { size
 
 Quand aucun outil ne couvre l'opération, ou pour un travail en volume / déterministe (créer 30 pages, patcher un schéma, lire un état exact) :
 
-- **`fetch` same-origin depuis la page** (`browser_evaluate`) : les cookies NHI partent automatiquement. C'est la voie normale quand on est déjà dans le navigateur ;
+- **`fetch` same-origin depuis la page** (`evaluate_script` / `browser_evaluate`) : les cookies NHI partent automatiquement. C'est la voie normale quand on est déjà dans le navigateur ;
 - **`curl --proxy` depuis le shell** : plus court pour une lecture ponctuelle, indépendant de l'état de la page.
 
 Dans les deux cas l'authentification vient de la session injectée par le proxy — pas d'en-tête à poser. Certaines API n'acceptent d'ailleurs **que** la session : celle du gestionnaire de portails refuse les clés d'API (`401`).
@@ -70,7 +72,7 @@ Les comportements de l'API des jeux de données qui piègent un script (slug, `4
 
 **Piège numéro un** : l'origine. Une API n'existe que sur l'hôte qui la sert (`/portals-manager/api` sur l'hôte du gestionnaire, jamais sur le sous-domaine du portail). Après avoir navigué ailleurs pour vérifier un rendu, un `fetch` relatif part sur la mauvaise origine et renvoie le HTML de la SPA → `Unexpected end of JSON input`. Revenir sur l'hôte de l'API, ou passer une URL absolue avec `curl`.
 
-### ③ Playwright brut
+### ③ Le navigateur brut
 
 Clics, saisies, captures. Réservé à trois cas :
 
@@ -108,7 +110,7 @@ Une réponse `200` n'est pas une vérification. Pour tout résultat visible par 
 - **Chemins des formulaires VJSF** → `setFieldValue` prend un chemin dans l'état du formulaire, qui inclut les conteneurs de mise en page (`/$comp-1/title`, pas `/title`). Les lire dans `getData`/`describeState` ; commencer par `<prefix>fillFormSkill`, qui renvoie le mode d'emploi du formulaire courant.
 - **Outils d'une iframe invisibles** → chaque frame tient son propre registre (un serveur MCP par frame sur un `BroadcastChannel`) ; seul le chat de la plateforme les agrège. Évaluer dans la frame propriétaire.
 - **`Tool already registered`** → le registre est global à la page et les outils sont libérés au démontage du composant. Recharger la page plutôt que d'insister.
-- **`browser_type` / `browser_fill_form` concatènent** avec le contenu existant. Vider le champ ou recharger le formulaire avant de le re-remplir — ou utiliser l'outil WebMCP, qui remplace la valeur.
+- **`browser_type` / `browser_fill_form` (Playwright) concatènent** avec le contenu existant. Vider le champ ou recharger le formulaire avant de le re-remplir — ou utiliser l'outil WebMCP, qui remplace la valeur.
 - **Rôle modifié mais toujours refusé** → le JWT en cookie est périmé ; recharger une page de l'hôte pour déclencher le keepalive.
 
 ## Références

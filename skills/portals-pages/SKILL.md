@@ -78,7 +78,7 @@ Points d'attention :
 
 ## 3. Créer / modifier une page
 
-Le chemin fiable est l'**API du gestionnaire appelée en same-origin depuis la session Playwright** (cookies inclus automatiquement) : plus rapide et déterministe que de remplir les formulaires VJSF. Voir `references/api-workflow.md` pour le script complet et les payloads exacts. L'API refuse les clés d'API ; quand le navigateur passe par le proxy NHI, l'identité est fixée par le profil du proxy et se choisit en posant `owner` à la création (`data-fair-browse` §1).
+Le chemin fiable est l'**API du gestionnaire appelée en same-origin depuis la session du navigateur MCP** (cookies inclus automatiquement) : plus rapide et déterministe que de remplir les formulaires VJSF. Voir `references/api-workflow.md` pour le script complet et les payloads exacts. L'API refuse les clés d'API ; quand le navigateur passe par le proxy NHI, l'identité est fixée par le profil du proxy et se choisit en posant `owner` à la création (`data-fair-browse` §1).
 
 Séquence en trois appels :
 
@@ -240,7 +240,7 @@ Toute page qui nomme une application DataFair emploie le **libellé de l'applica
 
 ## Références
 
-- `data-fair-browse` — identité NHI, outils WebMCP d'une page, échelle outil → API → Playwright, vérification d'un rendu.
+- `data-fair-browse` — identité NHI, outils WebMCP d'une page, échelle outil → API → navigateur, vérification d'un rendu.
 - `references/api-workflow.md` — endpoints et payloads exacts, script de création complet, découverte des droits, déplacement de page, snippets de vérification.
 - `references/elements.md` — catalogue des blocs utiles : champs requis, propriétés courantes, conventions de contenu.
 - `references/design.md` — composition et rendu : parti pris, recettes (hero, sections, grilles, FAQ), table « propriété → rendu » et pièges visuels, typographie/hiérarchie, rythme, thèmes et contraste, relecture visuelle.
