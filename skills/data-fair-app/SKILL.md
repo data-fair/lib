@@ -192,7 +192,7 @@ nom du dépôt  =  package.json name (hors scope)  =  meta application-name
      app-charts        @data-fair/app-charts             app-charts
 ```
 
-Format `[a-z0-9-]` : sans accent, sans espace, sans majuscule — **convention pour les nouvelles briques, pas une validation**. Le schéma `BaseApp` de data-fair déclare `applicationName: { type: 'string' }`, sans `pattern` (`api/types/base-app/schema.js`) : une valeur hors format est acceptée, importée et fonctionne. Le parc installé le montre — sur 28 applications du dossier, 21 portent un libellé humain (`Diagramme de Sankey`, `Application Calendrier`, `Bar chart race`) et 7 seulement un slug. Ne pas lire un `application-name` non conforme comme un bug à corriger : c'est le cas majoritaire, et la seule propriété qui compte réellement est la **stabilité** de la valeur d'une version à l'autre.
+Format `[a-z0-9-]` : sans accent, sans espace, sans majuscule — **convention pour les nouvelles briques, pas une validation**. Le schéma `BaseApp` de data-fair déclare `applicationName: { type: 'string' }`, sans `pattern` (`api/types/base-app/schema.js`) : une valeur hors format est acceptée, importée et fonctionne. Beaucoup de briques anciennes portent un libellé humain (`Diagramme de Sankey`, `Bar chart race`). Ne pas lire un `application-name` non conforme comme un bug à corriger : la seule propriété qui compte réellement est la **stabilité** de la valeur d'une version à l'autre.
 
 C'est la **clé d'identité de la brique entre ses versions**. Elle permet à DataFair de reconnaître `app-charts@1.2` et `app-charts@1.3` comme un même modèle et de proposer la montée de version — filtre `?applicationName=`, qui matche `applicationName` ou `meta.application-name` (`base-applications/router.ts`). Champ requis du schéma `BaseApp`, et seule porte d'entrée à l'import si l'application n'expose pas de `config-schema.json`.
 
@@ -279,6 +279,7 @@ Utiliser les fichiers du dossier `snippets/` de ce skill :
 | `snippets/theme-setup.ts` | Configuration session + Vuetify avec thème dynamique |
 | `snippets/error-handling.ts` | Gestion d'erreurs API (snackbar + `useFetch` / `useAsyncAction`) |
 | `snippets/ui-notif.ts` | Notifications globales avec `<DfUiNotif />` de `@data-fair/lib-vuetify` + `createUiNotif` / `useUiNotif` |
+| `snippets/e2e-fixtures.ts` | Base de `tests/e2e/fixtures.ts` : garde console automatique, mocks session / `_public.js`, injection de `window.APPLICATION` |
 | `snippets/hot-reload.ts` | Rendre la config réactive en mode draft (df:sync-config="true") |
 | `snippets/draft-qs-filter.ts` | **Déprécié** — ancienne sync `staticFilters` → `qsFilter` (abandonnée : plus de `qs` pour les filtres statiques) |
 | `snippets/schema-static-filters.ts` | Définition VJSF des filtres statiques prédéfinis (`in`, `out`, `interval`, `starts`, `exists`, `notExists`) |
@@ -371,7 +372,7 @@ my-visu/
 
 Ces fichiers ne se devinent pas et se recopient mal : reprendre celui d'une application maintenue au hasard fait hériter de ses divergences.
 
-> **Statut de ce boilerplate** : c'est la **cible**, définie sur `bar-chart-race` en s'inspirant des services (`data-fair`, `catalogs`, `processings`) — pas l'état du parc. La plupart des apps existantes en divergent (pas de husky, `lint` avec `--fix`, un seul projet Playwright, tsconfig sans `tests/**`). Sur une **reprise**, migrer vers cette cible plutôt que d'imiter l'app voisine ; l'état réel du parc est noté point par point dans `references/root-files.md`.
+> **Ce boilerplate est la cible**, inspirée des services (`data-fair`, `catalogs`, `processings`). Sur une **reprise**, migrer vers lui plutôt que d'imiter une application voisine, qui peut en diverger.
 
 Contenus intégraux à copier : **`references/root-files.md`** (package.json et peerDependencies, husky/commitlint, `.nvmrc`, **ports de développement / `.env`**, `.zellij.kdl`, `eslint.config.js`, `tsconfig.json`, `vite.config.ts`, `playwright.config.ts`, `.gitignore`). Les pièges à connaître même sans générer de fichier :
 
@@ -379,23 +380,23 @@ Contenus intégraux à copier : **`references/root-files.md`** (package.json et 
 - **peerDependencies de `@data-fair/lib-vue` à déclarer explicitement** — `dayjs` est le piège courant : jamais importé directement, son absence ne se voit ni au `type-check` ni au build tant que npm l'a hissé depuis une dépendance transitive, puis casse ailleurs.
 - **`build-types` avant `type-check` et `build`** sur un clone neuf : `src/config/.type/` est git-ignoré et réexporté par `src/config/index.ts` — ordonner la CI en conséquence.
 - **`.nvmrc` obligatoire dès que `.zellij.kdl` existe** (version majeure seule, ex. `24`) : sans lui, chaque pane sort en `[ EXIT CODE: 127 ]` sans aucun message — l'oubli le plus facile en générant les fichiers racine d'un nouveau projet.
-- **eslint : `neostandard({ ts: true })` + vue + vuetify + `@data-fair/lib-utils/eslint/recommended.js`**, avec le contournement du double enregistrement du plugin `vue` — obligatoire dès **ESLint 9.39+** (aujourd'hui seuls `bar-chart-race` et `data-fair/ui` y sont ; les autres services, en 9.35, n'en ont pas encore besoin) — config complète dans `references/root-files.md`.
+- **eslint : `neostandard({ ts: true })` + vue + vuetify + `@data-fair/lib-utils/eslint/recommended.js`**, avec le contournement du double enregistrement du plugin `vue` — obligatoire dès **ESLint 9.39+** — config complète dans `references/root-files.md`.
 - **Deux plafonds de version que « tout mettre à jour » ne doit pas franchir**, à revérifier avant chaque montée plutôt qu'à recopier :
   - **ESLint reste en 9.** `neostandard` — 0.13.0, la dernière — déclare `peerDependencies: { eslint: "^9.0.0" }`. ESLint 10 est publié, mais rien dans la chaîne ne le suit encore.
   - **TypeScript reste en 6.** `typescript-eslint` 8.68 déclare `typescript: ">=4.8.4 <6.1.0"`. TypeScript 7 est publié ; il sortirait de la plage supportée par le parseur.
 
   Contrôle : `npm view neostandard peerDependencies` et `npm view typescript-eslint peerDependencies`.
-- **Déclarer `@typescript-eslint/parser`, pas le méta-paquet `typescript-eslint`.** La config nomme le parseur par sa chaîne (`parser: '@typescript-eslint/parser'`) ; le méta-paquet ne servait qu'à le hisser en transitif. Aucune config du parc ne l'importe.
+- **Déclarer `@typescript-eslint/parser`, pas le méta-paquet `typescript-eslint`.** La config nomme le parseur par sa chaîne (`parser: '@typescript-eslint/parser'`) ; le méta-paquet ne servait qu'à le hisser en transitif.
 - **`@data-fair/lib-common-types` va en `devDependencies`** : il n'est consommé qu'en `import type`, donc effacé au build. En `dependencies` il gonfle l'installation de production et la surface de `npm audit --omit=dev` pour rien.
 - **`vueI18n({})` sans option `include`** dans `vite.config.ts` : un `include` hérité de l'ancien plugin fait parser des SFC entiers comme du JSON et le build échoue sur `SyntaxError: Unexpected token '<'` en pointant `ui-notif.vue`.
 - **Police du site cassée en dev seulement** : le dev server de Vite réécrit les URLs root-relative d'`index.html` en `base + url` → le `<link>` vers `/simple-directory/api/sites/_theme.css` part en `/app/simple-directory/…`, servi en `200 text/html` (fallback SPA de Vite), rendu en serif par défaut. Corrigé dans `@data-fair/dev-server` ≥ 2.3.4 (redirection vers son proxy `/simple-directory`) : **mettre à jour la dépendance**, pas de correctif dans l'app.
-- **Husky + commitlint comme les services** : `pre-commit` → `lint` (sans `--fix` — la plupart des apps legacy ont encore `lint: eslint . --fix`, à corriger en reprise), `commit-msg` → commitlint, `pre-push` → `quality` ; config dans un fichier `commitlint.config.ts`, comme tout l'écosystème. Ne pas rejouer les e2e en CI.
-- **`server.warmup.clientFiles` dans `vite.config.ts`** : `warmup: { clientFiles: ['./src/main.ts', './src/**/*.vue'] }`. Sans lui, le serveur ne transforme le graphe de modules qu'à la **première requête**, et la suite e2e court contre ce démarrage à froid. Les symptômes ne ressemblent pas à leur cause : `Execution context was destroyed, most likely because of a navigation` sur le premier `page.evaluate`, ou `Failed to fetch dynamically imported module` dès qu'un composant passe par `defineAsyncComponent`. Le réflexe — un projet Playwright « warmup » monté en `dependencies` d'`e2e` — traite le symptôme et **coûte une page de plus à chaque exécution** ; `server.warmup` traite la cause et sert aussi le développement quotidien. Vérifié sur les sept applications : trois démarrages à froid consécutifs, verts, sans projet warmup.
-- **Tests Playwright dans `tests/`**, `.spec.ts` (jamais `.test.ts`), projets `unit`/`e2e` ; `webServer` conditionné au projet e2e ; injecter `window.APPLICATION` via `page.addInitScript` ; toute assertion négative exige son contrôle positif en regard.
+- **Husky + commitlint comme les services** : `pre-commit` → `lint` (sans `--fix`), `commit-msg` → commitlint, `pre-push` → `quality` ; config dans un fichier `commitlint.config.ts`, comme tout l'écosystème. Ne pas rejouer les e2e en CI.
+- **`server.warmup.clientFiles` dans `vite.config.ts`** : `warmup: { clientFiles: ['./src/main.ts', './src/**/*.vue'] }`. Sans lui, le serveur ne transforme le graphe de modules qu'à la **première requête**, et la suite e2e court contre ce démarrage à froid. Les symptômes ne ressemblent pas à leur cause : `Execution context was destroyed, most likely because of a navigation` sur le premier `page.evaluate`, ou `Failed to fetch dynamically imported module` dès qu'un composant passe par `defineAsyncComponent`. Le réflexe — un projet Playwright « warmup » monté en `dependencies` d'`e2e` — traite le symptôme et **coûte une page de plus à chaque exécution** ; `server.warmup` traite la cause et sert aussi le développement quotidien.
+- **Tests Playwright dans `tests/`**, `.spec.ts` (jamais `.test.ts`), projets `unit`/`e2e` dans un seul `playwright.config.ts` (`references/root-files.md` § « Tests »), `webServer` conditionné au projet e2e. Des specs sans `playwright.config.ts` ne tournent jamais, et rien ne le signale. Base commune des e2e dans `tests/e2e/fixtures.ts`, à partir de `snippets/e2e-fixtures.ts` (cf. « Stratégie de tests et console propre »).
 
 #### Les e2e tournent contre le serveur de développement, pas contre `dist/`
 
-C'est le choix du parc, et il n'est pas gratuit. Ce qu'il achète : pas de build avant chaque exécution, les traces pointent le fichier source, et `page.route` intercepte les mêmes URL qu'en production.
+C'est la convention, et elle n'est pas gratuite. Ce qu'il achète : pas de build avant chaque exécution, les traces pointent le fichier source, et `page.route` intercepte les mêmes URL qu'en production.
 
 Ce qu'il ne couvre pas, c'est exactement ce que le bundler change :
 
@@ -406,40 +407,20 @@ Ce qu'il ne couvre pas, c'est exactement ce que le bundler change :
 | Minification, tree-shaking | Un `import` conservé en dev peut disparaître au build |
 | Réécriture des URLs d'`index.html` | Vite réécrit `/favicon.ico` en `base + favicon.ico` au build, pas en dev |
 
-Aucune de ces divergences n'est théorique : la panne de police décrite plus haut est précisément une divergence dev/build. Un jeu de tests réduit contre `vite preview` (qui sert `dist/`) est le complément naturel — il supprime au passage toute course au démarrage à froid, `preview` ne servant que des fichiers statiques. `app-catalog` et `app-indicators` font déjà tourner leur e2e sur un build servi par `vite preview` (`webServer` : `vite build --outDir=dist-test` puis `vite preview`), cf. `references/root-files.md` § « État du parc ».
+Aucune de ces divergences n'est théorique : la panne de police décrite plus haut est précisément une divergence dev/build. Un jeu de tests réduit contre `vite preview` (qui sert `dist/`) est le complément naturel — il supprime au passage toute course au démarrage à froid, `preview` ne servant que des fichiers statiques. Forme du `webServer` dans ce cas : `vite build --outDir=dist-test` puis `vite preview --outDir=dist-test`.
 
-> **Vite 8 embarque rolldown** (`rolldown ~1.2.4` en dépendance de `vite`), plus Rollup. Conséquence visible au build : `<script src="/simple-directory/api/sites/_public.js"> in "/index.html" can't be bundled without type="module" attribute`. **Cet avertissement est normal et le script est bien conservé dans `dist/index.html`** — vérifié sur les sept applications. Ne pas le « corriger » en ajoutant `type="module"` : le script doit rester classique pour être exécuté avant le module `main.ts`, qui est différé, sans quoi `window.__PUBLIC_SITE_INFO` n'est pas posé quand `createSession` le teste.
+> **Vite 8 embarque rolldown** (`rolldown ~1.2.4` en dépendance de `vite`), plus Rollup. Conséquence visible au build : `<script src="/simple-directory/api/sites/_public.js"> in "/index.html" can't be bundled without type="module" attribute`. **Cet avertissement est normal et le script est bien conservé dans `dist/index.html`**. Ne pas le « corriger » en ajoutant `type="module"` : le script doit rester classique pour être exécuté avant le module `main.ts`, qui est différé, sans quoi `window.__PUBLIC_SITE_INFO` n'est pas posé quand `createSession` le teste.
 - **Pas de `.editorconfig`** — aucun dépôt maison n'en a ; le supprimer sur une reprise, une fois `neostandard` en place.
 
 #### Stratégie de tests et console propre
 
 - **Les tests unitaires d'abord** : la logique vit dans les utilitaires et les composables (cf. « Notes pour les agents »), c'est là qu'elle se teste, sans navigateur. Les e2e ne servent qu'aux **parcours complets** et aux **visuels**, et ne rejouent jamais ce qu'un test unitaire couvre déjà : un e2e par parcours, pas un par règle.
-- **Console propre, vérifiée par les e2e** : une fixture Playwright automatique fait échouer tout test sur une erreur ou un avertissement console, ou une exception de page. Les exceptions sont nommées et commentées, jamais un filtre large :
-
-```ts
-// tests/e2e/fixtures.ts
-import { test as base, expect } from '@playwright/test'
-
-export const test = base.extend<{ consoleGuard: void }>({
-  consoleGuard: [async ({ page }, use) => {
-    const messages: string[] = []
-    page.on('console', (msg) => {
-      if (msg.type() === 'error' || msg.type() === 'warning') messages.push(`[${msg.type()}] ${msg.text()}`)
-    })
-    page.on('pageerror', (err) => {
-      // harness artifact, only when index.html is served without substituting `%APPLICATION%`
-      // (window.APPLICATION then comes from page.addInitScript)
-      if (err.message === "Unexpected token '%'") return
-      messages.push(`[pageerror] ${err.message}`)
-    })
-    await use()
-    expect(messages, 'console must stay clean').toEqual([])
-  }, { auto: true }]
-})
-export { expect }
-```
-
-Les specs importent alors `test` et `expect` depuis `./fixtures`. Ne pas écouter les événements `error` de `window` sans exception derrière (`ResizeObserver loop…`) : ils n'atteignent pas la console, ne se voient pas et ne sont que du bruit.
+- **Console propre, vérifiée par chaque e2e.** Une erreur console est le symptôme le plus souvent oublié : la page s'affiche, le test passe, et l'avertissement Vue, l'échec de requête ou la portée i18n cassée restent invisibles. La fixture `consoleGuard` de `snippets/e2e-fixtures.ts` est **automatique** (`auto: true`) : elle fait échouer tout test sur une erreur ou un avertissement console, ou une exception de page, sans que le spec ait à y penser. Les specs importent donc `test` et `expect` depuis `./fixtures`, jamais depuis `@playwright/test` — un spec qui importe le `test` de Playwright échappe au garde sans rien dire.
+- **Pas de contrôle console écrit à la main dans un spec** (un `page.on('console')` local, filtré sur `[intlify]` ou sur un seul scénario) : il ne couvre que ce scénario-là, et c'est précisément ce que la fixture automatique remplace.
+- **Un message provoqué exprès se nomme, dans le spec qui le provoque** : `test.use({ expectedConsole: ['status of 500'] })`, une sous-chaîne par message. Jamais de filtre large (`type() === 'error'` ignoré, regex sur `Failed`), et jamais au niveau de la fixture pour toute la suite.
+- **La seule exception permanente est `Unexpected token '%'`**, artefact du harnais : Vite sert `index.html` sans substituer `%APPLICATION%`, le script inline ne parse pas, et `window.APPLICATION` vient de `page.addInitScript`. Ne pas tenter de supprimer l'artefact en substituant le placeholder dans un `page.route` sur le document : Chrome considère alors le document comme servi depuis le réseau public et bloque le websocket de Vite vers `localhost` (`ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS`), et `server.hmr: false` ni `server.ws: false` ne retirent ce websocket du client Vite 8.
+- **Appli WebGL (carte maplibre) : `GPU stall due to ReadPixels`** peut remonter plusieurs fois par test dès que le canvas se dessine. C'est un message de performance du pilote GPU logiciel de Chrome headless (SwiftShader) : ni l'application ni maplibre n'appellent `readPixels`, et aucune option de lancement de Chrome ne le fait taire. Inutile de chercher plus loin : le nommer dans `expectedConsole` des specs qui affichent la carte, avec un commentaire qui renvoie ici.
+- **N'écouter que `console` et `pageerror`.** Un écouteur sur l'événement `error` de `window` reçoit aussi `ResizeObserver loop completed with undelivered notifications`, bénin, fréquent avec Vuetify et jamais affiché dans la console du navigateur : du bruit qui ferait échouer des tests sans rien signaler.
 
 ## Schéma de configuration (VJSF)
 
@@ -453,7 +434,7 @@ Le formulaire de configuration d'application de data-fair **ne supporte pas enco
 
 ### Libellés : majuscule initiale, casse de phrase
 
-La règle complète (majuscule initiale, casse de phrase française, exceptions identifiants techniques et noms propres) est dans le **skill `vjsf`**. Point propre aux applications : elle porte sur **toute chaîne visible, où qu'elle vive** — pas seulement les schémas. Dans l'état actuel du parc, l'immense majorité des textes sont des chaînes françaises en dur dans les templates : elles sont concernées au premier chef. Ne pas attendre un passage à l'i18n pour appliquer la casse ; quand des blocs `<i18n>` existent, la majuscule est portée dans chaque langue.
+La règle complète (majuscule initiale, casse de phrase française, exceptions identifiants techniques et noms propres) est dans le **skill `vjsf`**. Point propre aux applications : elle porte sur **toute chaîne visible, où qu'elle vive** — pas seulement les schémas. Les chaînes françaises en dur dans les templates sont concernées au premier chef. Ne pas attendre un passage à l'i18n pour appliquer la casse ; quand des blocs `<i18n>` existent, la majuscule est portée dans chaque langue.
 
 ### Pipeline de build
 
@@ -478,7 +459,7 @@ src/config/.type/index.d.ts     → types TS, git-ignoré, réexporté par src/c
 
 C'est le montage des plugins processing — `processing-config-schema.json` à la racine du dépôt, ré-exporté depuis `types/processingConfig/schema.ts`. `df-build-types` cherche récursivement n'importe quel `schema.{json,js,ts}`, le ré-export d'une ligne suffit et les types générés sont identiques.
 
-**Servir le schéma avec ses `$ref`, pas la version déréférencée.** `df-build-types` sait produire `.type/resolved-schema.json`, où chaque `$ref` est remplacé par une copie de sa cible ; c'est ce que toutes les applications du parc sauf `app-catalog` copient encore dans `public/`. json-layout compile un arbre par sous-schéma distinct et résout lui-même les `$ref` internes : déréférencer multiplie donc la compilation, **à chaque montage du formulaire** — page de configuration DataFair comprise. Mesuré sur `app-catalog`, dont les définitions partagées sont référencées jusqu'à 9 fois : 48 ko contre 402 ko, 99 arbres contre 569, ~390 ms contre ~5 100 ms de codegen Ajv, pour un formulaire et un objet de configuration identiques. Le mécanisme est détaillé dans le skill `vjsf`.
+**Servir le schéma avec ses `$ref`, pas la version déréférencée.** `df-build-types` sait produire `.type/resolved-schema.json`, où chaque `$ref` est remplacé par une copie de sa cible ; ne pas le copier dans `public/`. json-layout compile un arbre par sous-schéma distinct et résout lui-même les `$ref` internes : déréférencer multiplie donc la compilation, **à chaque montage du formulaire** — page de configuration DataFair comprise. Mesuré sur un schéma dont les définitions partagées sont référencées jusqu'à 9 fois : 48 ko contre 402 ko, 99 arbres contre 569, ~390 ms contre ~5 100 ms de codegen Ajv, pour un formulaire et un objet de configuration identiques. Le mécanisme est détaillé dans le skill `vjsf`.
 
 Rien ne casse côté DataFair : à l'enregistrement de la base application il résout lui-même les `$ref` locaux (`jsonRefs.resolveRefs(..., { filter: ['local'] })`) avant d'en déduire les `datasetsFilters`.
 
@@ -502,7 +483,7 @@ Tout le générique vit dans le skill `vjsf` et n'est pas dupliqué ici : organi
 
 Le skill `vjsf` décrit `x-i18n-*` comme actif « dès que l'UI passe `xI18n: true` ». **Le formulaire de configuration d'application de DataFair ne le passe pas** (`ui/src/components/application/application-config.vue` : `vjsfOptions` sans `xI18n`, `locale: 'fr'` en dur), et l'option est opt-in dans `@json-layout/core` (`compile/options.js` : `xI18n: !!partialOptions.xI18n`). Conséquences pour un `config-schema.json` :
 
-- Les surcharges `x-i18n-title` / `x-i18n-description` ne sont **jamais résolues** : le schéma est affiché dans sa langue de base. Écrire le schéma **en français, sans `x-i18n-*`**, comme tout le parc.
+- Les surcharges `x-i18n-title` / `x-i18n-description` ne sont **jamais résolues** : le schéma est affiché dans sa langue de base. Écrire le schéma **en français, sans `x-i18n-*`**.
 - Une surcharge `{ "en": … }` seule est **nuisible** le jour où l'option serait activée : `resolveXI18n` fait `value[locale] ?? value['en'] ?? base`, donc un utilisateur `fr` recevrait l'anglais à la place du français de base.
 - **Jamais de `x-i18n-*` à l'intérieur de `layout` ni de `oneOfLayout`** (`x-i18n-props`, `x-i18n-messages`, `x-i18n-label`…). Sans résolution préalable, json-layout valide chaque composant avec `unevaluatedProperties: false` et rejette **tout le layout** — « failed to normalize layout, use default component » — silencieusement côté formulaire : un sélecteur de colonne se dégrade en deux champs texte `key` / `label`, une liste de filtres perd son sélecteur de type. Le message n'apparaît que dans la console (« JSON layout encountered some validation errors »).
 
@@ -540,7 +521,7 @@ Un `sort` explicite casse le second cas : le score de pertinence est **ajouté a
 
 La même mécanique vaut pour un sélecteur alimenté par `/lines` (ElasticSearch) : `esQuery.sort.push('_score')` n'intervient qu'**après** les clés reçues (`api/src/datasets/es/commons.ts`). Aucun sélecteur piloté par une recherche textuelle ne porte de `sort`, quel que soit l'endpoint interrogé.
 
-Le tri par date de création n'est donc pas à défendre par un paramètre : c'est déjà le défaut, et le laisser implicite garde la recherche utilisable. Erreur très répandue dans le parc (29 applications sur 37 au 2026-09-08, souvent sur plusieurs sélecteurs du même schéma) — c'est un défaut à corriger à la reprise, pas une convention.
+Le tri par date de création n'est donc pas à défendre par un paramètre : c'est déjà le défaut, et le laisser implicite garde la recherche utilisable. Un `sort` sur ce sélecteur est un défaut à corriger à la reprise, pas une convention.
 
 ### Schémas de couleur
 
@@ -707,7 +688,7 @@ Les applications sont majoritairement embarquées dans des portails du secteur p
 
 Le point à comprendre : le document servi à `/data-fair/app/<id>` est une **page web autonome**. Il n'hérite ni de la langue, ni du `<main>`, ni des titres de la page porteuse. Une visualisation qui rend dans un `<canvas>` sans alternative a un arbre d'accessibilité **vide** — un lecteur d'écran ne restitue rien, et aucun réglage de couleur n'y change quoi que ce soit.
 
-Les points clés qui reviennent sur tout le parc :
+Les points clés :
 
 | Point | Critères |
 |---|---|
@@ -722,7 +703,7 @@ Un rendu **SVG** satisfait gratuitement le critère 10.4 et se rend accessible s
 
 ### Internationalisation
 
-Aucune application du parc ne traduit ses propres textes : `createI18n` n'y sert qu'à faire fonctionner les composants de `@data-fair/lib-vuetify`. Pour rendre une visualisation réellement bilingue, reprendre le pattern des services plutôt que d'inventer un mécanisme.
+Pour rendre une visualisation réellement bilingue, reprendre le pattern des services plutôt que d'inventer un mécanisme.
 
 **Un bloc `<i18n>` par composant**, pas de dossier `locales/` central :
 
@@ -739,7 +720,7 @@ puis `const { t } = useI18n()` dans le `<script setup>` (la portée locale est a
 
 - **Activer le plugin de compilation** dans `vite.config.ts` : `import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'`, puis `VueI18nPlugin()` dans `plugins`. Sans lui les blocs `<i18n>` ne sont pas compilés. Plusieurs applications l'ont déjà installé sans s'en servir — vérifier avant de l'ajouter.
 - **Dates et durées** : `createLocaleDayjs(session.lang.value)` puis `useLocaleDayjs()`, cf. `snippets/locale-dayjs.ts`.
-- **Nombres et pourcentages** : `n()` plutôt que `toLocaleString()`, voir ci-dessous — c'est l'écart le plus fréquent et le plus silencieux du parc.
+- **Nombres et pourcentages** : `n()` plutôt que `toLocaleString()`, voir ci-dessous.
 - **Ne pas porter l'i18n du catalogue dans `index.html`** (un seul `<title>`, une seule `<meta name="description">`) : elle passera par registry, qui porte `title` et `description` en objets `{ en, fr }`.
 - **Casse des libellés** : la règle de majuscule initiale s'applique à toutes les chaînes visibles, traduites ou en dur — voir « Libellés : majuscule initiale, casse de phrase » dans la section VJSF.
 
@@ -757,7 +738,7 @@ n(31546)                       // « 31 546 » en fr, « 31,546 » en en
 n(part / total, 'percent')     // « 45,6 % » en fr, « 45.6% » en en
 ```
 
-**⚠️ `toLocaleString()` et `toFixed()` appelés sans argument sont le défaut le plus répandu du parc**,
+**⚠️ `toLocaleString()` et `toFixed()` appelés sans argument sont un défaut fréquent**,
 et le plus silencieux : ils passent la revue, passent les tests, et ne se voient qu'à l'écran.
 
 - `valeur.toLocaleString()` sans locale suit **`navigator.language`**, pas `session.lang`. Le
@@ -1230,7 +1211,7 @@ const { data } = useFetch(() => datasetUrl + '/lines', { query: params })
 - [ ] `index.html` : `<!DOCTYPE html>` obligatoire, pas de `lang` sur `<html>`, `charset` en premier, un seul `<title>` lisible, une seule `<meta name="description">`, `<div id="app">` (si `<v-main>`) ou `<main id="app">`, `<link>` vers `_theme.css` et déclaration `@layer`
 - [ ] `App.vue` : `<v-app :class="{ 'bg-transparent': embedded }">` avec `embedded = window.self !== window.top` — jamais `bg-transparent` inconditionnel, jamais de règle sur `.v-application`
 - [ ] `<script src="/simple-directory/api/sites/_public.js">` présent **et** `main.ts` en `siteInfo: !window.__PUBLIC_SITE_INFO` — les deux, jamais l'un sans l'autre. Contrôle : lancer les e2e et grepper `refreshSiteInfo is deprecated` dans la sortie ; un seul hit signifie que la session paie encore le fetch bloquant. Attention au faux négatif inverse : un mock qui répond du JSON à tout `**/simple-directory/**` sert du JSON pour `_public.js` aussi, le global reste vide et l'app repasse en silence par le chemin déprécié alors que le code est bon
-- [ ] console propre pendant les e2e : fixture `consoleGuard` en place (cf. « Stratégie de tests et console propre »), aucune exception non commentée
+- [ ] e2e : un `playwright.config.ts` dès qu'il existe des specs, base `tests/e2e/fixtures.ts` issue de `snippets/e2e-fixtures.ts`, tous les specs importent `test` depuis `./fixtures` (fixture `consoleGuard` automatique), seuls les messages provoqués exprès sont nommés en `expectedConsole`
 - [ ] aucun avertissement `[intlify]` en console pendant les e2e (cf. « Un bloc `<i18n>` local casse `n(v, 'percent')` »)
 - [ ] `application-name` = nom du dépôt = nom du paquet, en `[a-z0-9-]`
 - [ ] aucune méta morte (`keywords`, `thumbnail`, `vocabulary-*`, `version`, `title`, `x-capture`, `{VERSION}`)

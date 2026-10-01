@@ -2,7 +2,7 @@
 
 Ces fichiers ne se devinent pas et se recopient mal : reprendre celui d'une application maintenue au hasard fait hériter de ses divergences. Les pièges principaux sont résumés dans le SKILL.md ; ce fichier porte les contenus intégraux à copier.
 
-> **Statut** : ce boilerplate est la **cible**, définie sur `bar-chart-race` (le pilote) en s'inspirant des services `data-fair` / `catalogs` / `processings`. Ce n'est **pas** l'état du parc — l'écart réel est signalé section par section (« État du parc »). Sur un nouveau projet, appliquer la cible telle quelle ; sur une reprise, migrer vers la cible.
+> **Statut** : ce boilerplate est la **cible**, inspirée des services `data-fair` / `catalogs` / `processings`. Sur un nouveau projet, l'appliquer tel quel ; sur une reprise, migrer vers lui.
 
 ## package.json — dépendances et version
 
@@ -14,14 +14,14 @@ Ces fichiers ne se devinent pas et se recopient mal : reprendre celui d'une appl
 @vueuse/core >=10 · dayjs 1 · ofetch 1 · reconnecting-websocket 4 · vue 3 · vue-router 4||5
 ```
 
-`dayjs` est le piège courant : il n'est jamais importé directement (on passe par `createLocaleDayjs` / `useLocaleDayjs`), donc son absence ne se voit ni au `type-check` ni au build tant que npm l'a hissé depuis une dépendance transitive — puis casse ailleurs. Les applications de référence la déclarent toutes. Ne déclarer que les peers réellement utilisées (`reconnecting-websocket` et `vue-router` ne servent qu'aux apps qui font du WS ou du routage).
+`dayjs` est le piège courant : il n'est jamais importé directement (on passe par `createLocaleDayjs` / `useLocaleDayjs`), donc son absence ne se voit ni au `type-check` ni au build tant que npm l'a hissé depuis une dépendance transitive — puis casse ailleurs. Ne déclarer que les peers réellement utilisées (`reconnecting-websocket` et `vue-router` ne servent qu'aux apps qui font du WS ou du routage).
 
 **Scripts** : cf. « Scripts obligatoires » du SKILL.md. Deux précisions :
 
-- `"dev": "df-dev-env && dotenv -- zellij --layout .zellij.kdl"` **suppose que `.zellij.kdl` existe** — sans lui le script échoue. 24 applications du parc l'ont ; c'est la convention, pas une option. `df-dev-env` génère le `.env` au premier lancement (cf. « Ports de développement »), `dotenv --` le rend visible de tous les panes. Ni `dev-app` ni `dev-server` ne portent plus de variable en préfixe : `vite` lit le `.env` par `loadEnv`, `df-dev-server` par `dotenv`.
+- `"dev": "df-dev-env && dotenv -- zellij --layout .zellij.kdl"` **suppose que `.zellij.kdl` existe** — sans lui le script échoue. C'est la convention, pas une option. `df-dev-env` génère le `.env` au premier lancement (cf. « Ports de développement »), `dotenv --` le rend visible de tous les panes. Ni `dev-app` ni `dev-server` ne portent plus de variable en préfixe : `vite` lit le `.env` par `loadEnv`, `df-dev-server` par `dotenv`.
 - `build-types` doit tourner **avant** `type-check` et `build` sur un clone neuf : `src/config/.type/` est git-ignoré et `src/config/index.ts` le réexporte. Ordonner la CI en conséquence (`build-types` → `lint` → `type-check` → `build`) — le `"build": "vite build"` nu ne le garantit pas seul.
-- **Scripts de test au tiret comme les services** : `test` / `test-unit` / `test-e2e` (`playwright test --max-failures=1`, `--project unit` / `--project e2e`). La plupart des apps legacy utilisent encore la variante `test:e2e` / `test:unit` (deux-points) — adopter la forme tiret en reprise. Pas de variante `--ui` en script : le flag se passe à la volée (`npm run test-e2e -- --ui`). `test` et `test-e2e` sont préfixés de `df-dev-env && dotenv --` (ils ont besoin d'`E2E_PORT`) ; `test-unit` ne lance pas de `webServer` et n'a besoin d'aucun port.
-- **E2E contre `df-dev-server` : l'exception, pas le modèle.** Le modèle ci-dessus ne lance que Vite et mocke tout (`window.APPLICATION`, session, données) : l'e2e est hermétique et tourne au `pre-push` sans rien d'autre. Une application dont l'e2e lit la config live (`GET /config` de `df-dev-server`, alimenté par `.dev-config.json`) et interroge un vrai data-fair — aujourd'hui `app-dashboards` — dépend de deux serveurs : `df-dev-server` ne sert pas l'application, il **relaie `/app/*` vers Vite** sur `APP_PORT`. Le `webServer` doit alors être un tableau qui démarre Vite **puis** `df-dev-server`, sinon la sonde `/app/` n'aboutit jamais sans `npm run dev` ouvert à côté (« Timed out waiting 60000ms from config.webServer », typiquement au `pre-push`) :
+- **Scripts de test au tiret comme les services** : `test` / `test-unit` / `test-e2e` (`playwright test --max-failures=1`, `--project unit` / `--project e2e`). Une variante `test:e2e` / `test:unit` (deux-points) se remplace par la forme tiret en reprise. Pas de variante `--ui` en script : le flag se passe à la volée (`npm run test-e2e -- --ui`). `test` et `test-e2e` sont préfixés de `df-dev-env && dotenv --` (ils ont besoin d'`E2E_PORT`) ; `test-unit` ne lance pas de `webServer` et n'a besoin d'aucun port.
+- **E2E contre `df-dev-server` : l'exception, pas le modèle.** Le modèle ci-dessus ne lance que Vite et mocke tout (`window.APPLICATION`, session, données) : l'e2e est hermétique et tourne au `pre-push` sans rien d'autre. Une application dont l'e2e lit la config live (`GET /config` de `df-dev-server`, alimenté par `.dev-config.json`) et interroge un vrai data-fair dépend de deux serveurs : `df-dev-server` ne sert pas l'application, il **relaie `/app/*` vers Vite** sur `APP_PORT`. Le `webServer` doit alors être un tableau qui démarre Vite **puis** `df-dev-server`, sinon la sonde `/app/` n'aboutit jamais sans `npm run dev` ouvert à côté (« Timed out waiting 60000ms from config.webServer », typiquement au `pre-push`) :
 
 ```ts
 webServer: isUnitOnly
@@ -34,15 +34,11 @@ webServer: isUnitOnly
 
 `baseURL` pointe sur `DEV_SERVER_PORT`, et `base` doit valoir `/app/` (le `||` de `vite.config.ts`, ou `PUBLIC_URL=/app/` dans la commande tant que la config porte `??`). Un tel e2e dépend du réseau et des données de l'instance distante : en reprise, préférer le ramener au modèle mocké.
 
-**État du parc** (septembre 2026) : la grande majorité des apps suit le modèle (projets `unit`/`e2e`, Vite seul, `PUBLIC_URL=`). Écarts restants : unitaire sous **vitest** (`app-table`, `app-calendar`, `app-indicators`) ; unitaire `node --test` colocalisé dans `src/` (`app-explore-map`) ; un seul projet `chromium` sans `test-unit`, specs dans `tests-e2e/` (`app-agg-table`, `app-timelines`, et `app-calendar`) ; e2e sur un build + `vite preview` au lieu du Vite de dev (`app-catalog`, `app-indicators`) ; e2e via `df-dev-server` (`app-dashboards`, voir ci-dessus) ; aucun test (`app-carousel`, `app-pie-chart`, `app-minimal`, les `app-game-*`). En reprise, ramener l'app au modèle plutôt que de copier sa voisine. Les services suivent une convention différente (projets discriminés par suffixe `*.unit.spec.ts` / `*.api.spec.ts` / `*.e2e.spec.ts`, pas de `webServer` — leur stack démarre en docker) : ne pas la transposer aux apps.
-
 ## Husky, commitlint et `npm run quality`
 
 Comme les services (`data-fair`, `portals`, `catalogs`, `processings`) et les plugins, une application installe **husky + commitlint** et fait passer la qualité au push. Ne pas faire tourner les e2e en CI : le hook pre-push les a déjà lancés sur la machine du dev (cf. le commentaire `commits.yml` des services : *« husky already did it on the dev computer »*).
 
-**État du parc** : seule bar-chart-race a un `.husky/` ; `infos-territoires` a `"prepare": "husky"` mais aucun dossier `.husky/`. Le setup husky d'une app en reprise est donc presque toujours à faire entièrement.
-
-**devDependencies** — `husky ^9.1.7` est la seule version commune à tout l'écosystème ; pour commitlint, s'aligner sur bar-chart-race et les plugins :
+**devDependencies** — `husky ^9.1.7` est la seule version commune à tout l'écosystème ; pour commitlint, s'aligner sur les plugins :
 
 ```
 husky ^9.1.7 · @commitlint/cli ^19.8 · @commitlint/config-conventional ^19.8
@@ -82,11 +78,9 @@ C'est la convention de tout l'écosystème (et la seule forme qui accueille prop
 24
 ```
 
-**État du parc** : 18 apps sur 25 sont à `24` ; traînent encore un `18`, un `21`, un `22`, un `v14.17.1`, et 5 apps sans `.nvmrc`. Côté services, `catalogs` et `processings` sont à `24` mais `data-fair` (`24.9`) et `portals` (`24.11.1`) épinglent une mineure — pour une app, rester à la majeure seule.
-
 ## Ports de développement — le `.env`
 
-Une application tient trois ports en développement. Tant qu'ils sont en dur (3000 pour Vite, 5888 pour `df-dev-server`), **une seule application tourne à la fois** — c'était le cas des 37 apps du parc avant `@data-fair/dev-server` 2.5.0.
+Une application tient trois ports en développement. Tant qu'ils sont en dur (3000 pour Vite, 5888 pour `df-dev-server`), **une seule application tourne à la fois** — c'était la convention avant `@data-fair/dev-server` 2.5.0.
 
 `df-dev-env`, bin du paquet, génère un `.env` **git-ignoré** portant trois ports libres consécutifs tirés dans 20000–29999 :
 
@@ -112,33 +106,33 @@ Le fichier est généré **une fois**, au premier `npm run dev`, puis laissé te
 
 > **⚠️ `dotenv --` devant `zellij` n'est pas optionnel.** Dans un layout zellij chaque pane est un process fils : sans lui, `$DEV_SERVER_PORT` est vide dans tous les panes et le bandeau d'URL affiche `http://localhost:`. C'est exactement ce que fait `data-fair` (`"dev-zellij": "dotenv -- zellij --layout .zellij.kdl"`).
 
-> **⚠️ `E2E_PORT` doit rester distinct de `APP_PORT`.** Avec `reuseExistingServer: !process.env.CI`, un Playwright pointant sur `APP_PORT` accroche le Vite de développement déjà lancé — lequel n'a pas `DATA_FAIR_TEST=true`, donc `%APPLICATION%` n'est pas substitué et les e2e échouent sans indiquer pourquoi.
+> **⚠️ `E2E_PORT` doit rester distinct de `APP_PORT`.** Avec `reuseExistingServer: !process.env.CI`, un Playwright pointant sur `APP_PORT` accroche le Vite de développement déjà lancé : la suite dépend alors d'un serveur qu'on arrête à tout moment, et chaque fichier édité pendant l'exécution recharge les pages de test par le HMR.
 
 `APP_PATH` n'est pas un port mais suit le précédent de `DEV_HOST` dans le `.env` généré de `data-fair` : `df-dev-server` en dérive son `app.url` (`http://localhost:$APP_PORT$APP_PATH`), ce qui rend impossible la désynchronisation entre le port de Vite et celui de l'URL proxifiée. `APP_URL` reste prioritaire pour une app qui n'est pas servie sur `localhost` (les apps nuxt, `carto-stats`).
 
 ### Migrer une application existante
 
-27 des 37 applications du parc sont encore sur la convention en dur (3000 / 5888) et passeront par là une à une. Dans l'ordre :
+Pour une application encore sur les ports en dur (3000 / 5888), dans l'ordre :
 
 1. `npm i -D @data-fair/dev-server@^2.5.0 dotenv-cli`
 2. **`package.json`** : `"dev": "df-dev-env && dotenv -- zellij --layout .zellij.kdl"` ; `"dev-server": "df-dev-server"` — **retirer le préfixe `APP_URL=http://localhost:3000/app/`** ; `"dev-app": "vite"`, nu comme `dev-server` ; `"test"` et `"test-e2e"` gagnent le préfixe `df-dev-env && dotenv --` ; `"test-unit"` ne change pas, il ne lance aucun `webServer` et n'a donc besoin d'aucun port.
 3. **`vite.config`** : passer à la forme factory `loadEnv`, avec `hmr.port` aligné sur `server.port` — code exact au § « vite.config.ts » ci-dessus, ne pas le reproduire ici.
 4. **`playwright.config.ts`** : lire `E2E_PORT`, passer `APP_PORT` par `webServer.env` — code exact au § « Tests — Playwright » ci-dessus.
 5. Supprimer `tests/helpers/port.ts` et la ligne `tests/.test-port` du `.gitignore` : le port vient désormais du `.env`.
-6. **`.gitignore`** : ajouter `.env`, `.dev-config.json` et `.dev-attachments`, **puis** `git rm -r --cached --ignore-unmatch .dev-config.json .dev-attachments` — une ligne de `.gitignore` n'a aucun effet sur un fichier déjà suivi. 27 applications du parc suivent `.dev-config.json` aujourd'hui, dont 8 qui l'ont pourtant déjà dans leur `.gitignore`.
+6. **`.gitignore`** : ajouter `.env`, `.dev-config.json` et `.dev-attachments`, **puis** `git rm -r --cached --ignore-unmatch .dev-config.json .dev-attachments` — une ligne de `.gitignore` n'a aucun effet sur un fichier déjà suivi.
 7. **`.zellij.kdl`** : ajouter le bandeau d'URL en dernière ligne (§ « .zellij.kdl » ci-dessous).
 
 **Trois pièges** :
 
 > **⚠️ Une application qui a déjà un `.env`.** `df-dev-env` est idempotent : s'il trouve un `.env`, il ne le réécrit pas. Une application qui porte déjà un `.env` pour une tout autre raison ne reçoit donc **aucun port** — le cas se rencontre avec un `.env` qui ne sert qu'à figer un `PUBLIC_URL`. Depuis 2.5.0 le générateur ne se tait plus dessus : il relit le fichier et avertit quand `APP_PORT` en est absent. Correction : ajouter les trois lignes de port à la main, ou lancer `df-dev-env --force` puis recoller le contenu préexistant par-dessus.
 
-> **⚠️ Une application servie à la racine plutôt que sous `/app/`.** Depuis dev-server 2.5.0, `APP_PATH` **vaut `/app/` par défaut** (il valait la chaîne vide avant) — un défaut utile puisque 27 des 37 applications sont des apps Vite servies sous `/app/`, et c'est ce qui fait fonctionner un clone neuf avant même qu'on ait lancé `df-dev-env`. Une application servie à la racine doit donc déclarer `APP_PATH=` explicitement — chaîne vide, non nullish, donc bien conservée. En pratique son script `dev` appelle `df-dev-env --app-path=` : le flag n'agit qu'à la génération, et `--force` conserve ensuite la valeur. Passer un `--app-path` qui contredit un `.env` déjà écrit ne le réécrit pas non plus — le générateur le dit, plutôt que de laisser l'application démarrer sur le mauvais chemin. C'est une **rupture volontaire**, posée à la montée de version : elle touche toute application qui appelle `df-dev-server` sans son propre `APP_URL` et qui n'est pas servie sous `/app/` — typiquement une app Nuxt, dont la racine sert directement l'application. Une application qui garde son propre `APP_URL` n'est pas concernée — `APP_URL` prime toujours.
+> **⚠️ Une application servie à la racine plutôt que sous `/app/`.** Depuis dev-server 2.5.0, `APP_PATH` **vaut `/app/` par défaut** (il valait la chaîne vide avant) — le cas des apps Vite, et c'est ce qui fait fonctionner un clone neuf avant même qu'on ait lancé `df-dev-env`. Une application servie à la racine doit donc déclarer `APP_PATH=` explicitement — chaîne vide, non nullish, donc bien conservée. En pratique son script `dev` appelle `df-dev-env --app-path=` : le flag n'agit qu'à la génération, et `--force` conserve ensuite la valeur. Passer un `--app-path` qui contredit un `.env` déjà écrit ne le réécrit pas non plus — le générateur le dit, plutôt que de laisser l'application démarrer sur le mauvais chemin. C'est une **rupture volontaire**, posée à la montée de version : elle touche toute application qui appelle `df-dev-server` sans son propre `APP_URL` et qui n'est pas servie sous `/app/` — typiquement une app Nuxt, dont la racine sert directement l'application. Une application qui garde son propre `APP_URL` n'est pas concernée — `APP_URL` prime toujours.
 
 > **⚠️ Retirer le préfixe `APP_URL=…/app/` du script `dev-server` n'est sûr qu'une fois le `.env` en place.** C'est le défaut `/app/` ci-dessus qui rend l'opération sûre sur un clone neuf ; sans lui le proxy viserait silencieusement la racine de Vite pendant que Vite sert sous `/app/`, et l'application ne chargerait tout simplement pas, sans aucune erreur.
 
 ## .zellij.kdl
 
-Trois panes : un shell libre, `dev-app` (Vite) et `dev-server` (`df-dev-server`). Le `nvm use` de chaque pane aligne la version de Node — d'où la dépendance stricte au `.nvmrc` ci-dessus. 24 apps du parc ont ce fichier, 22 au motif exact (exceptions : `app-humidex` et `carto-explore` sans `nvm use`, `app-timelines` sur un vieux layout). Les services ont un layout plus riche (panes `ui`/`api`/`worker`/`deps`) qui ne s'applique pas aux apps, mais leur **bandeau d'URL en dernière ligne**, lui, est repris : depuis que le port est généré, il n'est plus mémorisable. Il exige le `dotenv --` du script `dev` (cf. « Ports de développement »).
+Trois panes : un shell libre, `dev-app` (Vite) et `dev-server` (`df-dev-server`). Le `nvm use` de chaque pane aligne la version de Node — d'où la dépendance stricte au `.nvmrc` ci-dessus. Les services ont un layout plus riche (panes `ui`/`api`/`worker`/`deps`) qui ne s'applique pas aux apps, mais leur **bandeau d'URL en dernière ligne**, lui, est repris : depuis que le port est généré, il n'est plus mémorisable. Il exige le `dotenv --` du script `dev` (cf. « Ports de développement »).
 
 ```kdl
 layout {
@@ -169,7 +163,7 @@ layout {
 
 ## eslint.config.js
 
-Ne pas s'aligner sur les applications : 11 apps sur 25 sont encore en `.eslintrc` legacy, et plusieurs configs flat n'utilisent que `tseslint.configs.recommended` + `eslint-plugin-vue`, deux presets qui ne portent **aucune règle de formatage**. Un dépôt ainsi configuré n'impose ni indentation, ni quotes, ni point-virgule sur ses `.ts` — le style ne tient plus qu'aux réglages d'éditeur de chacun. La cible ci-dessous est celle de `bar-chart-race`, calquée sur `data-fair/ui`.
+Ne pas s'aligner sur une application voisine : une config `.eslintrc` legacy, ou une config flat qui n'utilise que `tseslint.configs.recommended` + `eslint-plugin-vue`, deux presets qui ne portent **aucune règle de formatage**. Un dépôt ainsi configuré n'impose ni indentation, ni quotes, ni point-virgule sur ses `.ts` — le style ne tient plus qu'aux réglages d'éditeur de chacun. La cible ci-dessous est calquée sur `data-fair/ui`.
 
 ```js
 import neostandard from 'neostandard'
@@ -242,11 +236,11 @@ Aucun dépôt maison n'en a. Sur une reprise, le supprimer — mais seulement ap
 
 > **Pas de `baseUrl`** : `baseUrl` est déprécié depuis TypeScript 5/6 et sera retiré dans TS 7.0. `paths` résout automatiquement par rapport au dossier du `tsconfig.json` dès lors que les chemins cibles commencent explicitement par `./` (`"./src/*"` et non `"src/*"`).
 
-`include` doit couvrir `tests/**` : sans lui les fichiers de test échappent au `type-check`, et l'alias `@/` n'y résout pas. **C'est l'écart le plus répandu du parc** — la quasi-totalité des apps n'incluent que `src/**` et leurs tests ne sont pas type-checkés ; à corriger dès qu'on touche au dépôt. L'alias `@/*` est constant côté apps (les services utilisent `~/*` ou `#api/*` — ne pas transposer).
+`include` doit couvrir `tests/**` : sans lui les fichiers de test échappent au `type-check`, et l'alias `@/` n'y résout pas. À corriger dès qu'on touche au dépôt. L'alias `@/*` est constant côté apps (les services utilisent `~/*` ou `#api/*` — ne pas transposer).
 
 ## vite.config.ts
 
-Extension : `vite.config.ts` pour les nouveaux projets (cohérent avec le TypeScript strict du reste du dépôt). Une bonne partie du parc a encore un `.mjs` ou `.js` — Vite accepte les trois, ne pas renommer sur une simple maintenance.
+Extension : `vite.config.ts` pour les nouveaux projets (cohérent avec le TypeScript strict du reste du dépôt). Vite accepte aussi `.mjs` et `.js` : ne pas renommer sur une simple maintenance.
 
 ```ts
 import { defineConfig, loadEnv } from 'vite'
@@ -272,7 +266,10 @@ export default defineConfig(({ mode }) => {
       strictPort: !!env.APP_PORT,
       // hmr suit le port du serveur : un websocket resté sur 3000 fait tenir deux
       // ports à l'application et annule le décalage
-      hmr: { port, protocol: 'ws' }
+      hmr: { port, protocol: 'ws' },
+      // without it the module graph is only transformed on the first request,
+      // and the e2e suite races against that cold start
+      warmup: { clientFiles: ['./src/main.ts', './src/**/*.vue'] }
     }
   }
 })
@@ -288,11 +285,11 @@ export default defineConfig(({ mode }) => {
 
 `base` vaut `/app/` par défaut, ce qu'attend `df-dev-server` ; la CI le surcharge par `PUBLIC_URL`.
 
-> **⚠️ `||`, pas `??`, pour `base`.** Le `webServer` Playwright lance Vite avec `PUBLIC_URL=` (vide, voir « Tests »). `??` ne remplace que `null`/`undefined` : avec `env.PUBLIC_URL ?? '/app/'` la base devient `''` et Vite sert ses modules à la racine (`/@vite/client`, `/src/main.ts`). Vite seul s'en sort par son fallback SPA, mais derrière `df-dev-server`, qui ne relaie que `/app/*` vers Vite, ces modules reviennent en `text/html` : page blanche, console « Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text/html" ». `||` ramène la chaîne vide sur `/app/`. Le parc porte encore `??` : sans conséquence tant que l'e2e tourne sur Vite seul, à corriger dès qu'il passe par `df-dev-server`.
+> **⚠️ `||`, pas `??`, pour `base`.** Le `webServer` Playwright lance Vite avec `PUBLIC_URL=` (vide, voir « Tests »). `??` ne remplace que `null`/`undefined` : avec `env.PUBLIC_URL ?? '/app/'` la base devient `''` et Vite sert ses modules à la racine (`/@vite/client`, `/src/main.ts`). Vite seul s'en sort par son fallback SPA, mais derrière `df-dev-server`, qui ne relaie que `/app/*` vers Vite, ces modules reviennent en `text/html` : page blanche, console « Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text/html" ». `||` ramène la chaîne vide sur `/app/`.
 
 ## Tests — Playwright, dans `tests/`
 
-Cible (le modèle de `bar-chart-race`, seul à l'appliquer intégralement) : dossier `tests/`, extension `.spec.ts` (jamais `.test.ts`), Playwright découpé en **projets** `unit`/`e2e`.
+Cible : dossier `tests/`, extension `.spec.ts` (jamais `.test.ts`), Playwright découpé en **projets** `unit`/`e2e`.
 
 ```ts
 // playwright.config.ts
@@ -327,7 +324,7 @@ export default defineConfig({
     : {
         command: 'PUBLIC_URL= npm run dev-app',
         url: BASE_URL,
-        env: { ...process.env, APP_PORT: String(PORT), DATA_FAIR_TEST: 'true' },
+        env: { ...process.env, APP_PORT: String(PORT) },
         reuseExistingServer: !process.env.CI
       }
 })
@@ -350,11 +347,9 @@ Le plafond ne vise donc que la machine de développement et le hook `pre-push`. 
 Trois détails du modèle qui se perdent facilement :
 
 - **`PUBLIC_URL=` vidé dans la commande du `webServer`** — protège d'un `PUBLIC_URL` exporté dans le shell du dev (l'URL CDN du build, par exemple). Ne fonctionne que si `vite.config.ts` écrit `base: env.PUBLIC_URL || '/app/'` (voir « vite.config.ts ») : c'est ce `||` qui ramène la valeur vide sur `/app/`.
-- **`E2E_PORT` vient du `.env`**, pas d'un `$RANDOM` dans le script ni d'un fichier `tests/.test-port`. Les deux formes se croisent encore dans le parc — elles réimplémentaient, en double, le « tire une fois, persiste, réutilise » que porte désormais le `.env` (cf. « Ports de développement »). En reprise, supprimer `tests/helpers/port.ts` et la ligne `tests/.test-port` du `.gitignore`.
+- **`E2E_PORT` vient du `.env`**, pas d'un `$RANDOM` dans le script ni d'un fichier `tests/.test-port`. Ces deux formes réimplémentaient, en double, le « tire une fois, persiste, réutilise » que porte désormais le `.env` (cf. « Ports de développement »). En reprise, supprimer `tests/helpers/port.ts` et la ligne `tests/.test-port` du `.gitignore`.
 - **`APP_PORT` passé par `webServer.env`, jamais par `--port`.** Un `vite --port` ne change pas `hmr.port`, qui viendrait toujours d'`APP_PORT` et pointerait à côté : le HMR se connecterait au serveur de développement pendant que les tests tournent ailleurs.
-- **`tests/e2e/fixtures.ts`** centralise les mocks (`mockSite`, `buildApplication`, dataset de test, config de base) pour des e2e sans instance data-fair réelle.
-
-**État du parc** : les autres apps déclarent un seul projet `chromium` avec `webServer` inconditionnel (seule `atelier-carto` isole l'unitaire, via un fichier `playwright.unit.config.ts` séparé) ; `app-charts` et `app-timelines` rangent leurs specs dans `tests-e2e/specs/` ; `carto-explore` colocalise encore ses tests unitaires `node --test` à côté des sources. Les services suivent une convention différente (projets discriminés par suffixe `*.unit.spec.ts` / `*.api.spec.ts` / `*.e2e.spec.ts`, pas de `webServer` — leur stack démarre en docker) : ne pas la transposer aux apps.
+- **`tests/e2e/fixtures.ts`** part de `snippets/e2e-fixtures.ts` (garde console automatique, mocks session et `_public.js`, injection de `window.APPLICATION`, `gotoApp`) ; les mocks propres à l'application (routes de données, configurations de test) s'ajoutent dans le même fichier.
 
 Pour les tests e2e, mocker `**/simple-directory/**` (session) et les endpoints de données, et injecter `window.APPLICATION` via `page.addInitScript` avec `writable: false` **avant** le script inline de `index.html` : en `vite` nu, `window.APPLICATION=%APPLICATION%` lève une `SyntaxError` (placeholder non substitué) que le parser ignore ensuite.
 
@@ -375,7 +370,7 @@ playwright-report
 
 `src/config/.type/` est généré par `df-build-types` ; `public/config-schema.json`, lui, **est commité**.
 
-`.env`, `.dev-config.json` et `.dev-attachments/` (pièces jointes de l'application stockées par `df-dev-server`) sont de l'**état local**, jamais commités. Attention en reprise : **un `.gitignore` n'a aucun effet sur un fichier déjà suivi**. 27 apps du parc suivent `.dev-config.json` dans git, dont 8 qui l'ont pourtant dans leur `.gitignore` depuis des mois. La ligne ne suffit pas, il faut `git rm -r --cached --ignore-unmatch .dev-config.json .dev-attachments`.
+`.env`, `.dev-config.json` et `.dev-attachments/` (pièces jointes de l'application stockées par `df-dev-server`) sont de l'**état local**, jamais commités. Attention en reprise : **un `.gitignore` n'a aucun effet sur un fichier déjà suivi**. La ligne ne suffit pas, il faut `git rm -r --cached --ignore-unmatch .dev-config.json .dev-attachments`.
 
 ## CI
 
