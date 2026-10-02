@@ -22,6 +22,7 @@
     "axios": "^1.7.7",
     "cacheable-lookup": "^7.0.0",
     "cookie": "^0.7.2",
+    "ipaddr.js": "^2.5.0",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.1.0",
     "semver": "^7.6.3"

@@ -3,7 +3,8 @@
 
 import { Agent } from 'node:http'
 import { CookieJar } from 'tough-cookie'
-import { axiosInstance } from './axios.js'
+import { privateAxiosInstance } from './axios.js'
+import { privateHttpsAgent } from './http-agents.js'
 import { axiosWithCookies, type AxiosWithCookiesInstance } from './axios-with-cookies.js'
 
 export interface AxiosAuthOptions {
@@ -30,11 +31,13 @@ export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosAuthInsta
   if (opts.orgStorage) body.orgStorage = opts.orgStorage
   const axiosOpts = {
     httpAgent: new Agent({ keepAlive: false }),
+    // the directory is a service of our own infrastructure, not a user provided URL
+    httpsAgent: privateHttpsAgent,
     maxRedirects: 0,
     ...opts.axiosOpts
   }
   const directoryUrl = opts.directoryUrl ?? 'http://localhost:8080'
-  let callbackUrl = (await axiosInstance.post(directoryUrl + '/api/auth/password', body, { params: { redirect: directoryUrl }, maxRedirects: 0 })).data
+  let callbackUrl = (await privateAxiosInstance.post(directoryUrl + '/api/auth/password', body, { params: { redirect: directoryUrl }, maxRedirects: 0 })).data
   if (callbackUrl.startsWith(directoryUrl + '/simple-directory')) {
     callbackUrl = callbackUrl.replace(directoryUrl + '/simple-directory', directoryUrl)
   }
@@ -42,7 +45,7 @@ export async function axiosAuth (opts: AxiosAuthOptions): Promise<AxiosAuthInsta
   const sdOrigin = new URL(directoryUrl).origin
   const cookieJar = new CookieJar()
   try {
-    await axiosInstance.get(callbackUrl, { maxRedirects: 0 })
+    await privateAxiosInstance.get(callbackUrl, { maxRedirects: 0 })
   } catch (err: any) {
     if (err.status !== 302) throw err
     const redirectUrl = new URL(err.headers.location)

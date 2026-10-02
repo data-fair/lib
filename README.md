@@ -22,6 +22,17 @@ Shared schemas and built type definitions, etc.
 
 Code meant to be used server-side in a nodejs environment.
 
+### Outgoing HTTP requests and SSRF
+
+The default axios instance (`@data-fair/lib-node/axios.js`) and the default agents (`httpAgent`, `httpsAgent`) refuse to connect to non public addresses (loopback, private ranges, link-local including the cloud metadata service, etc.). Use them for every URL that a user can influence.
+
+`privateAxiosInstance` and the `privateHttpAgent` / `privateHttpsAgent` agents have no such restriction. Use them only for URLs that come from the configuration of the service (other services of the same infrastructure).
+
+- `SSRF_PUBLIC_IPS`: comma separated IPs / CIDR ranges to consider public, for example an intranet data source of a self-hosted instance, or `127.0.0.1,::1` in a development environment.
+- `SSRF_PRIVATE_IPS`: comma separated IPs / CIDR ranges to consider private even if they are public addresses, for example the database servers.
+
+If `HTTP_PROXY`, `HTTPS_PROXY` or `ALL_PROXY` is defined the protection is disabled (the agents connect to the proxy, not to the target) and a warning is logged at startup.
+
 ## @data-fair/lib-express
 
 Code meant to be used server-side in a Express based Web server.

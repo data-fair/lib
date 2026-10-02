@@ -2,7 +2,7 @@
 
 import type { InternalAxiosRequestConfig, AxiosInstance, CreateAxiosDefaults } from 'axios'
 import axios from 'axios'
-import { httpAgent, httpsAgent } from './http-agents.js'
+import { httpAgent, httpsAgent, privateHttpAgent, privateHttpsAgent } from './http-agents.js'
 
 const { stackTraceLimit } = Error
 
@@ -25,6 +25,7 @@ const requestInterceptor = (config: InternalAxiosRequestConfig) => {
   return config
 }
 
+// public agents by default, pass privateHttpAgent / privateHttpsAgent in opts for a private instance
 export function axiosBuilder (opts: CreateAxiosDefaults = {}, beforeInterceptors?: (ax: AxiosInstance) => void): AxiosInstance {
   const ax = axios.create({
     httpAgent,
@@ -65,6 +66,11 @@ export function axiosBuilder (opts: CreateAxiosDefaults = {}, beforeInterceptors
   return ax
 }
 
+// public instance, refuses to connect to non public addresses (cf http-agents.ts)
+// use it for every URL that a user can influence
 export const axiosInstance = axiosBuilder()
+
+// private instance, only for URLs that come from the configuration of the service
+export const privateAxiosInstance = axiosBuilder({ httpAgent: privateHttpAgent, httpsAgent: privateHttpsAgent })
 
 export default axiosInstance
