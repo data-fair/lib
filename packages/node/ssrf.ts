@@ -50,7 +50,11 @@ export const getSsrfRules = (env: NodeJS.ProcessEnv = process.env): SsrfRules =>
 })
 
 const matchList = (addr: ipaddr.IPv4 | ipaddr.IPv6, list: IPRange[]) => {
-  return list.some(([range, bits]) => addr.kind() === range.kind() && addr.match(range, bits))
+  return list.some(([range, bits]) => {
+    if (addr.kind() !== range.kind()) return false
+    if (addr.kind() === 'ipv4') return (addr as ipaddr.IPv4).match(range as ipaddr.IPv4, bits)
+    return (addr as ipaddr.IPv6).match(range as ipaddr.IPv6, bits)
+  })
 }
 
 /**
