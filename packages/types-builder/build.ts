@@ -349,7 +349,7 @@ const emit = defineEmits(emits)
 </script>
 
 <template>
-<component :is="localeComps[locale]" :model-value="modelValue" :options="options" @update:model-value="value => emit('update:modelValue', value)" @update:state="state => emit('update:state')">
+<component :is="localeComps[locale]" :model-value="modelValue" :options="options" @update:model-value="value => emit('update:modelValue', value)" @update:state="state => emit('update:state', state)">
   <template v-for="(_, name) in $slots" v-slot:[name]="slotData">
     <slot :name="name" v-bind="slotData" />
   </template>

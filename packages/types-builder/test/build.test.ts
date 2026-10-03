@@ -53,6 +53,13 @@ describe('build.js script', () => {
     assert.equal(localDefsSchema['x-exports'], undefined)
   })
 
+  it('should pass the form state through the locale wrapper component', async () => {
+    // the wrapper picking the component of the current locale re-emitted update:state
+    // without its argument, so no application received the form state
+    const wrapperCode = readFileSync(import.meta.dirname + '/vjsf/vjsf-localized.vue', 'utf8')
+    assert.ok(wrapperCode.includes("@update:state=\"state => emit('update:state', state)\""), wrapperCode)
+  })
+
   it('should reuse the vjsf layout for the compiledLayout export', async () => {
     // site-patch exports both vjsf and compiledLayout: the compiledLayout export reuses the
     // layout already compiled+serialized for the vjsf component, so both must stay in sync

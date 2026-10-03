@@ -1,0 +1,10 @@
+{
+  "$id": "https://github.com/data-fair/lib-test/localized",
+  "x-exports": ["vjsf"],
+  "x-vjsf-locales": ["en", "fr"],
+  "title": "localized",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string", "title": "Name", "x-i18n-title": { "fr": "Nom" } }
+  }
+}
