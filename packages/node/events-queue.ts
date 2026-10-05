@@ -1,7 +1,8 @@
 import { type Event } from '@data-fair/lib-common-types/event/index.js'
 import { type Notification } from '@data-fair/lib-common-types/notification/index.js'
 import { internalError } from '@data-fair/lib-node/observer.js'
-import axios from './axios.js'
+// the events service is part of our own infrastructure (configuration, not user input)
+import { privateAxiosInstance as axios } from './axios.js'
 import Debug from 'debug'
 import { SessionState } from '@data-fair/lib-common-types/session/index.js'
 

@@ -16,7 +16,7 @@
     "build": "cd .. && npm run build"
   },
   "peerDependencies": {
-    "@data-fair/lib-node": "^2.13.1",
+    "@data-fair/lib-node": "^2.14.0",
     "express": "5",
     "ws": "8"
   },

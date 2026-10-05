@@ -7,7 +7,8 @@ import microTemplate from '@data-fair/lib-utils/micro-template.js'
 import { static as expressStatic, type Request } from 'express'
 import { reqSitePath, reqSiteUrl, reqOrigin } from '@data-fair/lib-express'
 import serialize from 'serialize-javascript'
-import axios from '@data-fair/lib-node/axios.js'
+// the directory is a service of our own infrastructure (configuration, not user input)
+import { privateAxiosInstance as axios } from '@data-fair/lib-node/axios.js'
 import type { Theme } from '@data-fair/lib-common-types/theme/index.js'
 
 type CSPDirectives = Record<string, string | string[]>
