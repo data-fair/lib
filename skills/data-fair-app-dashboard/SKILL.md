@@ -42,12 +42,12 @@ rendered result. A three-star observatory ticks the first five; four stars needs
 | 2 | **Reading path**: overview first, then one tab per theme | `sectionsGroup: 'tabs-button'` (2–6 sections); first section = key figures (`metrics`), then themes; block titles phrased as what the reader learns |
 | 3 | **Map linked to the filter** | `atelier-carto` / `infos-territoires` with concept filters, fixed height (700 px) |
 | 4 | **Comparison with a reference territory** | `allowDuplicate: true` (two columns, each with its own filters) and/or `ignoreFilters: true` blocks titled "France" / "Département" next to the filtered one |
-| 5 | **Shareable state** | The dashboard keeps its filters in its URL: share the link; `showEmbed: true` to embed it in the client's CMS |
+| 5 | **Shareable state** | The dashboard keeps its filters in its URL: share the link |
 | 6 | **Method next to every number**: definition, formula, vintage, source, limits | `description` of each sub-application (rendered as markdown) + `element.description: 'right'` or `'bottom'`; `showSources: true` |
 | 7 | **Rates, not only counts** (per 1,000 inhabitants, shares) | `metrics` `value.divider` with `{type: 'metric'}` on another dataset (cross-dataset ratio) (`references/sub-apps.md`) |
 | 8 | **Honest scale**: no block silently shows France while a territory is selected | Every dataset checked for the concept of every scale offered; blocks that cannot follow get a `text` warning, `ignoreFilters` + explicit title, or `valueMandatory` (§4) |
 | 9 | **Numbers verified** against an independent source for one known territory | §6 checklist, network check that each iframe request carries the filter |
-| 10 | **Readable by everyone**: anonymous access, dark theme, no grey series, export | All sub-apps public; palette colors; `showCapture: true`; `tablePreview` for the underlying rows |
+| 10 | **Readable by everyone**: anonymous access, dark theme, no grey series, export | All sub-apps public; palette colors; `tablePreview` for the underlying rows and their download |
 
 What the platform cannot do yet, so do not promise it: text with live values inserted, an
 automatic PDF portrait, a median (`avg`, `sum`, `min`, `max` only), a ratio whose
@@ -166,8 +166,8 @@ network** (`references/sub-apps.md` lists the ones that lie).
    101-row pyramid 820). A fixed height on an auto app creates an inner scroll.
 5. **An `application` element carries the full base-app**: `baseApp {id, url, meta,
    datasetsFilters}` from `GET /applications/<id>/base-application`, not just its `url`,
-   as the form stores it: the capture button reads `meta` (`df:capture-*`), and the meta
-   is how you (and the next agent) know whether the block can follow filters.
+   as the form stores it: the meta is how you (and the next agent) know whether the block
+   can follow filters.
 6. **Mirror what the form maintains**: `config.applications` = `[{id, title}]` of every
    embedded application, `config.datasets` = root dataset first (full entry: `id`,
    `href`, `title`, `slug`, `schema`, `finalizedAt`, `bbox`, `timePeriod`).
@@ -198,8 +198,7 @@ network** (`references/sub-apps.md` lists the ones that lie).
 - [ ] 500, 1100, 1920 px: no inner scroll, no horizontal overflow; dark theme readable,
       no grey-only series.
 - [ ] Every sub-app has a description with definition, source link and vintage.
-- [ ] `showSources` / `showEmbed` / `showCapture` behave (bars do not overlap the next
-      block).
+- [ ] `showSources` behaves (the bar does not overlap the next block).
 
 ## References
 

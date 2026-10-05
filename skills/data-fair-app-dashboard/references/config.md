@@ -20,7 +20,7 @@ DashboardConfig
 ├── sections[]
 │   ├── title, description, icon {name, svg, svgPath}
 │   └── rows[] { height, elements[] }     height in px, -1 = auto
-├── showSources, showEmbed, showCapture   action bar under each element (global switches)
+├── showSources                           action bar under each element (source links)
 └── applications[]                        [{id, title}] of every embedded app (not in the schema: the form
                                           maintains it through set-config; mirror it when writing by API)
 ```
@@ -120,7 +120,7 @@ definitions and source links in each sub-application description, displayed with
   "addressFilter": false,
   "allowDuplicate": true,
   "sectionsGroup": "tabs-button",
-  "showSources": true, "showEmbed": true, "showCapture": true,
+  "showSources": true,
   "sections": [
     { "title": "Vue d'ensemble", "icon": { "name": "view-dashboard", "svg": "<svg…>", "svgPath": "M…" },
       "rows": [
