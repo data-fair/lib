@@ -94,10 +94,12 @@ Built by the worker (`processings/worker/src/task/axios.ts`); `@data-fair/lib-pr
 | Timeout | none (axios default) | none |
 | Retry | `axios-retry`, 3 retries, exponential delay honouring `Retry-After`, on network errors and 429/5xx **for GET/HEAD/OPTIONS/PUT/DELETE only — never POST/PATCH**; each retry logs a warning | **none** |
 | Error shape | raw `AxiosError`: `err.status`, body in `err.response.data` (`err.data` is undefined) | rejects with the trimmed `response`: `err.status`, `err.data`, no `err.response` |
+| Network | **refuses non public addresses** (SSRF protection of lib-node's default agents); only data-fair urls go through private agents, without redirects | not guarded |
 
 What to do with it:
 
-- **External sources:** pass per-request options (`{ maxRedirects: 5, timeout: 60000 }`) or create a dedicated `axios.create(...)`; a remote host that redirects (http→https, CDN, download link) otherwise fails with a 3xx.
+- **External sources:** pass per-request options (`{ maxRedirects: 5, timeout: 60000 }`) on `context.axios`; a remote host that redirects (http→https, CDN, download link) otherwise fails with a 3xx.
+- **Every HTTP call goes through `context.axios`** — never the raw `axios` package, `axios.create()`, `fetch`, `got` or `request`, and never a custom `httpAgent`/`httpsAgent`/`proxy` option: they bypass the SSRF protection. Don't re-send credentials from the config (`Authorization`, API keys) to a next-page or resource URL whose origin differs from the configured API. Non-HTTP clients (ftp, sftp) and child processes: **READ the [data-fair-security skill](../data-fair-security/SKILL.md)**.
 - **POST/PATCH to data-fair** (bulk lines, file upload) are not retried: wrap them in a small helper retrying 429/5xx, with the body rebuilt by a thunk on each attempt. Reference: `processing-ods/lib/utils.ts` `withRetry429` / `dfRetry` (429 only, 3 retries, fixed 10 s pause, logs each pause). Don't wrap GETs — the built-in retry already applies, the two stack.
 - **Reading an error in code that runs in both worker and tests:** `err.status ?? err.response?.status`, `err.data ?? err.response?.data`.
 - **Logging:** an error thrown from `run` is already turned by the worker into `log.error("<status> - <statusText> - <body> (<url>)")` plus a `log.debug` of the trimmed error — just rethrow. When you catch to add context, `await log.error('what failed', err.response?.data ?? err.data)` (the second argument is a real `extra`), then rethrow.
@@ -166,5 +168,6 @@ Run tests against a real instance by filling `config/local-test.mjs` (gitignored
 - **Dropping the `.ts` extension in imports** — keep it (`NodeNext` + `allowImportingTsExtensions`).
 - **cwd-relative `fs.existsSync('./lib/...')`** — resolve with `import.meta.dirname`; the code runs from inside `lib/`.
 - **`exec(\`unzip ... ${x}\`)`** — use `execFile('unzip', ['-o', file, '-d', dir])`, no shell injection.
+- **Joining a remote name into a path** (`path.join(tmpDir, title)`) — `path.basename()` it first; names from remote listings, metadata or ids are attacker-controlled.
 - **Forgetting `patchConfig`** after a create-mode run — the next run creates a second dataset.
 - **Bumping `version`** for a `feat!` — leave it alone.
