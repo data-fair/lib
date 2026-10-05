@@ -34,7 +34,7 @@ Rules:
 
 ### Clients the agents do not cover
 
-Anything that does not go through node's `http.Agent` of lib-node escapes the check. Prefer moving the call to the lib-node client; otherwise:
+Anything that does not go through node's `http.Agent` of lib-node escapes the check. Prefer moving the call to the lib-node client; otherwise use the helpers of `@data-fair/lib-node/ssrf.js` (same `SSRF_*` rules as the agents, but **not** disabled by a proxy env variable since these clients connect directly):
 
 | Client | Minimal fix |
 |---|---|
@@ -42,7 +42,8 @@ Anything that does not go through node's `http.Agent` of lib-node escapes the ch
 | AWS SDK (`@aws-sdk/*`) | `requestHandler: new NodeHttpHandler({ httpAgent, httpsAgent })` with lib-node's public agents |
 | other SDKs with a user-chosen endpoint | pass the agents if supported; else validate the endpoint (fixed provider domain, strict account-name pattern) |
 | `jsonld` (remote `@context`) | pass a `documentLoader` that refuses remote URLs, or `jsonld.documentLoaders.node({ httpAgent, httpsAgent })` |
-| ftp / sftp / ssh2 / raw sockets | resolve the host (`dns.lookup(host, { all: true })`), check every address with `checkAddress(address, host, getSsrfRules())` from `@data-fair/lib-node/ssrf.js`, then connect **to the checked IP** (TLS `servername` = host). FTP passive mode: the server chooses the data-channel IP — use EPSV or check the PASV address too |
+| ftp / sftp / ssh2 / raw sockets | `const ip = await resolvePublicAddress(host)` from `@data-fair/lib-node/ssrf.js` (checks every address, throws `SsrfError`), then connect **to `ip`**, not to the host (TLS `servername` = host) — resolving again could give another address. FTP passive mode: the server chooses the data-channel IP — use EPSV or check the PASV address with `resolvePublicAddress` too |
+| any client with a `lookup` option (`net.connect`, `tls.connect`, undici `connect`, got `dnsLookup`) | `lookup: publicLookup` from `@data-fair/lib-node/ssrf.js`; node skips lookup for IP literals, so also pass the host through `resolvePublicAddress` when it may be a literal |
 | child processes (GDAL/ogr2ogr, curl, wget, headless browsers) | never pass a user URL; force the input driver (`-if GPKG`) so a file cannot be sniffed as a VRT pointing to `/vsicurl/…` or a local path; a browser needs request interception with the same address check |
 | `nodemailer` | `createTransport({ ...transport, disableFileAccess: true, disableUrlAccess: true })` when the message content is not ours |
 | third-party credential configs (e.g. Google `external_account` JSON) | validate the type (`service_account`) before use: they can read local files or fetch arbitrary URLs and post the result to a chosen token URL |

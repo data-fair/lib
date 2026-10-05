@@ -7,7 +7,8 @@ import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
 import axios from 'axios'
 import CacheableLookup from 'cacheable-lookup'
-import { checkAddress, parseIPList, getSsrfRules, getProxyEnvName, SsrfHttpAgent, SsrfHttpsAgent, type SsrfRules } from './ssrf.js'
+import net from 'node:net'
+import { checkAddress, parseIPList, getSsrfRules, getProxyEnvName, resolvePublicAddress, publicLookup, SsrfHttpAgent, SsrfHttpsAgent, type SsrfRules } from './ssrf.js'
 
 const execFileAsync = promisify(execFile)
 
@@ -127,5 +128,30 @@ describe('ssrf agents', () => {
     const env = { ...process.env, HTTPS_PROXY: 'http://proxy.example.com:3128' }
     const { stderr } = await execFileAsync(process.execPath, ['--experimental-strip-types', '--input-type=module', '--eval', script], { env, timeout: 10000 })
     assert.match(stderr, /WARNING: HTTPS_PROXY is defined, the protection against server side request forgery \(SSRF\) is disabled/)
+  })
+})
+
+describe('ssrf helpers for other clients', () => {
+  it('should resolve and check hosts', async () => {
+    await assert.rejects(resolvePublicAddress('localhost', noRules), { code: 'ERR_SSRF_BLOCKED' })
+    await assert.rejects(resolvePublicAddress('127.0.0.1', noRules), { code: 'ERR_SSRF_BLOCKED' })
+    await assert.rejects(resolvePublicAddress('[::1]', noRules), { code: 'ERR_SSRF_BLOCKED' })
+    await assert.rejects(resolvePublicAddress('169.254.169.254'), { code: 'ERR_SSRF_BLOCKED' })
+    assert.equal(await resolvePublicAddress('8.8.8.8', noRules), '8.8.8.8')
+    assert.equal(await resolvePublicAddress('[2001:4860:4860::8888]', noRules), '2001:4860:4860::8888')
+    const loopback = getSsrfRules({ SSRF_PUBLIC_IPS: '127.0.0.1,::1' })
+    assert.ok(['127.0.0.1', '::1'].includes(await resolvePublicAddress('localhost', loopback)))
+  })
+
+  it('should refuse non public addresses in a lookup option', async () => {
+    assert.ok(!process.env.SSRF_PUBLIC_IPS, 'the test must run without SSRF_PUBLIC_IPS')
+    const err = await new Promise<any>((resolve) => {
+      const socket = net.connect({ host: 'localhost', port: 1, lookup: publicLookup })
+      socket.on('error', resolve)
+      socket.on('connect', () => { socket.destroy(); resolve(undefined) })
+    })
+    assert.equal(err?.code, 'ERR_SSRF_BLOCKED')
+    const legacyErr = await new Promise<any>(resolve => publicLookup('localhost', resolve))
+    assert.equal(legacyErr?.code, 'ERR_SSRF_BLOCKED')
   })
 })

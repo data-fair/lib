@@ -33,6 +33,8 @@ The default axios instance (`@data-fair/lib-node/axios.js`) and the default agen
 
 If `HTTP_PROXY`, `HTTPS_PROXY` or `ALL_PROXY` is defined the protection is disabled (the agents connect to the proxy, not to the target) and a warning is logged at startup.
 
+For clients that don't use these agents (ftp, sftp, raw sockets, SDKs...), `@data-fair/lib-node/ssrf.js` exports `resolvePublicAddress(host)` (checks every address of the host and returns the one to connect to) and `publicLookup` (a `dns.lookup` compatible function for any `lookup` option). They apply the same rules and are not disabled by a proxy env variable.
+
 ## @data-fair/lib-express
 
 Code meant to be used server-side in a Express based Web server.

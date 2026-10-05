@@ -91,6 +91,47 @@ const guardLookup = (lookup: LookupFunction, rules: SsrfRules): LookupFunction =
   }
 }
 
+// helpers for clients that do not use our http agents (ftp, sftp/ssh2, raw sockets, SDKs, undici...)
+// unlike the agents they are not disabled by a proxy env variable: these clients connect directly
+
+let envRules: SsrfRules | undefined
+const getEnvRules = () => {
+  envRules = envRules ?? getSsrfRules()
+  return envRules
+}
+
+/**
+ * Resolve a host and check all its addresses, returns the address to connect to.
+ * Connect to the returned address (with the original host as TLS servername), not to the host:
+ * resolving the host again could give a different address (DNS rebinding).
+ * Throws a SsrfError if the host is or resolves to a non public address.
+ */
+export const resolvePublicAddress = async (host: string, rules: SsrfRules = getEnvRules()): Promise<string> => {
+  const bareHost = host.replace(/^\[(.*)\]$/, '$1')
+  if (net.isIP(bareHost)) {
+    const ssrfError = checkAddress(bareHost, undefined, rules)
+    if (ssrfError) throw ssrfError
+    return bareHost
+  }
+  const addresses = await dns.promises.lookup(bareHost, { all: true })
+  for (const { address } of addresses) {
+    const ssrfError = checkAddress(address, bareHost, rules)
+    if (ssrfError) throw ssrfError
+  }
+  return addresses[0].address
+}
+
+/**
+ * A dns.lookup compatible function that refuses non public addresses, for any client accepting a
+ * `lookup` option (net.connect, tls.connect, undici connect options, got dnsLookup...).
+ * WARNING: node does not call lookup for IP literals, check those with resolvePublicAddress.
+ */
+export const publicLookup = (hostname: string, options: any, callback?: (...args: any[]) => void): void => {
+  // support the dns.lookup(hostname, callback) signature
+  if (typeof options === 'function') return publicLookup(hostname, {}, options)
+  return guardLookup(dns.lookup as LookupFunction, getEnvRules())(hostname, options ?? {}, callback as (...args: any[]) => void)
+}
+
 // the check happens when the connection is created, on the exact address that will be used:
 // IP literals are checked directly (no DNS lookup happens for them),
 // hostnames are checked on every address returned by the lookup (no DNS rebinding),
