@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib-express",
-  "version": "1.28.0",
+  "version": "1.28.1",
   "description": "Middlewares and utility functions related to the use of Express in the data-fair stack.",
   "main": "index.js",
   "types": "index.d.ts",
@@ -16,7 +16,7 @@
     "build": "cd .. && npm run build"
   },
   "peerDependencies": {
-    "@data-fair/lib-node": "^2.14.0",
+    "@data-fair/lib-node": "^2.15.0",
     "express": "5",
     "ws": "8"
   },
