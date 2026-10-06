@@ -29,7 +29,7 @@ Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 
 - `titleSize` (requis) pilote l'apparence : `h1`…`h6` → `text-h1`…`text-h6` (Vuetify). `titleTag` pilote la balise HTML : `h1`…`h6` ou `div`.
 - Le layout rend le titre du portail en `<h1>` **seulement si l'entête affiche son titre** (`config.header.show && showTitle && !logoPrimaryCentered`) : vérifier dans `GET /portal/api/portal`. Héros d'accueil : `titleSize: 'h2'` + `titleTag: 'h1'`. Page de contenu : `titleSize: 'h3'` + `titleTag: 'h2'` (ou `h1` si aucun autre h1).
-- `anchor.enabled` génère un lien direct ; `anchor.inToc` ajoute l'entrée au sommaire ; `anchor.label` raccourcit le libellé du sommaire.
+- `anchor.enabled` génère un lien direct ; `anchor.inToc` ajoute l'entrée au sommaire (coché par défaut dans l'éditeur, à écrire explicitement via l'API) ; `anchor.label` raccourcit le libellé du sommaire. Un seul titre dans le sommaire suffit à l'afficher, ce qui neutralise `fluid` sur grand écran : voir « Page pleine largeur » dans `SKILL.md`.
 - Autres : `color`, `icon`, `line { position, color, growOnHover? }`, `link` (lien simple).
 - **Lien texte avec flèche** (style ODS « Voir tous les jeux → ») : un `title` avec `link` et `icon: { mdi: { name, svg, svgPath }, color }` ; l'icône est rendue **avant** le texte et fait partie du lien. Le bloc `button` ne peut pas le faire (pas de variante texte, voir `button`).
 

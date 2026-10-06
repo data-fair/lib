@@ -151,6 +151,7 @@ Deux références se complètent : **`references/design.md`** pour *composer* un
 - `text` et `alert` acceptent du **markdown sanitisé** (gras, liens, listes, tableaux) mais **pas d'iframe** — le sanitizer la retire ; pour intégrer, utiliser les blocs `application` ou `iframe`.
 - `title` : `titleSize` visuel (`h1`…`h6` → classes `text-h1`…`text-h6`) et `titleTag` sémantique (`h1`…`h6`, `div`) sont indépendants. Le layout rend le titre du portail en `<h1>` **uniquement si l'entête est affichée avec son titre** (`GET /portal/api/portal` → `config.header.show && config.header.showTitle && !config.header.logoPrimaryCentered`) : vérifier avant de choisir `titleTag`. Pour un hero d'accueil (long titre), viser `titleSize: 'h2'` + `titleTag: 'h1'` ; pour une page de contenu, `titleSize: 'h3'` + `titleTag: 'h2'` (et pas de `<h1>` si l'entête en affiche déjà un).
 - **Sommaire** : il n'existe **aucune** option `toc` au niveau de la page ni du portail (le schéma `page-config` est en `unevaluatedProperties: false`, mais l'API accepte une clé inventée sans broncher : elle reste inerte). Le sommaire s'active **bloc titre par bloc titre** avec `anchor: { enabled: true, inToc: true, label? }` ; le serveur recalcule `config._toc` à chaque PATCH, dédoublonne les slugs et pose `anchor._slug`. `_toc` est `readOnly` : ne jamais l'écrire. Contrôle : `config._toc.length` = nombre de titres ancrés. Convention : ancres sur les H2/H3, jamais sur le H1 (doublon avec le titre de page).
+- **Page pleine largeur** : voir la section dédiée ci-dessous ; elle interagit avec le sommaire.
 - **Fil d'Ariane** : porté par le `rootPage` du **groupe** de pages (slug de page), voir `references/api-workflow.md`.
 - **Images** : uploadées dans la médiathèque de la page, toujours `mobileAlt: false`, `height` calculée depuis le ratio du PNG sinon l'image est rognée — règles dans `references/elements.md`.
 - **Listings** : une page dont un bloc texte (souvent dans un `two-columns`) contient une ligne markdown par entrée. Ajouter puis **re-trier** avant de publier :
@@ -166,6 +167,26 @@ Deux références se complètent : **`references/design.md`** pour *composer* un
 - Structure éditoriale éprouvée : titre → alerte « Pour qui ? » → intro (enjeu/réglementation) → diagramme Mermaid → une section par étape du cas d'usage → intégration(s) → « Pour aller plus loin » (liens) → bouton CTA.
 - Renseigner `config.description` (SEO, cartes de partage) et `config.thumbnail` (og:image) ; garder les libellés en **casse de phrase** française.
 - Blocs `card` (utilisés dans les grilles) : `children` et `actions` sont **requis** (tableaux, même vides) ; le lien de carte est `link` (variante sans libellé) et la carte entière devient cliquable.
+
+### Page pleine largeur
+
+La pleine largeur est un réglage **de la page** : `config.fluid: true` (onglet « Métadonnées », « Page pleine largeur »). Elle n'existe ni au niveau du portail, ni sur les blocs. À ne pas confondre avec `banner.fullWidth` / `image.banner`, qui ne font déborder que le **fond** d'un bloc racine jusqu'aux bords, contenu de la page inchangé.
+
+Le piège est le **sommaire** : il apparaît dès qu'**un seul** titre a `anchor.inToc: true`, et dans l'éditeur ce switch est **coché par défaut** dès qu'on active l'ancre.
+
+- **Jusqu'à portals 2.34.0 inclus** : `layout-page.vue` ne transmet pas `isFluid` au sommaire. Sur grand écran (`lg`), il reste en volet latéral : deux tiroirs de 256 px (un vide à gauche pour centrer, le sommaire à droite) rétrécissent la zone de contenu, et `fluid` n'a **aucun effet visible**.
+- **Versions corrigées** : sur une page `fluid`, le sommaire devient un bouton flottant en haut à droite, et le conteneur prend une gouttière de 64 px de chaque côté sur grand écran (`lg`) pour que le bouton ne recouvre pas le contenu (symétrique pour garder les bannières `fullWidth` centrées). En dessous de `lg`, pas de gouttière : le bouton peut recouvrir le texte, comme sur mobile.
+
+Recette d'une page pleine largeur **sans** sommaire (tableau de bord, application intégrée, visuel large), valable sur toutes les versions :
+
+1. `config.fluid: true`.
+2. Sur **chaque** titre ancré, `anchor: { enabled: true, inToc: false }` : l'ancre (lien direct) reste, le titre sort du sommaire. Toujours écrire `inToc` explicitement, ne pas compter sur l'absence de la clé.
+3. Après le `PATCH`, vérifier `config._toc.length === 0` : c'est la seule preuve qu'aucun sommaire ne sera rendu.
+4. Contrôler en capture desktop 1440 px que le contenu touche les bords du conteneur (padding 16 px), sans colonne vide à droite.
+
+Garder un sommaire sur une page `fluid` seulement sur une version corrigée, et si la page est longue au point d'en avoir besoin. À l'inverse, une page de texte long reste en largeur fixe : un paragraphe sur toute la largeur se lit mal (`references/design.md`, §7).
+
+**Piège d'API** : un `POST /pages` qui embarque directement `config.elements` stocke la config **sans** calculer `_html` ni `_toc` (textes vides, pas de sommaire à l'écran). Toujours créer la page vide, puis `PATCH draftConfig` et publier (§3).
 
 ## 6. Diagramme Mermaid
 
@@ -224,6 +245,7 @@ Toute page qui nomme une application DataFair emploie le **libellé de l'applica
 - **Image cassée après publication** → `mobileAlt` absent ou `true` sur une image sans variante mobile ; poser `mobileAlt: false`.
 - **Image rognée** → `height` incompatible avec le ratio ; recalculer (`references/elements.md`).
 - **Sommaire vide** malgré `_toc` → les titres n'ont pas `anchor.enabled`/`inToc` ; la clé `toc` de page est inerte.
+- **« Page pleine largeur » sans effet** (portals ≤ 2.34.0) → un titre au moins est dans le sommaire (`config._toc` non vide) : le volet latéral rétrécit le contenu. Passer `inToc: false` sur tous les titres ancrés (section « Page pleine largeur »).
 - **Fil d'Ariane qui ne remonte pas au listing** → `rootPage` absent de l'objet groupe (`PATCH /groups/:id` avec `title` + `rootPage`).
 - **Trait de titre invisible** → `line` demandé sans `line.color` : la couleur CSS est invalide, aucun trait n'est rendu (`references/design.md`, §5).
 - **Teinte inopérante** → `tintStrength` n'agit qu'avec `background.color` **et** `background.image` ; l'un des deux manque.

@@ -36,7 +36,7 @@ Tout le « design » se joue donc sur : **composition, rythme, hiérarchie, imag
 | `config.linksConfig` | Style des liens markdown (soulignement, couleur). |
 | `config.breadcrumb.position` | Le fil d'Ariane est-il affiché, et où. |
 | `config.allowedFrameSources` | Quels domaines externes sont autorisés dans un bloc `iframe` (`frame-src`). |
-| `fluid` de la **page** (`page-config.fluid`, pas du portail) | `true` = contenu pleine largeur ; le sommaire passe alors en bouton flottant au lieu d'un volet latéral (`layout/page-toc.vue:3`). |
+| `fluid` de la **page** (`page-config.fluid`, pas du portail) | `true` = contenu pleine largeur. Avec un sommaire : sans effet jusqu'à portals 2.34.0 (le volet rétrécit le contenu), puis bouton flottant + gouttières de 64 px dans les versions corrigées ; voir « Page pleine largeur » dans `SKILL.md`. |
 
 Sur l'accueil, vérifier aussi `config.headerHomeActive` / `config.headerHome` : l'en-tête peut changer sur la home (`layout-app-bar.vue:38-41`).
 
@@ -188,7 +188,7 @@ Une ligne markdown par entrée, **re-triée** avant publication (voir `SKILL.md`
 - `titleSize` = apparence, `titleTag` = balise HTML ; les deux sont indépendants. `titleTag` par défaut = `titleSize`.
 - **Un seul `<h1>` par page.** Si `header.show` (ou l'en-tête de la home) est affiché, il en rend déjà un : le titre de page prend `titleTag: 'h2'` (visuel `h3`). Sinon la page peut le porter (`titleSize: 'h2'`, `titleTag: 'h1'` pour un hero).
 - Éviter d'habiller un titre avec du markdown : dans un bloc `text`, `#` devient un `<h2 class="text-display-medium text-primary mt-12 mb-8">` (marges et couleur non maîtrisées, `lib/packages/utils/marked-vuetify.ts:64-72`). Les blocs `title` existent pour ça.
-- Ancres : `anchor: { enabled: true, inToc: true }` sur chaque H2/H3. Le serveur recalcule `_toc` à chaque PATCH ; `anchor.label` raccourcit l'entrée. Depuis que le sommaire existe, une page longue sans sommaire se lit mal.
+- Ancres : `anchor: { enabled: true, inToc: true }` sur chaque H2/H3 (sauf page pleine largeur : `inToc: false`). Le serveur recalcule `_toc` à chaque PATCH ; `anchor.label` raccourcit l'entrée. Depuis que le sommaire existe, une page longue sans sommaire se lit mal.
 - Contenu markdown : listes et tableaux bienvenus, paragraphes courts, un lien par phrase plutôt que des URL nues.
 
 ## 7. Rythme, largeurs, responsive
@@ -197,7 +197,7 @@ Une ligne markdown par entrée, **re-triée** avant publication (voir `SKILL.md`
 - **Rythme vertical** : un espacement de 16 px par défaut entre blocs. Pour des sections, viser `mb: 6` (24 px) à `mb: 8` (32 px) ou un `banner` avec `pt`/`pb`. Des blocs collés se lisent comme une page non finie, des écarts de 64 px partout comme un gabarit.
 - **Gutters** : `none`, `dense` (16 px), `default` (24 px).
 - **Responsive à vérifier, pas à supposer** : la grille et les colonnes s'empilent, mais un titre `h2`/`h1`, un tableau large ou deux cartes côte à côte peuvent déborder. `h1` à 96 px ne tient pas dans une colonne étroite.
-- Le sommaire occupe un volet à droite en `lg` **et** hors `fluid` ; sur mobile et en pleine largeur, c'est un bouton flottant en haut à droite.
+- Le sommaire occupe un volet à droite en `lg` (deux tiroirs de 256 px qui rétrécissent le contenu) ; sur mobile, c'est un bouton flottant en haut à droite. Une page `fluid` avec sommaire garde le volet jusqu'à portals 2.34.0 ; ensuite elle passe en bouton flottant avec 64 px de gouttière de chaque côté (`lg` uniquement). Pour une pleine largeur bord à bord, aucun titre dans le sommaire (`inToc: false` partout, `_toc` vide).
 
 ## 8. Thèmes et contraste
 
