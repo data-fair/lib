@@ -72,6 +72,10 @@ export function vuetifySessionOptions (session: Session, cspNonce?: string): Vue
       },
       VCombobox: {
         autocomplete: 'suppress'
+      },
+      VTimePicker: {
+        // vuetify defaults to 'ampm' whatever the locale; it is only the convention in english
+        format: session.lang.value === 'en' ? 'ampm' : '24hr'
       }
     }
   }
