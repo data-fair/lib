@@ -67,7 +67,7 @@ Ce skill guide la création et la maintenance d'applications DataFair (visus, ap
 Dans `index.html`, `%APPLICATION%` est remplacé par DataFair au runtime.
 Le code lit `window.APPLICATION` (typé dans `src/types.d.ts`).
 
-> **⚠️ Une seule occurrence du placeholder** : en prod, DataFair remplace `%APPLICATION%` via une regex **non globale** (`replace(/%APPLICATION%/, ...)`) → seule la première occurrence est remplacée. Le dev-server, lui, les remplace toutes (flag `/g`) → comportement divergent dev/prod. Utiliser le placeholder **exactement une fois** dans `index.html`.
+> **⚠️ Le placeholder vit dans l'affectation, et nulle part ailleurs** : DataFair (depuis 6.18.0) et le dev-server substituent la même chose, l'affectation `window.APPLICATION = %APPLICATION%` (`/window\.APPLICATION\s*=\s*%APPLICATION%/g`, `api/src/applications/proxy.ts`), jamais le placeholder nu : un `%APPLICATION%` cité ailleurs (commentaire, chaîne) reste tel quel. Écrire le placeholder **exactement une fois**, dans cette affectation.
 
 **Structure** :
 
@@ -93,7 +93,7 @@ window.APPLICATION = {
 }
 ```
 
-**Important** : les datasets et leurs schemas sont dans `window.APPLICATION.configuration.datasets` (tableau). Les métadonnées (schema, champs, concepts, finalizedAt) sont **déjà injectées** par DataFair — inutile de les fetcher via API. L'app accède aux données via le `href` du dataset.
+**Important** : les datasets et leurs schemas sont dans `window.APPLICATION.configuration.datasets` (tableau). Les métadonnées sont **déjà injectées** par DataFair — inutile de les fetcher via API — mais seulement celles que le sélecteur demande : DataFair rafraîchit les clés stockées dans l'entrée, `finalizedAt`, `slug`, et le `select` du `getItems.url` de `datasets` (`refreshConfigDatasetsRefs`). Une app qui lit `dataset.schema`, `isRest` ou `userPermissions` doit donc les mettre dans ce `select`. Le dev-server reproduit la même règle à partir du `config-schema.json` local. L'app accède aux données via le `href` du dataset.
 
 ### .dev-config.json — configuration courante de dev
 
