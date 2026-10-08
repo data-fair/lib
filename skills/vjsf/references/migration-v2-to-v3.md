@@ -9,6 +9,7 @@ vjsf 2 keywords are plain unknown keywords to json-layout: no warning, no error,
 - `x-display: "tabs"` ignored → tabs collapse into one long vertical form.
 - `x-fromUrl` ignored → a dataset picker degrades into the raw sub-fields of its object (two text inputs for `id` / `title`).
 - `x-if` ignored → the field always shows.
+- `x-display: "list"` ignored on an array fed by `x-fromUrl` → the per-item editor becomes a multi-select of the fetched values, and the sub-fields of each item (an icon, a colour per value) are never shown.
 
 Detection: `grep -n '"x-' <schema>` and migrate everything it finds **except** `x-exports` (df-build-types keyword) and `x-i18n-*` (json-layout keyword, still valid).
 
@@ -23,6 +24,7 @@ Detection: `grep -n '"x-' <schema>` and migrate everything it finds **except** `
 | `"x-display": "switch"` (non-boolean, multi-choice) | `"layout": "switch-group"` |
 | `"x-display": "hidden"` | `"layout": "none"` |
 | `"x-display": "password"` | `"layout": { "props": { "type": "password" } }` |
+| `"x-display": "list"` on an `array` of objects fed by `x-fromUrl` (one row per fetched value, e.g. an icon or a colour per category) | `"layout": { "comp": "list", "listEditMode": "inline", "getItems": { … } }` — **`comp` is mandatory**: an array with `getItems` is inferred as a multi-select |
 | `"x-display": "icon"` on an `enum` | `"layout": { "getItems": { "itemIcon": "…" } }` |
 | `"format": "hexcolor"` | `"layout": "color-picker"` — `hexcolor` is not a JSON Schema format, drop it |
 | `"x-props": { … }` | `"layout": { "props": { … } }` |

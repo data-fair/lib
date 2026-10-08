@@ -261,6 +261,7 @@ Two exceptions only: technical identifiers rendered as-is (`h1`, a dataset field
 | `layout.if` used to make a field conditionally mandatory | Hiding ≠ optional; model it with `oneOf` / `if`-`then` |
 | Slider label squeezed next to the track | `label: ""` + `slots.before` (see `references/patterns.md`) |
 | `"format": "hexcolor"` (or any invented format) | Not a JSON Schema format — vjsf warns `unknown format ignored`; use `layout: "color-picker"` |
+| Array of objects with `getItems` and no `comp` (one icon/colour per dataset value, the vjsf 2 `x-display: "list"`) | Inferred as a multi-select: the values become chips and the item sub-fields never show — set `"comp": "list"` (+ `"listEditMode": "inline"`) |
 | `enumTitles` / `enumNames` next to an `enum` | Not vjsf keywords, in any version (vjsf 2 already used `oneOf`): borrowed from other form libraries, silently ignored — the select shows the raw values. Use a `oneOf` of `{ "const": …, "title": … }` (in `items` for a multiple choice) |
 | `description` on a single-field object wrapper | Renders an always-visible subtitle block; put it on the field, where it becomes a help icon |
 | `enum` / `examples` / all-`const` `oneOf` on a property that has `layout.getItems` | The schema list silently replaces `getItems` (a `url` one even fails layout validation and falls back to the enum). Drop the schema keyword; only `layout.items` wins over schema items |
