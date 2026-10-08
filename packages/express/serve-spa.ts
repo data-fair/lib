@@ -68,6 +68,29 @@ function buildPreloadLinks (links?: PreloadLink[]): string {
   }).join('')
 }
 
+/**
+ * The _t_* query parameters of a request: a local override of its site's theme (primary
+ * color, etc.) applied by simple-directory to the non-hashed site resources, so that a page
+ * can be rendered with other colors (embedded in an external site, etc.) without any
+ * override logic of its own. Shared with the application proxy of data-fair.
+ */
+export const getThemeParams = (query: Record<string, unknown>): URLSearchParams => {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(query)) {
+    if (key.startsWith('_t_') && typeof value === 'string') params.append(key, value)
+  }
+  return params
+}
+
+const siteResourceRegexp = /(\/simple-directory\/api\/sites\/(?:_theme\.css|_public\.js))(?=["'])/g
+
+// an overridden resource is never hashed (a hash describes the site's own theme): the hash
+// placeholders were emptied, the plain references now receive the parameters
+const applyThemeParams = (html: string, themeParams: URLSearchParams) => {
+  const query = '?' + themeParams.toString().replace(/&/g, '&amp;')
+  return html.replace(siteResourceRegexp, (match) => match + query)
+}
+
 type ServeSpaOptions = {
   ignoreSitePath?: boolean,
   privateDirectoryUrl?: string,
@@ -99,7 +122,13 @@ async function createHtmlMiddleware (directory: string, baseParams: Record<strin
         html = microTemplate(html, siteExtraParams)
       }
       if (options?.privateDirectoryUrl) {
-        html = microTemplate(html, await getSiteHashes(options.privateDirectoryUrl, siteUrl))
+        const hashes = await getSiteHashes(options.privateDirectoryUrl, siteUrl)
+        const themeParams = getThemeParams(req.query ?? {})
+        if (themeParams.size) {
+          html = applyThemeParams(microTemplate(html, { ...hashes, THEME_CSS_HASH: '', PUBLIC_SITE_INFO_HASH: '' }), themeParams)
+        } else {
+          html = microTemplate(html, hashes)
+        }
       }
     }
 
