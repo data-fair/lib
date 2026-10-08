@@ -38,9 +38,10 @@ async function setupTheme () {
 // les @font-face du site et une règle @media print.
 // → pour du texte, utiliser text-primary plutôt que primary.
 //
-// Chemin absolu et sans hash : le proxy data-fair ne substitue que %APPLICATION%,
-// les placeholders {SITE_PATH} / {THEME_CSS_HASH} des services sont inaccessibles ici.
-// Sans hash, le CSS est revalidé toutes les 60 s au lieu d'être immuable.
+// Référence écrite exactement ainsi (root-relative, sans hash ni query) : le proxy
+// data-fair la réécrit vers l'URL hashée et immuable du site, ou vers l'URL non
+// hashée portant les paramètres _t_* d'une surcharge locale des couleurs. Rien à
+// coder pour ces surcharges, cf. SKILL.md « Surcharge locale des couleurs (_t_*) ».
 
 // Et dans main.ts, importer les styles globaux de la lib À LA PLACE de
 // 'vuetify/styles' — jamais les deux, sinon le CSS Vuetify est chargé en double
