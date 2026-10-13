@@ -1,0 +1,31 @@
+{
+  "name": "@data-fair/lib-dev",
+  "version": "0.1.0",
+  "description": "Dev environment tooling of the data-fair services: setup, zellij session, status, logs and restart for humans and agents.",
+  "files": [
+    "**/*.js",
+    "**/*.js.map",
+    "**/*.d.ts",
+    "mem-cap.sh",
+    "worktree.sh",
+    "worktree-delete.sh",
+    "status-pane.sh"
+  ],
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "prepublishOnly": "cd .. && npm run prepublishOnly",
+    "build": "cd .. && npm run build"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "type": "module",
+  "bin": {
+    "df-dev": "./cli.js",
+    "df-mem-cap": "./mem-cap.sh",
+    "df-worktree": "./worktree.sh",
+    "df-worktree-delete": "./worktree-delete.sh",
+    "df-status": "./status-pane.sh"
+  }
+}
