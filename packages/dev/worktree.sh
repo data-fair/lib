@@ -35,7 +35,7 @@ TARGET_DIR="../${REPO_NAME}_${BRANCH_NAME}"
 
 if [ -e "$TARGET_DIR" ]; then
     echo "Error: $TARGET_DIR already exists."
-    echo "Run ./dev/delete-worktree.sh $BRANCH_NAME first if you want to recreate it."
+    echo "Run npx --no df-worktree-delete $BRANCH_NAME first if you want to recreate it."
     exit 1
 fi
 
