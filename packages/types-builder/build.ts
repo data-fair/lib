@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync, existsSync, rmSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import path from 'node:path'
 import { pascalCase } from 'change-case'
@@ -8,6 +8,7 @@ import { program } from 'commander'
 import clone from '@data-fair/lib-utils/clone.js'
 import { fdir as Fdir } from 'fdir'
 import { makeLocalDefs } from '@data-fair/lib-utils/json-schema.js'
+import { writeIfChanged, removeUnlisted } from './write-if-changed.js'
 import { ensureDir } from '@data-fair/lib-node/fs.js'
 // import { ensureDir } from '@data-fair/lib-node/fs.js'
 
@@ -130,8 +131,13 @@ const main = async (dir: string, options: TypesBuilderOptions) => {
     // serialized compiled layouts produced by the vjsf export (keyed by locale), so the
     // compiledLayout export can reuse them instead of compiling+serializing a second time
     const builtVjsfLayoutCodes: Record<string, string> = {}
-    if (existsSync(path.join(dir, '.type'))) rmSync(path.join(dir, '.type'), { recursive: true })
-    mkdirSync(path.join(dir, '.type'))
+    // never remove .type: a watcher restarting the API mid-build would import a missing module
+    mkdirSync(path.join(dir, '.type'), { recursive: true })
+    const typeFiles = new Set<string>()
+    const writeTypeFile = (name: string, content: string) => {
+      typeFiles.add(name)
+      writeIfChanged(path.join(dir, '.type', name), content)
+    }
 
     let resolvedSchema
     if (schemaExports.includes('resolvedSchema') || schemaExports.includes('resolvedSchemaJson')) {
@@ -179,7 +185,7 @@ export declare const resolvedSchema: any
         `
       } else if (schemaExport === 'resolvedSchemaJson') {
         delete resolvedSchema['x-exports']
-        writeFileSync(path.join(dir, '.type', 'resolved-schema.json'), JSON.stringify(resolvedSchema, null, 2))
+        writeTypeFile('resolved-schema.json', JSON.stringify(resolvedSchema, null, 2))
       } else if (schemaExport === 'localDefsSchema') {
         code += `
 export const localDefsSchema = ${JSON.stringify(localDefsSchema, null, 2)}
@@ -194,7 +200,7 @@ export declare const localDefsSchema: any
         // schema explode — and resolvedSchema is undefined unless it was also exported.
         const localDefsSchemaJson = { ...localDefsSchema }
         delete localDefsSchemaJson['x-exports']
-        writeFileSync(path.join(dir, '.type', 'local-defs-schema.json'), JSON.stringify(localDefsSchemaJson, null, 2))
+        writeTypeFile('local-defs-schema.json', JSON.stringify(localDefsSchemaJson, null, 2))
       } else if (schemaExport === 'validate') {
         const Ajv = (await import('ajv')).default
         const addFormats = (await import('ajv-formats')).default
@@ -235,7 +241,7 @@ export declare const localDefsSchema: any
         }
 
         const validationImport = '@data-fair/lib-validation'
-        writeFileSync(path.join(dir, '.type', 'validate.' + (options.mjs ? 'mjs' : 'js')), '/* eslint-disable */\n// @ts-nocheck\n\n' + validateCode)
+        writeTypeFile('validate.' + (options.mjs ? 'mjs' : 'js'), '/* eslint-disable */\n// @ts-nocheck\n\n' + validateCode)
         importsCode += `
 import validate from './validate.${options.mjs ? 'mjs' : 'js'}'
 import { assertValid as assertValidGeneric } from '${validationImport}'`
@@ -314,7 +320,7 @@ export declare function returnValid(data: any, options?: import('${validationImp
             builtVjsfLayoutCodes[locale] = compiledLayoutCode
             const vjsfFilePath = path.join(vjsfDir, vjsfLocales.length > 1 ? `vjsf-${compName}-${locale}.vue` : `vjsf-${compName}.vue`)
             console.log(`  vjsf ${locale} component path : ${vjsfFilePath}`)
-            writeFileSync(vjsfFilePath, vjsfCode)
+            writeIfChanged(vjsfFilePath, vjsfCode)
           }
 
           if (vjsfLocales.length > 1) {
@@ -359,7 +365,7 @@ const emit = defineEmits(emits)
 
             const vjsfFilePath = path.join(vjsfDir, `vjsf-${compName}.vue`)
             console.log(`  vjsf global component path : ${vjsfFilePath}`)
-            writeFileSync(vjsfFilePath, globalVjsfCode)
+            writeIfChanged(vjsfFilePath, globalVjsfCode)
           }
         }
       } else if (schemaExport === 'compiledLayout') {
@@ -404,15 +410,16 @@ const emit = defineEmits(emits)
           compiledLayoutCode = compiledLayoutCode.replace('const compiledLayout =', 'export const compiledLayout =')
 
           const filePath = path.join(dir, '.type', `compiled-layout-${locale}.js`)
-          writeFileSync(filePath, '/* eslint-disable */\n// @ts-nocheck\n\n' + compiledLayoutCode)
+          writeTypeFile(`compiled-layout-${locale}.js`, '/* eslint-disable */\n// @ts-nocheck\n\n' + compiledLayoutCode)
           console.log(`  compiledLayout ${locale} path: ${filePath}`)
         }
       } else {
         throw new Error(`unsupported export ${schemaExport}`)
       }
     }
-    writeFileSync(path.join(dir, '.type', 'index.' + (options.mjs ? 'mjs' : 'js')), importsCode + '\n' + code)
-    writeFileSync(path.join(dir, '.type', 'index.d.ts'), dtsCode)
+    writeTypeFile('index.' + (options.mjs ? 'mjs' : 'js'), importsCode + '\n' + code)
+    writeTypeFile('index.d.ts', dtsCode)
+    removeUnlisted(path.join(dir, '.type'), typeFiles)
 
     const indexFilePath = path.join(dir, 'index.' + (options.mjs ? 'mjs' : 'js'))
     const tsIndexFilePath = path.join(dir, 'index.ts')
