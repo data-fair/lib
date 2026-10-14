@@ -292,10 +292,10 @@ avec `_c_` (concept) ou `_d_<datasetId>_` (champ simple), jamais en clé nue.
   - embed table (dé-préfixé) : `dep_in=75%2C92`
 - Sélection émise par une app (clic sur la barre `dep=75`) :
   `_d_accidents-velos_dep_eq=75` + `_s_accidents-velos_dep=app_<applicationId>` +
-  `_c_codeDepartement_eq=75` + `_s_codeDepartement=app_<applicationId>` — l'app
-  s'auto-exclut, une carte
-  mettrait le département en évidence, un tableau se restreindrait si le parent
-  propage en filtre.
+  `_c_codeDepartement_eq=75` + `_s_codeDepartement=app_<applicationId>` — aucune
+  app ne se restreint sur ces clés marquées : l'émettrice garde son contexte, une
+  carte mettrait le département en évidence, un tableau se restreindrait seulement
+  si le parent propage en filtre (sans marqueur).
 - Sélection posée par une page (pas une app), cf. pages communes Grand Poitiers :
   `_c_codeCommune_in=86194` + `_s_codeCommune=86194` — la carte garde tous les
   contours et met la commune en évidence.
