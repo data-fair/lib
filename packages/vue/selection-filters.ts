@@ -18,6 +18,8 @@ export interface SelectionFilter {
   datasetId?: string
   fieldKey?: string
   value: string
+  /** Marker value, the emitter (`app_<applicationId>`): tells an app whether the selection is its own. */
+  source: string
 }
 
 // Concepts that do not describe a selectable entity.
@@ -53,34 +55,35 @@ export function parseSelectionValues (raw: string): string[] {
 }
 
 /**
- * Active filters of the selection: those with a matching `_s_` marker. Only `eq` and
- * `in` are usable to highlight entities; the other operators are ignored (their
- * filtering stays unchanged).
+ * Active filters of the selection: those with a matching `_s_` marker, whatever their
+ * operator (a range shares one marker between its `_gte` and `_lte` bounds). An app
+ * renders what it can (`eq` / `in`: entities, `gte` / `lte`: a range) and ignores the rest.
  */
 export function findSelectionFilters (searchParams: Record<string, unknown>, datasetId?: string | null): SelectionFilter[] {
   const keys = Object.keys(searchParams)
-  const markers = new Set(keys.filter((k) => k.startsWith('_s_')))
+  const marker = (markerKey: string) => markerKey in searchParams ? String(searchParams[markerKey]) : undefined
   const out: SelectionFilter[] = []
   for (const key of keys) {
     if (!key.startsWith('_c_') && !key.startsWith('_d_')) continue
     const { baseKey, operator } = splitFilterKey(key)
-    if (operator !== 'eq' && operator !== 'in') continue
     if (key.startsWith('_c_')) {
       const conceptId = baseKey.slice(3)
       if (!conceptId || NON_HIGHLIGHT_CONCEPTS.has(conceptId)) continue
-      if (!markers.has(`_s_${conceptId}`)) continue
-      out.push({ filterKey: key, baseKey, operator, conceptId, value: String(searchParams[key]) })
+      const source = marker(`_s_${conceptId}`)
+      if (source === undefined) continue
+      out.push({ filterKey: key, baseKey, operator, conceptId, value: String(searchParams[key]), source })
     } else {
       if (!datasetId || !key.startsWith(`_d_${datasetId}_`)) continue
       const fieldKey = baseKey.slice(`_d_${datasetId}_`.length)
-      if (!fieldKey || !markers.has(`_s_${datasetId}_${fieldKey}`)) continue
-      out.push({ filterKey: key, baseKey, operator, datasetId, fieldKey, value: String(searchParams[key]) })
+      const source = fieldKey ? marker(`_s_${datasetId}_${fieldKey}`) : undefined
+      if (source === undefined) continue
+      out.push({ filterKey: key, baseKey, operator, datasetId, fieldKey, value: String(searchParams[key]), source })
     }
   }
   return out
 }
 
-/** Filter keys to exclude from API requests: they describe a selection. */
+/** Filter keys to exclude from API requests: they describe a selection. Already applied by `getConceptFilters`. */
 export function selectionExcludeKeys (searchParams: Record<string, unknown>, datasetId?: string | null): string[] {
   return findSelectionFilters(searchParams, datasetId).map((f) => f.filterKey)
 }
@@ -96,8 +99,9 @@ export function selectionMarkerKey (filterKey: string): string {
 }
 
 /**
- * Marker value of a selection emitted by an application: `app_<applicationId>`. Only the
- * emitting application interprets it (self-exclusion); a page can set another value.
+ * Marker value of a selection emitted by an application: `app_<applicationId>`. Every app
+ * renders a marked filter as a selection; this value only tells the emitter that the
+ * selection is its own (`SelectionFilter.source`). A page can set another value.
  */
 export function selectionMarkerValue (applicationId?: string): string | undefined {
   return applicationId ? `app_${applicationId}` : undefined

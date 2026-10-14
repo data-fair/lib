@@ -7,6 +7,7 @@ import {
   selectionMarkerKey,
   selectionMarkerValue
 } from './selection-filters.js'
+import { getConceptFilters } from './concept-filters.js'
 
 describe('parseSelectionValues', () => {
   it('reads a single value, a bare list, a quoted list and a JSON array', () => {
@@ -26,7 +27,8 @@ describe('findSelectionFilters', () => {
       baseKey: '_c_codeCommune',
       operator: 'in',
       conceptId: 'codeCommune',
-      value: '86222'
+      value: '86222',
+      source: 'page_x'
     })
   })
 
@@ -59,8 +61,9 @@ describe('findSelectionFilters', () => {
     )
   })
 
-  it('ignores an operator that cannot highlight (gte)', () => {
-    assert.deepStrictEqual(findSelectionFilters({ _c_codeCommune_gte: '86222', _s_codeCommune: 'page_x' }), [])
+  it('returns both bounds of a range sharing one marker', () => {
+    const filters = findSelectionFilters({ _d_ds1_annee_gte: '2020', _d_ds1_annee_lte: '2022', _s_ds1_annee: 'app_a' }, 'ds1')
+    assert.deepStrictEqual(filters.map((f) => f.operator), ['gte', 'lte'])
   })
 })
 
@@ -74,6 +77,22 @@ describe('selectionExcludeKeys', () => {
 
   it('keeps a concept filter with no marker', () => {
     assert.deepStrictEqual(selectionExcludeKeys({ _c_codeCommune_in: '86222', _c_q: 'poitiers' }), [])
+  })
+})
+
+describe('getConceptFilters', () => {
+  it('drops marked filters, dataset prefix removed from the others', () => {
+    assert.deepStrictEqual(
+      getConceptFilters({
+        _c_codeCommune_in: '86222',
+        _s_codeCommune: 'app_a',
+        _d_ds1__id_eq: 'l1',
+        _s_ds1__id: 'app_a',
+        _d_ds1_categorie_eq: 'A',
+        _c_q: 'poitiers'
+      }, 'ds1'),
+      { categorie_eq: 'A', _c_q: 'poitiers' }
+    )
   })
 })
 

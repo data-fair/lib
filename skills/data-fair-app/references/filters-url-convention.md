@@ -201,8 +201,9 @@ distincts** :
 - **Réception** : un filtre **marqué** n'est jamais une restriction pour l'app qui
   le reçoit ; elle rend la sélection selon son type (une carte peint les entités,
   un tableau surligne les lignes, un graphe met les barres ou segments concernés
-  en évidence) ou l'ignore si elle n'a rien à mettre en évidence. Un filtre **non
-  marqué** s'applique normalement (restriction).
+  en évidence) ou l'ignore si elle n'a rien à mettre en évidence. Vrai quel que
+  soit l'opérateur : une plage (`_gte` + `_lte`, un seul marqueur) se rend comme
+  une plage. Un filtre **non marqué** s'applique normalement (restriction).
 
 **Émission** d'une sélection = un filtre **+ un marqueur** :
 
@@ -214,27 +215,35 @@ distincts** :
 - Le marqueur est la **clé de filtre sans opérateur** (`_s_<conceptId>` /
   `_s_<ds>_<field>`), ce qui lève l'ambiguïté champ/concept.
 - **Valeur** : `app_<applicationId>` avec `applicationId = window.APPLICATION.id`.
-  Collision connue et assumée : la même app embedée 2× sur la même page pour le
-  même concept. Seule l'app émettrice interprète cette valeur (auto-exclusion) :
-  une page peut y mettre autre chose (ex. le code d'une commune), personne ne s'en
-  trouvera être l'émetteur.
-- **Lecture (auto-exclusion)** : l'app dont un marqueur porte son identité retire
-  la clé correspondante de ses propres requêtes API (contexte préservé, durable
-  après reload de l'URL). Les autres apps ne restreignent pas : elles rendent la
-  sélection (cf. ci-dessus).
+  Elle identifie l'émetteur : une app sait si la sélection qu'elle rend est la
+  sienne ou vient de l'extérieur. Elle ne change rien au filtrage. Collision
+  connue et assumée : la même app embedée 2× sur la même page pour le même
+  concept. Une page peut y mettre autre chose (ex. le code d'une commune),
+  aucune app ne s'en trouvera être l'émetteur.
+- **Lecture** : aucune app ne restreint ses requêtes API sur une clé marquée
+  (contexte préservé, durable après reload de l'URL) —
+  `getConceptFilters` / `useConceptFilters` (lib-vue) les retirent déjà.
+  `findSelectionFilters(searchParams, datasetId)`
+  (`@data-fair/lib-vue/selection-filters.js`) donne la sélection à rendre, avec
+  son émetteur (`source`).
 - **Effacement** : chip « ✕ » / « tout effacer » → retirer ses valeurs
   (read-modify-write sur l'URL), supprimer la clé si vide, supprimer le marqueur.
 - **Cas table** : sélection de ligne = `_d_<datasetId>__id_eq=<lineId>` +
   `_s_<datasetId>__id=app_table`.
 - **Coin à connaître** : si un filtre préexiste (posé par un agent, un autre
   composant) sur le même champ et que l'utilisateur clique dans l'app, la **clé
-  entière** est auto-exclue de l'app source (mais pas des autres apps).
+  entière** devient une sélection : la restriction d'origine est perdue pour
+  toutes les apps qui reçoivent le marqueur.
+- **Une marque par clé** : chaque clé émise a son marqueur. Une sélection doublée
+  `_c_` + `_d_` (miroir concept) porte deux marqueurs, sinon la clé `_d_` reste
+  une restriction.
 
 ### Propagation aux autres visus : décision du parent
 
 Un visu n'écrit jamais pour les autres : il tient son propre état. La propagation
 vers les autres visus de la même page est configurée au-dessus (page de portail,
-tableau de bord, diaporama data-story), visu par visu.
+tableau de bord, diaporama data-story), visu par visu. Le parent contrôle **en
+sortie** (ce qui remonte de l'app vers la page), pas en entrée.
 
 | Ce qu'émet le visu | Choix du parent |
 |---|---|
@@ -282,8 +291,9 @@ avec `_c_` (concept) ou `_d_<datasetId>_` (champ simple), jamais en clé nue.
   - miroir concept : `_c_codeDepartement_in=75%2C92`
   - embed table (dé-préfixé) : `dep_in=75%2C92`
 - Sélection émise par une app (clic sur la barre `dep=75`) :
-  `_d_accidents-velos_dep_eq=75` + `_c_codeDepartement_eq=75` +
-  `_s_codeDepartement=app_<applicationId>` — l'app s'auto-exclut, une carte
+  `_d_accidents-velos_dep_eq=75` + `_s_accidents-velos_dep=app_<applicationId>` +
+  `_c_codeDepartement_eq=75` + `_s_codeDepartement=app_<applicationId>` — l'app
+  s'auto-exclut, une carte
   mettrait le département en évidence, un tableau se restreindrait si le parent
   propage en filtre.
 - Sélection posée par une page (pas une app), cf. pages communes Grand Poitiers :

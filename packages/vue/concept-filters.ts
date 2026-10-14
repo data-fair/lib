@@ -1,13 +1,17 @@
 // filter reactiveSearchParams to conceptFilters (params prefixed by _c_)
 
 import { reactive, watch } from 'vue'
+import { selectionExcludeKeys } from './selection-filters.js'
 
 export function getConceptFilters (searchParams: Record<string, string>, datasetId?: string) {
   const conceptFilters: Record<string, string> = {}
 
   const datasetFiltersPrefix = datasetId && `_d_${datasetId}_`
+  // a filter marked by `_s_` is a selection, never a restriction (see selection-filters.ts)
+  const selectionKeys = new Set(selectionExcludeKeys(searchParams, datasetId))
 
   for (const key of Object.keys(searchParams)) {
+    if (selectionKeys.has(key)) continue
     if (key.startsWith('_c_')) conceptFilters[key] = searchParams[key]
     if (datasetFiltersPrefix && key.startsWith(datasetFiltersPrefix)) {
       conceptFilters[key.replace(datasetFiltersPrefix, '')] = searchParams[key]
