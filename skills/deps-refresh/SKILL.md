@@ -18,6 +18,8 @@ npm audit --omit=dev                                 # what actually ships
 npm outdated --workspaces --include-workspace-root
 docker pull ghcr.io/data-fair/<service>:<version>    # the released image
 trivy image --scanners vuln ghcr.io/data-fair/<service>:<version>
+grep -nE 'uses:|node-version' .github/workflows/*.y*ml
+grep -hE '^FROM node' Dockerfile; cat .nvmrc; grep -A1 '"engines"' package.json
 ```
 
 Trivy on the built image is not redundant with npm audit. It sees the alpine OS layer, which is usually where the criticals are, plus the npm bundled in the node base image, and it reports only what is actually shipped. npm audit sees the dev tree that never reaches production. Neither alone is a security answer.
@@ -38,6 +40,14 @@ Cheapest fix first:
 - **Phantom deps.** Something imported but never declared, resolving through a hoisted transitive copy. Declare it explicitly; it is a latent break.
 - **Small dated packages** replaceable by a node built-in or by a dependency already in the tree.
 - **`patches/`.** A `patch-package` patch often exists only because a fix was unreleased. Upgrading may let you delete the patch — check each one.
+
+### CI workflows
+
+`.github/workflows/` is a dependency manifest too, and nothing like `npm outdated` reports it. Most pins live in the reusable `reuse-quality.yml` and `reuse-build.yml`.
+
+- **Actions to their current major.** Find the latest with `gh api repos/<owner>/<action>/releases/latest --jq .tag_name` (e.g. `actions/checkout`, `actions/setup-node`, `docker/build-push-action`, `docker/metadata-action`, `docker/login-action`, `docker/setup-buildx-action`). Old majors run on a node runtime GitHub deprecates and then removes, so a workflow that is green today can stop working on a date nobody chose. Read each major's release notes for renamed or removed inputs. Keep pinning by major tag (`@v5`), as the repos do. Don't switch to SHA pinning as a side effect of this pass.
+- **Unmaintained third-party actions.** These follow the same rule as npm: replace or vendor them. `battila7/get-version-action@v2` only parses the tag, and a shell step does the same job: `echo "major=${GITHUB_REF_NAME#v}" | cut -d. -f1`, written to `$GITHUB_OUTPUT`.
+- **One node major everywhere.** The `node-version` in CI, the `FROM node:X` in the Dockerfile, `.nvmrc` and `engines.node` must name the same major. CI exists to test what ships. `backup` once ran its quality checks on node 22 while its image shipped node 24. The Dockerfile is the source of truth: align the other three to it.
 
 ## Phase 4 — Majors, only when proven behaviour-neutral
 
@@ -73,6 +83,8 @@ Boot-test the image, do not just build it. Run the deps whose loader changed (co
 docker run --rm -w /app/api <image> node --input-type=module -e 'import config from "config"; console.log(config.get("mode"))'
 ```
 
+Workflow changes are only proven on GitHub. Run `actionlint` locally if it is installed. Push the branch, which triggers `commits.yml` and so `reuse-build.yml`. Open the PR, which triggers `reuse-quality.yml`. Watch both with `gh run watch`. `releases.yml` only runs on a `v*` tag, so nothing before the next release exercises its steps. Review that diff line by line, and say in the PR that it is untested.
+
 Two traps specific to this pass:
 
 - e2e specs run against the already-running dev server, whose module graph predates your upgrade. After changing vite plugins or anything they pull in, e2e results are stale until that server has been restarted — say so, and re-run them once it has.
@@ -80,7 +92,7 @@ Two traps specific to this pass:
 
 ## Phase 6 — Report, then plan the rest
 
-Split commits so a revert is surgical: security and base image, dead-and-replaced deps, verified majors, ui separate from api.
+Split commits so a revert is surgical: security and base image, dead-and-replaced deps, verified majors, CI workflows, ui separate from api.
 
 For every major you declined, write down **the specific blocker** — "the image ships the KML driver but not LIBKML", not "needs more work". That sentence is what saves the next session from re-deriving it. Persist it to memory or a follow-up issue, and offer the deferred list as the suggested next piece of work.
 
@@ -92,4 +104,6 @@ For every major you declined, write down **the specific blocker** — "the image
 - Reporting "0 vulnerabilities" from npm audit alone, without scanning the image.
 - Deleting a dependency because grep found no import, before checking ambient `.d.ts`, `optimizeDeps` and dynamic `import()`.
 - Trusting a peer range to catch an incompatible pairing. `@data-fair/lib-vuetify` 2.4.0–2.5.0 imports `resolveTheme` from `@data-fair/lib-vue/session.js`, which only exists since lib-vue 1.29.0, yet declares `lib-vue: ^1.15.0`: `npm ci` passes, `vite build` fails with `MISSING_EXPORT`. Bump the two together (2.5.1+ declares `^1.31`), and prove a bump with a real build.
+- Bumping the Dockerfile's node major and leaving CI's `node-version` behind. The checks then pass on a runtime that is never deployed.
+- Calling a workflow edit done without a run of it. Edits to `releases.yml` ship untested until the next tag.
 - A lockfile diff far larger than your change. Note it, and say whether it is intended drift absorption or accidental churn.
