@@ -11,6 +11,7 @@ import { type Request } from 'express'
 import { hostname as getHostname } from 'os'
 import { Counter } from 'prom-client'
 import session from './session.js'
+import { reqIp } from './req-origin.js'
 import { internalError } from '@data-fair/lib-node/observer.js'
 
 export type EventLogLevel = 'info' | 'warn' | 'alert'
@@ -89,7 +90,7 @@ async function log (level: EventLogLevel, code: string, message: string, context
     code,
     message,
     hostname,
-    ip: context.ip ?? context.req?.get('X-Client-IP'),
+    ip: context.ip ?? (context.req && reqIp(context.req, { optional: true })),
     host,
     accountKey: account && (account.type + '.' + account.id),
     accountDep: account?.department,

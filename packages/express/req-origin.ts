@@ -3,6 +3,7 @@ import type { IncomingMessage } from 'node:http'
 import { isIP } from 'node:net'
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
+import { internalError } from '@data-fair/lib-node/observer.js'
 
 export const reqHost = (req: Request) => {
   const forwardedHost = req.get('x-forwarded-host')
@@ -38,15 +39,59 @@ export const reqOrigin = (req: Request) => {
   }
 }
 
+// first occurrence in the process, then at most hourly: an appending environment would otherwise
+// log an error per request and bury the cause in its own noise
+const FLAG_INTERVAL_MS = 60 * 60 * 1000
+let lastFlagged: number | undefined
+const flagAppendedForwardedFor = (value: string) => {
+  const now = Date.now()
+  if (lastFlagged !== undefined && now - lastFlagged < FLAG_INTERVAL_MS) return
+  lastFlagged = now
+  internalError('x-forwarded-for-several', `X-Forwarded-For holds several IPs ("${value}"): a layer appends to it, so its first entry can be chosen by the client. The edge proxy must overwrite it with the client address.`)
+}
+
 // read from req.headers and not req.get: this is also used on the plain IncomingMessage
 // of a websocket upgrade, where the express helpers are not available
-export const reqIp = (req: Request | IncomingMessage) => {
+//
+// Strict by default: a request is limited by its user or by this IP, and one with neither is a
+// misconfiguration. `optional` is for the places where no client IP is legitimate (audit logs, a
+// relay deciding what to forward): undefined without the header, still an error on a non-IP value.
+export function reqIp (req: Request | IncomingMessage): string
+export function reqIp (req: Request | IncomingMessage, options: { optional: true }): string | undefined
+export function reqIp (req: Request | IncomingMessage, options?: { optional?: boolean }): string | undefined {
   const forwardedFor = req.headers['x-forwarded-for']
   let ip = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor
-  if (!ip) throw new Error('The "X-Forwarded-For" header is required, please check the configuration of the reverse-proxy.')
-  ip = ip.split(',')[0].trim()
+  if (!ip) {
+    if (options?.optional) return undefined
+    throw new Error('The "X-Forwarded-For" header is required, please check the configuration of the reverse-proxy.')
+  }
+  // The edge proxy should overwrite the header with the client address (a trusted relay's value
+  // included, see data-fair docs/architecture/agent-rate-limiting.md). Several entries mean a layer
+  // appended to it, so the first one may be what the client chose: it is still the origin and is
+  // used, but the environment is flagged rather than failing every request of a live deployment.
+  if (ip.includes(',')) {
+    flagAppendedForwardedFor(ip)
+    ip = ip.split(',')[0]
+  }
+  ip = ip.trim()
   if (!isIP(ip)) throw new Error(`The "X-Forwarded-For" header should contain an IP. "${ip}" is not valid.`)
   return ip
+}
+
+/**
+ * The key a per-IP rate limiter uses for a client IP (from reqIp). An IPv6 host usually controls a
+ * whole /64 and can pick a new address in it per request, so it is limited as its /64; an
+ * IPv4-mapped IPv6 address is its IPv4.
+ */
+export function ipRateLimitKey (ip: string): string {
+  if (isIP(ip) !== 6) return ip
+  const mapped = ip.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i)
+  if (mapped) return mapped[1]
+  const [head, tail] = ip.toLowerCase().split('::')
+  const headGroups = head ? head.split(':') : []
+  const tailGroups = tail ? tail.split(':') : []
+  const groups = tail === undefined ? headGroups : [...headGroups, ...Array(8 - headGroups.length - tailGroups.length).fill('0'), ...tailGroups]
+  return groups.slice(0, 4).map(g => parseInt(g, 16).toString(16)).join(':') + '::/64'
 }
 
 export const reqIsInternal = (req: Request) => {
