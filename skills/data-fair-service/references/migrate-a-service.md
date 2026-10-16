@@ -42,7 +42,7 @@ Also require `@data-fair/lib-node` >= 2.16.1 (its events queue goes inactive by 
 }
 ```
 
-Pane titles in `panes` must equal the `name` of the panes in `.zellij.kdl`; other panes (the free shell, keep the repo's name for it if it has one) need no entry. A pane without an HTTP endpoint (worker, mock without route) gets `{}`. `${VAR}` in `ready` and `urls` resolves any `.env` variable. `optional` values must pass the service's config schema: `null` only where the schema allows it (registry types `privateEventsUrl` as `string`: use `""`). Then `git rm dev/init-env.sh` and run `./node_modules/.bin/df-dev setup` (writes `.env`, runs `setup`, build-types, builds `ui` when `ui/dist/index.html` is missing).
+Pane titles in `panes` must equal the `name` of the panes in `.zellij.kdl`; other panes (the free shell, keep the repo's name for it if it has one) need no entry. A pane without an HTTP endpoint (worker, mock without route) gets `{}`. `${VAR}` in `ready` and `url` resolves any `.env` variable. `optional` values must pass the service's config schema: `null` only where the schema allows it (registry types `privateEventsUrl` as `string`: use `""`). Then `git rm dev/init-env.sh` and run `./node_modules/.bin/df-dev setup` (writes `.env`, runs `setup`, build-types, builds `ui` when `ui/dist/index.html` is missing).
 
 ## 2. docker-compose.yml
 
@@ -78,7 +78,7 @@ layout {
       args "-c" "./node_modules/.bin/df-dev wait-deps && export NODE_CONFIG=$(./node_modules/.bin/df-dev absent-config) && cd worker && FORCE_COLOR=1 NODE_ENV=development exec ../node_modules/.bin/nodemon -e js,ts,json index.ts"
     }
   }
-  pane name="urls" size=1 borderless=true command="bash" {
+  pane name="url" size=1 borderless=true command="bash" {
     args "-c" "echo -n -e \"Dev server available at \\e[1;96mhttp://$DEV_HOST:$NGINX_PORT/catalogs/dev\\e[0m\"; exec sleep infinity"
   }
 }
