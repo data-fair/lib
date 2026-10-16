@@ -90,9 +90,9 @@ describe('status', () => {
     assert.deepEqual(procs.map(p => p.label), ['api: node --watch index.ts'])
   })
 
-  it('shows the dev URLs first, in full so the terminal can open them', () => {
-    const out = renderStatus({ urls: [{ label: 'Manager', url: 'http://feat-x.localhost:28119/portals-manager/dev' }], containers: [], panes: [], procs: [] }, false)
-    assert.equal(out.split('\n')[0], 'Manager: http://feat-x.localhost:28119/portals-manager/dev')
+  it('shows the dev URL first, in full so the terminal can open them', () => {
+    const out = renderStatus({ url: 'http://feat-x.localhost:28119/portals-manager/dev', containers: [], panes: [], procs: [] }, false)
+    assert.equal(out.split('\n')[0], 'http://feat-x.localhost:28119/portals-manager/dev')
   })
 
   it('leaves out the status pane and its ps children', () => {

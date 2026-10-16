@@ -6,7 +6,7 @@ export type PaneOptions = { ready?: string }
 export type DevConfig = {
   ports: string[]
   panes: Record<string, PaneOptions>
-  urls?: Record<string, string>
+  url?: string
   setup?: string[]
   optional?: Record<string, Record<string, unknown>>
 }
@@ -23,7 +23,7 @@ export const findRoot = (start: string): string => {
 
 export const readDevConfig = (root: string): DevConfig => {
   const raw = JSON.parse(readFileSync(path.join(root, 'dev/dev.json'), 'utf8'))
-  return { ports: raw.ports ?? [], panes: raw.panes ?? {}, urls: raw.urls ?? {}, setup: raw.setup ?? [], optional: raw.optional ?? {} }
+  return { ports: raw.ports ?? [], panes: raw.panes ?? {}, url: raw.url, setup: raw.setup ?? [], optional: raw.optional ?? {} }
 }
 
 export const interpolate = (template: string, env: Record<string, string | undefined>) =>

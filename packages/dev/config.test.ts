@@ -26,7 +26,7 @@ describe('config', () => {
 
   it('fills defaults for missing sections', () => {
     const root = makeRepo({ ports: ['NGINX_PORT'] })
-    assert.deepEqual(readDevConfig(root), { ports: ['NGINX_PORT'], panes: {}, urls: {}, setup: [], optional: {} })
+    assert.deepEqual(readDevConfig(root), { ports: ['NGINX_PORT'], panes: {}, url: undefined, setup: [], optional: {} })
   })
 
   it('interpolates variables', () => {

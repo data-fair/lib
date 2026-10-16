@@ -8,7 +8,7 @@ import { checkReady } from './panes.js'
 export type Container = { service: string, state: string, health: string, memory?: string, exitCode?: number }
 export type Proc = { label: string, rssKb: number }
 export type PaneState = { title: string, exited: boolean, exit_status: number | null, ready?: boolean, readyUrl?: string }
-export type StatusData = { urls?: { label: string, url: string }[], containers: Container[], containersError?: string, panes: PaneState[], panesError?: string, procs: Proc[] }
+export type StatusData = { url?: string, containers: Container[], containersError?: string, panes: PaneState[], panesError?: string, procs: Proc[] }
 
 const COLORS = { green: '32', yellow: '33', red: '31', dim: '2' } as const
 
@@ -25,8 +25,7 @@ const human = (kb: number) => kb >= 1048576 ? `${(kb / 1048576).toFixed(1)}G` : 
 
 export const renderStatus = (data: StatusData, color: boolean) => {
   const paint = (c: keyof typeof COLORS, s: string) => color ? `\x1b[${COLORS[c]}m${s}\x1b[0m` : s
-  const lines = (data.urls ?? []).map(u => `${u.label}: ${u.url}`)
-  if (lines.length) lines.push('')
+  const lines = data.url ? [data.url, ''] : []
   lines.push(...data.containersError
     ? [paint('red', `containers unavailable: ${data.containersError}`)]
     : data.containers.map(c => {
@@ -98,8 +97,9 @@ export const collectStatus = (root: string, exec: Exec = realExec): StatusData =
   const data: StatusData = { containers: [], panes: [], procs: [] }
   try {
     const env = readEnvFile(root)
-    data.urls = Object.entries(readDevConfig(root).urls ?? {}).map(([label, url]) => ({ label, url: interpolate(url, env) }))
-  } catch {} // URLs are a convenience, the rest of the status must still show
+    const url = readDevConfig(root).url
+    if (url) data.url = interpolate(url, env)
+  } catch {} // the URL is a convenience, the rest of the status must still show
   try {
     data.containers = collectContainers(root, exec)
   } catch (err: any) {

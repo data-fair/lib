@@ -10,14 +10,14 @@ Dev environment of a data-fair service, for humans and agents. Needs zellij >= 0
 {
   "ports": ["NGINX_PORT", "DEV_API_PORT", "DEV_UI_PORT", "MONGO_PORT"],
   "panes": { "api": { "ready": "http://localhost:${DEV_API_PORT}/api/ping" } },
-  "urls": { "Manager": "http://${DEV_HOST}:${NGINX_PORT}/portals-manager/dev" },
+  "url": "http://${DEV_HOST}:${NGINX_PORT}/portals-manager/dev",
   "optional": { "events": { "privateEventsUrl": "" } }
 }
 ```
 
 - `ports`: names of the port variables written to `.env`, each a free port drawn in 20000-29999, so worktrees never collide. `.env` also gets `DEV_HOST` (`<branch>.localhost`) and `SSRF_PUBLIC_IPS`; `init-env --force` draws them again and keeps the variables added by hand.
 - `panes`: zellij pane titles; `ready` is polled by `restart`.
-- `urls`: the page to open, the UI's `/dev` page when it has one (its dev navigation bar), printed by `df-dev status` so an agent knows where to point a browser (the footer pane of the layout prints them with a plain `echo`, no node process).
+- `url`: the page to open, the UI's `/dev` page when it has one (its dev navigation bar), printed by `df-dev status` so an agent knows where to point a browser (the footer pane of the layout prints it with a plain `echo`, no node process).
 - `setup`: repo-specific commands `df-dev setup` runs before build-types (e.g. `npm -w parquet-writer run build`).
 - `optional`: one key per optional compose service (a service with a profile), its value the config overrides to apply **while that service does not run**, e.g. `{ "events": { "privateEventsUrl": "" }, "clamav": { "clamav": { "active": false } } }`: without events the API does not call it. Values must pass the config schema. `df-dev absent-config` merges the overrides of every stopped service; the api pane does `export NODE_CONFIG=$(df-dev absent-config)` (node-config merges it over the config files, no local file to write).
 - No key for the UI: `setup` builds the `ui` workspace when `ui/dist/index.html` is missing (the API's serve-spa reads it at startup, and the build generates the auto-import declarations `check-types` needs).

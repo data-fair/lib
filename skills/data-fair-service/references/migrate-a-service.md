@@ -33,7 +33,7 @@ Also require `@data-fair/lib-node` >= 2.16.1 (its events queue goes inactive by 
     "ui": { "ready": "http://localhost:${DEV_UI_PORT}/data-fair/" },
     "mock": { "ready": "http://localhost:${MOCK_PORT}/" }
   },
-  "urls": { "Data Fair": "http://${DEV_HOST}:${NGINX_PORT}/data-fair/" },
+  "url": "http://${DEV_HOST}:${NGINX_PORT}/data-fair/",
   "optional": {
     "events": { "privateEventsUrl": null },
     "clamav": { "clamav": { "active": false } }
