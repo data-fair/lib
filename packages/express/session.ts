@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Account, SessionState, SessionStateAuthenticated, User } from '@data-fair/lib-common-types/session/index.js'
 import type { Request, Response, RequestHandler } from 'express'
 import cookie from 'cookie'
-import { assertAdminMode, assertAuthenticated } from '@data-fair/lib-common-types/session/index.js'
+import { assertAdminMode, assertAuthenticated, assertScope } from '@data-fair/lib-common-types/session/index.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { reqSitePathSafe, reqIp } from '@data-fair/lib-express'
 import { SessionHandler } from '@data-fair/lib-node/session.js'
@@ -18,11 +18,16 @@ const sessionMiddlewareKey = Symbol('session-middleware')
 
 export class Session extends SessionHandler {
   private onlyDecode?: (req: Request | IncomingMessage) => boolean
+  // a service declares itself scope-aware once it enforces scopes on its routes; until then a
+  // scope-restricted session (an NHI or OAuth access token with a scope claim) is refused with
+  // a 403 instead of acting with the full role of its identity
+  public scopeAware = false
 
-  init (directoryUrl = 'http://simple-directory:8080', defaultLang?: string, onlyDecode?: (req: Request | IncomingMessage) => boolean) {
+  init (directoryUrl = 'http://simple-directory:8080', defaultLang?: string, onlyDecode?: (req: Request | IncomingMessage) => boolean, options: { scopeAware?: boolean } = {}) {
     this.initJWKS(directoryUrl)
     if (defaultLang) this.defaultLang = defaultLang
     this.onlyDecode = onlyDecode
+    this.scopeAware = !!options.scopeAware
   }
 
   async req (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
@@ -32,6 +37,9 @@ export class Session extends SessionHandler {
     // and a previous ajv validation proved useless (its result was ignored and it could never pass
     // anyway because the schema does not accept the exp/iat claims present in the payload)
     const sessionState = await this.readState(req, res)
+    if (sessionState.scopes && !this.scopeAware) {
+      throw httpError(403, 'this service does not accept scope-restricted sessions')
+    }
     if (sessionState.user?.boundIp) {
       // hard IP binding: simple-directory stamps boundIp in the token of sensitive sessions
       // (superadmins), a stolen token must not be usable from another address.
@@ -73,6 +81,12 @@ export class Session extends SessionHandler {
   }
 
   async readState (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
+    // a bearer access token wins over cookies: cookies of a browser session must never be mixed
+    // with the account binding of an access token
+    const authorization = req.headers.authorization
+    if (authorization?.startsWith('Bearer ')) {
+      return this.readStateFromBearer(authorization.slice(7).trim())
+    }
     // reuse req.cookies if a cookie-parser middleware already populated it, to avoid re-parsing the Cookie header
     // @ts-ignore - cookies is set by cookie-parser, absent on plain IncomingMessage
     const cookies = req.cookies ?? req.headers.cookie
@@ -131,6 +145,13 @@ export function reqAdminMode (req: Request | IncomingMessage): SessionStateAuthe
   assertAuthenticated(sessionState)
   assertAdminMode(sessionState)
   return sessionState
+}
+// guard a route with the scopes it accepts (any one of them); unrestricted sessions pass
+export function requireScope (accepted: string | string[]): RequestHandler {
+  return (req, _res, next) => {
+    assertScope(reqSession(req), accepted)
+    next()
+  }
 }
 export function reqUser (req: Request | IncomingMessage): User | undefined { return reqSession(req).user }
 export function reqUserAuthenticated (req: Request | IncomingMessage): User { return reqSessionAuthenticated(req).user }

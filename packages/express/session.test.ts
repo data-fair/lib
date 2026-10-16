@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
-import { Session, reqSession, reqSessionAuthenticated, reqAdminMode, setReqUser, setReqSession } from './session.js'
+import { Session, requireScope, reqSession, reqSessionAuthenticated, reqAdminMode, setReqUser, setReqSession } from './session.js'
 import type { Request, Response } from 'express'
 import type { SessionState, User } from '@data-fair/lib-common-types/session/index.js'
 
@@ -305,5 +305,57 @@ describe('sync accessors', () => {
   it('reqAdminMode should throw if middleware was not applied', () => {
     const req = mockReq()
     assert.throws(() => reqAdminMode(req), /session middleware was not applied/)
+  })
+})
+
+describe('Session bearer and scopes', () => {
+  const scopedState = (): SessionState => ({
+    lang: 'fr',
+    user: { ...testUser, scope: 'datasets:read' },
+    account: { type: 'organization', id: 'org1', name: 'Test Org' },
+    accountRole: 'admin',
+    scopes: ['datasets:read']
+  })
+
+  it('reads the bearer token and ignores cookies when both are present', async () => {
+    const session = new Session()
+    let bearerToken: string | undefined
+    session.readStateFromBearer = async (token: string) => { bearerToken = token; return scopedState() }
+    session.readStateFromCookie = async () => { throw new Error('cookies must not be read') }
+    session.scopeAware = true
+    const state = await session.req(mockReq('GET', { authorization: 'Bearer abc.def.ghi', cookie: 'id_token=x; id_token_sign=y' }))
+    assert.equal(bearerToken, 'abc.def.ghi')
+    assert.deepEqual(state.scopes, ['datasets:read'])
+  })
+
+  it('refuses a scope-restricted session in a service that is not scope-aware', async () => {
+    const session = new Session()
+    session.readState = async () => scopedState()
+    await assert.rejects(session.req(mockReq()), (err: any) => err.status === 403)
+  })
+
+  it('accepts unrestricted sessions in a service that is not scope-aware', async () => {
+    const session = new Session()
+    session.readState = async () => ({ lang: 'fr', user: testUser, account: { type: 'user', id: testUser.id, name: testUser.name }, accountRole: 'admin' })
+    const state = await session.req(mockReq())
+    assert.equal(state.user?.id, testUser.id)
+  })
+
+  it('init sets scopeAware', () => {
+    const session = new Session()
+    session.init('http://localhost:1234', 'fr', undefined, { scopeAware: true })
+    assert.equal(session.scopeAware, true)
+  })
+
+  it('requireScope lets covered sessions through and throws 403 otherwise', async () => {
+    const session = new Session()
+    session.scopeAware = true
+    session.readState = async () => scopedState()
+    const req = mockReq()
+    await new Promise<void>((resolve, reject) => session.middleware()(req, mockRes(), (err?: any) => err ? reject(err) : resolve()))
+    let called = false
+    requireScope(['datasets:read', 'datasets'])(req, mockRes(), () => { called = true })
+    assert.ok(called)
+    assert.throws(() => requireScope('datasets:write')(req, mockRes(), () => {}), (err: any) => err.status === 403)
   })
 })
