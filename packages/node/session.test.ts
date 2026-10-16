@@ -263,7 +263,7 @@ describe('SessionHandler.readStateFromBearer', () => {
     const handler = realHandler(false)
     assert.equal(handler.scopeAware, false)
     await assert.rejects(handler.readStateFromBearer(bearer(nhiUser)), (err: any) => err.status === 403)
-    const cookies = toCookies(signScoped({ ...testUser, scope: 'datasets' }))
+    const cookies = toCookies(signScoped({ ...testUser, organizations: [testUser.organizations[0]], scope: 'datasets' }))
     await assert.rejects(handler.readStateFromCookie(cookies), (err: any) => err.status === 403)
     handler.scopeAware = true
     assert.deepEqual((await handler.readStateFromCookie(cookies)).scopes, ['datasets'])
@@ -286,7 +286,7 @@ describe('SessionHandler.readStateFromBearer', () => {
   })
 
   it('fills scopes from a cookie session too', async () => {
-    const state = await realHandler().readStateFromCookie(toCookies(signScoped({ ...testUser, scope: 'datasets' })))
+    const state = await realHandler().readStateFromCookie(toCookies(signScoped({ ...testUser, organizations: [testUser.organizations[0]], scope: 'datasets' })))
     assert.deepEqual(state.scopes, ['datasets'])
   })
 })
@@ -320,7 +320,7 @@ describe('key sets and token kinds', () => {
     await rejects401(handler.readStateFromCookie(toCookies(signScoped(nhiUser, { typ: 'at+jwt' }))))
     await rejects401(handler.readStateFromCookie(toCookies(signSession({ ...testUser, scope: 'datasets' }))))
     await rejects401(handler.readStateFromCookie(toCookies(signScoped(testUser))))
-    assert.deepEqual((await handler.readStateFromCookie(toCookies(signScoped({ ...testUser, scope: 'datasets' })))).scopes, ['datasets'])
+    assert.deepEqual((await handler.readStateFromCookie(toCookies(signScoped({ ...testUser, organizations: [testUser.organizations[0]], scope: 'datasets' })))).scopes, ['datasets'])
     assert.equal((await handler.readStateFromCookie(toCookies(signSession(testUser)))).scopes, undefined)
   })
 
@@ -371,7 +371,7 @@ describe('verification errors', () => {
       const handler = stubbed(err)
       let cleared = false
       await assert.rejects(
-        handler.readStateFromCookie(toCookies(signScoped({ ...testUser, scope: 'datasets' })), false, () => { cleared = true }),
+        handler.readStateFromCookie(toCookies(signScoped({ ...testUser, organizations: [testUser.organizations[0]], scope: 'datasets' })), false, () => { cleared = true }),
         (e: any) => e.status === 500
       )
       assert.equal(cleared, false)
@@ -383,7 +383,7 @@ describe('verification errors', () => {
     const handler = stubbed(named('SigningKeyNotFoundError'))
     let cleared = false
     await assert.rejects(
-      handler.readStateFromCookie(toCookies(signScoped({ ...testUser, scope: 'datasets' })), false, () => { cleared = true }),
+      handler.readStateFromCookie(toCookies(signScoped({ ...testUser, organizations: [testUser.organizations[0]], scope: 'datasets' })), false, () => { cleared = true }),
       (e: any) => e.status === 401
     )
     assert.equal(cleared, true)
@@ -398,5 +398,43 @@ describe('verification errors', () => {
     await handler.verifyTokenKeySet(signSession({ id: 'u' }))
     await handler.verifyTokenKeySet(signScoped({ id: 'u' }))
     assert.deepEqual(calls, ['session:sd-1', 'scoped:scoped-sd-1'])
+  })
+})
+
+describe('malformed tokens, typ normalization, one organization per scoped cookie token', () => {
+  const b64 = (o: any) => Buffer.from(typeof o === 'string' ? o : JSON.stringify(o)).toString('base64url')
+  const malformed = (typ: string, kid: string) => b64({ alg: 'RS256', typ, kid }) + '.' + b64('{not json') + '.sig'
+  const oneOrg = [testUser.organizations[0]]
+
+  it('a token whose payload is not JSON is a 401 and clears the cookies', async () => {
+    for (const onlyDecode of [false, true]) {
+      const handler = realHandler()
+      let cleared = false
+      await rejects401(handler.readStateFromCookie(toCookies(malformed('JWT', 'sd-1')), onlyDecode, () => { cleared = true }))
+      assert.equal(cleared, true)
+    }
+  })
+
+  it('a bearer whose payload is not JSON is a 401', async () => {
+    const handler = realHandler()
+    await rejects401(handler.readStateFromBearer(malformed('JWT', 'sd-1')))
+    await rejects401(handler.readStateFromBearer(malformed('at+jwt', 'scoped-sd-1')))
+  })
+
+  it('a scoped cookie token carrying more than one organization is a 401', async () => {
+    const handler = realHandler()
+    await rejects401(handler.readStateFromCookie(toCookies(signScoped({ ...testUser, scope: 'datasets' }))))
+    await rejects401(handler.readStateFromCookie(toCookies(signScoped({ ...testUser, scope: 'datasets' })), true))
+    assert.equal((await handler.readStateFromCookie(toCookies(signScoped({ ...testUser, organizations: oneOrg, scope: 'datasets' })))).organization, undefined)
+  })
+
+  it('typ at+jwt is compared case-insensitively with an optional application/ prefix', async () => {
+    const handler = realHandler()
+    const nhi = { ...testUser, organizations: oneOrg, scope: 'datasets:read' }
+    for (const typ of ['AT+JWT', 'application/at+jwt', 'Application/AT+JWT']) {
+      assert.equal((await handler.readStateFromBearer(signScoped(nhi, { typ }))).user?.id, 'user1')
+      await rejects401(handler.readStateFromCookie(toCookies(signScoped(nhi, { typ }))))
+      await rejects401(handler.readStateFromCookie(toCookies(signScoped(nhi, { typ })), true))
+    }
   })
 })

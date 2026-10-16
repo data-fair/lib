@@ -20,6 +20,17 @@ const isTokenFailure = (err: any) =>
   err?.status === 401 || tokenFailureNames.has(err?.name) ||
   err?.message === 'failed to decode token' || err?.message === 'not a session token'
 
+// jwt.decode throws a raw SyntaxError on a payload that is not JSON: that is a malformed token,
+// not an infrastructure failure
+const decodeToken = (token: string) => {
+  let decoded
+  try { decoded = jwt.decode(token, { complete: true }) } catch { throw new Error('failed to decode token') }
+  if (!decoded) throw new Error('failed to decode token')
+  return decoded
+}
+// RFC 7515 4.1.9: the media type comparison is case-insensitive and the application/ prefix is optional
+const isAccessTokenTyp = (typ?: string) => typeof typ === 'string' && typ.toLowerCase().replace(/^application\//, '') === 'at+jwt'
+
 type TokenSessionState = Omit<SessionState, 'lang' | 'dark'>
 
 export class SessionHandler {
@@ -68,8 +79,7 @@ export class SessionHandler {
   // verifies against the key set designated by the kid: a token claiming a scoped kid must be
   // signed by a key of the scoped set, any other must be signed by a key of the session set
   async verifyTokenKeySet (token: string): Promise<{ payload: any, header: JwtHeader, keySet: KeySet }> {
-    const decoded = jwt.decode(token, { complete: true })
-    if (!decoded) throw new Error('failed to decode token')
+    const decoded = decodeToken(token)
     const keySet = keySetOfKid(decoded.header.kid)
     const signingKeyObject = await this.getSigningKeyObject(keySet, decoded.header.kid)
     const payload = jwt.verify(token, signingKeyObject, { algorithms: ['RS256'] })
@@ -86,13 +96,14 @@ export class SessionHandler {
 
   private assertTokenKind (path: 'bearer' | 'cookie', header: JwtHeader, payload: any, keySet: KeySet) {
     if (path === 'bearer') {
-      if (header.typ !== 'at+jwt') throw httpError(401, 'bearer token is not an access token')
+      if (!isAccessTokenTyp(header.typ)) throw httpError(401, 'bearer token is not an access token')
       if (keySet !== 'scoped') throw httpError(401, 'access token must be signed by the scoped key set')
     } else {
-      if (header.typ === 'at+jwt') throw httpError(401, 'an access token is not a session token')
+      if (isAccessTokenTyp(header.typ)) throw httpError(401, 'an access token is not a session token')
       const hasScope = payload && typeof payload === 'object' && 'scope' in payload
       if (keySet === 'session' && hasScope) throw httpError(401, 'session key set token must not carry a scope')
       if (keySet === 'scoped' && !hasScope) throw httpError(401, 'scoped key set token must carry a scope')
+      if (keySet === 'scoped' && payload?.organizations?.length > 1) throw httpError(401, 'scoped token must be bound to at most one organization')
     }
     if (keySet === 'scoped') {
       if (payload && ('adminMode' in payload || 'asAdmin' in payload || 'isAdmin' in payload)) throw httpError(401, 'scoped token cannot carry superadmin claims')
@@ -182,9 +193,14 @@ export class SessionHandler {
 
     let user: User
     if (onlyDecode) {
-      const decoded = jwt.decode(token, { complete: true })
-      if (!decoded) return { lang, dark }
-      this.assertTokenKind('cookie', decoded.header, decoded.payload, keySetOfKid(decoded.header.kid))
+      let decoded
+      try {
+        decoded = decodeToken(token)
+        this.assertTokenKind('cookie', decoded.header, decoded.payload, keySetOfKid(decoded.header.kid))
+      } catch (err: any) {
+        if (clearBrokenSession) clearBrokenSession()
+        throw err.status === 401 ? err : httpError(401)
+      }
       user = decoded.payload as User
     } else {
       try {
@@ -218,8 +234,9 @@ export class SessionHandler {
   // raw reader, applies neither the route scope guard nor the session cache: not for authorization,
   // use session.req() / reqSession(). It only refuses scoped states when the handler is not scope-aware.
   async readStateFromBearer (token: string, lang?: string): Promise<SessionState> {
-    const decoded = jwt.decode(token, { complete: true })
-    if (!decoded || decoded.header.typ !== 'at+jwt') throw httpError(401, 'bearer token is not an access token')
+    let decoded
+    try { decoded = decodeToken(token) } catch { throw httpError(401, 'bearer token is not an access token') }
+    if (!isAccessTokenTyp(decoded.header.typ)) throw httpError(401, 'bearer token is not an access token')
     let user: User
     try {
       const verified = await this.verifyTokenKeySet(token)
