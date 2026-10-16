@@ -203,6 +203,7 @@ describe('SessionHandler.readStateFromBearer', () => {
   // verification is stubbed: these tests are about what is accepted, not about signatures
   const decodingHandler = () => {
     const handler = new SessionHandler()
+    handler.scopeAware = true
     handler.verifyToken = async (token: string) => jwt.decode(token)
     return handler
   }
@@ -217,10 +218,55 @@ describe('SessionHandler.readStateFromBearer', () => {
     assert.deepEqual(state.scopes, ['datasets:read', 'organizations:read'])
   })
 
-  it('falls back to the personal account when the token carries several organizations', async () => {
-    const state = await decodingHandler().readStateFromBearer(sign(testUser, 'at+jwt'))
+  it('refuses (401) a token bound to several organizations', async () => {
+    await assert.rejects(decodingHandler().readStateFromBearer(sign(testUser, 'at+jwt')), (err: any) => err.status === 401)
+  })
+
+  it('gives a personal account session to a token with no organization membership', async () => {
+    const state = await decodingHandler().readStateFromBearer(sign({ ...testUser, organizations: [] }, 'at+jwt'))
     assert.equal(state.account?.type, 'user')
-    assert.equal(state.scopes, undefined)
+    assert.equal(state.account?.id, 'user1')
+    assert.equal(state.accountRole, 'admin')
+  })
+
+  it('refuses a token without an organizations key', async () => {
+    const { organizations, ...noOrgs } = testUser
+    await assert.rejects(decodingHandler().readStateFromBearer(sign(noOrgs, 'at+jwt')), (err: any) => err.status === 401)
+  })
+
+  it('refuses (401) an invalid scope claim on the bearer and cookie paths', async () => {
+    for (const scope of [null, 12, ['a']]) {
+      await assert.rejects(decodingHandler().readStateFromBearer(sign({ ...nhiUser, scope }, 'at+jwt')), (err: any) => err.status === 401)
+      const handler = new SessionHandler()
+      handler.scopeAware = true
+      handler.verifyToken = async () => structuredClone({ ...testUser, scope })
+      await assert.rejects(handler.readStateFromCookie('id_token=a.b; id_token_sign=c'), (err: any) => err.status === 401)
+    }
+  })
+
+  it('refuses a scoped session unless the handler is scope-aware', async () => {
+    const handler = new SessionHandler()
+    assert.equal(handler.scopeAware, false)
+    handler.verifyToken = async (token: string) => jwt.decode(token)
+    await assert.rejects(handler.readStateFromBearer(sign(nhiUser, 'at+jwt')), (err: any) => err.status === 403)
+    handler.verifyToken = async () => structuredClone({ ...testUser, scope: 'datasets' })
+    await assert.rejects(handler.readStateFromCookie('id_token=a.b; id_token_sign=c'), (err: any) => err.status === 403)
+    handler.scopeAware = true
+    assert.deepEqual((await handler.readStateFromCookie('id_token=a.b; id_token_sign=c')).scopes, ['datasets'])
+    handler.verifyToken = async (token: string) => jwt.decode(token)
+    assert.deepEqual((await handler.readStateFromBearer(sign(nhiUser, 'at+jwt'))).scopes, ['datasets:read', 'organizations:read'])
+  })
+
+  it('refuses an expired token or one signed by another key when really verifying', async () => {
+    const { privateKey: goodKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
+    const { privateKey: otherKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
+    const handler = new SessionHandler()
+    handler.verifyToken = async (token: string) => jwt.verify(token, publicKey)
+    const mk = (key: any, opts: any) => jwt.sign({ ...nhiUser }, key, { algorithm: 'RS256', header: { alg: 'RS256', typ: 'at+jwt' }, ...opts })
+    handler.scopeAware = true
+    assert.equal((await handler.readStateFromBearer(mk(goodKey, { expiresIn: '5m' }))).user?.id, 'user1')
+    await assert.rejects(handler.readStateFromBearer(mk(goodKey, { expiresIn: -10 })), (err: any) => err.status === 401)
+    await assert.rejects(handler.readStateFromBearer(mk(otherKey, { expiresIn: '5m' })), (err: any) => err.status === 401)
   })
 
   it('refuses a session token or an exchange token presented as bearer', async () => {
@@ -232,6 +278,7 @@ describe('SessionHandler.readStateFromBearer', () => {
 
   it('fills scopes from a cookie session too', async () => {
     const handler = new SessionHandler()
+    handler.scopeAware = true
     handler.verifyToken = async () => structuredClone({ ...testUser, scope: 'datasets' })
     const state = await handler.readStateFromCookie('id_token=a.b; id_token_sign=c')
     assert.deepEqual(state.scopes, ['datasets'])

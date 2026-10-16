@@ -11,6 +11,10 @@ type TokenSessionState = Omit<SessionState, 'lang' | 'dark'>
 export class SessionHandler {
   private _jwksClient: JwksClient.JwksClient | undefined
   public defaultLang: string = 'fr'
+  // a service declares itself scope-aware once it enforces scopes on its routes; until then a
+  // scope-restricted session (an NHI or OAuth access token with a scope claim) is refused with
+  // a 403 instead of acting with the full role of its identity
+  public scopeAware = false
 
   get jwksClient () {
     if (!this._jwksClient) throw new Error('session management was not initialized')
@@ -63,7 +67,12 @@ export class SessionHandler {
     }
 
     state.user = user
-    if (user.scope !== undefined) state.scopes = parseScope(user.scope)
+    // absent claim = unrestricted first party session; anything but a string is malformed
+    // (null must not silently become unrestricted)
+    if (user.scope !== undefined) {
+      if (typeof user.scope !== 'string') throw httpError(401, 'invalid scope claim')
+      state.scopes = parseScope(user.scope)
+    }
 
     if (organizationId) {
       state.organization = user.organizations.find(o => {
@@ -103,6 +112,10 @@ export class SessionHandler {
     return state
   }
 
+  private assertScopeAware (state: SessionState) {
+    if (state.scopes && !this.scopeAware) throw httpError(403, 'this service does not accept scope-restricted sessions')
+  }
+
   // accepts either the raw Cookie header or an already-parsed cookies object
   // (e.g. req.cookies when a cookie-parser middleware already ran upstream) to
   // avoid re-parsing and allocating a second cookies object per request
@@ -139,14 +152,18 @@ export class SessionHandler {
       }
     }
     if (!user) return { lang, dark }
-    return Object.assign({ lang, dark } as SessionState, this.buildTokenSessionState(user, organizationId, departmentId, switchedRole))
+    const state = Object.assign({ lang, dark } as SessionState, this.buildTokenSessionState(user, organizationId, departmentId, switchedRole))
+    this.assertScopeAware(state)
+    return state
   }
 
   // Only tokens minted as access tokens (RFC 9068 header typ at+jwt) are bearer credentials.
   // Session cookie tokens and the long lived exchange token are signed by the same keys and
   // must never be usable this way (cf simple-directory docs/architecture/session-theft-protections.md).
   // An access token is bound to one account: its organizations array holds the one membership it
-  // acts in, or nothing for the personal account.
+  // acts in (1 = that organization), or nothing for the personal account (0 memberships). More than
+  // one is refused because the full array stays in user.organizations and consumers filter on it.
+  // A missing organizations key is not an access token either.
   async readStateFromBearer (token: string, lang?: string): Promise<SessionState> {
     const decoded = jwt.decode(token, { complete: true })
     if (!decoded || decoded.header.typ !== 'at+jwt') throw httpError(401, 'bearer token is not an access token')
@@ -158,7 +175,10 @@ export class SessionHandler {
       throw httpError(401)
     }
     if (!user?.organizations) throw httpError(401, 'bearer token is not an access token')
-    const org = user.organizations.length === 1 ? user.organizations[0] : undefined
-    return Object.assign({ lang: lang ?? this.defaultLang } as SessionState, this.buildTokenSessionState(user, org?.id ?? '', org?.department ?? '', ''))
+    if (user.organizations.length > 1) throw httpError(401, 'access token must be bound to at most one organization')
+    const org = user.organizations[0]
+    const state = Object.assign({ lang: lang ?? this.defaultLang } as SessionState, this.buildTokenSessionState(user, org?.id ?? '', org?.department ?? '', ''))
+    this.assertScopeAware(state)
+    return state
   }
 }

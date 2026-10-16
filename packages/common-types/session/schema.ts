@@ -23,7 +23,7 @@ export default {
     },
     scopes: {
       type: 'array',
-      title: 'scopes this session is restricted to, parsed from the token scope claim; absent for an unrestricted first party session',
+      description: 'scopes this session is restricted to, parsed from the token scope claim; absent for an unrestricted first party session',
       items: { type: 'string' }
     },
     lang: {
@@ -155,7 +155,7 @@ export default {
         },
         scope: {
           type: 'string',
-          title: 'space-delimited scopes the token is restricted to (RFC 9068 scope claim); absent for an unrestricted first party session'
+          description: 'space-delimited scopes the token is restricted to (RFC 9068 scope claim); absent for an unrestricted first party session'
         },
         rememberMe: {
           type: 'integer',
