@@ -55,7 +55,7 @@ The runtime `.js` and `.d.ts` files are build output and are **gitignored** (`*.
 ```jsonc
 "build":          "npm run build-types && npm run build-tsc && npm run build-vue-tsc"
 "build-types":    "tsc -p tsconfig.build-schemas.json && node --experimental-strip-types packages/types-builder/build.ts"
-"build-tsc":      "rm -f packages/*/*.d.ts && tsc -p tsconfig.build.json"
+"build-tsc":      "node --experimental-strip-types scripts/clean-orphans.mts && rm -f packages/*/*.d.ts && tsc -p tsconfig.build.json"
 "build-vue-tsc":  "vue-tsc -p tsconfig.build-vue.json"
 ```
 
@@ -66,7 +66,8 @@ The runtime `.js` and `.d.ts` files are build output and are **gitignored** (`*.
   (`@data-fair/lib-utils/clone.js`, `@data-fair/lib-node/fs.js`…) because the published
   `df-build-types` bin does too: when you add such an import to
   `packages/types-builder/build.ts`, add its source to `tsconfig.build-schemas.json`.
-- **`build-tsc`** — removes stale `.d.ts`, then compiles all packages
+- **`build-tsc`** — removes the build outputs whose source was deleted (`scripts/clean-orphans.mts`,
+  or `npm publish` would ship them) and stale `.d.ts`, then compiles all packages
   (`tsconfig.build.json`, extends `tsconfig.json`, `target: esnext`, `module: nodenext`,
   `strict`, with source maps) to `.js` + `.d.ts`.
 - **`build-vue-tsc`** — type-checks/compiles the `vuetify` package with `vue-tsc`
