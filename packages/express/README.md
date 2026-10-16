@@ -54,11 +54,18 @@ Permissions, account roles, admin mode and the Vue side are covered by the [`dat
 
 - `Authorization: Bearer <token>` is read before cookies. Only tokens whose JWT header has
   `typ: at+jwt` are accepted; any other token is a 401.
-- A token with a `scope` claim produces `sessionState.scopes`. A service that enforces scopes
-  calls `session.init(directoryUrl, lang, onlyDecode, { scopeAware: true })`; otherwise every
-  scope-restricted session gets a 403.
-- `requireScope(['datasets:read', 'datasets'])` guards a route; `hasScope` / `assertScope`
-  do the same in code. A session without scopes is unrestricted.
+- A token with a `scope` claim produces `sessionState.scopes` (a non-string claim is a 401). A service
+  that enforces scopes calls `session.init(directoryUrl, lang, onlyDecode, { scopeAware: true })`;
+  otherwise every scope-restricted session gets a 403. `scopeAware` is also honoured by lib-node's
+  `SessionHandler` (`readStateFromCookie` / `readStateFromBearer`), so consumers that use it directly
+  are closed by default too.
+- An access token carries at most one organization membership (none = personal account); a token
+  with several is refused with a 401.
+- `requireScope('datasets:read')` guards a route (it needs `session.middleware()` to have run on the
+  request); `hasScope` / `assertScope` do the same in code. A session without scopes is unrestricted.
+  A granted umbrella such as `datasets` already covers `datasets:read`, so it need not be listed.
+  "Write implies read" is expressed by listing the accepted scopes, e.g.
+  `requireScope(['datasets:read', 'datasets:write'])` (any one of them is enough).
 
 ## Websockets and identities
 
