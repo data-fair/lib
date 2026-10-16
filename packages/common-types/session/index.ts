@@ -64,3 +64,34 @@ export function isValidAccountType (type: string): type is 'user' | 'organizatio
 export function assertValidAccountType (type: string): asserts type is 'user' | 'organization' {
   if (!isValidAccountType(type)) throw httpError(400, 'invalid account type')
 }
+
+// Scope names are `resource:class` (datasets:read) and a bare resource name (datasets) is an
+// umbrella covering every scope of that resource. Matching is exact membership after umbrella
+// expansion, never by prefix: datasets:read is a prefix of datasets:readAdvanced.
+// "write implies read" is not decided here: an enforcing service lists every scope it accepts.
+export const scopeRegexp = /^[a-z][a-z0-9-]*(:[a-zA-Z][a-zA-Z0-9-]*)?$/
+
+export function parseScope (scope: string | undefined): string[] | undefined {
+  if (scope === undefined) return undefined
+  return scope.split(' ').filter(s => !!s)
+}
+
+export function scopeCovers (granted: string[], scope: string): boolean {
+  if (granted.includes(scope)) return true
+  const sep = scope.indexOf(':')
+  return sep !== -1 && granted.includes(scope.slice(0, sep))
+}
+
+// a session without scopes is an unrestricted first party session
+export function hasScope (sessionState: SessionState, accepted: string | string[]): boolean {
+  if (!sessionState.scopes) return true
+  const acceptedList = typeof accepted === 'string' ? [accepted] : accepted
+  return acceptedList.some(s => scopeCovers(sessionState.scopes!, s))
+}
+
+export function assertScope (sessionState: SessionState, accepted: string | string[]) {
+  if (!hasScope(sessionState, accepted)) {
+    const acceptedList = typeof accepted === 'string' ? [accepted] : accepted
+    throw httpError(403, `insufficient scope, requires one of: ${acceptedList.join(' ')}`)
+  }
+}

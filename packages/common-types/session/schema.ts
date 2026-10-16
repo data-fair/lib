@@ -21,6 +21,11 @@ export default {
     siteRole: {
       type: 'string'
     },
+    scopes: {
+      type: 'array',
+      title: 'scopes this session is restricted to, parsed from the token scope claim; absent for an unrestricted first party session',
+      items: { type: 'string' }
+    },
     lang: {
       type: 'string'
     },
@@ -147,6 +152,10 @@ export default {
           title: 'short for non-human identity',
           description: 'service account: single org membership, short-lived non-refreshable session, carries a synthetic non-deliverable email — services should not propose mail-based actions or account switching',
           enum: [1]
+        },
+        scope: {
+          type: 'string',
+          title: 'space-delimited scopes the token is restricted to (RFC 9068 scope claim); absent for an unrestricted first party session'
         },
         rememberMe: {
           type: 'integer',
