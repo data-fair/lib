@@ -20,6 +20,7 @@ import type { SessionState } from '@data-fair/lib-common-types/session/index.js'
 import type { Message } from '@data-fair/lib-common-types/ws.js'
 import { nanoid } from 'nanoid'
 import { WebSocketServer } from 'ws'
+import { assertScope } from '@data-fair/lib-common-types/session/index.js'
 import { session } from '@data-fair/lib-express'
 import { internalError } from '@data-fair/lib-node/observer.js'
 import { initMessagesCollection } from '@data-fair/lib-node/ws-emitter.js'
@@ -31,11 +32,44 @@ const clients: Record<string, import('ws').WebSocket> = {}
 
 const isAlive = Symbol('isActive')
 
+type CanSubscribe = (channel: string, sessionState: SessionState, message: any) => Promise<boolean>
+type ChannelScopes = (channel: string) => string[] | undefined
+
+export type SubscribeDecision = { ok: true } | { ok: false, status: number, data: string }
+
+// decides if a session can subscribe to a channel. Scope-restricted sessions are only accepted on
+// channels for which the service declares accepted scopes, canSubscribe still applies afterwards
+export const subscribeDecision = async (
+  sessionState: SessionState,
+  channel: string,
+  message: any,
+  canSubscribe: CanSubscribe,
+  channelScopes?: ChannelScopes
+): Promise<SubscribeDecision> => {
+  const restricted = !!sessionState.scopes || sessionState.user?.scope !== undefined
+  if (restricted) {
+    const accepted = channelScopes?.(channel)
+    if (!accepted) return { ok: false, status: 403, data: 'scope-restricted sessions cannot subscribe to this channel' }
+    // a raw claim without parsed scopes cannot be matched (assertScope would let it through): refuse
+    if (!sessionState.scopes) return { ok: false, status: 403, data: 'scope-restricted sessions cannot subscribe to this channel' }
+    try {
+      assertScope(sessionState, accepted)
+    } catch (err: any) {
+      return { ok: false, status: err.status ?? 403, data: err.message }
+    }
+  }
+  if (!sessionState.user?.adminMode && !await canSubscribe(channel, sessionState, message)) {
+    return { ok: false, status: 403, data: 'Permission manquante.' }
+  }
+  return { ok: true }
+}
+
 let stopped = false
 export const start = async (
   server: Server,
   db: Db,
-  canSubscribe: (channel: string, sessionState: SessionState, message: any) => Promise<boolean>
+  canSubscribe: CanSubscribe,
+  options: { channelScopes?: ChannelScopes } = {}
 ) => {
   const messagesCollection = await initMessagesCollection(db)
   wss = new WebSocketServer({ server })
@@ -63,10 +97,12 @@ export const start = async (
           return ws.send(JSON.stringify({ type: 'error', channel: message.channel, status: 400, data: 'type should be "subscribe" or "unsubscribe"' }))
         }
         if (message.type === 'subscribe') {
-          // session.req refuses scope-restricted sessions (403): websockets do not support scoped sessions yet
-          const sessionState = await session.req(req)
-          if (!sessionState.user?.adminMode && !await canSubscribe(message.channel, sessionState, message)) {
-            return ws.send(JSON.stringify({ type: 'error', channel: message.channel, status: 403, data: 'Permission manquante.' }))
+          // scope checks are per channel, not per request: read without the route guard and never mark
+          // the upgrade request (a mark would leak to every later channel of the connection)
+          const sessionState = await session.reqUnguarded(req)
+          const decision = await subscribeDecision(sessionState, message.channel, message, canSubscribe, options.channelScopes)
+          if (!decision.ok) {
+            return ws.send(JSON.stringify({ type: 'error', channel: message.channel, status: decision.status, data: decision.data }))
           }
           subscribers[message.channel] = subscribers[message.channel] || new Set()
           subscribers[message.channel].add(clientId)

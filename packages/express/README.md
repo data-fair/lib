@@ -81,7 +81,11 @@ Permissions, account roles, admin mode and the Vue side are covered by the [`dat
     every route to every scope.
   - A mark lasts for the whole request: a route that checked a scope and calls `next()` into
     another handler passes the mark on to it.
-- Websockets (`ws-server`) do not accept scoped sessions yet.
+- Websockets (`ws-server`) refuse scoped sessions unless the service passes
+  `start(server, db, canSubscribe, { channelScopes })`: `channelScopes(channel)` returns the scopes
+  accepted on that channel (any of them), or `undefined` to refuse scoped sessions there (403).
+  `canSubscribe` still applies afterwards. Scopes are checked per subscribe message, nothing is
+  marked on the upgrade request.
 - `session.reqForLogs(req)` reads the session for logging only; never use it for authorization.
   It never throws and ignores the scope check requirement; 401/403 refusals are silent, other
   errors are reported as internal errors.
