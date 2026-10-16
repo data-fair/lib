@@ -147,7 +147,7 @@ npm publish -w packages/vue
 ```
 
 `npm run release` takes the directory name under `packages/` (`vue`, `node`, `express`…)
-and refuses to run on a dirty working tree. The `chore: release lib-<name> <version>`
+and refuses to run outside `main`, on a dirty working tree, or right after a release commit of the same package. The `chore: release lib-<name> <version>`
 commit is the only record (per-package releases are **not** git-tagged).
 
 Notes:

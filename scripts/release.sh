@@ -7,12 +7,21 @@ if [ ! -f "$dir/package.json" ] || [ -z "$2" ]; then
   echo "usage: npm run release <$(ls packages | tr '\n' '|' | sed 's/|$//')> <patch|minor|major>"
   exit 1
 fi
+if [ "$(git branch --show-current)" != "main" ]; then
+  echo "releases are made from main, switch to it first"
+  exit 1
+fi
 if [ -n "$(git status --porcelain)" ]; then
   echo "the working tree is not clean, commit or stash first"
   exit 1
 fi
-npm version "$2" -w "$dir" --no-git-tag-version
 name=$(node -p "require('./$dir/package.json').name.replace('@data-fair/', '')")
+case "$(git log -1 --format=%s)" in
+  "chore: release $name "*)
+    echo "the last commit already releases $name, nothing new to release"
+    exit 1;;
+esac
+npm version "$2" -w "$dir" --no-git-tag-version
 version=$(node -p "require('./$dir/package.json').version")
 git commit -m "chore: release $name $version" -- "$dir/package.json" package-lock.json
 echo "next: git push && npm publish -w $dir"
