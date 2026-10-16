@@ -26,9 +26,9 @@ export function markScopeChecked (req: Request | IncomingMessage) {
 
 // a scope-restricted session is only readable by a route that checked a scope first: a route
 // that forgets to is closed, not open with the full role of the identity
-function assertRouteCheckedScope (req: Request | IncomingMessage, sessionState: SessionState) {
+function assertRouteCheckedScope (req: Request | IncomingMessage, sessionState: SessionState | undefined) {
   // @ts-ignore
-  if ((sessionState.scopes || sessionState.user?.scope !== undefined) && !req[scopeCheckedKey]) {
+  if (sessionState && (sessionState.scopes || sessionState.user?.scope !== undefined) && !req[scopeCheckedKey]) {
     throw httpError(403, 'this route does not check scopes, scope-restricted sessions are refused')
   }
 }
@@ -49,8 +49,8 @@ export class Session extends SessionHandler {
     return sessionState
   }
 
-  // reads the session for logging only (never for authorization): never throws, ignores the
-  // scope check requirement
+  /** @internal logging only, never for authorization */
+  // reads the session for logging only: never throws, ignores the scope check requirement
   async reqForLogs (req: Request | IncomingMessage): Promise<SessionState | undefined> {
     try {
       return await this.loadState(req)
@@ -75,6 +75,8 @@ export class Session extends SessionHandler {
     // and a previous ajv validation proved useless (its result was ignored and it could never pass
     // anyway because the schema does not accept the exp/iat claims present in the payload)
     const sessionState = await this.readState(req, res)
+    // a raw scope claim that lib-node did not parse (mismatched lib-node version) must never reach a scope check
+    if (sessionState.user?.scope !== undefined && !sessionState.scopes) throw httpError(401, 'invalid scope claim')
     if ((sessionState.scopes || sessionState.user?.scope !== undefined) && !this.scopeAware) {
       throw httpError(403, 'this service does not accept scope-restricted sessions')
     }
@@ -172,6 +174,7 @@ export function reqSession (req: Request | IncomingMessage): SessionState {
   // @ts-ignore
   const sessionState = req[sessionKey] as SessionState
   assertRouteCheckedScope(req, sessionState)
+  // undefined after a failed middleware (e.g. read from an error handler): as before scopes existed
   return sessionState
 }
 export function reqSessionAuthenticated (req: Request | IncomingMessage): SessionStateAuthenticated {
@@ -180,6 +183,7 @@ export function reqSessionAuthenticated (req: Request | IncomingMessage): Sessio
   // @ts-ignore
   const sessionState = req[sessionKey] as SessionState
   assertRouteCheckedScope(req, sessionState)
+  if (!sessionState) throw httpError(401)
   assertAuthenticated(sessionState)
   return sessionState
 }
@@ -189,6 +193,7 @@ export function reqAdminMode (req: Request | IncomingMessage): SessionStateAuthe
   // @ts-ignore
   const sessionState = req[sessionKey] as SessionState
   assertRouteCheckedScope(req, sessionState)
+  if (!sessionState) throw httpError(401)
   assertAuthenticated(sessionState)
   assertAdminMode(sessionState)
   return sessionState
@@ -214,7 +219,7 @@ export const allowAnyScope: RequestHandler = (req, _res, next) => {
   markScopeChecked(req)
   next()
 }
-export function reqUser (req: Request | IncomingMessage): User | undefined { return reqSession(req).user }
+export function reqUser (req: Request | IncomingMessage): User | undefined { return reqSession(req)?.user }
 export function reqUserAuthenticated (req: Request | IncomingMessage): User { return reqSessionAuthenticated(req).user }
 
 // this can be used to override the normal session mechanisme

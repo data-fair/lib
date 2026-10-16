@@ -456,17 +456,39 @@ describe('scope checks are required per route', () => {
     assert.equal(reqSession(req).lang, 'fr')
   })
 
-  it('the not-scope-aware gate also reads the raw claim', async () => {
+  it('the not-scope-aware gate refuses a scoped state', async () => {
     const session = new Session()
-    session.readState = async () => ({ lang: 'fr', user: { ...testUser, scope: 'datasets:read' } } as SessionState)
+    session.readState = async () => ({ lang: 'fr', user: { ...testUser, scope: 'datasets:read' }, scopes: ['datasets:read'] } as SessionState)
     await assert.rejects(session.req(mockReq()), (err: any) => err.status === 403)
   })
 
-  it('the route guard also reads the raw user.scope claim', async () => {
-    const { req } = await setup(() => ({ lang: 'fr', user: { ...testUser, scope: 'datasets:read' } } as SessionState))
+  it('the route guard refuses a scoped state until a scope check', async () => {
+    const { req } = await setup(() => ({ lang: 'fr', user: { ...testUser, scope: 'datasets:read' }, scopes: ['datasets:read'] } as SessionState))
     assert.throws(() => reqSession(req), is403)
     markScopeChecked(req)
     assert.equal(reqSession(req).user?.id, testUser.id)
+  })
+
+  it('a raw scope claim without parsed scopes (mismatched lib-node) is a 401, never passes a scope check', async () => {
+    const raw = (): SessionState => ({ ...scopedState(), scopes: undefined })
+    const session = new Session()
+    session.scopeAware = true
+    session.readState = async () => raw()
+    const req = mockReq()
+    await assert.rejects(session.req(req), (err: any) => err.status === 401 && /invalid scope claim/.test(err.message))
+    await assert.rejects(Promise.resolve(session.middleware()(mockReq(), mockRes(), () => {})), (err: any) => err.status === 401)
+  })
+
+  it('sync accessors after a failed middleware do not throw a TypeError', async () => {
+    const session = new Session()
+    session.readState = async () => { throw Object.assign(new Error('x'), { status: 401 }) }
+    const req = mockReq()
+    await assert.rejects(Promise.resolve(session.middleware()(req, mockRes(), () => {})))
+    assert.equal(reqSession(req), undefined)
+    assert.equal(reqUser(req), undefined)
+    assert.throws(() => reqSessionAuthenticated(req), (err: any) => err.status === 401)
+    assert.throws(() => reqUserAuthenticated(req), (err: any) => err.status === 401)
+    assert.throws(() => reqAdminMode(req), (err: any) => err.status === 401)
   })
 
   it('reqForLogs reports infrastructure errors but stays silent on 401/403', async () => {
