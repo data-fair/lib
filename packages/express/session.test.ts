@@ -462,6 +462,28 @@ describe('scope checks are required per route', () => {
     await assert.rejects(session.req(mockReq()), (err: any) => err.status === 403)
   })
 
+  it('the route guard also reads the raw user.scope claim', async () => {
+    const { req } = await setup(() => ({ lang: 'fr', user: { ...testUser, scope: 'datasets:read' } } as SessionState))
+    assert.throws(() => reqSession(req), is403)
+    markScopeChecked(req)
+    assert.equal(reqSession(req).user?.id, testUser.id)
+  })
+
+  it('reqForLogs reports infrastructure errors but stays silent on 401/403', async () => {
+    const calls: any[] = []
+    const failing = new Session()
+    failing.onLogsError = (err: any) => calls.push(err)
+    failing.readState = async () => { throw new Error('mongo down') }
+    assert.equal(await failing.reqForLogs(mockReq()), undefined)
+    failing.readState = async () => { throw Object.assign(new Error('boom'), { status: 503 }) }
+    assert.equal(await failing.reqForLogs(mockReq()), undefined)
+    failing.readState = async () => { throw Object.assign(new Error('nope'), { status: 401 }) }
+    assert.equal(await failing.reqForLogs(mockReq()), undefined)
+    failing.readState = async () => { throw Object.assign(new Error('nope'), { status: 403 }) }
+    assert.equal(await failing.reqForLogs(mockReq()), undefined)
+    assert.equal(calls.length, 2)
+  })
+
   it('reqForLogs never throws', async () => {
     const { session, req } = await setup(scopedState)
     const state = await session.reqForLogs(req)

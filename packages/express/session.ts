@@ -6,6 +6,7 @@ import { assertAdminMode, assertAuthenticated, assertScope } from '@data-fair/li
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { reqSitePathSafe, reqIp } from '@data-fair/lib-express'
 import { SessionHandler } from '@data-fair/lib-node/session.js'
+import { internalError } from '@data-fair/lib-node/observer.js'
 
 export * from '@data-fair/lib-common-types/session/index.js'
 
@@ -27,7 +28,7 @@ export function markScopeChecked (req: Request | IncomingMessage) {
 // that forgets to is closed, not open with the full role of the identity
 function assertRouteCheckedScope (req: Request | IncomingMessage, sessionState: SessionState) {
   // @ts-ignore
-  if (sessionState.scopes && !req[scopeCheckedKey]) {
+  if ((sessionState.scopes || sessionState.user?.scope !== undefined) && !req[scopeCheckedKey]) {
     throw httpError(403, 'this route does not check scopes, scope-restricted sessions are refused')
   }
 }
@@ -53,9 +54,16 @@ export class Session extends SessionHandler {
   async reqForLogs (req: Request | IncomingMessage): Promise<SessionState | undefined> {
     try {
       return await this.loadState(req)
-    } catch {
+    } catch (err: any) {
+      // 401/403 are expected refusals; anything else (jwks fetch, infrastructure) must not vanish
+      if (!err?.status || err.status >= 500) this.onLogsError(err)
       return undefined
     }
+  }
+
+  // overridable seam, mostly for tests
+  onLogsError (err: unknown) {
+    internalError('event-log-session', err)
   }
 
   private async loadState (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
@@ -108,6 +116,8 @@ export class Session extends SessionHandler {
     ])
   }
 
+  // raw reader, applies neither the route scope guard nor the session cache: not for authorization,
+  // use session.req() / reqSession(). It does not even refuse scoped states of a service that is not scope-aware (loadState does).
   async readState (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
     // a bearer access token wins over cookies: cookies of a browser session must never be mixed
     // with the account binding of an access token

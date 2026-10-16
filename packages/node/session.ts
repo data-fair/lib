@@ -164,6 +164,8 @@ export class SessionHandler {
   // accepts either the raw Cookie header or an already-parsed cookies object
   // (e.g. req.cookies when a cookie-parser middleware already ran upstream) to
   // avoid re-parsing and allocating a second cookies object per request
+  // raw reader, applies neither the route scope guard nor the session cache: not for authorization,
+  // use session.req() / reqSession(). It only refuses scoped states when the handler is not scope-aware.
   async readStateFromCookie (rawCookies: string | Record<string, string | undefined> | undefined, onlyDecode?: boolean, clearBrokenSession?: () => void): Promise<SessionState> {
     if (!rawCookies) return { lang: this.defaultLang }
     const cookies = typeof rawCookies === 'string' ? cookie.parse(rawCookies) : rawCookies
@@ -213,6 +215,8 @@ export class SessionHandler {
   // acts in (1 = that organization), or nothing for the personal account (0 memberships). More than
   // one is refused because the full array stays in user.organizations and consumers filter on it.
   // A missing organizations key is not an access token either.
+  // raw reader, applies neither the route scope guard nor the session cache: not for authorization,
+  // use session.req() / reqSession(). It only refuses scoped states when the handler is not scope-aware.
   async readStateFromBearer (token: string, lang?: string): Promise<SessionState> {
     const decoded = jwt.decode(token, { complete: true })
     if (!decoded || decoded.header.typ !== 'at+jwt') throw httpError(401, 'bearer token is not an access token')
