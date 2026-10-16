@@ -328,6 +328,16 @@ describe('Session bearer and scopes', () => {
     assert.deepEqual(state.scopes, ['datasets:read'])
   })
 
+  it('matches the bearer auth scheme case-insensitively', async () => {
+    const session = new Session()
+    let bearerToken: string | undefined
+    session.readStateFromBearer = async (token: string) => { bearerToken = token; return scopedState() }
+    session.readStateFromCookie = async () => { throw new Error('cookies must not be read') }
+    session.scopeAware = true
+    await session.req(mockReq('GET', { authorization: 'bearer abc.def.ghi', cookie: 'id_token=x; id_token_sign=y' }))
+    assert.equal(bearerToken, 'abc.def.ghi')
+  })
+
   it('refuses a scope-restricted session in a service that is not scope-aware', async () => {
     const session = new Session()
     session.readState = async () => scopedState()

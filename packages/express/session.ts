@@ -83,9 +83,10 @@ export class Session extends SessionHandler {
   async readState (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
     // a bearer access token wins over cookies: cookies of a browser session must never be mixed
     // with the account binding of an access token
-    const authorization = req.headers.authorization
-    if (authorization?.startsWith('Bearer ')) {
-      return this.readStateFromBearer(authorization.slice(7).trim())
+    // the auth scheme is case-insensitive (RFC 7235)
+    const bearerMatch = req.headers.authorization?.match(/^bearer\s+(.+)$/i)
+    if (bearerMatch) {
+      return this.readStateFromBearer(bearerMatch[1].trim())
     }
     // reuse req.cookies if a cookie-parser middleware already populated it, to avoid re-parsing the Cookie header
     // @ts-ignore - cookies is set by cookie-parser, absent on plain IncomingMessage
