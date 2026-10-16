@@ -14,14 +14,14 @@ Downstream examples:
 {type: 'error', data: {...}}
 */
 
-import type { Server } from 'node:http'
+import type { Server, IncomingMessage } from 'node:http'
 import type { Db, Collection } from 'mongodb'
 import type { SessionState } from '@data-fair/lib-common-types/session/index.js'
 import type { Message } from '@data-fair/lib-common-types/ws.js'
 import { nanoid } from 'nanoid'
 import { WebSocketServer } from 'ws'
 import { assertScope } from '@data-fair/lib-common-types/session/index.js'
-import { session } from '@data-fair/lib-express'
+import { session, markScopeChecked } from '@data-fair/lib-express'
 import { internalError } from '@data-fair/lib-node/observer.js'
 import { initMessagesCollection } from '@data-fair/lib-node/ws-emitter.js'
 
@@ -58,10 +58,27 @@ export const subscribeDecision = async (
       return { ok: false, status: err.status ?? 403, data: err.message }
     }
   }
-  if (!sessionState.user?.adminMode && !await canSubscribe(channel, sessionState, message)) {
+  if (!(!restricted && sessionState.user?.adminMode) && !await canSubscribe(channel, sessionState, message)) {
     return { ok: false, status: 403, data: 'Permission manquante.' }
   }
   return { ok: true }
+}
+
+// reads the session of the upgrade request and decides on one subscribe message.
+// Scope checks are per channel, not per request. The route guard is satisfied on a per-message
+// child of the upgrade request: a mark on the upgrade req itself would leak to every later
+// channel of the connection. headers/socket resolve through the prototype, so boundIp still applies.
+export const subscribeForRequest = async (
+  req: IncomingMessage,
+  channel: string,
+  message: any,
+  canSubscribe: CanSubscribe,
+  channelScopes?: ChannelScopes
+): Promise<SubscribeDecision> => {
+  const scopedReq = Object.create(req)
+  markScopeChecked(scopedReq)
+  const sessionState = await session.req(scopedReq)
+  return subscribeDecision(sessionState, channel, message, canSubscribe, channelScopes)
 }
 
 let stopped = false
@@ -97,10 +114,7 @@ export const start = async (
           return ws.send(JSON.stringify({ type: 'error', channel: message.channel, status: 400, data: 'type should be "subscribe" or "unsubscribe"' }))
         }
         if (message.type === 'subscribe') {
-          // scope checks are per channel, not per request: read without the route guard and never mark
-          // the upgrade request (a mark would leak to every later channel of the connection)
-          const sessionState = await session.reqUnguarded(req)
-          const decision = await subscribeDecision(sessionState, message.channel, message, canSubscribe, options.channelScopes)
+          const decision = await subscribeForRequest(req, message.channel, message, canSubscribe, options.channelScopes)
           if (!decision.ok) {
             return ws.send(JSON.stringify({ type: 'error', channel: message.channel, status: decision.status, data: decision.data }))
           }

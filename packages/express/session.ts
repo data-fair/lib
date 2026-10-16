@@ -63,14 +63,6 @@ export class Session extends SessionHandler {
     }
   }
 
-  /**
-   * @internal for ws-server only: reads the state without the per-route scope guard, because websocket
-   * scope checks are per channel. The caller must check scopes itself (see subscribeDecision).
-   */
-  async reqUnguarded (req: Request | IncomingMessage): Promise<SessionState> {
-    return this.loadState(req)
-  }
-
   /** @internal test seam, not API */
   onLogsError (err: unknown) {
     internalError('event-log-session', err)
