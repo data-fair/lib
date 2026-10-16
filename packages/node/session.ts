@@ -1,4 +1,5 @@
 import type { SessionState, User } from '@data-fair/lib-common-types/session/index.js'
+import { parseScope } from '@data-fair/lib-common-types/session/index.js'
 import { createPublicKey, type KeyObject } from 'node:crypto'
 import jwt from 'jsonwebtoken'
 import JwksClient from 'jwks-rsa'
@@ -62,6 +63,7 @@ export class SessionHandler {
     }
 
     state.user = user
+    if (user.scope !== undefined) state.scopes = parseScope(user.scope)
 
     if (organizationId) {
       state.organization = user.organizations.find(o => {
@@ -138,5 +140,25 @@ export class SessionHandler {
     }
     if (!user) return { lang, dark }
     return Object.assign({ lang, dark } as SessionState, this.buildTokenSessionState(user, organizationId, departmentId, switchedRole))
+  }
+
+  // Only tokens minted as access tokens (RFC 9068 header typ at+jwt) are bearer credentials.
+  // Session cookie tokens and the long lived exchange token are signed by the same keys and
+  // must never be usable this way (cf simple-directory docs/architecture/session-theft-protections.md).
+  // An access token is bound to one account: its organizations array holds the one membership it
+  // acts in, or nothing for the personal account.
+  async readStateFromBearer (token: string, lang?: string): Promise<SessionState> {
+    const decoded = jwt.decode(token, { complete: true })
+    if (!decoded || decoded.header.typ !== 'at+jwt') throw httpError(401, 'bearer token is not an access token')
+    let user: User
+    try {
+      user = await this.verifyToken(token) as User
+    } catch (err: any) {
+      if (err.name === 'JwksError') throw httpError(500, 'Session token public keys not initialized')
+      throw httpError(401)
+    }
+    if (!user?.organizations) throw httpError(401, 'bearer token is not an access token')
+    const org = user.organizations.length === 1 ? user.organizations[0] : undefined
+    return Object.assign({ lang: lang ?? this.defaultLang } as SessionState, this.buildTokenSessionState(user, org?.id ?? '', org?.department ?? '', ''))
   }
 }
