@@ -1,44 +1,54 @@
 import type { SessionState, User } from '@data-fair/lib-common-types/session/index.js'
 import { parseScope } from '@data-fair/lib-common-types/session/index.js'
 import { createPublicKey, type KeyObject } from 'node:crypto'
+import type { JwtHeader } from 'jsonwebtoken'
 import jwt from 'jsonwebtoken'
 import JwksClient from 'jwks-rsa'
 import cookie from 'cookie'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 
+export type KeySet = 'session' | 'scoped'
+// simple-directory names the keys of its scoped key set scoped-<kid>; the signature still has to
+// verify against that set, so a forged kid gains nothing
+export const keySetOfKid = (kid?: string): KeySet => kid?.startsWith('scoped-') ? 'scoped' : 'session'
+
 type TokenSessionState = Omit<SessionState, 'lang' | 'dark'>
 
 export class SessionHandler {
-  private _jwksClient: JwksClient.JwksClient | undefined
+  private _jwksClients: Record<KeySet, JwksClient.JwksClient> | undefined
   public defaultLang: string = 'fr'
   // a service declares itself scope-aware once it enforces scopes on its routes; until then a
   // scope-restricted session (an NHI or OAuth access token with a scope claim) is refused with
   // a 403 instead of acting with the full role of its identity
   public scopeAware = false
 
-  get jwksClient () {
-    if (!this._jwksClient) throw new Error('session management was not initialized')
-    return this._jwksClient
+  get jwksClients () {
+    if (!this._jwksClients) throw new Error('session management was not initialized')
+    return this._jwksClients
   }
 
   initJWKS (directoryUrl = 'http://simple-directory:8080') {
-    this._jwksClient = JwksClient({ jwksUri: directoryUrl + '/.well-known/jwks.json' })
-    // the parsed key cache is derived from this jwks client (which enforces key rotation
-    // through its own ttl), so it must be dropped whenever the client is recreated
+    const client = (path: string) => JwksClient({ jwksUri: directoryUrl + path, rateLimit: true, jwksRequestsPerMinute: 10 })
+    this._jwksClients = {
+      session: client('/.well-known/jwks.json'),
+      scoped: client('/.well-known/scoped-jwks.json')
+    }
+    // the parsed key cache is derived from these jwks clients (which enforce key rotation
+    // through their own ttl), so it must be dropped whenever the clients are recreated
     this._signingKeyObjects.clear()
   }
 
   // jwks-rsa caches the JWK per kid but it exports a new PEM string at every access
   // and jsonwebtoken parses that PEM again at every verification: caching the parsed
-  // KeyObject per kid skips both costs.
+  // KeyObject per key set and kid skips both costs.
   // IMPORTANT: getSigningKey must still be awaited on every verification. It is the only
   // thing that re-checks the kid against the current keyset, so a key rotated out of the
   // JWKS stops being accepted. Short-circuiting it from a persistent cache would accept a
   // rotated-out key forever (the lib#41 regression).
   private _signingKeyObjects = new Map<string, KeyObject>()
-  private async getSigningKeyObject (kid?: string): Promise<KeyObject> {
-    const signingKey = await this.jwksClient.getSigningKey(kid)
-    const cacheKey = kid ?? ''
+  protected async getSigningKeyObject (keySet: KeySet, kid?: string): Promise<KeyObject> {
+    const signingKey = await this.jwksClients[keySet].getSigningKey(kid)
+    const cacheKey = keySet + ':' + (kid ?? '')
     let keyObject = this._signingKeyObjects.get(cacheKey)
     if (!keyObject) {
       keyObject = createPublicKey(signingKey.getPublicKey())
@@ -47,12 +57,39 @@ export class SessionHandler {
     return keyObject
   }
 
-  // used for the main session token, but can also be used to use the jwks to verify other types of tokens
-  async verifyToken (token: string): Promise<any> {
+  // verifies against the key set designated by the kid: a token claiming a scoped kid must be
+  // signed by a key of the scoped set, any other must be signed by a key of the session set
+  async verifyTokenKeySet (token: string): Promise<{ payload: any, header: JwtHeader, keySet: KeySet }> {
     const decoded = jwt.decode(token, { complete: true })
     if (!decoded) throw new Error('failed to decode token')
-    const signingKeyObject = await this.getSigningKeyObject(decoded.header.kid)
-    return jwt.verify(token, signingKeyObject)
+    const keySet = keySetOfKid(decoded.header.kid)
+    const signingKeyObject = await this.getSigningKeyObject(keySet, decoded.header.kid)
+    const payload = jwt.verify(token, signingKeyObject, { algorithms: ['RS256'] })
+    return { payload, header: decoded.header, keySet }
+  }
+
+  // used for the main session token, but can also be used to use the jwks to verify other types of tokens
+  // (simple-directory verifies its exchange tokens with it): only the session key set is accepted
+  async verifyToken (token: string): Promise<any> {
+    const { payload, keySet } = await this.verifyTokenKeySet(token)
+    if (keySet !== 'session') throw new Error('not a session token')
+    return payload
+  }
+
+  private assertTokenKind (path: 'bearer' | 'cookie', header: JwtHeader, payload: any, keySet: KeySet) {
+    if (path === 'bearer') {
+      if (header.typ !== 'at+jwt') throw httpError(401, 'bearer token is not an access token')
+      if (keySet !== 'scoped') throw httpError(401, 'access token must be signed by the scoped key set')
+    } else {
+      if (header.typ === 'at+jwt') throw httpError(401, 'an access token is not a session token')
+      const hasScope = payload && typeof payload === 'object' && 'scope' in payload
+      if (keySet === 'session' && hasScope) throw httpError(401, 'session key set token must not carry a scope')
+      if (keySet === 'scoped' && !hasScope) throw httpError(401, 'scoped key set token must carry a scope')
+    }
+    if (keySet === 'scoped') {
+      if (payload?.adminMode || payload?.asAdmin || payload?.isAdmin) throw httpError(401, 'scoped token cannot carry superadmin claims')
+      if (typeof payload?.exp !== 'number') throw httpError(401, 'scoped token must expire')
+    }
   }
 
   private buildTokenSessionState (user: User, organizationId: string, departmentId: string, switchedRole: string): TokenSessionState {
@@ -135,11 +172,21 @@ export class SessionHandler {
 
     let user: User
     if (onlyDecode) {
-      user = jwt.decode(token) as User
+      const decoded = jwt.decode(token, { complete: true })
+      if (!decoded) return { lang, dark }
+      this.assertTokenKind('cookie', decoded.header, decoded.payload, keySetOfKid(decoded.header.kid))
+      user = decoded.payload as User
     } else {
       try {
-        user = await this.verifyToken(token) as User
+        const verified = await this.verifyTokenKeySet(token)
+        user = verified.payload as User
+
+        this.assertTokenKind('cookie', verified.header, verified.payload, verified.keySet)
       } catch (err: any) {
+        if (err.status === 401 && err.name !== 'JwksError') {
+          if (clearBrokenSession) clearBrokenSession()
+          throw err
+        }
         console.warn(err)
         if (err.name === 'JwksError') {
           // happens in case of temporary unavailability if SD
@@ -169,9 +216,12 @@ export class SessionHandler {
     if (!decoded || decoded.header.typ !== 'at+jwt') throw httpError(401, 'bearer token is not an access token')
     let user: User
     try {
-      user = await this.verifyToken(token) as User
+      const verified = await this.verifyTokenKeySet(token)
+      this.assertTokenKind('bearer', verified.header, verified.payload, verified.keySet)
+      user = verified.payload as User
     } catch (err: any) {
       if (err.name === 'JwksError') throw httpError(500, 'Session token public keys not initialized')
+      if (err.status === 401) throw err
       throw httpError(401)
     }
     if (!user?.organizations) throw httpError(401, 'bearer token is not an access token')

@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
 import { generateKeyPairSync } from 'node:crypto'
 import jwt from 'jsonwebtoken'
-import { SessionHandler } from './session.js'
+import { SessionHandler, keySetOfKid } from './session.js'
 
 const testUser = {
   email: 'test@example.com',
@@ -18,9 +18,9 @@ const testUser = {
 const stubbedHandler = () => {
   const handler = new SessionHandler()
   const calls = { count: 0 }
-  handler.verifyToken = async () => {
+  handler.verifyTokenKeySet = async () => {
     calls.count++
-    return structuredClone(testUser)
+    return { payload: structuredClone(testUser), header: { alg: 'RS256' }, keySet: 'session' }
   }
   return { handler, calls }
 }
@@ -130,7 +130,7 @@ describe('SessionHandler.readStateFromCookie', () => {
 
   it('should reject and clear the session when the token is invalid', async () => {
     const handler = new SessionHandler()
-    handler.verifyToken = async () => { throw Object.assign(new Error('jwt expired'), { name: 'TokenExpiredError' }) }
+    handler.verifyTokenKeySet = async () => { throw Object.assign(new Error('jwt expired'), { name: 'TokenExpiredError' }) }
     let cleared = false
     await assert.rejects(
       handler.readStateFromCookie('id_token=h.p; id_token_sign=s', undefined, () => { cleared = true }),
@@ -141,7 +141,7 @@ describe('SessionHandler.readStateFromCookie', () => {
 
   it('should surface a 500 without clearing the session on a jwks error', async () => {
     const handler = new SessionHandler()
-    handler.verifyToken = async () => { throw Object.assign(new Error('jwks down'), { name: 'JwksError' }) }
+    handler.verifyTokenKeySet = async () => { throw Object.assign(new Error('jwks down'), { name: 'JwksError' }) }
     let cleared = false
     await assert.rejects(
       handler.readStateFromCookie('id_token=h.p; id_token_sign=s', undefined, () => { cleared = true }),
@@ -158,10 +158,12 @@ describe('SessionHandler.verifyToken', () => {
     const handler = new SessionHandler()
     let getSigningKeyCalls = 0
     let getPublicKeyCalls = 0
-    ;(handler as any)._jwksClient = {
-      getSigningKey: async () => {
-        getSigningKeyCalls++
-        return { getPublicKey: () => { getPublicKeyCalls++; return pem } }
+    ;(handler as any)._jwksClients = {
+      session: {
+        getSigningKey: async () => {
+          getSigningKeyCalls++
+          return { getPublicKey: () => { getPublicKeyCalls++; return pem } }
+        }
       }
     }
     const token = jwt.sign({ id: 'user1' }, privateKey, { algorithm: 'RS256', keyid: 'kid1' })
@@ -181,10 +183,12 @@ describe('SessionHandler.verifyToken', () => {
     const pem = publicKey.export({ format: 'pem', type: 'spki' }) as string
     const handler = new SessionHandler()
     let keyPresent = true
-    ;(handler as any)._jwksClient = {
-      getSigningKey: async () => {
-        if (!keyPresent) throw Object.assign(new Error('key not found'), { name: 'SigningKeyNotFoundError' })
-        return { getPublicKey: () => pem }
+    ;(handler as any)._jwksClients = {
+      session: {
+        getSigningKey: async () => {
+          if (!keyPresent) throw Object.assign(new Error('key not found'), { name: 'SigningKeyNotFoundError' })
+          return { getPublicKey: () => pem }
+        }
       }
     }
     const token = jwt.sign({ id: 'user1' }, privateKey, { algorithm: 'RS256', keyid: 'kid1' })
@@ -197,20 +201,31 @@ describe('SessionHandler.verifyToken', () => {
   })
 })
 
+const sessionKeys = generateKeyPairSync('rsa', { modulusLength: 2048 })
+const scopedKeys = generateKeyPairSync('rsa', { modulusLength: 2048 })
+const signWith = (privateKey: any, kid: string, payload: any, header: any = {}, opts: any = {}) =>
+  jwt.sign(payload, privateKey, { algorithm: 'RS256', expiresIn: '5m', keyid: kid, header: { alg: 'RS256', ...header }, ...opts })
+const signSession = (payload: any, header?: any, opts?: any) => signWith(sessionKeys.privateKey, 'sd-1', payload, header, opts)
+const signScoped = (payload: any, header?: any, opts?: any) => signWith(scopedKeys.privateKey, 'scoped-sd-1', payload, header, opts)
+// real jwt verification against two local key pairs, one per key set
+const realHandler = (scopeAware = true) => {
+  const handler = new SessionHandler()
+  handler.scopeAware = scopeAware
+  ;(handler as any).getSigningKeyObject = async (keySet: string) => keySet === 'scoped' ? scopedKeys.publicKey : sessionKeys.publicKey
+  return handler
+}
+const toCookies = (token: string) => {
+  const [h, p, s] = token.split('.')
+  return `id_token=${h}.${p}; id_token_sign=${s}`
+}
+const rejects401 = (p: Promise<any>) => assert.rejects(p, (err: any) => err.status === 401)
+
 describe('SessionHandler.readStateFromBearer', () => {
-  const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
-  const sign = (payload: any, typ?: string) => jwt.sign(payload, privateKey, { algorithm: 'RS256', expiresIn: '5m', ...(typ ? { header: { alg: 'RS256', typ } } : {}) })
-  // verification is stubbed: these tests are about what is accepted, not about signatures
-  const decodingHandler = () => {
-    const handler = new SessionHandler()
-    handler.scopeAware = true
-    handler.verifyToken = async (token: string) => jwt.decode(token)
-    return handler
-  }
   const nhiUser = { ...testUser, organizations: [testUser.organizations[0]], nhi: 1, scope: 'datasets:read organizations:read' }
+  const bearer = (payload: any, header: any = { typ: 'at+jwt' }, opts?: any) => signScoped(payload, header, opts)
 
   it('reads an at+jwt access token, bound to its single organization, with its scopes', async () => {
-    const state = await decodingHandler().readStateFromBearer(sign(nhiUser, 'at+jwt'))
+    const state = await realHandler().readStateFromBearer(bearer(nhiUser))
     assert.equal(state.user?.id, 'user1')
     assert.equal(state.account?.type, 'organization')
     assert.equal(state.account?.id, 'org1')
@@ -219,11 +234,11 @@ describe('SessionHandler.readStateFromBearer', () => {
   })
 
   it('refuses (401) a token bound to several organizations', async () => {
-    await assert.rejects(decodingHandler().readStateFromBearer(sign(testUser, 'at+jwt')), (err: any) => err.status === 401)
+    await rejects401(realHandler().readStateFromBearer(bearer(testUser)))
   })
 
   it('gives a personal account session to a token with no organization membership', async () => {
-    const state = await decodingHandler().readStateFromBearer(sign({ ...testUser, organizations: [] }, 'at+jwt'))
+    const state = await realHandler().readStateFromBearer(bearer({ ...testUser, organizations: [], scope: 'datasets' }))
     assert.equal(state.account?.type, 'user')
     assert.equal(state.account?.id, 'user1')
     assert.equal(state.accountRole, 'admin')
@@ -231,56 +246,113 @@ describe('SessionHandler.readStateFromBearer', () => {
 
   it('refuses a token without an organizations key', async () => {
     const { organizations, ...noOrgs } = testUser
-    await assert.rejects(decodingHandler().readStateFromBearer(sign(noOrgs, 'at+jwt')), (err: any) => err.status === 401)
+    await rejects401(realHandler().readStateFromBearer(bearer({ ...noOrgs, scope: 'datasets' })))
   })
 
   it('refuses (401) an invalid scope claim on the bearer and cookie paths', async () => {
     for (const scope of [null, 12, ['a']]) {
-      await assert.rejects(decodingHandler().readStateFromBearer(sign({ ...nhiUser, scope }, 'at+jwt')), (err: any) => err.status === 401)
+      await rejects401(realHandler().readStateFromBearer(bearer({ ...nhiUser, scope })))
       const handler = new SessionHandler()
       handler.scopeAware = true
-      handler.verifyToken = async () => structuredClone({ ...testUser, scope })
-      await assert.rejects(handler.readStateFromCookie('id_token=a.b; id_token_sign=c'), (err: any) => err.status === 401)
+      handler.verifyTokenKeySet = async () => ({ payload: structuredClone({ ...testUser, scope, exp: 4102444800 }), header: { alg: 'RS256' }, keySet: 'scoped' })
+      await rejects401(handler.readStateFromCookie('id_token=a.b; id_token_sign=c'))
     }
   })
 
   it('refuses a scoped session unless the handler is scope-aware', async () => {
-    const handler = new SessionHandler()
+    const handler = realHandler(false)
     assert.equal(handler.scopeAware, false)
-    handler.verifyToken = async (token: string) => jwt.decode(token)
-    await assert.rejects(handler.readStateFromBearer(sign(nhiUser, 'at+jwt')), (err: any) => err.status === 403)
-    handler.verifyToken = async () => structuredClone({ ...testUser, scope: 'datasets' })
-    await assert.rejects(handler.readStateFromCookie('id_token=a.b; id_token_sign=c'), (err: any) => err.status === 403)
+    await assert.rejects(handler.readStateFromBearer(bearer(nhiUser)), (err: any) => err.status === 403)
+    const cookies = toCookies(signScoped({ ...testUser, scope: 'datasets' }))
+    await assert.rejects(handler.readStateFromCookie(cookies), (err: any) => err.status === 403)
     handler.scopeAware = true
-    assert.deepEqual((await handler.readStateFromCookie('id_token=a.b; id_token_sign=c')).scopes, ['datasets'])
-    handler.verifyToken = async (token: string) => jwt.decode(token)
-    assert.deepEqual((await handler.readStateFromBearer(sign(nhiUser, 'at+jwt'))).scopes, ['datasets:read', 'organizations:read'])
+    assert.deepEqual((await handler.readStateFromCookie(cookies)).scopes, ['datasets'])
+    assert.deepEqual((await handler.readStateFromBearer(bearer(nhiUser))).scopes, ['datasets:read', 'organizations:read'])
   })
 
   it('refuses an expired token or one signed by another key when really verifying', async () => {
-    const { privateKey: goodKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
     const { privateKey: otherKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
-    const handler = new SessionHandler()
-    handler.verifyToken = async (token: string) => jwt.verify(token, publicKey)
-    const mk = (key: any, opts: any) => jwt.sign({ ...nhiUser }, key, { algorithm: 'RS256', header: { alg: 'RS256', typ: 'at+jwt' }, ...opts })
-    handler.scopeAware = true
-    assert.equal((await handler.readStateFromBearer(mk(goodKey, { expiresIn: '5m' }))).user?.id, 'user1')
-    await assert.rejects(handler.readStateFromBearer(mk(goodKey, { expiresIn: -10 })), (err: any) => err.status === 401)
-    await assert.rejects(handler.readStateFromBearer(mk(otherKey, { expiresIn: '5m' })), (err: any) => err.status === 401)
+    const handler = realHandler()
+    assert.equal((await handler.readStateFromBearer(bearer(nhiUser))).user?.id, 'user1')
+    await rejects401(handler.readStateFromBearer(bearer(nhiUser, undefined, { expiresIn: -10 })))
+    await rejects401(handler.readStateFromBearer(signWith(otherKey, 'scoped-sd-1', nhiUser, { typ: 'at+jwt' })))
   })
 
   it('refuses a session token or an exchange token presented as bearer', async () => {
-    const handler = decodingHandler()
-    await assert.rejects(handler.readStateFromBearer(sign(testUser)), (err: any) => err.status === 401)
-    await assert.rejects(handler.readStateFromBearer(sign({ user: 'user1', session: 'abc' }, 'JWT')), (err: any) => err.status === 401)
-    await assert.rejects(handler.readStateFromBearer('not-a-jwt'), (err: any) => err.status === 401)
+    const handler = realHandler()
+    await rejects401(handler.readStateFromBearer(signSession(testUser)))
+    await rejects401(handler.readStateFromBearer(signSession({ user: 'user1', session: 'abc' }, { typ: 'JWT' })))
+    await rejects401(handler.readStateFromBearer('not-a-jwt'))
   })
 
   it('fills scopes from a cookie session too', async () => {
-    const handler = new SessionHandler()
-    handler.scopeAware = true
-    handler.verifyToken = async () => structuredClone({ ...testUser, scope: 'datasets' })
-    const state = await handler.readStateFromCookie('id_token=a.b; id_token_sign=c')
+    const state = await realHandler().readStateFromCookie(toCookies(signScoped({ ...testUser, scope: 'datasets' })))
     assert.deepEqual(state.scopes, ['datasets'])
+  })
+})
+
+describe('key sets and token kinds', () => {
+  const nhiUser = { ...testUser, organizations: [testUser.organizations[0]], nhi: 1, scope: 'datasets:read' }
+
+  it('keySetOfKid', () => {
+    assert.equal(keySetOfKid('scoped-sd-1'), 'scoped')
+    assert.equal(keySetOfKid('sd-1'), 'session')
+    assert.equal(keySetOfKid(undefined), 'session')
+  })
+
+  it('bearer requires an at+jwt from the scoped set', async () => {
+    const handler = realHandler()
+    assert.equal((await handler.readStateFromBearer(signScoped(nhiUser, { typ: 'at+jwt' }))).user?.id, 'user1')
+    await rejects401(handler.readStateFromBearer(signSession(nhiUser, { typ: 'at+jwt' })))
+    await rejects401(handler.readStateFromBearer(signScoped(nhiUser, {})))
+  })
+
+  it('a token signed by one set is not verified by the other', async () => {
+    const handler = realHandler()
+    // claims a scoped kid but is signed with the session private key
+    await rejects401(handler.readStateFromBearer(signWith(sessionKeys.privateKey, 'scoped-sd-1', nhiUser, { typ: 'at+jwt' })))
+    // and the other way round, on the cookie path
+    await rejects401(handler.readStateFromCookie(toCookies(signWith(scopedKeys.privateKey, 'sd-1', testUser))))
+  })
+
+  it('cookie path refuses access tokens and enforces the scope/key-set pairing', async () => {
+    const handler = realHandler()
+    await rejects401(handler.readStateFromCookie(toCookies(signScoped(nhiUser, { typ: 'at+jwt' }))))
+    await rejects401(handler.readStateFromCookie(toCookies(signSession({ ...testUser, scope: 'datasets' }))))
+    await rejects401(handler.readStateFromCookie(toCookies(signScoped(testUser))))
+    assert.deepEqual((await handler.readStateFromCookie(toCookies(signScoped({ ...testUser, scope: 'datasets' })))).scopes, ['datasets'])
+    assert.equal((await handler.readStateFromCookie(toCookies(signSession(testUser)))).scopes, undefined)
+  })
+
+  it('applies the same kind rules when only decoding', async () => {
+    const handler = realHandler()
+    await rejects401(handler.readStateFromCookie(toCookies(signScoped(nhiUser, { typ: 'at+jwt' })), true))
+    await rejects401(handler.readStateFromCookie(toCookies(signSession({ ...testUser, scope: 'datasets' })), true))
+    await rejects401(handler.readStateFromCookie(toCookies(signScoped(testUser)), true))
+    assert.equal((await handler.readStateFromCookie(toCookies(signSession(testUser)), true)).user?.id, 'user1')
+  })
+
+  it('scoped-set tokens cannot carry superadmin claims and must expire', async () => {
+    const handler = realHandler()
+    for (const claims of [{ adminMode: 1 }, { asAdmin: { id: 'a', name: 'A' } }, { isAdmin: 1 }]) {
+      await rejects401(handler.readStateFromBearer(signScoped({ ...nhiUser, ...claims }, { typ: 'at+jwt' })))
+    }
+    // no exp claim at all
+    const noExp = jwt.sign(nhiUser, scopedKeys.privateKey, { algorithm: 'RS256', keyid: 'scoped-sd-1', header: { alg: 'RS256', typ: 'at+jwt' }, noTimestamp: true })
+    assert.equal((jwt.decode(noExp) as any).exp, undefined)
+    await rejects401(handler.readStateFromBearer(noExp))
+  })
+
+  it('verifyToken only accepts the session key set', async () => {
+    const handler = realHandler()
+    assert.equal((await handler.verifyToken(signSession({ id: 'user1' }))).id, 'user1')
+    await assert.rejects(handler.verifyToken(signScoped({ id: 'user1', scope: 'datasets' })))
+  })
+
+  it('only RS256 is accepted', async () => {
+    const handler = realHandler()
+    const token = jwt.sign(testUser, sessionKeys.privateKey, { algorithm: 'PS256', keyid: 'sd-1', expiresIn: '5m' })
+    await rejects401(handler.readStateFromCookie(toCookies(token)))
+    await assert.rejects(handler.verifyToken(token))
   })
 })
