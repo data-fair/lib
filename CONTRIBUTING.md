@@ -6,7 +6,7 @@ monorepo. Each workspace under `packages/` is published independently to npm in 
 `@data-fair` namespace with the `lib-` prefix (e.g. `@data-fair/lib-utils`,
 `@data-fair/lib-vue`).
 
-For *what* each package does and usage examples, see [`README.md`](./README.md). This
+For *what* each package does and usage examples, see each package README (`packages/<dir>/README.md`, indexed in [`README.md`](./README.md)). This
 document is about *contributing* — building, testing, and developing the lib itself.
 
 ## Repository layout
@@ -19,7 +19,7 @@ Workspaces are declared in the root `package.json` (`workspaces`). Each lives in
 | `packages/utils`           | `@data-fair/lib-utils`           | Dependency-less / dependency-light utility functions (e.g. `clone`, `json-schema`). |
 | `packages/validation`      | `@data-fair/lib-validation`      | Small validation utils, mostly wrapping ajv (with `ajv-i18n`). |
 | `packages/common-types`    | `@data-fair/lib-common-types`    | Shared json schemas and the built type definitions used across the stack. |
-| `packages/types-builder`   | `@data-fair/lib-types-builder`   | Tool that processes json schemas to produce types, validation and serialization functions. Ships the `df-build-types` bin. |
+| `packages/types-builder`   | `@data-fair/lib-types-builder`   | Tool that processes json schemas to produce types, validation functions and resolved schemas. Ships the `df-build-types` bin. |
 | `packages/node`            | `@data-fair/lib-node`            | Server-side Node.js utilities (observer/metrics, ws, upgrade-scripts, fs…). |
 | `packages/express`         | `@data-fair/lib-express`         | Express middlewares and helpers (session, async handler, ws-server…). |
 | `packages/vue`             | `@data-fair/lib-vue`             | Composables and utilities for Vue 3 applications (e.g. `useSession`, ws). |
@@ -28,7 +28,7 @@ Workspaces are declared in the root `package.json` (`workspaces`). Each lives in
 
 ## Prerequisites
 
-- Node.js — `>=20` (root `package.json` `engines`); `.nvmrc` pins **22**, so use 22.
+- Node.js — `>=22.6` (root `package.json` `engines`, needed by `--experimental-strip-types`); `.nvmrc` pins **22**.
 - npm with workspaces support (bundled with the Node version above).
 
 ```bash
@@ -41,62 +41,37 @@ nvm use   # picks up .nvmrc (22)
 git clone https://github.com/data-fair/lib.git
 cd lib
 npm ci
+npm run build
 ```
 
-### First build on a fresh checkout (the bootstrap gotcha)
-
-The runtime `.js` files are build output and are **gitignored** (see `.gitignore`:
-`*.d.ts`, `*.js.map`, `packages/**/*.js`). A fresh worktree therefore contains only
-the `.ts` sources.
-
-Running `npm run build` straight away **fails** at its first step, `build-types`:
-
-```
-ERR_MODULE_NOT_FOUND: Cannot find module '.../packages/utils/clone.js'
-```
-
-Why: `build` runs `build-types` first, which runs the code generator
-`packages/types-builder/build.ts`. That generator imports the *compiled* outputs of
-other packages — `@data-fair/lib-utils/clone.js`, `@data-fair/lib-utils/json-schema.js`,
-`@data-fair/lib-node/fs.js` — which don't exist yet on a clean checkout. This is a
-package-level circular dependency: `build-types` needs the compiled `utils`/`node`
-`.js`, while `build-tsc` needs the types that `build-types` generates.
-
-Break the cycle by emitting the runtime `.js` once before the full build:
-
-```bash
-npm ci
-npm run build-tsc   # bootstrap: emits the runtime .js (clone.js, json-schema.js, fs.js, …).
-                    # It EXITS WITH TS ERRORS — missing generated .type/ files and
-                    # lib-common-types exports that build-types will produce. This is
-                    # EXPECTED on a fresh checkout; tsc still emits the .js. Ignore them once.
-npm run build       # now succeeds: build-types runs, then a clean build-tsc + build-vue-tsc + lint
-```
-
-After this first bootstrap the `.js` files exist, so subsequent `npm run build` runs
-work directly. The main long-lived checkout never hits this because it already has the
-built `.js` on disk.
+The runtime `.js` and `.d.ts` files are build output and are **gitignored** (`*.d.ts`,
+`*.js.map`, `packages/**/*.js`): a fresh checkout contains only the `.ts` sources, and
+`npm run build` is the first thing to run.
 
 ## Build pipeline
 
-`npm run build` chains four steps (root `package.json` `scripts`):
+`npm run build` chains three steps (root `package.json` `scripts`):
 
 ```jsonc
-"build":          "npm run build-types && npm run build-tsc && npm run build-vue-tsc && eslint . --fix"
+"build":          "npm run build-types && npm run build-tsc && npm run build-vue-tsc"
 "build-types":    "tsc -p tsconfig.build-schemas.json && node --experimental-strip-types packages/types-builder/build.ts"
-"build-tsc":      "rm -f packages/*/*.d.ts && tsc -p tsconfig.build.json"
+"build-tsc":      "node --experimental-strip-types scripts/clean-orphans.mts && rm -f packages/*/*.d.ts && tsc -p tsconfig.build.json"
 "build-vue-tsc":  "vue-tsc -p tsconfig.build-vue.json"
 ```
 
-- **`build-types`** — compiles `**/schema.ts` (`tsconfig.build-schemas.json`), then runs
-  the `types-builder` generator to emit the `.type/` artifacts and the
-  `common-types` exports (types, validation, serialization) from the json schemas.
-- **`build-tsc`** — removes stale `.d.ts`, then compiles all packages
+- **`build-types`** — compiles `**/schema.ts` and the files the generator imports
+  (`tsconfig.build-schemas.json`), then runs the `types-builder` generator to emit the
+  `.type/` artifacts and the `common-types` exports (types, validation, schemas)
+  from the json schemas. The generator imports the *compiled* `.js` of other packages
+  (`@data-fair/lib-utils/clone.js`, `@data-fair/lib-node/fs.js`…) because the published
+  `df-build-types` bin does too: when you add such an import to
+  `packages/types-builder/build.ts`, add its source to `tsconfig.build-schemas.json`.
+- **`build-tsc`** — removes the build outputs whose source was deleted (`scripts/clean-orphans.mts`,
+  or `npm publish` would ship them) and stale `.d.ts`, then compiles all packages
   (`tsconfig.build.json`, extends `tsconfig.json`, `target: esnext`, `module: nodenext`,
   `strict`, with source maps) to `.js` + `.d.ts`.
 - **`build-vue-tsc`** — type-checks/compiles the `vuetify` package with `vue-tsc`
   (`tsconfig.build-vue.json`).
-- **`eslint . --fix`** — final lint/auto-fix pass.
 
 ## Testing
 
@@ -104,9 +79,13 @@ Tests are `*.test.ts` files run with the Node.js built-in test runner via
 `--experimental-strip-types`. They are preceded by a `pre-test` step that builds the
 `types-builder` test fixtures.
 
+Tests import the sibling modules as `./x.js`, i.e. the **built** output: run
+`npm run build` after a source change, or the tests run against stale code.
+
 ```bash
-npm test                  # pre-test fixtures + run all *.test.ts
-npm run test-only         # same, but only tests marked with { only: true } (--test-only)
+npm run build && npm test   # pre-test fixtures + run all *.test.ts
+npm run test-only           # same, but only tests marked with { only: true } (--test-only)
+npm run quality             # build + lint + test, what the pre-push hook and the CI run
 ```
 
 To run a single file, target it with the same runner flags, e.g.:
@@ -118,7 +97,8 @@ node --experimental-strip-types --test packages/utils/event-promise.test.ts
 ## Linting & type-checking
 
 ```bash
-npm run lint     # eslint . --fix
+npm run lint       # eslint .
+npm run lint-fix   # eslint . --fix
 ```
 
 ESLint uses the flat config `eslint.config.mjs` (built on `neostandard`, TS enabled,
@@ -140,53 +120,40 @@ Common types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, etc.
 
 Husky hooks (installed by `npm run prepare` / on `npm ci`):
 
-- `commit-msg` → `commitlint --edit ""`
+- `commit-msg` → `commitlint --edit "$1"`
 - `pre-commit` → `npm run lint`
-- `pre-push`   → `npm run quality && npm run build` (`quality` = `eslint . && npm test`)
+- `pre-push`   → `npm run quality` (build + lint + test)
 
-The `pre-push` hook runs the full lint + test + build, so pushing is slow but guarantees
-a publishable state.
+Pull requests run the same `npm run quality` in GitHub Actions
+(`.github/workflows/pull-requests.yml`).
 
 ## Releasing & publishing
 
-There is **no release automation** (no CI, no `.github/`, no semantic-release). Each
-package is versioned and published **independently and manually**. The recipe below is
-the whole process — follow it for **each** package you changed.
-
-> Example: publishing a patch of `@data-fair/lib-vue` (in `packages/vue`).
+Each package is versioned and published **independently and manually**, from `main`.
+Follow this for **each** package you changed:
 
 ```bash
 # 0. Be logged in to npm with publish rights to the @data-fair scope.
 npm whoami                    # prints your user; if it errors, run: npm login
 
-# 1. Bump the changed package's version. patch = fix · minor = feat · major = breaking.
-#    --no-git-tag-version: we commit ourselves below (npm's default tag/commit isn't used).
-#    This edits packages/vue/package.json AND the matching entry in package-lock.json.
-npm version patch --workspace=packages/vue --no-git-tag-version
+# 1. Bump the version and create the release commit.
+#    patch = fix · minor = feat · major = breaking.
+npm run release vue minor     # -> commit "chore: release lib-vue 1.33.0"
 
-# 2. Sanity-check the diff is ONLY those two files, then commit with the release message.
-git diff --stat                                   # expect: packages/vue/package.json + package-lock.json
-git commit -am "chore: release lib-vue 1.28.2"    # use the new version npm just wrote
-
-# 3. Push. The pre-push hook runs `quality && build`, so this validates before you publish.
+# 2. Push (the pre-push hook runs the quality checks), then publish. prepublishOnly
+#    re-runs `npm run quality`, so the tarball is always freshly built. Add --otp if you use 2FA.
 git push
-
-# 4. Publish that one workspace. Its prepublishOnly re-runs `quality && build` and ships
-#    only the built files (the package's "files" allow-list). Add --otp if you use 2FA.
-npm publish --workspace=packages/vue              # e.g. --otp=123456
+npm publish -w packages/vue
 ```
 
-That's it — the `chore: release lib-vue <version>` commit is the only record (per-package
-releases are **not** git-tagged). Repeat steps 1–4 for every package you touched.
+`npm run release` takes the directory name under `packages/` (`vue`, `node`, `express`…)
+and refuses to run on a dirty working tree. The `chore: release lib-<name> <version>`
+commit is the only record (per-package releases are **not** git-tagged).
 
 Notes:
 - **Which packages to release?** Only the ones whose source you changed. If you changed a
   package that others depend on, bump/release it first, then bump the dependents' version
   range if needed and release them too.
-- **Why a build runs twice** (pre-push *and* prepublishOnly): both run
-  `npm run quality && npm run build` (`quality` = `eslint . && npm test`). Publishing is
-  slow but always ships a lint-clean, tested, freshly-built tarball — the gitignored `.js`
-  are (re)built at publish time, never committed.
 - The legacy `v0.x.x` git tags track the root `@data-fair/lib` version; that root-level
   release scheme has been **dormant since 2024** and is not part of day-to-day releases.
 
@@ -227,7 +194,6 @@ Notes:
 
 ## Gotchas recap
 
-- Fresh checkout: run `npm run build-tsc` once (ignore its TS errors) before
-  `npm run build`. See [First build](#first-build-on-a-fresh-checkout-the-bootstrap-gotcha).
 - `.js` / `.d.ts` are build output and gitignored — never commit them.
+- Tests run against the built `.js`: rebuild before `npm test`.
 - `relative-deps` ships built output: rebuild lib before syncing into a consumer.

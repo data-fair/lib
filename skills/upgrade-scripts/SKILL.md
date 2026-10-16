@@ -169,7 +169,7 @@ import upgradeScripts from '@data-fair/lib-node/upgrade-scripts.js'
 import locks from '@data-fair/lib-node/locks.js'
 import db from './db.js'
 
-await locks.init(db)
+await locks.start(db)
 await upgradeScripts(db, locks)
 ```
 
