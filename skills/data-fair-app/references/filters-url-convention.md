@@ -190,6 +190,9 @@ Restriction et sélection s'écrivent avec **la même forme d'URL** (`_c_`/`_d_`
 opérateur) : ce qui les distingue n'est pas la clé écrite, mais le **champ de
 sélection déclaré par la visu réceptrice**.
 
+Le marqueur `_s_` (lib-vue 1.32, `selection-filters.js`) n'est plus supporté : toute trace (`_s_*` dans les `sync-params`, l'émission ou la
+lecture d'un marqueur, imports de `selection-filters.js`) est à purger de l'application.
+
 - **Filtre** : un critère (facette, période, recherche…). La visu se restreint.
 - **Sélection** : un clic sur une entité ou un ensemble (une barre, une ligne, une
   entité de carte, une commune). La visu met en évidence — elle ne se restreint
