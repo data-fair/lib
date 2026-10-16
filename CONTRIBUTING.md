@@ -25,6 +25,7 @@ Workspaces are declared in the root `package.json` (`workspaces`). Each lives in
 | `packages/vue`             | `@data-fair/lib-vue`             | Composables and utilities for Vue 3 applications (e.g. `useSession`, ws). |
 | `packages/vuetify`         | `@data-fair/lib-vuetify`         | UI components built on Vuetify. |
 | `packages/processing-dev`  | `@data-fair/lib-processing-dev`  | Utilities for the development environment of a processing. |
+| `packages/dev`             | `@data-fair/lib-dev`             | Dev environment tooling of the services (`df-dev`, `df-worktree`, `df-mem-cap`, `df-status`). |
 
 ## Prerequisites
 
