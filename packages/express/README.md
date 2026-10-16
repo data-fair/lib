@@ -66,6 +66,27 @@ Permissions, account roles, admin mode and the Vue side are covered by the [`dat
   A granted umbrella such as `datasets` already covers `datasets:read`, so it need not be listed.
   "Write implies read" is expressed by listing the accepted scopes, e.g.
   `requireScope(['datasets:read', 'datasets:write'])` (any one of them is enough).
+- simple-directory signs scoped tokens and access tokens with a separate key set
+  (`/.well-known/scoped-jwks.json`, key ids `scoped-...`). Older libs only know
+  `/.well-known/jwks.json` and refuse those tokens, so a scoped token never acts with full role
+  power on a service that was not upgraded. Access tokens split into cookies are refused, scoped
+  tokens cannot carry superadmin claims and must expire, only RS256 is accepted.
+- In a scope-aware service every route that reads the session must check a scope first:
+  `requireScope(...)` / `assertReqScope(req, ...)`, or `allowAnyScope` / `markScopeChecked(req)`
+  when any scope is fine (session machinery, public resources). Otherwise the session accessors
+  (`session.req()`, `reqSession()` and friends) answer 403 to scoped sessions, also when only the
+  raw `user.scope` claim is present. Unrestricted sessions are not concerned.
+  - Mark scopes per route, with the narrowest scope the route needs.
+  - Never apply `allowAnyScope` app-wide, outside the session machinery itself: it would open
+    every route to every scope.
+  - A mark lasts for the whole request: a route that checked a scope and calls `next()` into
+    another handler passes the mark on to it.
+- Websockets (`ws-server`) do not accept scoped sessions yet.
+- `session.reqForLogs(req)` reads the session for logging only; never use it for authorization.
+  It never throws and ignores the scope check requirement; 401/403 refusals are silent, other
+  errors are reported as internal errors.
+- `session.readState`, `readStateFromCookie` and `readStateFromBearer` are raw readers: no route
+  scope guard and no per-request cache. They are not meant for authorization.
 
 ## Websockets and identities
 
