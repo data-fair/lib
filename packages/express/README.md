@@ -50,6 +50,16 @@ app.use(errorHandler)
 
 Permissions, account roles, admin mode and the Vue side are covered by the [`data-fair-session` skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-session).
 
+### Scopes and bearer tokens
+
+- `Authorization: Bearer <token>` is read before cookies. Only tokens whose JWT header has
+  `typ: at+jwt` are accepted; any other token is a 401.
+- A token with a `scope` claim produces `sessionState.scopes`. A service that enforces scopes
+  calls `session.init(directoryUrl, lang, onlyDecode, { scopeAware: true })`; otherwise every
+  scope-restricted session gets a 403.
+- `requireScope(['datasets:read', 'datasets'])` guards a route; `hasScope` / `assertScope`
+  do the same in code. A session without scopes is unrestricted.
+
 ## Websockets and identities
 
 - Websocket server: [`data-fair-ws` skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-ws).
