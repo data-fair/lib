@@ -6,7 +6,7 @@ monorepo. Each workspace under `packages/` is published independently to npm in 
 `@data-fair` namespace with the `lib-` prefix (e.g. `@data-fair/lib-utils`,
 `@data-fair/lib-vue`).
 
-For *what* each package does and usage examples, see [`README.md`](./README.md). This
+For *what* each package does and usage examples, see each package README (`packages/<dir>/README.md`, indexed in [`README.md`](./README.md)). This
 document is about *contributing* — building, testing, and developing the lib itself.
 
 ## Repository layout
@@ -19,7 +19,7 @@ Workspaces are declared in the root `package.json` (`workspaces`). Each lives in
 | `packages/utils`           | `@data-fair/lib-utils`           | Dependency-less / dependency-light utility functions (e.g. `clone`, `json-schema`). |
 | `packages/validation`      | `@data-fair/lib-validation`      | Small validation utils, mostly wrapping ajv (with `ajv-i18n`). |
 | `packages/common-types`    | `@data-fair/lib-common-types`    | Shared json schemas and the built type definitions used across the stack. |
-| `packages/types-builder`   | `@data-fair/lib-types-builder`   | Tool that processes json schemas to produce types, validation and serialization functions. Ships the `df-build-types` bin. |
+| `packages/types-builder`   | `@data-fair/lib-types-builder`   | Tool that processes json schemas to produce types, validation functions and resolved schemas. Ships the `df-build-types` bin. |
 | `packages/node`            | `@data-fair/lib-node`            | Server-side Node.js utilities (observer/metrics, ws, upgrade-scripts, fs…). |
 | `packages/express`         | `@data-fair/lib-express`         | Express middlewares and helpers (session, async handler, ws-server…). |
 | `packages/vue`             | `@data-fair/lib-vue`             | Composables and utilities for Vue 3 applications (e.g. `useSession`, ws). |
@@ -61,7 +61,7 @@ The runtime `.js` and `.d.ts` files are build output and are **gitignored** (`*.
 
 - **`build-types`** — compiles `**/schema.ts` and the files the generator imports
   (`tsconfig.build-schemas.json`), then runs the `types-builder` generator to emit the
-  `.type/` artifacts and the `common-types` exports (types, validation, serialization)
+  `.type/` artifacts and the `common-types` exports (types, validation, schemas)
   from the json schemas. The generator imports the *compiled* `.js` of other packages
   (`@data-fair/lib-utils/clone.js`, `@data-fair/lib-node/fs.js`…) because the published
   `df-build-types` bin does too: when you add such an import to
