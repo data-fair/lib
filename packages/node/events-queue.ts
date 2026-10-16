@@ -9,8 +9,8 @@ import { SessionState } from '@data-fair/lib-common-types/session/index.js'
 const debug = Debug('events-queue')
 
 export type EventsQueueOptions = {
-  eventsUrl: string,
-  eventsSecret: string,
+  eventsUrl?: string | null,
+  eventsSecret?: string | null,
   inactive?: boolean
 }
 
@@ -31,8 +31,14 @@ export class EventsQueue {
 
   start = async (options: EventsQueueOptions) => {
     if (this._options) return // already initialized
-    this._options = options
-    this.loop()
+    // events is an optional service: without its url it is not deployed and events are dropped
+    let inactive = !!options.inactive || !options.eventsUrl
+    if (!inactive && !options.eventsSecret) {
+      internalError('events-queue', 'the events service url is set but its secret is missing, events are dropped')
+      inactive = true
+    }
+    this._options = { ...options, inactive }
+    if (!inactive) this.loop()
   }
 
   stop = async () => {

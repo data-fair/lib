@@ -36,4 +36,30 @@ describe('events queue', () => {
     assert.equal(received[0].url, '/api/events')
     assert.equal(received[0].body[0].title, 'test event')
   })
+
+  const event = { title: 'dropped', topic: { key: 'test' }, sender: { type: 'user', id: 'user1' } } as any
+
+  it('should drop events silently when the events service has no url', async () => {
+    const queue = new EventsQueue()
+    await queue.start({ eventsUrl: '', eventsSecret: 'secret' })
+    assert.equal(queue.options().inactive, true)
+    queue.pushEvent(event)
+    queue.pushNotification({ title: 'dropped', topic: { key: 'test' } } as any)
+    assert.equal(queue.eventsQueue.length, 0)
+    assert.equal(queue.notificationsQueue.length, 0)
+    await queue.stop()
+  })
+
+  it('should drop events when the url is set but the secret is missing', async () => {
+    const queue = new EventsQueue()
+    await queue.start({ eventsUrl: `http://127.0.0.1:${port}` })
+    assert.equal(queue.options().inactive, true)
+    queue.pushEvent(event)
+    assert.equal(queue.eventsQueue.length, 0)
+    await queue.stop()
+  })
+
+  it('should still refuse events before start', () => {
+    assert.throws(() => new EventsQueue().pushEvent(event), /not initialized/)
+  })
 })
