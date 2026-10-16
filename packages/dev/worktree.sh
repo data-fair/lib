@@ -61,14 +61,15 @@ REMOTE_EXISTS=no
 git show-ref --verify --quiet "refs/heads/$BRANCH_NAME" && LOCAL_EXISTS=yes
 git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME" && REMOTE_EXISTS=yes
 
-STASH_REF=""
+STASH_SHA=""
 if [ "$LOCAL_EXISTS" = "yes" ] && [ "$CURRENT_BRANCH" = "$BRANCH_NAME" ]; then
     echo "Branch '$BRANCH_NAME' is currently checked out in $PWD — migrating it to the worktree."
     if [ -n "$(git status --porcelain)" ]; then
         STASH_LABEL="worktree-migration-${BRANCH_NAME}-$(date +%s)"
         echo "Stashing local changes (incl. untracked) as '$STASH_LABEL'"
         git stash push --include-untracked --message "$STASH_LABEL"
-        STASH_REF=$(git stash list --format='%gd %gs' | grep -F "$STASH_LABEL" | head -1 | awk '{print $1}')
+        # the stash stack is shared by every worktree: keep the sha, a stash@{n} index moves
+        STASH_SHA=$(git stash list --format='%H %gs' | grep -F "$STASH_LABEL" | head -1 | awk '{print $1}')
     fi
     echo "Switching this checkout to $MAIN_BRANCH"
     git checkout "$MAIN_BRANCH"
@@ -86,9 +87,11 @@ else
     git worktree add -b "$BRANCH_NAME" "$TARGET_DIR" "$SOURCE_BRANCH"
 fi
 
-if [ -n "$STASH_REF" ]; then
+if [ -n "$STASH_SHA" ]; then
     echo "Re-applying stashed changes inside the worktree"
-    ( cd "$TARGET_DIR" && git stash pop "$STASH_REF" )
+    ( cd "$TARGET_DIR" && git stash apply "$STASH_SHA" )
+    STASH_REF=$(git stash list --format='%gd %H' | awk -v sha="$STASH_SHA" '$2 == sha { print $1 }')
+    [ -n "$STASH_REF" ] && git stash drop -q "$STASH_REF"
 fi
 
 cd "$TARGET_DIR"
@@ -111,7 +114,7 @@ echo "-----------------------------------------------"
 echo "✅ Setup Complete!"
 echo "Location: $TARGET_DIR"
 echo "Branch:   $BRANCH_NAME"
-if [ -n "$STASH_REF" ]; then
+if [ -n "$STASH_SHA" ]; then
     echo "(Local changes from your previous checkout were migrated.)"
 fi
 echo "-----------------------------------------------"
