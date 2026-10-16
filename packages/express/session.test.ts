@@ -338,6 +338,14 @@ describe('Session bearer and scopes', () => {
     assert.equal(bearerToken, 'abc.def.ghi')
   })
 
+  it('refuses an empty bearer header without reading cookies', async () => {
+    for (const header of ['Bearer', 'Bearer ', 'Bearer\t']) {
+      const session = new Session()
+      session.readStateFromCookie = async () => { throw new Error('cookies must not be read') }
+      await assert.rejects(session.req(mockReq('GET', { authorization: header, cookie: 'id_token=x; id_token_sign=y' })), (err: any) => err.status === 401)
+    }
+  })
+
   it('refuses a scope-restricted session in a service that is not scope-aware', async () => {
     const session = new Session()
     session.readState = async () => scopedState()
@@ -364,7 +372,7 @@ describe('Session bearer and scopes', () => {
     const req = mockReq()
     await new Promise<void>((resolve, reject) => session.middleware()(req, mockRes(), (err?: any) => err ? reject(err) : resolve()))
     let called = false
-    requireScope(['datasets:read', 'datasets'])(req, mockRes(), () => { called = true })
+    requireScope('datasets:read')(req, mockRes(), () => { called = true })
     assert.ok(called)
     assert.throws(() => requireScope('datasets:write')(req, mockRes(), () => {}), (err: any) => err.status === 403)
   })

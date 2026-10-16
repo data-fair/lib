@@ -18,10 +18,6 @@ const sessionMiddlewareKey = Symbol('session-middleware')
 
 export class Session extends SessionHandler {
   private onlyDecode?: (req: Request | IncomingMessage) => boolean
-  // a service declares itself scope-aware once it enforces scopes on its routes; until then a
-  // scope-restricted session (an NHI or OAuth access token with a scope claim) is refused with
-  // a 403 instead of acting with the full role of its identity
-  public scopeAware = false
 
   init (directoryUrl = 'http://simple-directory:8080', defaultLang?: string, onlyDecode?: (req: Request | IncomingMessage) => boolean, options: { scopeAware?: boolean } = {}) {
     this.initJWKS(directoryUrl)
@@ -84,9 +80,10 @@ export class Session extends SessionHandler {
     // a bearer access token wins over cookies: cookies of a browser session must never be mixed
     // with the account binding of an access token
     // the auth scheme is case-insensitive (RFC 7235)
-    const bearerMatch = req.headers.authorization?.match(/^bearer\s+(.+)$/i)
+    // an empty token ('Bearer', 'Bearer ') is still a bearer attempt: refused by readStateFromBearer, never a fallback to cookies
+    const bearerMatch = req.headers.authorization?.match(/^bearer(?:\s+(.*))?$/i)
     if (bearerMatch) {
-      return this.readStateFromBearer(bearerMatch[1].trim())
+      return this.readStateFromBearer((bearerMatch[1] ?? '').trim())
     }
     // reuse req.cookies if a cookie-parser middleware already populated it, to avoid re-parsing the Cookie header
     // @ts-ignore - cookies is set by cookie-parser, absent on plain IncomingMessage
