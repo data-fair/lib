@@ -227,9 +227,12 @@ reset their volumes with this change anyway (mongo 4.2 → 8).
       - elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9200"]
-      interval: 2s
-      timeout: 2s
-      retries: 60
+      # 2 s probes while starting (df-dev wait-deps gives up after 3 min), then one per minute
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 3m
+      start_interval: 2s
     mem_limit: 2g
     # no swap: an idle ES got 1.7 GB swapped out
     memswap_limit: 2g
@@ -244,9 +247,12 @@ reset their volumes with this change anyway (mongo 4.2 → 8).
       - mongo-data:/data/db
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
-      interval: 2s
-      timeout: 2s
-      retries: 60
+      # 2 s probes while starting, then one per minute: a mongosh probe costs ~1.3 s of CPU
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 3m
+      start_interval: 2s
 
   maildev:
     profiles:
