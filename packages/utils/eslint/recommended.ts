@@ -1,16 +1,17 @@
 import type { Linter } from 'eslint'
 
 export const deprecatedModules: { name: string, message: string, importNames?: string[] }[] = [
-  { name: 'event-to-promise', message: 'Please use @data-fair/lib/event-promise.js' },
-  { name: '@koumoul/sd-vue', message: 'Please use @data-fair/lib/vue/session.js' },
-  { name: '@koumoul/sd-express', message: 'Please use @data-fair/lib/express/session.js' },
-  { name: '@data-fair/sd-vue', message: 'Please use @data-fair/lib/vue/session.js' },
-  { name: '@data-fair/sd-express', message: 'Please use @data-fair/lib/express/session.js' },
-  { name: '@data-fair/processings-test-utils', message: 'Please use @data-fair/lib/processings/test-utils.js' },
+  { name: 'event-to-promise', message: 'Please use @data-fair/lib-utils/event-promise.js' },
+  { name: '@koumoul/sd-vue', message: 'Please use @data-fair/lib-vue/session.js' },
+  { name: '@koumoul/sd-express', message: 'Please use @data-fair/lib-express/session.js' },
+  { name: '@data-fair/sd-vue', message: 'Please use @data-fair/lib-vue/session.js' },
+  { name: '@data-fair/sd-express', message: 'Please use @data-fair/lib-express/session.js' },
+  { name: '@data-fair/processings-test-utils', message: 'Please use @data-fair/lib-processing-dev/tests-utils.js' },
   { name: '@data-fair/lib/express/async-handler.js', message: 'asyncHandler was removed, use native support of async functions with Express 5.' },
-  { name: 'rfdc', message: 'Please use @data-fair/lib/clone.js' },
-  { name: 'http-errors', message: 'Please use @data-fair/lib/http-errors.js' },
-  { name: 'original-url', message: 'Please use @data-fair/lib/express/req-origin.js' }
+  { name: '@data-fair/lib-express/async-handler.js', message: 'asyncHandler is deprecated, use native support of async functions with Express 5.' },
+  { name: 'rfdc', message: 'Please use @data-fair/lib-utils/clone.js' },
+  { name: 'http-errors', message: 'Please use @data-fair/lib-utils/http-errors.js' },
+  { name: 'original-url', message: 'Please use @data-fair/lib-express/req-origin.js' }
 ]
 
 const config: Linter.Config[] = [{
