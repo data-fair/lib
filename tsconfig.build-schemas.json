@@ -1,4 +1,10 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["packages/**/schema.ts"]
+  "include": [
+    "packages/**/schema.ts",
+    "packages/types-builder/build.ts",
+    "packages/utils/clone.ts",
+    "packages/utils/json-schema.ts",
+    "packages/node/fs.ts"
+  ]
 }
