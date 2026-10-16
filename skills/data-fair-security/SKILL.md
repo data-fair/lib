@@ -22,7 +22,7 @@ Network rules (egress NetworkPolicies) exist in production but are a second laye
 
 The check runs when the connection is created, on the exact address used: IP literals, every address a DNS name resolves to (no rebinding), every redirect hop.
 
-Operators tune it with `SSRF_PUBLIC_IPS` (IPs/CIDRs to accept, e.g. an intranet source of a self-hosted instance) and `SSRF_PRIVATE_IPS` (public IPs to refuse, e.g. database servers). Dev environments set `SSRF_PUBLIC_IPS=127.0.0.1,::1` (all dev services are on the loopback) — in each repo's `dev/init-env.sh`. When `HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY` is set the protection is off (the agents connect to the proxy) and a warning is logged at startup.
+Operators tune it with `SSRF_PUBLIC_IPS` (IPs/CIDRs to accept, e.g. an intranet source of a self-hosted instance) and `SSRF_PRIVATE_IPS` (public IPs to refuse, e.g. database servers). Dev environments set `SSRF_PUBLIC_IPS=127.0.0.1,::1` (all dev services are on the loopback): `df-dev init-env` (`@data-fair/lib-dev`) writes it to `.env`, a repo not migrated yet does it in its `dev/init-env.sh`. When `HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY` is set the protection is off (the agents connect to the proxy) and a warning is logged at startup.
 
 Rules:
 
@@ -78,4 +78,4 @@ Anything that does not go through node's `http.Agent` of lib-node escapes the ch
 - [ ] No remote or user-provided name joined into a path, no `exec` with interpolation.
 - [ ] Downloads and pagination loops are bounded.
 - [ ] No privilege granted on `reqIsInternal` alone.
-- [ ] Dev env (`dev/init-env.sh`) sets `SSRF_PUBLIC_IPS=127.0.0.1,::1` if the repo uses lib-node >= 2.14.
+- [ ] Dev env (`df-dev init-env`, or `dev/init-env.sh` before the migration) sets `SSRF_PUBLIC_IPS=127.0.0.1,::1` if the repo uses lib-node >= 2.14.
