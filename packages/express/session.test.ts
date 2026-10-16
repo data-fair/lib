@@ -484,6 +484,13 @@ describe('scope checks are required per route', () => {
     assert.equal(calls.length, 2)
   })
 
+  it('reqForLogs never throws even when reporting throws', async () => {
+    const failing = new Session()
+    failing.onLogsError = () => { throw new Error('reporter broke') }
+    failing.readState = async () => { throw new Error('mongo down') }
+    assert.equal(await failing.reqForLogs(mockReq()), undefined)
+  })
+
   it('reqForLogs never throws', async () => {
     const { session, req } = await setup(scopedState)
     const state = await session.reqForLogs(req)

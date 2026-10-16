@@ -56,12 +56,14 @@ export class Session extends SessionHandler {
       return await this.loadState(req)
     } catch (err: any) {
       // 401/403 are expected refusals; anything else (jwks fetch, infrastructure) must not vanish
-      if (!err?.status || err.status >= 500) this.onLogsError(err)
+      if (!err?.status || err.status >= 500) {
+        try { this.onLogsError(err) } catch { /* reporting must never throw either */ }
+      }
       return undefined
     }
   }
 
-  // overridable seam, mostly for tests
+  /** @internal test seam, not API */
   onLogsError (err: unknown) {
     internalError('event-log-session', err)
   }
@@ -116,8 +118,9 @@ export class Session extends SessionHandler {
     ])
   }
 
-  // raw reader, applies neither the route scope guard nor the session cache: not for authorization,
-  // use session.req() / reqSession(). It does not even refuse scoped states of a service that is not scope-aware (loadState does).
+  // raw reader, applies neither the route scope guard nor the session cache. The lib-node readers it
+  // delegates to refuse scoped states when the service is not scope-aware; loadState additionally
+  // refuses a raw user.scope claim and checks boundIp. Not for authorization: use session.req() / reqSession().
   async readState (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
     // a bearer access token wins over cookies: cookies of a browser session must never be mixed
     // with the account binding of an access token
