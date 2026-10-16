@@ -12,6 +12,14 @@ export type KeySet = 'session' | 'scoped'
 // verify against that set, so a forged kid gains nothing
 export const keySetOfKid = (kid?: string): KeySet => kid?.startsWith('scoped-') ? 'scoped' : 'session'
 
+// only a genuine token failure means the credential is bad; anything else (jwks unreachable,
+// jwks-rsa rate limit, network error, unexpected bug) says nothing about the token and must
+// neither refuse it as invalid nor clear the session of the user
+const tokenFailureNames = new Set(['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError', 'SigningKeyNotFoundError'])
+const isTokenFailure = (err: any) =>
+  err?.status === 401 || tokenFailureNames.has(err?.name) ||
+  err?.message === 'failed to decode token' || err?.message === 'not a session token'
+
 type TokenSessionState = Omit<SessionState, 'lang' | 'dark'>
 
 export class SessionHandler {
@@ -28,7 +36,7 @@ export class SessionHandler {
   }
 
   initJWKS (directoryUrl = 'http://simple-directory:8080') {
-    const client = (path: string) => JwksClient({ jwksUri: directoryUrl + path, rateLimit: true, jwksRequestsPerMinute: 10 })
+    const client = (path: string) => JwksClient({ jwksUri: directoryUrl + path })
     this._jwksClients = {
       session: client('/.well-known/jwks.json'),
       scoped: client('/.well-known/scoped-jwks.json')
@@ -87,7 +95,7 @@ export class SessionHandler {
       if (keySet === 'scoped' && !hasScope) throw httpError(401, 'scoped key set token must carry a scope')
     }
     if (keySet === 'scoped') {
-      if (payload?.adminMode || payload?.asAdmin || payload?.isAdmin) throw httpError(401, 'scoped token cannot carry superadmin claims')
+      if (payload && ('adminMode' in payload || 'asAdmin' in payload || 'isAdmin' in payload)) throw httpError(401, 'scoped token cannot carry superadmin claims')
       if (typeof payload?.exp !== 'number') throw httpError(401, 'scoped token must expire')
     }
   }
@@ -180,22 +188,16 @@ export class SessionHandler {
       try {
         const verified = await this.verifyTokenKeySet(token)
         user = verified.payload as User
-
         this.assertTokenKind('cookie', verified.header, verified.payload, verified.keySet)
       } catch (err: any) {
-        if (err.status === 401 && err.name !== 'JwksError') {
-          if (clearBrokenSession) clearBrokenSession()
-          throw err
-        }
         console.warn(err)
-        if (err.name === 'JwksError') {
-          // happens in case of temporary unavailability if SD
+        if (!isTokenFailure(err)) {
+          // happens in case of temporary unavailability of SD
           // better not to disconnect user in this case
           throw httpError(500, 'Session token public keys not initialized')
-        } else {
-          if (clearBrokenSession) clearBrokenSession()
-          throw httpError(401)
         }
+        if (clearBrokenSession) clearBrokenSession()
+        throw err.status === 401 ? err : httpError(401)
       }
     }
     if (!user) return { lang, dark }
@@ -220,9 +222,8 @@ export class SessionHandler {
       this.assertTokenKind('bearer', verified.header, verified.payload, verified.keySet)
       user = verified.payload as User
     } catch (err: any) {
-      if (err.name === 'JwksError') throw httpError(500, 'Session token public keys not initialized')
-      if (err.status === 401) throw err
-      throw httpError(401)
+      if (!isTokenFailure(err)) throw httpError(500, 'Session token public keys not initialized')
+      throw err.status === 401 ? err : httpError(401)
     }
     if (!user?.organizations) throw httpError(401, 'bearer token is not an access token')
     if (user.organizations.length > 1) throw httpError(401, 'access token must be bound to at most one organization')

@@ -334,7 +334,7 @@ describe('key sets and token kinds', () => {
 
   it('scoped-set tokens cannot carry superadmin claims and must expire', async () => {
     const handler = realHandler()
-    for (const claims of [{ adminMode: 1 }, { asAdmin: { id: 'a', name: 'A' } }, { isAdmin: 1 }]) {
+    for (const claims of [{ adminMode: 1 }, { asAdmin: { id: 'a', name: 'A' } }, { isAdmin: 1 }, { isAdmin: 0 }, { adminMode: false }]) {
       await rejects401(handler.readStateFromBearer(signScoped({ ...nhiUser, ...claims }, { typ: 'at+jwt' })))
     }
     // no exp claim at all
@@ -354,5 +354,49 @@ describe('key sets and token kinds', () => {
     const token = jwt.sign(testUser, sessionKeys.privateKey, { algorithm: 'PS256', keyid: 'sd-1', expiresIn: '5m' })
     await rejects401(handler.readStateFromCookie(toCookies(token)))
     await assert.rejects(handler.verifyToken(token))
+  })
+})
+
+describe('verification errors', () => {
+  const stubbed = (err: Error) => {
+    const handler = realHandler()
+    ;(handler as any).getSigningKeyObject = async () => { throw err }
+    return handler
+  }
+  const named = (name: string, message = name) => Object.assign(new Error(message), { name })
+  const token = () => signScoped({ ...testUser, organizations: [testUser.organizations[0]], scope: 'datasets' }, { typ: 'at+jwt' })
+
+  it('infrastructure failures are a 500 and never clear the cookies', async () => {
+    for (const err of [named('JwksRateLimitError'), new Error('connect ECONNREFUSED'), named('JwksError')]) {
+      const handler = stubbed(err)
+      let cleared = false
+      await assert.rejects(
+        handler.readStateFromCookie(toCookies(signScoped({ ...testUser, scope: 'datasets' })), false, () => { cleared = true }),
+        (e: any) => e.status === 500
+      )
+      assert.equal(cleared, false)
+      await assert.rejects(handler.readStateFromBearer(token()), (e: any) => e.status === 500)
+    }
+  })
+
+  it('a kid absent from the jwks is a 401 and clears the cookies', async () => {
+    const handler = stubbed(named('SigningKeyNotFoundError'))
+    let cleared = false
+    await assert.rejects(
+      handler.readStateFromCookie(toCookies(signScoped({ ...testUser, scope: 'datasets' })), false, () => { cleared = true }),
+      (e: any) => e.status === 401
+    )
+    assert.equal(cleared, true)
+    await rejects401(handler.readStateFromBearer(token()))
+  })
+
+  it('looks a scoped kid up in the scoped client and another kid in the session client', async () => {
+    const handler = new SessionHandler()
+    const calls: string[] = []
+    const client = (name: string, key: any) => ({ getSigningKey: async (kid: string) => { calls.push(name + ':' + kid); return { getPublicKey: () => key.export({ format: 'pem', type: 'spki' }) } } })
+    ;(handler as any)._jwksClients = { session: client('session', sessionKeys.publicKey), scoped: client('scoped', scopedKeys.publicKey) }
+    await handler.verifyTokenKeySet(signSession({ id: 'u' }))
+    await handler.verifyTokenKeySet(signScoped({ id: 'u' }))
+    assert.deepEqual(calls, ['session:sd-1', 'scoped:scoped-sd-1'])
   })
 })
