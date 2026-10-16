@@ -63,6 +63,7 @@ export const start = async (
           return ws.send(JSON.stringify({ type: 'error', channel: message.channel, status: 400, data: 'type should be "subscribe" or "unsubscribe"' }))
         }
         if (message.type === 'subscribe') {
+          // session.req refuses scope-restricted sessions (403): websockets do not support scoped sessions yet
           const sessionState = await session.req(req)
           if (!sessionState.user?.adminMode && !await canSubscribe(message.channel, sessionState, message)) {
             return ws.send(JSON.stringify({ type: 'error', channel: message.channel, status: 403, data: 'Permission manquante.' }))

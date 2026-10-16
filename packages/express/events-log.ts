@@ -72,12 +72,10 @@ async function log (level: EventLogLevel, code: string, message: string, context
 
   // new session management
   if (!user && context.req) {
-    try {
-      const sessionState = await session.req(context.req)
+    const sessionState = await session.reqForLogs(context.req)
+    if (sessionState) {
       user = sessionState.user
       account = sessionState.account
-    } catch (err: any) {
-      internalError('event-log-session', err)
     }
   }
 

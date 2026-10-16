@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
-import { Session, requireScope, reqSession, reqSessionAuthenticated, reqAdminMode, setReqUser, setReqSession } from './session.js'
+import { Session, requireScope, assertReqScope, allowAnyScope, markScopeChecked, reqSession, reqSessionAuthenticated, reqAdminMode, reqUser, reqUserAuthenticated, setReqUser, setReqSession } from './session.js'
 import type { Request, Response } from 'express'
 import type { SessionState, User } from '@data-fair/lib-common-types/session/index.js'
 
@@ -323,7 +323,9 @@ describe('Session bearer and scopes', () => {
     session.readStateFromBearer = async (token: string) => { bearerToken = token; return scopedState() }
     session.readStateFromCookie = async () => { throw new Error('cookies must not be read') }
     session.scopeAware = true
-    const state = await session.req(mockReq('GET', { authorization: 'Bearer abc.def.ghi', cookie: 'id_token=x; id_token_sign=y' }))
+    const req = mockReq('GET', { authorization: 'Bearer abc.def.ghi', cookie: 'id_token=x; id_token_sign=y' })
+    markScopeChecked(req)
+    const state = await session.req(req)
     assert.equal(bearerToken, 'abc.def.ghi')
     assert.deepEqual(state.scopes, ['datasets:read'])
   })
@@ -334,7 +336,9 @@ describe('Session bearer and scopes', () => {
     session.readStateFromBearer = async (token: string) => { bearerToken = token; return scopedState() }
     session.readStateFromCookie = async () => { throw new Error('cookies must not be read') }
     session.scopeAware = true
-    await session.req(mockReq('GET', { authorization: 'bearer abc.def.ghi', cookie: 'id_token=x; id_token_sign=y' }))
+    const req = mockReq('GET', { authorization: 'bearer abc.def.ghi', cookie: 'id_token=x; id_token_sign=y' })
+    markScopeChecked(req)
+    await session.req(req)
     assert.equal(bearerToken, 'abc.def.ghi')
   })
 
@@ -375,5 +379,95 @@ describe('Session bearer and scopes', () => {
     requireScope('datasets:read')(req, mockRes(), () => { called = true })
     assert.ok(called)
     assert.throws(() => requireScope('datasets:write')(req, mockRes(), () => {}), (err: any) => err.status === 403)
+  })
+})
+
+describe('scope checks are required per route', () => {
+  const scopedState = (): SessionState => ({
+    lang: 'fr',
+    user: { ...testUser, scope: 'datasets:read' },
+    account: { type: 'organization', id: 'org1', name: 'Test Org' },
+    accountRole: 'admin',
+    scopes: ['datasets:read']
+  })
+  const is403 = (err: any) => err.status === 403 && /does not check scopes/.test(err.message)
+  async function setup (state: () => SessionState | Promise<SessionState>, scopeAware = true) {
+    const session = new Session()
+    session.scopeAware = scopeAware
+    session.readState = async () => state()
+    const req = mockReq()
+    await new Promise<void>((resolve, reject) => session.middleware()(req, mockRes(), (err?: any) => err ? reject(err) : resolve()))
+    return { session, req }
+  }
+
+  it('a scoped session read without a scope check is refused', async () => {
+    const { session, req } = await setup(scopedState)
+    assert.throws(() => reqSession(req), is403)
+    assert.throws(() => reqSessionAuthenticated(req), is403)
+    assert.throws(() => reqAdminMode(req), is403)
+    assert.throws(() => reqUser(req), is403)
+    assert.throws(() => reqUserAuthenticated(req), is403)
+    await assert.rejects(session.req(req), is403)
+    await assert.rejects(session.reqAuthenticated(req), is403)
+    await assert.rejects(session.reqAdminMode(req), is403)
+  })
+
+  it('requireScope marks the request, then the accessors work', async () => {
+    const { session, req } = await setup(scopedState)
+    let called = false
+    requireScope('datasets:read')(req, mockRes(), () => { called = true })
+    assert.ok(called)
+    assert.deepEqual(reqSession(req).scopes, ['datasets:read'])
+    assert.equal(reqUser(req)?.id, testUser.id)
+    assert.deepEqual((await session.req(req)).scopes, ['datasets:read'])
+  })
+
+  it('assertReqScope refuses an uncovered scope and does not mark', async () => {
+    const { req } = await setup(scopedState)
+    assert.throws(() => assertReqScope(req, 'datasets:write'), (err: any) => err.status === 403 && !is403(err))
+    assert.throws(() => reqSession(req), is403)
+    assertReqScope(req, ['datasets:write', 'datasets:read'])
+    assert.ok(reqSession(req))
+  })
+
+  it('allowAnyScope and markScopeChecked mark without restriction', async () => {
+    const a = await setup(scopedState)
+    let called = false
+    allowAnyScope(a.req, mockRes(), () => { called = true })
+    assert.ok(called)
+    assert.ok(reqSession(a.req))
+    const b = await setup(scopedState)
+    markScopeChecked(b.req)
+    assert.ok(reqSession(b.req))
+  })
+
+  it('unrestricted sessions are never concerned', async () => {
+    const { session, req } = await setup(() => ({ lang: 'fr', user: testUser, account: { type: 'user', id: testUser.id, name: testUser.name }, accountRole: 'admin' }))
+    assert.equal(reqSession(req).user?.id, testUser.id)
+    assert.equal(reqUser(req)?.id, testUser.id)
+    assert.ok(await session.req(req))
+  })
+
+  it('pseudo sessions set by setReqUser are unaffected', async () => {
+    const { req } = await setup(scopedState)
+    setReqUser(req, testUser)
+    assert.equal(reqSession(req).user?.id, testUser.id)
+    setReqSession(req, { lang: 'fr' })
+    assert.equal(reqSession(req).lang, 'fr')
+  })
+
+  it('the not-scope-aware gate also reads the raw claim', async () => {
+    const session = new Session()
+    session.readState = async () => ({ lang: 'fr', user: { ...testUser, scope: 'datasets:read' } } as SessionState)
+    await assert.rejects(session.req(mockReq()), (err: any) => err.status === 403)
+  })
+
+  it('reqForLogs never throws', async () => {
+    const { session, req } = await setup(scopedState)
+    const state = await session.reqForLogs(req)
+    assert.deepEqual(state?.scopes, ['datasets:read'])
+    const failing = new Session()
+    failing.readState = async () => { throw Object.assign(new Error('nope'), { status: 401 }) }
+    assert.equal(await failing.reqForLogs(mockReq()), undefined)
   })
 })
