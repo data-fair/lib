@@ -31,6 +31,6 @@
   },
   "type": "module",
   "bin": {
-    "df-build-types": "./build.js"
+    "df-build-types": "build.js"
   }
 }
