@@ -18,8 +18,9 @@ Deux familles de clés :
 | Le champ n'a **pas** de concept | `_d_<datasetId>_<fieldKey>_<op>` | scopé à un dataset |
 
 Ces clés couvrent **deux mécanismes** distincts — le filtre (restriction) et la
-sélection (désignation d'entités) : voir § « Mode sélection `_s_` » pour le
-marqueur `_s_`, le rendu de la sélection et la propagation entre visus.
+sélection (désignation d'entités) — qui s'écrivent avec les **mêmes clés** : c'est
+la visu réceptrice qui décide, selon son champ de sélection déclaré, si la clé la
+restreint ou la met en évidence. Voir § « Sélection ».
 
 ## 1. Champ avec concept → `_c_<conceptId>_<op>`
 
@@ -141,11 +142,11 @@ un enfant :
    un autre dataset.
 2. Le champ n'a pas de concept → écrire `_d_<datasetId>_<fieldKey>_<op>=<valeur>`
    (jamais de clé nue, sauf appel REST direct).
-3. Convention app-dashboards (à reproduire) : le broadcast vers les visus enfants
-   émet la clé dataset-scopée **et**, si le champ porte un concept, le miroir
-   `_c_<conceptId>_<op>` avec la même valeur — la visu cible peut ainsi
-   réutiliser le filtre même sur un autre dataset. Voir
-   `useFiltersValues.ts:recompute` et `collectStaticFilterParams`.
+3. Si le champ porte un concept, écrire la clé **concept seule**
+   (`_c_<conceptId>_<op>`) : elle est réutilisable par une autre visu sur un
+   autre dataset. N'écrire `_d_<datasetId>_<fieldKey>_<op>` que lorsque le champ
+   n'a pas de concept. Voir `useFiltersValues.ts:recompute` et
+   `collectStaticFilterParams`.
 
 ## Réception : comment lire des filtres venant d'un parent
 
@@ -183,101 +184,83 @@ Prérequis :
   `@data-fair/lib-vue/reactive-search-params-global.js`) + adaptateur
   `createDFrameAdapter(reactiveSearchParams)` côté parent.
 
-## Mode sélection `_s_` (filtre vs sélection, clic → interop)
+## Sélection (désignation d'entités)
 
-Une application maintient son état dans son URL selon **deux mécanismes
-distincts** :
+Restriction et sélection s'écrivent avec **la même forme d'URL** (`_c_`/`_d_` +
+opérateur) : ce qui les distingue n'est pas la clé écrite, mais le **champ de
+sélection déclaré par la visu réceptrice**.
 
-| Mécanisme | Clés écrites par l'app | Effet |
-|---|---|---|
-| **Filtre** | `_c_<conceptId>_<op>` / `_d_<datasetId>_<fieldKey>_<op>` | restriction : l'app se restreint |
-| **Sélection** | les mêmes clés **+ le marqueur** `_s_<clé sans opérateur>` | désignation : aucune app ne se restreint, la sélection est rendue |
-
-- **Filtre** : un critère (facette, période, recherche…), jamais un clic sur une
-  entité — pas de marqueur.
+- **Filtre** : un critère (facette, période, recherche…). La visu se restreint.
 - **Sélection** : un clic sur une entité ou un ensemble (une barre, une ligne, une
-  entité de carte). L'app émettrice **s'auto-exclut** du filtre marqué — elle
-  garde son contexte complet, pas seulement l'entité — et rend la sélection.
-- **Réception** : un filtre **marqué** n'est jamais une restriction pour l'app qui
-  le reçoit ; elle rend la sélection selon son type (une carte peint les entités,
-  un tableau surligne les lignes, un graphe met les barres ou segments concernés
-  en évidence) ou l'ignore si elle n'a rien à mettre en évidence. Vrai quel que
-  soit l'opérateur : une plage (`_gte` + `_lte`, un seul marqueur) se rend comme
-  une plage. Un filtre **non marqué** s'applique normalement (restriction).
+  entité de carte, une commune). La visu met en évidence — elle ne se restreint
+  pas.
 
-**Émission** d'une sélection = un filtre **+ un marqueur** :
+### Règle de lecture d'une visu
 
-| Filtre émis | Marqueur |
+Une visu **déclare son (ses) champ(s) de sélection** : un concept
+(`x-concept.primary`) ou un champ dataset-scopé. Le champ est **propre à chaque
+visu** ; une visu peut en avoir plusieurs (ex. carto multicouche peignant sur
+plusieurs champs).
+
+| Clé `_c_<conceptId>_<op>` / `_d_<datasetId>_<fieldKey>_<op>` | Comportement de la visu |
 |---|---|
-| `_c_<conceptId>_<op>=<valeur>` | `_s_<conceptId>=app_<applicationId>` |
-| `_d_<datasetId>_<fieldKey>_<op>=<valeur>` | `_s_<datasetId>_<fieldKey>=app_<applicationId>` |
+| sur le **champ de sélection** de la visu | **sélection** : mise en évidence ; la clé est **retirée de ses requêtes API** |
+| sur un **autre champ** | **restriction** (comportement normal) |
+| `<fieldKey>_<op>` (clé nue) | réservée aux appels REST directs, inchangé |
 
-- Le marqueur est la **clé de filtre sans opérateur** (`_s_<conceptId>` /
-  `_s_<ds>_<field>`), ce qui lève l'ambiguïté champ/concept.
-- **Valeur** : `app_<applicationId>` avec `applicationId = window.APPLICATION.id`.
-  Elle identifie l'émetteur : une app sait si la sélection qu'elle rend est la
-  sienne ou vient de l'extérieur. Elle ne change rien au filtrage. Collision
-  connue et assumée : la même app embedée 2× sur la même page pour le même
-  concept. Une page peut y mettre autre chose (ex. le code d'une commune),
-  aucune app ne s'en trouvera être l'émetteur.
-- **Lecture** : aucune app ne restreint ses requêtes API sur une clé marquée
-  (contexte préservé, durable après reload de l'URL) —
-  `getConceptFilters` / `useConceptFilters` (lib-vue) les retirent déjà.
-  `findSelectionFilters(searchParams, datasetId)`
-  (`@data-fair/lib-vue/selection-filters.js`) donne la sélection à rendre, avec
-  son émetteur (`source`).
-- **Effacement** : chip « ✕ » / « tout effacer » → retirer ses valeurs
-  (read-modify-write sur l'URL), supprimer la clé si vide, supprimer le marqueur.
-- **Cas table** : sélection de ligne = `_d_<datasetId>__id_eq=<lineId>` +
-  `_s_<datasetId>__id=app_table`.
-- **Coin à connaître** : si un filtre préexiste (posé par un agent, un autre
-  composant) sur le même champ et que l'utilisateur clique dans l'app, la **clé
-  entière** devient une sélection : la restriction d'origine est perdue pour
-  toutes les apps qui reçoivent le marqueur.
-- **Une marque par clé** : chaque clé émise a son marqueur. Une sélection doublée
-  `_c_` + `_d_` (miroir concept) porte deux marqueurs, sinon la clé `_d_` reste
-  une restriction.
+- Opérateurs lus comme sélection : `eq` et `in` pour des entités ponctuelles,
+  `gte` + `lte` pour une plage (brosse temporelle).
+- **Auto-exclusion par construction** : le champ de sélection n'étant jamais
+  appliqué comme restriction, une visu ne se restreint pas sur sa propre
+  émission, même relayée en retour.
+- **XOR assumé** : un champ de sélection n'est pas filtrable *sur cette visu*. Un
+  filtre de page visant le même champ ne restreint pas cette visu : il la met en
+  évidence.
+- Un **récepteur non configuré** (un embed natif, une visu sans champ de
+  sélection) ne peut pas distinguer une sélection : la clé le restreint.
+
+### Émission d'une sélection
+
+Un clic écrit une **clé seule**, sans marqueur ni identité :
+
+- champ à concept → `_c_<conceptId>_eq=<valeur>` ;
+- champ sans concept → `_d_<datasetId>_<fieldKey>_eq=<valeur>` ;
+- sélection multiple → `_in=<v1>%2C<v2>` (virgule URL-encodée) ;
+- ligne de table → `_d_<datasetId>__id_eq=<lineId>`.
+
+L'**effacement** (retirer une valeur, chip « ✕ », « tout effacer ») fait un
+read-modify-write sur l'URL et supprime la clé si vide.
 
 ### Propagation aux autres visus : décision du parent
 
-Un visu n'écrit jamais pour les autres : il tient son propre état. La propagation
-vers les autres visus de la même page est configurée au-dessus (page de portail,
-tableau de bord, diaporama data-story), visu par visu. Le parent contrôle **en
-sortie** (ce qui remonte de l'app vers la page), pas en entrée.
+Une visu n'écrit jamais pour les autres : elle tient son propre état. La
+propagation vers les autres visus de la même page (page de portail, tableau de
+bord, diaporama data-story) est configurée au-dessus, visu par visu, selon trois
+modes :
 
-| Ce qu'émet le visu | Choix du parent |
-|---|---|
-| sélection | **propager en sélection** — le marqueur suit, les autres visus mettent en évidence |
-| | **propager en filtre** — seules les clés `_c_`/`_d_` sont propagées : les autres visus se restreignent (ex. clic sur une barre qui filtre le reste du tableau de bord) |
-| | ne pas propager |
-| filtre | propager (les autres visus appliquent) / ne pas propager |
+| Mode | `syncParams` | Comportement |
+|---|---|---|
+| **partage des filtres** | `shared-filters` | les clés `_c*`/`_d*` écrites par la visu remontent dans l'URL du parent et sont injectées dans **tous** les blocs |
+| **cloisonné** | `sandboxed` | les clés de la visu sont conservées dans l'URL du parent sous son préfixe de bloc (état conservé au reload) mais **ne sont pas partagées** |
+| **aucune synchro** | `none` | rien n'est repris de la visu ; elle ne reçoit que les filtres du parent |
 
-- En mode « propager en filtre », le parent retire les clés `_s_*` du flux vers les
-  autres visus ; le visu émetteur conserve son marqueur, il reste la source de la
-  sélection.
-- Le marqueur porte déjà son émetteur (`app_<applicationId>`) : il suffit à router
-  `_s_*` vers le bon visu et `_c_*`/`_d_*` vers tous.
-
-**Routage portals** : `isFilterKey` reconnaît le préfixe `_s` ; les blocs
-`sync-params` (application / dataset-table) routent `_s*` comme les filtres
-(`_c*,_s*,_d*,*:<uuid>_` et `_s*,_c*,*_*:_d_<id>_,*:<uuid>_`). Le choix par visu
-« sélection propagée en sélection / en filtre / rien » reste à exposer (le
-réglage de bloc est aujourd'hui tout ou rien, cf. Écarts connus).
+Une visu qui reçoit les clés d'une autre les traite selon son propre champ de
+sélection (mise en évidence) ou comme des restrictions.
 
 ## Cas portals : synchro via l'URL dans les pages
 
 Les pages de portals reflètent les filtres de page dans l'URL avec la même
 convention et les routent vers chaque bloc :
 
-- Clés reconnues comme filtres de page : préfixe `_c`, `_d` ou `_s`
+- Clés reconnues comme filtres de page : préfixe `_c` ou `_d`
   (`pageFilters_get` / `pageFilters_set` dans portals).
 - Tableau de données d'un bloc : `sync-params` =
-  `_s*,_c*,*_*:_d_<datasetId>_,*:<uuid>_` (les `_c_*` passent tels quels, les
+  `_c*,*_*:_d_<datasetId>_,*:<uuid>_` (les `_c_*` passent tels quels, les
   `_d_<id>_*` sont dé-préfixés pour le bloc concerné, le reste est préfixé
   `<uuid>_`).
-- Application embarquée : `sync-params` = `_c*,_s*,_d*,*:<uuid>_` (l'app reçoit
-  toutes les clés `_c_*`, `_s_*` et `_d_*`, elle filtre avec `useConceptFilters`
-  et rend les sélections marquées).
+- Application embarquée : `sync-params` = `_c*,_d*,*:<uuid>_` (l'app reçoit
+  toutes les clés `_c_*` et `_d_*`, elle filtre avec `useConceptFilters` et met
+  en évidence selon son champ de sélection).
 - Sandbox : seul le préfixe `<uuid>_` est routé.
 
 Conséquence pour une app embarquée dans un portail : écrire ses filtres de page
@@ -290,33 +273,23 @@ avec `_c_` (concept) ou `_d_<datasetId>_` (champ simple), jamais en clé nue.
   - dataset-scopé : `_d_accidents-velos_dep_in=75%2C92`
   - miroir concept : `_c_codeDepartement_in=75%2C92`
   - embed table (dé-préfixé) : `dep_in=75%2C92`
-- Sélection émise par une app (clic sur la barre `dep=75`) :
-  `_d_accidents-velos_dep_eq=75` + `_s_accidents-velos_dep=app_<applicationId>` +
-  `_c_codeDepartement_eq=75` + `_s_codeDepartement=app_<applicationId>` — aucune
-  app ne se restreint sur ces clés marquées : l'émettrice garde son contexte, une
-  carte mettrait le département en évidence, un tableau se restreindrait seulement
-  si le parent propage en filtre (sans marqueur).
+- Sélection émise par un clic sur la barre `dep=75` :
+  `_c_codeDepartement_eq=75` — une visu dont `codeDepartement` est le champ de
+  sélection met le département en évidence et ne se restreint pas ; une autre
+  visu se restreint si le parent partage les filtres.
 - Sélection posée par une page (pas une app), cf. pages communes Grand Poitiers :
-  `_c_codeCommune_in=86194` + `_s_codeCommune=86194` — la carte garde tous les
-  contours et met la commune en évidence.
-- App data-fair embarquée : les clés `_d_*`, `_c_*` et `_s_*` lui sont passées
-  telles quelles dans l'URL de l'iframe.
+  `_c_codeCommune_in=86194` — la carte garde tous les contours et met la commune
+  en évidence.
+- App data-fair embarquée : les clés `_d_*` et `_c_*` lui sont passées telles
+  quelles dans l'URL de l'iframe.
 
 ## Écarts connus / à corriger
 
-- **URL propre qui ne double pas les filtres à concept** : si l'URL propre d'une
-  application écrit `_d_<rootDatasetId>_<field>_<op>` pour **tous** les filtres, y
-  compris ceux à concept, et ne double le miroir `_c_` que dans le broadcast vers
-  ses enfants, une app externe ne peut pas recycler ces filtres sans connaître le
-  schéma du dataset racine. Correction : doubler `_c_` dans l'URL propre
-  elle-même, en gardant la lecture des anciennes clés `_d_`.
-- **Propagation non configurable par le parent** : la convention demande, pour
-  chaque visu, de choisir ce qui est propagé aux autres visus (sélection → en
-  sélection / en filtre / rien ; filtre → oui / non). Portals n'expose aujourd'hui
-  qu'un réglage tout ou rien par bloc (`syncParams` : `none` / `sandboxed` /
-  `shared-filters`), et app-dashboards ne synchronise pas l'état de ses visus
-  enfants (aucun `sync-params` sur ses `d-frame`) — à couvrir avec
-  l'implémentation.
+- **URL propre qui ne double pas les filtres à concept** : une application qui
+  écrit `_d_<rootDatasetId>_<field>_<op>` pour **tous** ses filtres, y compris
+  ceux à concept, empêche une app externe de les recycler sans connaître le schéma
+  du dataset racine. Correction : écrire la clé concept `_c_<conceptId>_<op>`
+  lorsque le champ en porte un.
 - **Builders de clés non centralisés** : `datasetFilterKey` / `conceptFilterKey`
   sont parfois réimplémentés localement (`src/utils/dataset-filter.ts`) plutôt que
   fournis par `lib-vue` — mutualisation possible pour que toutes les apps
