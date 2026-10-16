@@ -247,7 +247,6 @@ reset their volumes with this change anyway (mongo 4.2 → 8).
       interval: 2s
       timeout: 2s
       retries: 60
-```
 
   maildev:
     profiles:
@@ -262,6 +261,7 @@ reset their volumes with this change anyway (mongo 4.2 → 8).
       - MAILDEV_ACTIVE=true
       - MAILDEV_URL=http://localhost:${MAILDEV_UI_PORT}
       - MAILS_TRANSPORT={"host":"localhost","port":${MAILDEV_SMTP_PORT},"ignoreTLS":true}
+```
 
 `registry` is optional (profile `registry`) where the repo does not need it at every start (data-fair);
 core where plugins are resolved through it (catalogs, processings).

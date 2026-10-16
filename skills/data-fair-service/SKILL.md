@@ -1,6 +1,6 @@
 ---
 name: data-fair-service
-description: Use when working on the dev environment or the shared architecture of a data-fair service (data-fair, portals, catalogs, processings, events, simple-directory, registry, agents…) - migrating a repo to @data-fair/lib-dev / df-dev, editing .zellij.kdl, dev/dev.json, docker-compose dev services or profiles, init-env, worktree scripts, status or log panes, an agent needing a service's logs, status or a restart, a crash at dev startup, build-types restarting the API, RAM of dev stacks, or a convention shared by services (ping route, BUILD.json, admin routes, /v1 prefix, vite.config, generated .d.ts, /dev pages).
+description: Use when working on the dev environment or the shared architecture of a data-fair service (data-fair, portals, catalogs, processings, events, simple-directory, registry, agents…) - migrating a repo to @data-fair/lib-dev / df-dev, editing .zellij.kdl, dev/dev.json, docker-compose dev services or profiles, init-env, worktree scripts, status or log panes, an agent needing a service's logs, status or a restart, a crash at dev startup, build-types restarting the API, RAM of dev stacks, aligning a service's tooling (eslint, commitlint, husky, tsconfig, .nvmrc, Dockerfile, CI workflows), its dev docker-compose (mongo / ES versions, service blocks) or dev nginx config, or a convention shared by services (ping route, BUILD.json, admin routes, /v1 prefix, vite.config, generated .d.ts, /dev pages).
 ---
 
 # data-fair service: dev environment and shared conventions

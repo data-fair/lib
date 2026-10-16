@@ -27,7 +27,7 @@ Dev environment of a data-fair service, for humans and agents. Needs zellij >= 0
 | Command | |
 |---|---|
 | `npx --no df-worktree <branch>` / `npx --no df-worktree-delete <branch> [-f]` | from the main checkout: create `../<repo>_<branch>` (npm ci + setup) / delete it with its containers, volumes and zellij session; branch names: letters, digits, `.`, `_`, `-`, at most 60 chars, no `/` |
-| `npx --no df-dev setup` | first install / new worktree: `.env` if missing, build-types, SPA builds if missing |
+| `npx --no df-dev setup` | first install / new worktree: `.env` if missing, `setup` commands, build-types, the `ui` build when `ui/dist/index.html` is missing |
 | `npx --no df-dev init-env [--force]` | `.env` only |
 | `npm run dev-zellij -- --services agents,events` | attach or create the session of this worktree (`df-dev zellij`) |
 | `npx --no df-dev status` | for agents: containers, panes (running / exited / not ready), dev processes, memory |

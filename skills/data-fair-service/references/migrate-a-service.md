@@ -7,7 +7,7 @@ Reference implementations: the portals, data-fair and catalogs migrations (branc
 Collect before writing anything:
 
 - `.zellij.kdl`: panes, their commands, the footer URL; keep the user's layout (pane positions) unless asked.
-- `dev/init-env.sh`: every variable it writes → `ports` / `env` of `dev.json`. Repo-specific build steps in `dev/worktree.sh` (e.g. `npm -w parquet-writer run build`) → `setup`.
+- `dev/init-env.sh`: every port variable it writes → `ports` of `dev.json` (`df-dev init-env` also writes `DEV_HOST` and `SSRF_PUBLIC_IPS`). Repo-specific build steps in `dev/worktree.sh` (e.g. `npm -w parquet-writer run build`) → `setup`.
 - `package.json` (root and workspaces): `dev-*` scripts, what CI calls (`.github/workflows/*.yml`).
 - `docker-compose.yml`: services, profiles, mongo image version, healthchecks, `depends_on`.
 - The API config of development (`api/config/development.*`): which URLs point to optional containers (`privateEventsUrl`, `privateAgentsUrl`, `privateRegistryUrl`, `clamav.active`, `privateProcessingsUrl`…).
@@ -21,17 +21,19 @@ Collect before writing anything:
 npm install -D @data-fair/lib-dev      # file:../lib…/packages/dev while unpublished; never ship a file: dependency
 ```
 
+Also require `@data-fair/lib-node` >= 2.16.1 (its events queue goes inactive by itself without the events service, which the `optional` events override relies on) and `@data-fair/lib-types-builder` >= 1.14.5 (atomic writes: build-types no longer restarts a running API).
+
 `dev/dev.json` (data-fair's, trimmed):
 
 ```json
 {
-  "ports": ["NGINX_PORT1", "DEV_API_PORT", "DEV_UI_PORT", "MONGO_PORT", "EVENTS_PORT", "MOCK_PORT"],
+  "ports": ["NGINX_PORT", "NGINX_PORT2", "DEV_API_PORT", "DEV_UI_PORT", "MONGO_PORT", "EVENTS_PORT", "MOCK_PORT"],
   "panes": {
     "api": { "ready": "http://localhost:${DEV_API_PORT}/api/v1/ping" },
     "ui": { "ready": "http://localhost:${DEV_UI_PORT}/data-fair/" },
     "mock": { "ready": "http://localhost:${MOCK_PORT}/" }
   },
-  "urls": { "Data Fair": "http://${DEV_HOST}:${NGINX_PORT1}/data-fair/" },
+  "urls": { "Data Fair": "http://${DEV_HOST}:${NGINX_PORT}/data-fair/" },
   "optional": {
     "events": { "privateEventsUrl": null },
     "clamav": { "clamav": { "active": false } }
@@ -45,24 +47,13 @@ Pane titles in `panes` must equal the `name` of the panes in `.zellij.kdl`; othe
 ## 2. docker-compose.yml
 
 - Core services (needed for the service to work): remove their `profiles`.
-- Optional services: `profiles: [<service name>]`; keep `test` in the list if CI needs it.
+- Optional services: `profiles: [<service name>]`, nothing else (no `test` profile).
 - CI starts the **core** services only (`docker compose up -d --wait`; `--profile '*'` only for `logs` / `down`), like a developer's default env, and its API / worker get `NODE_CONFIG=$(./node_modules/.bin/df-dev absent-config)`. The core holds what the tests really use: before moving a service to a profile, grep `tests/` for it. A test that needs an optional service is reviewed rather than kept by default: checking that a service emits its events is a unit test of the emission, not an api/e2e test that starts `events`.
 - `wait-deps` waits for every container of the active profiles: `healthy` when it has a healthcheck, `running` otherwise, one-shot containers exited 0.
-- mongo (match the shell to the image):
-
-```yaml
-    command: ["--wiredTigerCacheSizeGB", "0.25"]
-    healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]   # "mongo" for images < 5
-      interval: 5s
-      timeout: 5s
-      retries: 20
-```
-
-  and `depends_on: { mongo: { condition: service_healthy } }` on the containers that need it.
+- Service blocks (mongo 8, ES 8.19.9, simple-directory, nginx…), their healthchecks, memory caps and `depends_on`: copy them from [docker-compose.md](docker-compose.md), the only place they change; the nginx template from [nginx.md](nginx.md).
 - One-shot init containers (e.g. `s3-init`) are fine: `wait-deps` and `df-status` treat "exited 0" as done.
 
-## 3. .zellij.kdl (catalogs, complete)
+## 3. .zellij.kdl (catalogs, without its DEBUG flags)
 
 ```kdl
 // Dev environment of catalogs, see @data-fair/lib-dev. Agents: npx --no df-dev status | logs <pane> | restart <pane>
@@ -84,17 +75,17 @@ layout {
       args "-c" "./node_modules/.bin/df-dev wait-deps && export NODE_CONFIG=$(./node_modules/.bin/df-dev absent-config) && cd api && FORCE_COLOR=1 NODE_ENV=development exec ../node_modules/.bin/nodemon -e js,ts,json index.ts"
     }
     pane name="worker" command="bash" {
-      args "-c" "./node_modules/.bin/df-dev wait-deps && cd worker && FORCE_COLOR=1 NODE_ENV=development exec ../node_modules/.bin/nodemon -e js,ts,json index.ts"
+      args "-c" "./node_modules/.bin/df-dev wait-deps && export NODE_CONFIG=$(./node_modules/.bin/df-dev absent-config) && cd worker && FORCE_COLOR=1 NODE_ENV=development exec ../node_modules/.bin/nodemon -e js,ts,json index.ts"
     }
   }
   pane name="urls" size=1 borderless=true command="bash" {
-    args "-c" "echo -n -e \"Dev server available at \\e[1;96mhttp://$DEV_HOST:$NGINX_PORT/catalogs\\e[0m\"; exec sleep infinity"
+    args "-c" "echo -n -e \"Dev server available at \\e[1;96mhttp://$DEV_HOST:$NGINX_PORT/catalogs/dev\\e[0m\"; exec sleep infinity"
   }
 }
 ```
 
 - `df-dev zellij` exports `.env` (and `COMPOSE_PROFILES` from `--services`) into the session: panes read `$DEV_HOST`, `$NGINX_PORT`… directly.
-- `export NODE_CONFIG=…` in **every** pane whose process reads an `optional` key (processings' worker reads `privateEventsUrl` too), and only there. A second instance of the same API (registry's `api-upstream`) is another pane with its own env overrides (`PORT=$DEV_UPSTREAM_API_PORT MONGO_URL=… DATA_DIR=…`): env variables mapped in `custom-environment-variables` win over `NODE_CONFIG`.
+- `export NODE_CONFIG=…` in **every** pane whose process reads an `optional` key (catalogs' and processings' workers read `privateEventsUrl` too), and only there. A second instance of the same API (registry's `api-upstream`) is another pane with its own env overrides (`PORT=$DEV_UPSTREAM_API_PORT MONGO_URL=… DATA_DIR=…`): env variables mapped in `custom-environment-variables` win over `NODE_CONFIG`.
 - Keep the repo's vite invocation: pass `--port $DEV_UI_PORT` only if the old script did (registry's `vite.config.ts` reads `.env` itself).
 - Keep the repo's env vars and DEBUG flags from the old `dev` scripts; drop `mkdir -p dev/logs`, `| tee …`, `| ts …`, `nvm use`.
 - Nuxt: `… ../node_modules/.bin/df-mem-cap nuxt dev 2>&1 | cat` (no `exec`).
