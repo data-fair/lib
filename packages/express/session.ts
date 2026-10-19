@@ -4,7 +4,7 @@ import type { Request, Response, RequestHandler } from 'express'
 import cookie from 'cookie'
 import { assertAdminMode, assertAuthenticated, assertScope } from '@data-fair/lib-common-types/session/index.js'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
-import { reqSitePathSafe, reqIp } from '@data-fair/lib-express'
+import { reqSitePathSafe, reqIp, reqOrigin } from '@data-fair/lib-express'
 import { SessionHandler } from '@data-fair/lib-node/session.js'
 import { internalError } from '@data-fair/lib-node/observer.js'
 
@@ -35,12 +35,14 @@ function assertRouteCheckedScope (req: Request | IncomingMessage, sessionState: 
 
 export class Session extends SessionHandler {
   private onlyDecode?: (req: Request | IncomingMessage) => boolean
+  private audiences: (siteUrl: string) => string[] = siteUrl => [siteUrl]
 
-  init (directoryUrl = 'http://simple-directory:8080', defaultLang?: string, onlyDecode?: (req: Request | IncomingMessage) => boolean, options: { scopeAware?: boolean } = {}) {
+  init (directoryUrl = 'http://simple-directory:8080', defaultLang?: string, onlyDecode?: (req: Request | IncomingMessage) => boolean, options: { scopeAware?: boolean, audiences?: (siteUrl: string) => string[] } = {}) {
     this.initJWKS(directoryUrl)
     if (defaultLang) this.defaultLang = defaultLang
     this.onlyDecode = onlyDecode
     this.scopeAware = !!options.scopeAware
+    this.audiences = options.audiences ?? (siteUrl => [siteUrl])
   }
 
   async req (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
@@ -130,7 +132,14 @@ export class Session extends SessionHandler {
     // an empty token ('Bearer', 'Bearer ') is still a bearer attempt: refused by readStateFromBearer, never a fallback to cookies
     const bearerMatch = req.headers.authorization?.match(/^bearer(?:\s+(.*))?$/i)
     if (bearerMatch) {
-      return this.readStateFromBearer((bearerMatch[1] ?? '').trim())
+      // the audience of a bearer is the site it is used on; an internal request (no x-forwarded-host) has none
+      let audiences: string[] | undefined
+      if (req.headers['x-forwarded-host']) {
+        // reqOrigin only needs req.get, a plain IncomingMessage (websocket upgrade) has none
+        const originReq = { get: (name: string) => { const v = req.headers[name.toLowerCase()]; return Array.isArray(v) ? v[0] : v } } as unknown as Request
+        audiences = this.audiences(reqOrigin(originReq) + reqSitePathSafe(req))
+      }
+      return this.readStateFromBearer((bearerMatch[1] ?? '').trim(), undefined, audiences)
     }
     // reuse req.cookies if a cookie-parser middleware already populated it, to avoid re-parsing the Cookie header
     // @ts-ignore - cookies is set by cookie-parser, absent on plain IncomingMessage

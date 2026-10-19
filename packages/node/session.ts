@@ -233,7 +233,10 @@ export class SessionHandler {
   // A missing organizations key is not an access token either.
   // raw reader, applies neither the route scope guard nor the session cache: not for authorization,
   // use session.req() / reqSession(). It only refuses scoped states when the handler is not scope-aware.
-  async readStateFromBearer (token: string, lang?: string): Promise<SessionState> {
+  // The token must be addressed to the site it is used on (RFC 9068 section 4, RFC 8707): its aud
+  // has to share a value with `audiences`, so a token minted for one site or resource is useless on another.
+  // The RFC 9068 claims are moved out of the user into state.accessToken.
+  async readStateFromBearer (token: string, lang?: string, audiences?: string[]): Promise<SessionState> {
     let decoded
     try { decoded = decodeToken(token) } catch { throw httpError(401, 'bearer token is not an access token') }
     if (!isAccessTokenTyp(decoded.header.typ)) throw httpError(401, 'bearer token is not an access token')
@@ -248,8 +251,17 @@ export class SessionHandler {
     }
     if (!user?.organizations) throw httpError(401, 'bearer token is not an access token')
     if (user.organizations.length > 1) throw httpError(401, 'access token must be bound to at most one organization')
+    if (!audiences) throw httpError(401, 'access token audience cannot be checked')
+    const { iss, sub, aud, client_id: clientId, jti, nbf, ...claims } = user as any
+    if (aud === undefined || aud === null) throw httpError(401, 'access token has no audience')
+    const audience: string[] = Array.isArray(aud) ? aud : [aud]
+    if (!audience.every(a => typeof a === 'string') || !audience.some(a => audiences.includes(a))) throw httpError(401, 'access token audience mismatch')
+    user = claims as User
     const org = user.organizations[0]
     const state = Object.assign({ lang: lang ?? this.defaultLang } as SessionState, this.buildTokenSessionState(user, org?.id ?? '', org?.department ?? '', ''))
+    state.accessToken = { audience }
+    if (typeof iss === 'string') state.accessToken.issuer = iss
+    if (typeof clientId === 'string') state.accessToken.clientId = clientId
     this.assertScopeAware(state)
     return state
   }

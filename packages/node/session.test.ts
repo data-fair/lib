@@ -208,9 +208,12 @@ const signWith = (privateKey: any, kid: string, payload: any, header: any = {}, 
 const signSession = (payload: any, header?: any, opts?: any) => signWith(sessionKeys.privateKey, 'sd-1', payload, header, opts)
 const signScoped = (payload: any, header?: any, opts?: any) => signWith(scopedKeys.privateKey, 'scoped-sd-1', payload, header, opts)
 // real jwt verification against two local key pairs, one per key set
-const realHandler = (scopeAware = true) => {
+const realHandler = (scopeAware = true, siteAudiences: string[] | null = ['https://x']) => {
   const handler = new SessionHandler()
   handler.scopeAware = scopeAware
+  // the tests read bearers as if on the site https://x unless told otherwise
+  const readStateFromBearer = handler.readStateFromBearer.bind(handler)
+  handler.readStateFromBearer = (token: string, lang?: string) => readStateFromBearer(token, lang, siteAudiences ?? undefined)
   ;(handler as any).getSigningKeyObject = async (keySet: string) => keySet === 'scoped' ? scopedKeys.publicKey : sessionKeys.publicKey
   return handler
 }
@@ -221,7 +224,7 @@ const toCookies = (token: string) => {
 const rejects401 = (p: Promise<any>) => assert.rejects(p, (err: any) => err.status === 401)
 
 describe('SessionHandler.readStateFromBearer', () => {
-  const nhiUser = { ...testUser, organizations: [testUser.organizations[0]], nhi: 1, scope: 'datasets:read organizations:read' }
+  const nhiUser = { ...testUser, organizations: [testUser.organizations[0]], nhi: 1, scope: 'datasets:read organizations:read', iss: 'https://x/simple-directory', aud: 'https://x', client_id: 'nhi-a', jti: 'j1' }
   const bearer = (payload: any, header: any = { typ: 'at+jwt' }, opts?: any) => signScoped(payload, header, opts)
 
   it('reads an at+jwt access token, bound to its single organization, with its scopes', async () => {
@@ -238,7 +241,7 @@ describe('SessionHandler.readStateFromBearer', () => {
   })
 
   it('gives a personal account session to a token with no organization membership', async () => {
-    const state = await realHandler().readStateFromBearer(bearer({ ...testUser, organizations: [], scope: 'datasets' }))
+    const state = await realHandler().readStateFromBearer(bearer({ ...testUser, organizations: [], scope: 'datasets', aud: 'https://x' }))
     assert.equal(state.account?.type, 'user')
     assert.equal(state.account?.id, 'user1')
     assert.equal(state.accountRole, 'admin')
@@ -246,7 +249,7 @@ describe('SessionHandler.readStateFromBearer', () => {
 
   it('refuses a token without an organizations key', async () => {
     const { organizations, ...noOrgs } = testUser
-    await rejects401(realHandler().readStateFromBearer(bearer({ ...noOrgs, scope: 'datasets' })))
+    await rejects401(realHandler().readStateFromBearer(bearer({ ...noOrgs, scope: 'datasets', aud: 'https://x' })))
   })
 
   it('refuses (401) an invalid scope claim on the bearer and cookie paths', async () => {
@@ -285,6 +288,31 @@ describe('SessionHandler.readStateFromBearer', () => {
     await rejects401(handler.readStateFromBearer('not-a-jwt'))
   })
 
+  it('bearer with matching aud string is accepted and claims move to accessToken', async () => {
+    const state = await realHandler().readStateFromBearer(bearer(nhiUser))
+    assert.deepEqual(state.accessToken, { issuer: 'https://x/simple-directory', clientId: 'nhi-a', audience: ['https://x'] })
+    for (const claim of ['iss', 'sub', 'aud', 'client_id', 'jti', 'nbf']) assert.equal(claim in (state.user as object), false, claim)
+  })
+
+  it('bearer with aud array containing the site is accepted', async () => {
+    const state = await realHandler().readStateFromBearer(bearer({ ...nhiUser, aud: ['https://other', 'https://x'] }))
+    assert.deepEqual(state.accessToken?.audience, ['https://other', 'https://x'])
+  })
+
+  it('bearer without aud is refused 401', async () => {
+    const { aud, ...noAud } = nhiUser
+    await rejects401(realHandler().readStateFromBearer(bearer(noAud)))
+  })
+
+  it('bearer with another aud is refused 401', async () => {
+    await rejects401(realHandler().readStateFromBearer(bearer({ ...nhiUser, aud: 'https://y' })))
+    await rejects401(realHandler().readStateFromBearer(bearer({ ...nhiUser, aud: ['https://y', 'https://z'] })))
+  })
+
+  it('bearer refused 401 when audiences are not provided', async () => {
+    await rejects401(realHandler(true, null).readStateFromBearer(bearer(nhiUser)))
+  })
+
   it('fills scopes from a cookie session too', async () => {
     const state = await realHandler().readStateFromCookie(toCookies(signScoped({ ...testUser, organizations: [testUser.organizations[0]], scope: 'datasets' })))
     assert.deepEqual(state.scopes, ['datasets'])
@@ -292,7 +320,7 @@ describe('SessionHandler.readStateFromBearer', () => {
 })
 
 describe('key sets and token kinds', () => {
-  const nhiUser = { ...testUser, organizations: [testUser.organizations[0]], nhi: 1, scope: 'datasets:read' }
+  const nhiUser = { ...testUser, organizations: [testUser.organizations[0]], nhi: 1, scope: 'datasets:read', aud: 'https://x' }
 
   it('keySetOfKid', () => {
     assert.equal(keySetOfKid('scoped-sd-1'), 'scoped')
@@ -430,7 +458,7 @@ describe('malformed tokens, typ normalization, one organization per scoped cooki
 
   it('typ at+jwt is compared case-insensitively with an optional application/ prefix', async () => {
     const handler = realHandler()
-    const nhi = { ...testUser, organizations: oneOrg, scope: 'datasets:read' }
+    const nhi = { ...testUser, organizations: oneOrg, scope: 'datasets:read', aud: 'https://x' }
     for (const typ of ['AT+JWT', 'application/at+jwt', 'Application/AT+JWT']) {
       assert.equal((await handler.readStateFromBearer(signScoped(nhi, { typ }))).user?.id, 'user1')
       await rejects401(handler.readStateFromCookie(toCookies(signScoped(nhi, { typ }))))

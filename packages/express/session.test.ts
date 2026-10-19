@@ -363,6 +363,39 @@ describe('Session bearer and scopes', () => {
     assert.equal(state.user?.id, testUser.id)
   })
 
+  it('bearer on a request without x-forwarded-host is refused 401', async () => {
+    const session = new Session()
+    let audiences: string[] | undefined | 'unset' = 'unset'
+    session.readStateFromBearer = async (_token: string, _lang?: string, a?: string[]) => {
+      audiences = a
+      throw Object.assign(new Error('access token audience cannot be checked'), { status: 401 })
+    }
+    await assert.rejects(session.req(mockReq('GET', { authorization: 'Bearer abc.def.ghi' })), (err: any) => err.status === 401)
+    assert.equal(audiences, undefined)
+  })
+
+  it('audiences default to the site url', async () => {
+    const session = new Session()
+    let audiences: string[] | undefined
+    session.readStateFromBearer = async (_token: string, _lang?: string, a?: string[]) => { audiences = a; return scopedState() }
+    session.scopeAware = true
+    const req = mockReq('GET', { authorization: 'Bearer abc.def.ghi', 'x-forwarded-host': 'x', 'x-forwarded-proto': 'https' })
+    markScopeChecked(req)
+    await session.req(req)
+    assert.deepEqual(audiences, ['https://x'])
+  })
+
+  it('audiences option maps the site url', async () => {
+    const session = new Session()
+    session.init('http://localhost:1234', 'fr', undefined, { scopeAware: true, audiences: s => [s + '/mcp-server'] })
+    let audiences: string[] | undefined
+    session.readStateFromBearer = async (_token: string, _lang?: string, a?: string[]) => { audiences = a; return scopedState() }
+    const req = mockReq('GET', { authorization: 'Bearer abc.def.ghi', 'x-forwarded-host': 'x', 'x-forwarded-proto': 'https' })
+    markScopeChecked(req)
+    await session.req(req)
+    assert.deepEqual(audiences, ['https://x/mcp-server'])
+  })
+
   it('init sets scopeAware', () => {
     const session = new Session()
     session.init('http://localhost:1234', 'fr', undefined, { scopeAware: true })

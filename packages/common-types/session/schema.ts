@@ -26,6 +26,17 @@ export default {
       description: 'scopes this session is restricted to, parsed from the token scope claim; absent for an unrestricted first party session',
       items: { type: 'string' }
     },
+    accessToken: {
+      type: 'object',
+      description: 'RFC 9068 claims of the access token this session was read from; absent for a cookie session',
+      additionalProperties: false,
+      required: ['audience'],
+      properties: {
+        issuer: { type: 'string' },
+        clientId: { type: 'string' },
+        audience: { type: 'array', items: { type: 'string' } }
+      }
+    },
     lang: {
       type: 'string'
     },
