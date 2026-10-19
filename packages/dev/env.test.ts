@@ -1,9 +1,9 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { pickPorts, hostLabel, initEnv, PORT_MIN, PORT_MAX } from './env.js'
+import { pickPorts, hostLabel, initEnv, otherWorktreePorts, PORT_MIN, PORT_MAX } from './env.js'
 import { readEnvFile } from './config.js'
 
 const config = { ports: ['NGINX_PORT', 'DEV_API_PORT'], panes: {} }
@@ -74,5 +74,44 @@ describe('initEnv', () => {
     assert.equal(env.MY_TOKEN, 'secret')
     assert.equal(env.DEV_HOST, 'x.localhost')
     assert.notEqual(env.NGINX_PORT, '1')
+  })
+
+  it('keeps hand-added values that need quotes intact through a regeneration', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'df-dev-'))
+    writeFileSync(path.join(root, '.env'), 'NGINX_PORT=1\nSECRET=\'abc#def\'\nMSG="a b"\nQUOTE=`it\'s`\nCERT=\'line1\nline2\'\nPLAIN=x\n')
+    await initEnv(root, config, { force: true, branch: 'x', isFree: async () => true, reserved: new Set() })
+    await initEnv(root, config, { force: true, branch: 'x', isFree: async () => true, reserved: new Set() })
+    const env = readEnvFile(root)
+    assert.equal(env.SECRET, 'abc#def')
+    assert.equal(env.MSG, 'a b')
+    assert.equal(env.QUOTE, "it's")
+    assert.equal(env.CERT, 'line1\nline2')
+    assert.equal(env.PLAIN, 'x')
+    assert.match(readFileSync(path.join(root, '.env'), 'utf8'), /^PLAIN=x$/m)
+  })
+
+  it('never draws a port written in the .env of another worktree', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'df-dev-'))
+    // the first draw falls on a port another worktree uses, the second on a fresh one
+    const draws = [PORT_MIN + 5, PORT_MIN + 6].map(p => (p - PORT_MIN + 0.5) / (PORT_MAX - PORT_MIN + 1))
+    let i = 0
+    await initEnv(root, { ...config, ports: ['NGINX_PORT'] }, { branch: 'x', isFree: async () => true, reserved: new Set([PORT_MIN + 5]), random: () => draws[i++] })
+    assert.equal(readEnvFile(root).NGINX_PORT, String(PORT_MIN + 6))
+    assert.equal(i, 2)
+  })
+
+  it('reads the ports of the other worktrees of the repository', () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), 'df-dev-wt-'))
+    const root = path.join(tmp, 'repo')
+    const other = path.join(tmp, 'repo_feat-a')
+    mkdirSync(root)
+    mkdirSync(other)
+    writeFileSync(path.join(other, '.env'), `NGINX_PORT=${PORT_MIN + 5}\nDEV_HOST=feat-a.localhost\nOTHER=80\n`)
+    writeFileSync(path.join(root, '.env'), `NGINX_PORT=${PORT_MIN + 6}\n`)
+    // output of git worktree list --porcelain, given as text: no git in this test
+    const list = () => `worktree ${root}\nHEAD abc\nbranch refs/heads/master\n\nworktree ${other}\nHEAD def\nbranch refs/heads/feat-a\n`
+    assert.deepEqual([...otherWorktreePorts(root, list)], [PORT_MIN + 5])
+    assert.deepEqual([...otherWorktreePorts(other, list)], [PORT_MIN + 6])
+    assert.deepEqual([...otherWorktreePorts(root, () => { throw new Error('not a git repository') })], [])
   })
 })
