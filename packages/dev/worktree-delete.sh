@@ -46,6 +46,18 @@ if ! [[ "$BRANCH_NAME" =~ ^[A-Za-z0-9._-]{1,60}$ ]]; then
     exit 1
 fi
 
+# the worktrees live next to the main checkout: refuse a subfolder or another worktree
+TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "Error: not inside a git repository." >&2; exit 1; }
+if [ "$TOPLEVEL" != "$(pwd -P)" ]; then
+    echo "Error: run df-worktree-delete from the root of the repository: cd $TOPLEVEL" >&2
+    exit 1
+fi
+COMMON_DIR=$(git rev-parse --path-format=absolute --git-common-dir)
+if [ "$(git rev-parse --absolute-git-dir)" != "$COMMON_DIR" ]; then
+    echo "Error: run df-worktree-delete from the main checkout, not from a worktree: cd $(dirname "$COMMON_DIR")" >&2
+    exit 1
+fi
+
 REPO_NAME=$(basename "$PWD")
 TARGET_DIR="../${REPO_NAME}_${BRANCH_NAME}"
 

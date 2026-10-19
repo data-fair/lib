@@ -30,8 +30,29 @@ if ! [[ "$BRANCH_NAME" =~ ^[A-Za-z0-9._-]{1,60}$ ]]; then
     exit 1
 fi
 
+# the worktree goes next to the main checkout: refuse a subfolder or another worktree
+TOPLEVEL=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "Error: not inside a git repository." >&2; exit 1; }
+if [ "$TOPLEVEL" != "$(pwd -P)" ]; then
+    echo "Error: run df-worktree from the root of the repository: cd $TOPLEVEL" >&2
+    exit 1
+fi
+COMMON_DIR=$(git rev-parse --path-format=absolute --git-common-dir)
+if [ "$(git rev-parse --absolute-git-dir)" != "$COMMON_DIR" ]; then
+    echo "Error: run df-worktree from the main checkout, not from a worktree: cd $(dirname "$COMMON_DIR")" >&2
+    exit 1
+fi
+
 REPO_NAME=$(basename "$PWD")
 TARGET_DIR="../${REPO_NAME}_${BRANCH_NAME}"
+ORIGIN_DIR="$PWD"
+
+# the zellij session is named after the worktree folder and its socket path is capped at 107 bytes
+# (/run/user/<uid>/zellij/contract_version_1/<session>): 60 characters leave room for the prefix
+SESSION_MAX=60
+if [ $(( ${#REPO_NAME} + 1 + ${#BRANCH_NAME} )) -gt $SESSION_MAX ]; then
+    echo "Error: branch name \"$BRANCH_NAME\" too long for this repository: the zellij session \"${REPO_NAME}_${BRANCH_NAME}\" must fit in $SESSION_MAX characters, so at most $(( SESSION_MAX - ${#REPO_NAME} - 1 )) characters for the branch" >&2
+    exit 1
+fi
 
 if [ -e "$TARGET_DIR" ]; then
     echo "Error: $TARGET_DIR already exists."
@@ -62,6 +83,27 @@ git show-ref --verify --quiet "refs/heads/$BRANCH_NAME" && LOCAL_EXISTS=yes
 git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME" && REMOTE_EXISTS=yes
 
 STASH_SHA=""
+STASH_RESTORED=no
+# a failure after the stash must not leave the user's changes buried in the shared stash stack
+restore_stash() {
+    local code=$?
+    if [ "$code" -ne 0 ] && [ -n "$STASH_SHA" ] && [ "$STASH_RESTORED" != yes ]; then
+        if [ "$(git -C "$ORIGIN_DIR" branch --show-current)" = "$BRANCH_NAME" ] && git -C "$ORIGIN_DIR" stash apply -q "$STASH_SHA"; then
+            drop_stash
+            echo "Error: worktree setup failed, your local changes are back in $ORIGIN_DIR" >&2
+        else
+            echo "Error: worktree setup failed, your local changes are saved in the stash $STASH_SHA: git stash apply $STASH_SHA" >&2
+        fi
+    fi
+}
+drop_stash() {
+    local ref
+    ref=$(git -C "$ORIGIN_DIR" stash list --format='%gd %H' | awk -v sha="$STASH_SHA" '$2 == sha { print $1 }')
+    [ -n "$ref" ] && git -C "$ORIGIN_DIR" stash drop -q "$ref"
+    return 0
+}
+trap restore_stash EXIT
+
 if [ "$LOCAL_EXISTS" = "yes" ] && [ "$CURRENT_BRANCH" = "$BRANCH_NAME" ]; then
     echo "Branch '$BRANCH_NAME' is currently checked out in $PWD — migrating it to the worktree."
     if [ -n "$(git status --porcelain)" ]; then
@@ -90,8 +132,8 @@ fi
 if [ -n "$STASH_SHA" ]; then
     echo "Re-applying stashed changes inside the worktree"
     ( cd "$TARGET_DIR" && git stash apply "$STASH_SHA" )
-    STASH_REF=$(git stash list --format='%gd %H' | awk -v sha="$STASH_SHA" '$2 == sha { print $1 }')
-    [ -n "$STASH_REF" ] && git stash drop -q "$STASH_REF"
+    STASH_RESTORED=yes
+    drop_stash
 fi
 
 cd "$TARGET_DIR"
