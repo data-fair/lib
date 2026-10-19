@@ -59,6 +59,7 @@ docs/superpowers/
 
 - Extra workspaces in `lint` / `check-types`: portals' `portal` (Nuxt), data-fair's `parquet-writer`.
 - data-fair keeps `check-types-ratchet` in `quality` (1800+ legacy API errors) until its baseline reaches 0.
+- portals pins `.nvmrc` to the image's 24.x and `engines.node` to `>=24.11.0`: the portal's postcss / cssnano transitive deps need 24.11 (portals #65).
 - processings keeps npm in both runtime images, api and worker (lib-node-registry runs `npm rebuild` on plugins); it only drops corepack and yarn.
 - `USER node` stays commented where volumes are mounted as root (data-fair, processings, openapi-viewer, customers, metrics daemon).
 - metrics tests with `node --test`; openapi-viewer's `quality` runs only `test-unit`.
