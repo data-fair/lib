@@ -66,7 +66,7 @@ See the [data-fair-processing skill](https://github.com/data-fair/lib/tree/main/
 A service declares its scope families once; the matching of `session/index.js` (`hasScope`, exact or bare umbrella, never prefix) stays the same.
 
 ```ts
-import { defineScopes, oauth2SecurityScheme } from '@data-fair/lib-common-types/scopes.js'
+import { defineScopes, oauth2SecurityScheme, oauth2Alternatives } from '@data-fair/lib-common-types/scopes.js'
 
 const scopes = defineScopes({
   notifications: {
@@ -82,12 +82,18 @@ const scopes = defineScopes({
 // notifications:write notifications all:write all:admin
 requireScope(scopes.acceptedScopes('notifications', 'write'))
 
-// the oauth2 scheme of the service's OpenAPI document, with x-scopeIncludes for the aggregation by data-fair
+// the oauth2 scheme of the service's OpenAPI document
 oauth2SecurityScheme(scopes, { directoryUrl, locale: 'fr' })
+
+// an operation's security: [{ sdCookie: [] }, { oauth2: ['notifications:write'] }, { oauth2: ['notifications'] }, ...]
+const security = [{ sdCookie: [] }, ...oauth2Alternatives(scopes.acceptedScopes('notifications', 'write'))]
 ```
 
 - `acceptedScopes(family, tier)`: the family's declared tiers at or above `tier`, the umbrella, then `all:<tier>` and the higher global tier scopes. A tier the family does not declare throws.
 - `familyScopes(family)`: every scope that reaches some tier of the family, for a coarse gate.
-- `scopeDescriptions(locale)` and `scopeIncludes`: what each `all:*` scope includes, lower tiers included.
+- `scopeDescriptions(locale)`: the description of every declared scope, the `all:*` ones included.
+- `oauth2Alternatives(accepted)`: one OpenAPI security alternative per accepted scope. A single
+  `{ oauth2: [a, b] }` would mean a token needs both. What an `all:*` scope grants is read from
+  the operations that list it, data-fair's platform document relies on this form.
 - The global tier scopes and their descriptions are owned here (`globalScopes`), identical in every service. `all` is reserved as a family name.
 

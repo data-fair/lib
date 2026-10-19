@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
-import { defineScopes, globalScopes, oauth2SecurityScheme } from './scopes.js'
+import { defineScopes, globalScopes, oauth2SecurityScheme, oauth2Alternatives } from './scopes.js'
 import { hasScope, scopeCovers } from './session/index.js'
 
 const l = (fr: string, en: string) => ({ fr, en })
@@ -59,14 +59,6 @@ describe('scope vocabulary', () => {
     assert.equal(vocabulary.scopeDescriptions('en')['all:read'], globalScopes['all:read'].en)
   })
 
-  it('lists what each global tier scope includes, lower tiers included', () => {
-    assert.deepEqual(vocabulary.scopeIncludes, {
-      'all:read': ['notifications:read', 'webhooks:read', 'events:read'],
-      'all:write': ['notifications:read', 'webhooks:read', 'events:read', 'notifications:write'],
-      'all:admin': ['notifications:read', 'webhooks:read', 'events:read', 'notifications:write', 'webhooks:admin']
-    })
-  })
-
   it('refuses a declared tier without description and an invalid family name', () => {
     assert.throws(() => defineScopes({ webhooks: { tiers: ['read', 'admin'], descriptions: { umbrella: l('a', 'a'), read: l('b', 'b') } } }), /webhooks:admin has no description/)
     assert.throws(() => defineScopes({ Webhooks: { tiers: ['read'], descriptions: { umbrella: l('a', 'a'), read: l('b', 'b') } } }), /invalid scope family/)
@@ -80,8 +72,17 @@ describe('oauth2 security scheme', () => {
     assert.equal(scheme.type, 'oauth2')
     assert.equal(scheme.flows.clientCredentials.tokenUrl, 'http://localhost/simple-directory/api/auth/nhi-token')
     assert.deepEqual(scheme.flows.clientCredentials.scopes, vocabulary.scopeDescriptions('en'))
-    assert.deepEqual(scheme['x-scopeIncludes'], vocabulary.scopeIncludes)
+    assert.ok(!('x-scopeIncludes' in scheme))
     assert.match(scheme.description, /without a scope claim/)
     assert.match(oauth2SecurityScheme(vocabulary, { directoryUrl: 'http://x', locale: 'fr' }).description, /sans claim de scope/)
+  })
+})
+
+describe('oauth2 security alternatives', () => {
+  it('makes each accepted scope its own alternative, as standard OpenAPI reads one requirement as all needed', () => {
+    assert.deepEqual(oauth2Alternatives(vocabulary.acceptedScopes('webhooks', 'admin')), [
+      { oauth2: ['webhooks:admin'] }, { oauth2: ['webhooks'] }, { oauth2: ['all:admin'] }
+    ])
+    assert.deepEqual(oauth2Alternatives('events:read'), [{ oauth2: ['events:read'] }])
   })
 })

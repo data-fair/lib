@@ -39,8 +39,6 @@ export type ScopeVocabulary<F extends string> = {
   familyScopes: (family: F) => string[]
   /** name -> description of every declared scope, the global tier scopes included */
   scopeDescriptions: (locale: ScopeLocale) => Record<string, string>
-  /** the family scopes each global tier scope includes, lower tiers included */
-  scopeIncludes: Record<GlobalScope, string[]>
 }
 
 const familyRegexp = /^[a-z][a-z0-9-]*$/
@@ -80,13 +78,7 @@ export function defineScopes<F extends string> (definitions: Record<F, ScopeFami
     return out
   }
 
-  const scopeIncludes = {} as Record<GlobalScope, string[]>
-  for (const tier of scopeTiers) {
-    scopeIncludes[`all:${tier}`] = scopeTiers.slice(0, scopeTiers.indexOf(tier) + 1)
-      .flatMap(t => families.filter(f => tiersOf(f).includes(t)).map(f => `${f}:${t}`))
-  }
-
-  return { families, acceptedScopes, familyScopes, scopeDescriptions, scopeIncludes }
+  return { families, acceptedScopes, familyScopes, scopeDescriptions }
 }
 
 const schemeDescriptions: LocalizedText = {
@@ -96,10 +88,9 @@ const schemeDescriptions: LocalizedText = {
 
 /**
  * The OpenAPI oauth2 security scheme of a service: client credentials flow on simple-directory's
- * token exchange, the vocabulary's scopes and, in x-scopeIncludes, the inclusions of the global
- * tier scopes (data-fair aggregates them into the platform scopes list).
+ * token exchange and the vocabulary's scopes (data-fair merges them into the platform document).
  */
-export function oauth2SecurityScheme (vocabulary: Pick<ScopeVocabulary<string>, 'scopeDescriptions' | 'scopeIncludes'>, options: { directoryUrl: string, locale: ScopeLocale }) {
+export function oauth2SecurityScheme (vocabulary: Pick<ScopeVocabulary<string>, 'scopeDescriptions'>, options: { directoryUrl: string, locale: ScopeLocale }) {
   return {
     type: 'oauth2' as const,
     description: schemeDescriptions[options.locale],
@@ -108,7 +99,15 @@ export function oauth2SecurityScheme (vocabulary: Pick<ScopeVocabulary<string>, 
         tokenUrl: `${options.directoryUrl}/api/auth/nhi-token`,
         scopes: vocabulary.scopeDescriptions(options.locale)
       }
-    },
-    'x-scopeIncludes': vocabulary.scopeIncludes
+    }
   }
+}
+
+/**
+ * The oauth2 part of an operation's OpenAPI security: one alternative per accepted scope (standard
+ * OpenAPI reads the scopes of one requirement as all needed). What a global tier scope grants is
+ * read from the operations that list it.
+ */
+export function oauth2Alternatives (accepted: string | string[]): { oauth2: string[] }[] {
+  return (Array.isArray(accepted) ? accepted : [accepted]).map(scope => ({ oauth2: [scope] }))
 }
