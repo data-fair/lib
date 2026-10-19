@@ -100,7 +100,7 @@ layout {
 - CI: `./node_modules/.bin/df-dev init-env` instead of `./dev/init-env.sh`; processes started with local binaries (`./node_modules/.bin/dotenv -- npm -w api run dev &`), never a bare `npx`.
 - `tests/state-setup.ts`: drop the `tail -f dev/logs/…` spawn, and the `state-teardown` project and file that killed it; the "API unavailable" message tells agents `npx --no df-dev logs api` / `npx --no df-dev restart api`.
 - Config error messages mentioning `dev/init-env.sh` → `npx --no df-dev setup`.
-- AGENTS.md "Dev environment": the command table and the four rules of SKILL.md "Operating a running dev env", the list of optional containers, worktrees via `npx --no df-worktree <branch>` / `npx --no df-worktree-delete <branch>` (branch names: letters, digits, `.`, `_`, `-`, at most 60 characters, no `/`).
+- AGENTS.md "Dev environment": the command table and the four rules of SKILL.md "Operating a running dev env", the list of optional containers, worktrees via `npx --no df-worktree <branch>` / `npx --no df-worktree-delete <branch>` (branch names: letters, digits, `.`, `_`, `-`, no `/`, and `<repo>_<branch>` at most 60 characters).
 - CONTRIBUTING.md install: `npm ci`, `npx --no df-dev setup`, `npm run dev-zellij [-- --services a,b]`.
 - `.claude/skills/agents-sim/SKILL.md` and docs/architecture: `status.sh` → `df-dev status`; the bridge pane is suspended until the user presses Enter.
 - Commit scope `dev` (add it to `scope-enum` where commitlint enforces one). Run `npm run lint` and `check-types` (or the repo's type ratchet).

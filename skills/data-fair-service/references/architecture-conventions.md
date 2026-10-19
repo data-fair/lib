@@ -5,7 +5,7 @@ Only "Settled" items are rules. "Open" items list today's variants so they are n
 ## Settled
 
 - **API version prefix.** No `/v1/`: routes live under `/api/...`. Only data-fair keeps `/api/v1/` for history. A service still on `/api/v1/...` (processings: `/api/v1/_ping`, `/api/v1/admin`) moves to `/api/...` and keeps the `/api/v1/...` path as a compatibility route.
-- **Branch names.** Letters, digits, `.`, `_`, `-`, at most 60 characters, no `/` (enforced by `df-worktree`; the name becomes a directory, a zellij session and a `DEV_HOST` label).
+- **Branch names.** Letters, digits, `.`, `_`, `-`, no `/`, and `<repo>_<branch>` at most 60 characters (enforced by `df-worktree`; the name becomes a directory, a zellij session whose socket path zellij caps at 107 bytes, and a `DEV_HOST` label).
 - **Dev environment.** `@data-fair/lib-dev` + `dev/dev.json` + `.zellij.kdl` as described in SKILL.md and migrate-a-service.md.
 - **Tooling.** [tooling.md](tooling.md).
 - **test-env routers** (unauthenticated, destructive): mounted only when `process.env.NODE_ENV === 'development'`, with a dynamic import so production never loads the module. The dev environment is the test environment: CI starts the API with `NODE_ENV=development` too (with the mocks the dev config needs, e.g. portals' ingress-manager), never a separate `test` mode for the API.
