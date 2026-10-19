@@ -61,11 +61,15 @@ Permissions, account roles, admin mode and the Vue side are covered by the [`dat
   are closed by default too.
 - An access token carries at most one organization membership (none = personal account); a token
   with several is refused with a 401.
-- `requireScope('datasets:read')` guards a route (it needs `session.middleware()` to have run on the
-  request); `hasScope` / `assertScope` do the same in code. A session without scopes is unrestricted.
+- `requireScope('datasets:read')` guards a route. It reads the session through
+  `session.reqWithScope(req, accepted)` (cached on the request), so it needs no
+  `session.middleware()`. `assertReqScope(req, ...)` is the synchronous variant for routes
+  behind the middleware. `hasScope` / `assertScope` do the same in code. A session without scopes is unrestricted.
   A granted umbrella such as `datasets` already covers `datasets:read`, so it need not be listed.
   "Write implies read" is expressed by listing the accepted scopes, e.g.
   `requireScope(['datasets:read', 'datasets:write'])` (any one of them is enough).
+  Build these lists with `defineScopes` of `@data-fair/lib-common-types/scopes.js` rather than by
+  hand: it adds the umbrella and the global tier scopes (`all:read`, `all:write`, `all:admin`).
 - simple-directory signs scoped tokens and access tokens with a separate key set
   (`/.well-known/scoped-jwks.json`, key ids `scoped-...`). Older libs only know
   `/.well-known/jwks.json` and refuse those tokens, so a scoped token never acts with full role

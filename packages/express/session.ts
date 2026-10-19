@@ -51,6 +51,15 @@ export class Session extends SessionHandler {
     return sessionState
   }
 
+  // read the session and check its scopes (any one of the accepted ones), marking the request as
+  // scope-checked so the session stays readable afterwards; unrestricted sessions pass
+  async reqWithScope (req: Request | IncomingMessage, accepted: string | string[], res?: Response | ServerResponse): Promise<SessionState> {
+    const sessionState = await this.loadState(req, res)
+    assertScope(sessionState, accepted)
+    markScopeChecked(req)
+    return sessionState
+  }
+
   /** @internal logging only, never for authorization */
   // reads the session for logging only: never throws, ignores the scope check requirement
   async reqForLogs (req: Request | IncomingMessage): Promise<SessionState | undefined> {
@@ -216,10 +225,11 @@ export function assertReqScope (req: Request | IncomingMessage, accepted: string
   assertScope(req[sessionKey] as SessionState, accepted)
   markScopeChecked(req)
 }
-// guard a route with the scopes it accepts (any one of them); unrestricted sessions pass
+// guard a route with the scopes it accepts (any one of them); unrestricted sessions pass.
+// The session is read on the way (cached on the request), session.middleware() is not needed
 export function requireScope (accepted: string | string[]): RequestHandler {
-  return (req, _res, next) => {
-    assertReqScope(req, accepted)
+  return async (req, res, next) => {
+    await session.reqWithScope(req, accepted, res)
     next()
   }
 }

@@ -26,6 +26,7 @@ Each directory module exports its generated types (and `validate` / `assertValid
 | `@data-fair/lib-common-types/catalog/index.js` | The `CatalogPlugin` contract of catalog plugins and its context types. |
 | `@data-fair/lib-common-types/processings.js` | The `PrepareFunction`, `RunFunction`, `ProcessingContext` and `LogFunctions` types of processing plugins. |
 | `@data-fair/lib-common-types/ws.js` | `Message` type of the websocket protocol. |
+| `@data-fair/lib-common-types/scopes.js` | `defineScopes` (a service's scope vocabulary: accepted scopes per tier, descriptions, global tier scopes), `globalScopes`, `oauth2SecurityScheme`. |
 
 ## Usage
 
@@ -59,3 +60,34 @@ import type { CatalogPlugin } from '@data-fair/lib-common-types/catalog/index.js
 ```
 
 See the [data-fair-processing skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-processing).
+
+### Scopes
+
+A service declares its scope families once; the matching of `session/index.js` (`hasScope`, exact or bare umbrella, never prefix) stays the same.
+
+```ts
+import { defineScopes, oauth2SecurityScheme } from '@data-fair/lib-common-types/scopes.js'
+
+const scopes = defineScopes({
+  notifications: {
+    tiers: ['read', 'write'],
+    descriptions: {
+      umbrella: { fr: 'Tous les droits sur les notifications', en: 'All notification scopes' },
+      read: { fr: 'Lire ses notifications', en: 'Read own notifications' },
+      write: { fr: 'Gérer ses abonnements', en: 'Manage own subscriptions' }
+    }
+  }
+})
+
+// notifications:write notifications all:write all:admin
+requireScope(scopes.acceptedScopes('notifications', 'write'))
+
+// the oauth2 scheme of the service's OpenAPI document, with x-scopeIncludes for the aggregation by data-fair
+oauth2SecurityScheme(scopes, { directoryUrl, locale: 'fr' })
+```
+
+- `acceptedScopes(family, tier)`: the family's declared tiers at or above `tier`, the umbrella, then `all:<tier>` and the higher global tier scopes. A tier the family does not declare throws.
+- `familyScopes(family)`: every scope that reaches some tier of the family, for a coarse gate.
+- `scopeDescriptions(locale)` and `scopeIncludes`: what each `all:*` scope includes, lower tiers included.
+- The global tier scopes and their descriptions are owned here (`globalScopes`), identical in every service. `all` is reserved as a family name.
+

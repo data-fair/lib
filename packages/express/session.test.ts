@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
-import { Session, requireScope, assertReqScope, allowAnyScope, markScopeChecked, reqSession, reqSessionAuthenticated, reqAdminMode, reqUser, reqUserAuthenticated, setReqUser, setReqSession } from './session.js'
+import { Session, session as defaultSession, requireScope, assertReqScope, allowAnyScope, markScopeChecked, reqSession, reqSessionAuthenticated, reqAdminMode, reqUser, reqUserAuthenticated, setReqUser, setReqSession } from './session.js'
 import type { Request, Response } from 'express'
 import type { SessionState, User } from '@data-fair/lib-common-types/session/index.js'
 
@@ -409,9 +409,9 @@ describe('Session bearer and scopes', () => {
     const req = mockReq()
     await new Promise<void>((resolve, reject) => session.middleware()(req, mockRes(), (err?: any) => err ? reject(err) : resolve()))
     let called = false
-    requireScope('datasets:read')(req, mockRes(), () => { called = true })
+    await requireScope('datasets:read')(req, mockRes(), () => { called = true })
     assert.ok(called)
-    assert.throws(() => requireScope('datasets:write')(req, mockRes(), () => {}), (err: any) => err.status === 403)
+    await assert.rejects(async () => requireScope('datasets:write')(req, mockRes(), () => {}), (err: any) => err.status === 403)
   })
 })
 
@@ -448,7 +448,7 @@ describe('scope checks are required per route', () => {
   it('requireScope marks the request, then the accessors work', async () => {
     const { session, req } = await setup(scopedState)
     let called = false
-    requireScope('datasets:read')(req, mockRes(), () => { called = true })
+    await requireScope('datasets:read')(req, mockRes(), () => { called = true })
     assert.ok(called)
     assert.deepEqual(reqSession(req).scopes, ['datasets:read'])
     assert.equal(reqUser(req)?.id, testUser.id)
@@ -553,5 +553,81 @@ describe('scope checks are required per route', () => {
     const failing = new Session()
     failing.readState = async () => { throw Object.assign(new Error('nope'), { status: 401 }) }
     assert.equal(await failing.reqForLogs(mockReq()), undefined)
+  })
+})
+
+describe('requireScope without the session middleware', () => {
+  const scopedState = (): SessionState => ({
+    lang: 'fr',
+    user: { ...testUser, scope: 'datasets:read' },
+    account: { type: 'organization', id: 'org1', name: 'Test Org' },
+    accountRole: 'admin',
+    scopes: ['datasets:read']
+  })
+  // requireScope loads the session through the default instance, as a route of a service does
+  async function withDefaultSession (state: () => SessionState, fn: (reads: () => number) => Promise<void>) {
+    const { readState, scopeAware } = defaultSession
+    let reads = 0
+    defaultSession.readState = async () => { reads++; return state() }
+    defaultSession.scopeAware = true
+    try { await fn(() => reads) } finally {
+      defaultSession.readState = readState
+      defaultSession.scopeAware = scopeAware
+    }
+  }
+  const run = (handler: any, req: Request, res = mockRes()) => new Promise<{ next: boolean, err?: any, res: typeof res }>((resolve) => {
+    Promise.resolve(handler(req, res, (err?: any) => resolve({ next: true, err, res })))
+      .then(() => resolve({ next: false, res }), (err: any) => resolve({ next: false, err, res }))
+  })
+
+  it('loads the session, checks the scope and marks the request', async () => {
+    await withDefaultSession(scopedState, async () => {
+      const req = mockReq()
+      const result = await run(requireScope('datasets:read'), req)
+      assert.ok(result.next)
+      assert.equal(result.err, undefined)
+      assert.deepEqual((await defaultSession.req(req)).scopes, ['datasets:read'])
+    })
+  })
+
+  it('refuses an uncovered scope with 403', async () => {
+    await withDefaultSession(scopedState, async () => {
+      const result = await run(requireScope('datasets:write'), mockReq())
+      assert.equal(result.err?.status, 403)
+      assert.match(result.err?.message, /insufficient scope/)
+    })
+  })
+
+  it('reuses the session loaded by the middleware', async () => {
+    await withDefaultSession(scopedState, async (reads) => {
+      const req = mockReq()
+      await run(defaultSession.middleware(), req)
+      const result = await run(requireScope('datasets:read'), req)
+      assert.ok(result.next)
+      assert.equal(result.err, undefined)
+      assert.equal(reads(), 1)
+      assert.deepEqual(reqSession(req).scopes, ['datasets:read'])
+    })
+  })
+
+  it('passes a session loading error to the error handler', async () => {
+    const { readState } = defaultSession
+    defaultSession.readState = async () => { throw Object.assign(new Error('failed to decode token'), { status: 401 }) }
+    try {
+      const result = await run(requireScope('datasets:read'), mockReq())
+      assert.equal(result.err?.status, 401)
+    } finally { defaultSession.readState = readState }
+  })
+})
+
+describe('session.reqWithScope', () => {
+  it('returns the session once its scope is checked', async () => {
+    const session = new Session()
+    session.scopeAware = true
+    session.readState = async () => ({ lang: 'fr', user: { ...testUser, scope: 'datasets:read' }, scopes: ['datasets:read'] }) as SessionState
+    const req = mockReq()
+    assert.deepEqual((await session.reqWithScope(req, ['datasets:read', 'datasets:write'])).scopes, ['datasets:read'])
+    assert.ok((await session.req(req)).user)
+    await assert.rejects(session.reqWithScope(mockReq(), 'datasets:write'), { status: 403 })
   })
 })
