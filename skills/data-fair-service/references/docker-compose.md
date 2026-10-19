@@ -221,8 +221,13 @@ reset their volumes with this change anyway (mongo 4.2 → 8).
       - discovery.type=single-node
       - xpack.security.enabled=false
       - ingest.geoip.downloader.enabled=false
-      # heap 512m; an agent that needs more sets ES_HEAP=1g in .env (df-dev never overwrites it)
-      - ES_JAVA_OPTS=-Xms${ES_HEAP:-512m} -Xmx${ES_HEAP:-512m}
+      # features the services never use, skipped to lighten the boot
+      - xpack.ml.enabled=false
+      - xpack.watcher.enabled=false
+      - stack.templates.enabled=false
+      - cluster.deprecation_indexing.enabled=false
+      # heap starts at 64m and grows up to 512m (pre-touching a fixed 512m cost ~360m per idle stack)
+      - ES_JAVA_OPTS=-Xms64m -Xmx512m
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:
@@ -236,6 +241,8 @@ reset their volumes with this change anyway (mongo 4.2 → 8).
     mem_limit: 2g
     # no swap: an idle ES got 1.7 GB swapped out
     memswap_limit: 2g
+    # halves the boot CPU burst (ES sizes its thread pools, GC and JIT threads to the quota)
+    cpus: 2
 
   mongo:
     image: mongo:8

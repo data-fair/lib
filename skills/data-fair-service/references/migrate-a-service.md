@@ -48,7 +48,7 @@ Pane titles in `panes` must equal the `name` of the panes in `.zellij.kdl`; othe
 
 - Core services (needed for the service to work): remove their `profiles`.
 - Optional services: `profiles: [<service name>]`, nothing else (no `test` profile).
-- CI starts the **core** services only (`docker compose up -d --wait`; `--profile '*'` only for `logs` / `down`), like a developer's default env, and its API / worker get `NODE_CONFIG=$(./node_modules/.bin/df-dev absent-config)`. The core holds what the tests really use: before moving a service to a profile, grep `tests/` for it. A test that needs an optional service is reviewed rather than kept by default: checking that a service emits its events is a unit test of the emission, not an api/e2e test that starts `events`.
+- CI starts the **core** services only (`docker compose up -d --wait`; `--profile '*'` only for `logs` / `down`), like a developer's default env, and its API / worker get `NODE_CONFIG=$(./node_modules/.bin/df-dev absent-config)`. The core holds what the tests really use: before moving a service to a profile, grep `tests/` for it. A test that needs an optional service is reviewed rather than kept by default: checking that a service emits its events is a unit test of the emission, not an api/e2e test that starts `events`. Exception for now: data-fair's CI starts every profile (`--profile '*'`, maintainer's call) until its tests needing clamav, events or agents are reworked.
 - `wait-deps` waits for every container of the active profiles: `healthy` when it has a healthcheck, `running` otherwise, one-shot containers exited 0.
 - Service blocks (mongo 8, ES 8.19.9, simple-directory, nginx…), their healthchecks, memory caps and `depends_on`: copy them from [docker-compose.md](docker-compose.md), the only place they change; the nginx template from [nginx.md](nginx.md).
 - One-shot init containers (e.g. `s3-init`) are fine: `wait-deps` and `df-status` treat "exited 0" as done.
@@ -85,8 +85,8 @@ layout {
 ```
 
 - `df-dev zellij` exports `.env` (and `COMPOSE_PROFILES` from `--services`) into the session: panes read `$DEV_HOST`, `$NGINX_PORT`… directly.
-- `export NODE_CONFIG=…` in **every** pane whose process reads an `optional` key (catalogs' and processings' workers read `privateEventsUrl` too), and only there. A second instance of the same API (registry's `api-upstream`) is another pane with its own env overrides (`PORT=$DEV_UPSTREAM_API_PORT MONGO_URL=… DATA_DIR=…`): env variables mapped in `custom-environment-variables` win over `NODE_CONFIG`.
-- Keep the repo's vite invocation: pass `--port $DEV_UI_PORT` only if the old script did (registry's `vite.config.ts` reads `.env` itself).
+- `export NODE_CONFIG=…` in **every** pane whose process reads an `optional` key (catalogs' and processings' workers read `privateEventsUrl` too), and only there. That includes the ui pane when vite hashes the API's ui-config and that config reads an optional key (data-fair): otherwise vite and the API compute different `ui-config.js` hashes and every page is blank. A second instance of the same API (registry's `api-upstream`) is another pane with its own env overrides (`PORT=$DEV_UPSTREAM_API_PORT MONGO_URL=… DATA_DIR=…`): env variables mapped in `custom-environment-variables` win over `NODE_CONFIG`.
+- The ui pane passes `--port $DEV_UI_PORT` as in the template (the 4 pilots); `vite.config.ts` reads the same variable with `strictPort`, so the flag is redundant but harmless. registry's `vite.config.ts` reads `.env` itself.
 - Keep the repo's env vars and DEBUG flags from the old `dev` scripts; drop `mkdir -p dev/logs`, `| tee …`, `| ts …`, `nvm use`.
 - Nuxt: `… ../node_modules/.bin/df-mem-cap nuxt dev 2>&1 | cat` (no `exec`).
 - A data-fair API keeps its `nodemon --exec 'sh ../dev/run-api.sh'` (no restart feedback loop).
@@ -97,7 +97,7 @@ layout {
 
 - Root `package.json`: `"dev-zellij": "df-dev zellij"`, `"stop-dev-deps": "docker compose --profile '*' stop"`; remove `dev-deps`, `dev-api`, `dev-ui`, `dev-worker`, `dev-bridge`, `dev-mock` (keep workspace `dev` scripts only if CI uses them).
 - Delete `dev/init-env.sh`, `dev/status.sh`, `dev/worktree.sh`, `dev/delete-worktree.sh`, `dev/scripts/log-tee.sh`, `dev/scripts/dev-deps.sh`, `dev/with-memory-cap.sh` (replaced by `df-mem-cap`).
-- CI: `./node_modules/.bin/df-dev init-env` instead of `./dev/init-env.sh`; processes started with local binaries (`./node_modules/.bin/dotenv -- npm -w api run dev &`), never a bare `npx`.
+- CI: `./node_modules/.bin/df-dev init-env` instead of `./dev/init-env.sh`; processes started with local binaries, either the workspace `dev` scripts (`./node_modules/.bin/dotenv -- npm -w api run dev &`, processings) or the pane commands themselves (portals, data-fair), never a bare `npx`; each writes `dev/logs/<pane>.log`, tailed when readiness times out and uploaded with `test-results/` on failure (without them a failing run shows only the compose logs).
 - `tests/state-setup.ts`: drop the `tail -f dev/logs/…` spawn, and the `state-teardown` project and file that killed it; the "API unavailable" message tells agents `npx --no df-dev logs api` / `npx --no df-dev restart api`.
 - Config error messages mentioning `dev/init-env.sh` → `npx --no df-dev setup`.
 - AGENTS.md "Dev environment": the command table and the four rules of SKILL.md "Operating a running dev env", the list of optional containers, worktrees via `npx --no df-worktree <branch>` / `npx --no df-worktree-delete <branch>` (branch names: letters, digits, `.`, `_`, `-`, no `/`, and `<repo>_<branch>` at most 60 characters).
