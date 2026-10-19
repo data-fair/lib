@@ -1,6 +1,6 @@
 import { readlinkSync } from 'node:fs'
 import path from 'node:path'
-import { realExec, type Exec } from './exec.js'
+import { realExec, jsonLines, type Exec } from './exec.js'
 import { sessionName, sessionState, listPanes } from './zellij.js'
 import { readDevConfig, readEnvFile, interpolate, type DevConfig } from './config.js'
 import { checkReady } from './panes.js'
@@ -12,9 +12,12 @@ export type StatusData = { url?: string, containers: Container[], containersErro
 
 const COLORS = { green: '32', yellow: '33', red: '31', dim: '2' } as const
 
-export const containerMark = (c: Container) => {
+export const containerMark = (c: Container, stackRunning = true) => {
   if (c.state === 'not started') return { mark: '·', color: 'dim' as const, text: 'not started' }
-  if (c.state === 'exited' && c.exitCode === 0) return { mark: '✔', color: 'green' as const, text: 'done' } // one-shot init container
+  if (c.state === 'exited' && c.exitCode === 0) {
+    // a one-shot init container (s3-init) that completed, unless the whole stack is down: a stopped mongo exits with 0 too
+    return stackRunning ? { mark: '✔', color: 'green' as const, text: 'done' } : { mark: '·', color: 'dim' as const, text: 'stopped' }
+  }
   const text = c.health || c.state
   if (text === 'healthy' || (c.state === 'running' && !c.health)) return { mark: '✔', color: 'green' as const, text }
   if (text === 'starting' || c.state === 'restarting' || c.state === 'created') return { mark: '⠿', color: 'yellow' as const, text }
@@ -26,10 +29,11 @@ const human = (kb: number) => kb >= 1048576 ? `${(kb / 1048576).toFixed(1)}G` : 
 export const renderStatus = (data: StatusData, color: boolean) => {
   const paint = (c: keyof typeof COLORS, s: string) => color ? `\x1b[${COLORS[c]}m${s}\x1b[0m` : s
   const lines = data.url ? [data.url, ''] : []
+  const stackRunning = data.containers.some(c => c.state === 'running')
   lines.push(...data.containersError
     ? [paint('red', `containers unavailable: ${data.containersError}`)]
     : data.containers.map(c => {
-        const m = containerMark(c)
+        const m = containerMark(c, stackRunning)
         return `${paint(m.color, m.mark)} ${c.service.padEnd(18)} ${paint(m.color, m.text.padEnd(11))} ${c.memory ?? ''}`.trimEnd()
       }))
   lines.push('')
@@ -44,9 +48,6 @@ export const renderStatus = (data: StatusData, color: boolean) => {
   lines.push(`${'processes total'.padEnd(40)} ${human(data.procs.reduce((sum, p) => sum + p.rssKb, 0))}`)
   return lines.join('\n')
 }
-
-// docker compose prints one JSON object per line (older versions: a single JSON array)
-const jsonLines = (out: string): any[] => out.split('\n').filter(l => l.trim()).flatMap(l => JSON.parse(l))
 
 const SHELLS = ['bash', 'sh', 'zsh']
 
@@ -114,7 +115,10 @@ export const collectStatus = (root: string, exec: Exec = realExec): StatusData =
     data.panesError = `panes unavailable: ${err.message.split('\n')[0]}`
   }
   const cwdOf = (pid: number) => { try { return readlinkSync(`/proc/${pid}/cwd`) } catch { return undefined } }
-  data.procs = sessionProcesses(exec('ps', ['-u', String(process.getuid?.() ?? ''), '-o', 'pid=,ppid=,rss=,args=']), session, cwdOf, root, process.pid)
+  try {
+    const user = process.getuid ? ['-u', String(process.getuid())] : ['-e']
+    data.procs = sessionProcesses(exec('ps', [...user, '-o', 'pid=,ppid=,rss=,args=']), session, cwdOf, root, process.pid)
+  } catch {} // the process list is the least important part
   return data
 }
 

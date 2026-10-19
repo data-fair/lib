@@ -9,3 +9,6 @@ export const run = (cmd: string, args: string[], cwd: string, env: NodeJS.Proces
   const result = spawnSync(cmd, args, { cwd, env, stdio: 'inherit' })
   if (result.status !== 0) throw new Error(`${cmd} ${args.join(' ')} failed with exit code ${result.status}`)
 }
+
+// docker compose prints one JSON object per line (older versions: a single JSON array)
+export const jsonLines = (out: string): any[] => out.split('\n').filter(l => l.trim()).flatMap(l => JSON.parse(l))

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { program } from 'commander'
-import { findRoot, readDevConfig } from './config.js'
+import { findRoot, readDevConfig, readEnvFile } from './config.js'
 import { initEnv } from './env.js'
 import { setup } from './setup.js'
 import { launch } from './launch.js'
@@ -9,7 +9,6 @@ import { composeUp, composeDown, waitDeps } from './compose.js'
 import { collectStatus, renderStatus, checkReadiness } from './status.js'
 import { absentConfig } from './optional.js'
 import { realExec } from './exec.js'
-import { readEnvFile } from './config.js'
 
 const root = () => findRoot(process.cwd())
 

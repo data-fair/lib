@@ -14,6 +14,17 @@ describe('status', () => {
     assert.deepEqual(containerMark({ service: 's3-init', state: 'exited', health: '', exitCode: 0 }), { mark: '✔', color: 'green', text: 'done' })
   })
 
+  it('shows a stack stopped with exit code 0 as stopped, not done', () => {
+    const out = renderStatus({
+      containers: [{ service: 'mongo', state: 'exited', health: '', exitCode: 0 }, { service: 'nginx', state: 'exited', health: '', exitCode: 0 }],
+      panes: [],
+      procs: []
+    }, false)
+    assert.match(out, /· mongo\s+stopped/)
+    assert.match(out, /· nginx\s+stopped/)
+    assert.ok(!out.includes('done'))
+  })
+
   it('renders containers, processes and the total in plain text', () => {
     const out = renderStatus({
       containers: [{ service: 'mongo', state: 'running', health: 'healthy', memory: '115MiB' }],
@@ -64,14 +75,15 @@ describe('status', () => {
     assert.match(out, /✔ ui\s+running/)
   })
 
-  it('still shows panes and processes when docker fails, and says when the session is not running', () => {
+  it('still shows panes and processes when docker or ps fails, and says when the session is not running', () => {
     const exec: Exec = (cmd, args) => {
       if (cmd === 'docker') throw new Error('Cannot connect to the Docker daemon')
       if (args[0] === 'list-sessions') throw new Error('No active zellij sessions found.')
-      if (cmd === 'ps') return ''
+      if (cmd === 'ps') throw new Error('ps: command not found')
       throw new Error('unexpected ' + cmd + ' ' + args.join(' '))
     }
     const data = collectStatus('/x/portals', exec)
+    assert.deepEqual(data.procs, [])
     assert.match(data.containersError ?? '', /Docker daemon/)
     assert.match(data.panesError ?? '', /npm run dev-zellij/)
     const out = renderStatus(data, false)

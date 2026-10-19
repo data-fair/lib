@@ -51,6 +51,24 @@ describe('compose', () => {
     assert.ok(!calls.some(c => c.includes(' up')), calls.join(' | '))
   })
 
+  it('fails at once when a dependency stays exited with an error code', async () => {
+    let t = 0
+    const exec: Exec = (cmd, args) => args.includes('config') ? 'mongo\n' : JSON.stringify({ Service: 'mongo', State: 'exited', ExitCode: 1 }) + '\n'
+    await assert.rejects(waitDeps('/x', { exec, sleep: async (ms) => { t += ms }, now: () => t, log: () => {} }), /containers failed: mongo \(exited 1\).*docker compose logs mongo/)
+    assert.ok(t < 10_000, `waited ${t} ms`)
+  })
+
+  it('keeps waiting for a container that restarts after a failed attempt', async () => {
+    let t = 0
+    const states = [{ State: 'exited', ExitCode: 1 }, { State: 'restarting' }, { State: 'running', Health: 'healthy' }]
+    const exec: Exec = (cmd, args) => {
+      if (args.includes('config')) return 'data-fair\n'
+      return JSON.stringify({ Service: 'data-fair', ...states[Math.min(Math.floor(t / 1000), states.length - 1)] }) + '\n'
+    }
+    await waitDeps('/x', { exec, sleep: async (ms) => { t += ms }, now: () => t, log: () => {} })
+    assert.equal(t, 2000)
+  })
+
   it('gives up after 3 minutes and names what is not ready', async () => {
     let t = 0
     const exec: Exec = (cmd, args) => args.includes('config') ? 'mongo\n' : ''

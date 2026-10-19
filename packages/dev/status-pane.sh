@@ -28,9 +28,11 @@ fi
 
 if [ -n "${NO_COLOR:-}" ]; then G=; Y=; R=; D=; N=; else G=$'\e[32m'; Y=$'\e[33m'; R=$'\e[31m'; D=$'\e[2m'; N=$'\e[0m'; fi
 
+# the compose file does not change while the session runs: parse it once, not every 3 s
+services=$(docker compose --profile '*' config --services 2>/dev/null | sort)
+
 render() {
-  local services ps names stats procs
-  services=$(docker compose --profile '*' config --services 2>/dev/null | sort)
+  local ps names stats procs
   ps=$(docker compose ps -a --format '{{.Service}}\t{{.State}}\t{{.Health}}\t{{.ExitCode}}\t{{.Name}}' 2>/dev/null)
   names=$(printf '%s\n' "$ps" | awk -F'\t' '$2 == "running" { print $5 }')
   stats=""
@@ -53,7 +55,7 @@ render() {
     BEGIN {
       services = ENVIRON["S_SERVICES"]; ps = ENVIRON["S_PS"]; stats = ENVIRON["S_STATS"]; procs = ENVIRON["S_PROCS"]
       nps = split(ps, rows, "\n")
-      for (i = 1; i <= nps; i++) if (split(rows[i], f, "\t") >= 5) { state[f[1]] = f[2]; health[f[1]] = f[3]; code[f[1]] = f[4]; cname[f[1]] = f[5] }
+      for (i = 1; i <= nps; i++) if (split(rows[i], f, "\t") >= 5) { state[f[1]] = f[2]; health[f[1]] = f[3]; code[f[1]] = f[4]; cname[f[1]] = f[5]; if (f[2] == "running") running = 1 }
       npe = split(ENVIRON["S_PENDING"], pe, "\n")
       for (i = 1; i <= npe; i++) pending[pe[i]] = 1
       nst = split(stats, srows, "\n")
@@ -64,7 +66,9 @@ render() {
         s = svc[i]; if (s == "") continue
         if (!(s in state)) { printf "%s· %-18s not started%s\n", D, s, N; continue }
         st = state[s]; h = health[s]; text = (h != "" ? h : st)
-        if (st == "exited" && code[s] == "0") { printf "%s✔%s %-18s %sdone%s\n", G, N, s, G, N; continue }
+        # a one-shot init container (s3-init) that completed, unless the whole stack is down: a stopped mongo exits with 0 too
+        if (st == "exited" && code[s] == "0" && running) { printf "%s✔%s %-18s %sdone%s\n", G, N, s, G, N; continue }
+        if (st == "exited" && code[s] == "0") { printf "%s· %-18s stopped%s\n", D, s, N; continue }
         if (st != "running" && (s in pending)) { printf "%s⠿%s %-18s %swaiting%s\n", Y, N, s, Y, N; continue }
         if (st == "exited") text = "exited " code[s]
         if (text == "healthy" || (st == "running" && h == "")) { c = G; mark = "✔" }
