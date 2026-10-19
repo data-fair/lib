@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
 import { IncomingMessage } from 'node:http'
 import { Socket } from 'node:net'
-import { subscribeDecision, subscribeForRequest } from './ws-server.js'
+import { subscribeDecision, subscribeForRequest, parseFrame } from './ws-server.js'
 import { session } from './session.js'
 import type { SessionState } from '@data-fair/lib-common-types/session/index.js'
 
@@ -124,5 +124,43 @@ describe('ws-server subscribeForRequest', () => {
       assert.deepEqual(await subscribeForRequest(fakeReq(), 'ch', {}, c.fn), { ok: true })
       assert.equal(c.calls.length, 1)
     })
+  })
+})
+
+describe('ws-server parseFrame', () => {
+  // regression: a bare "null" frame passed the typeof guard and then crashed the message handler
+  it('a null frame is rejected with a 400, not a throw', () => {
+    const r = parseFrame('null') as any
+    assert.equal(r.error.status, 400)
+    assert.equal(r.error.data, '"channel" is required')
+  })
+
+  it('other non-object frames are rejected without throwing', () => {
+    for (const frame of ['123', '"str"', 'true', '[]']) {
+      const r = parseFrame(frame) as any
+      assert.equal(r.error.status, 400, `frame ${frame}`)
+    }
+  })
+
+  it('invalid JSON is rejected with a 400', () => {
+    const r = parseFrame('{not json') as any
+    assert.equal(r.error.status, 400)
+  })
+
+  it('a frame without channel is rejected', () => {
+    const r = parseFrame('{"type":"subscribe"}') as any
+    assert.equal(r.error.data, '"channel" is required')
+  })
+
+  it('a frame with an invalid type is rejected but keeps the channel', () => {
+    const r = parseFrame('{"channel":"ch","type":"nope"}') as any
+    assert.equal(r.error.status, 400)
+    assert.equal(r.error.channel, 'ch')
+  })
+
+  it('a valid subscribe frame is accepted', () => {
+    const r = parseFrame('{"channel":"ch","type":"subscribe"}') as any
+    assert.equal(r.message.channel, 'ch')
+    assert.equal(r.message.type, 'subscribe')
   })
 })

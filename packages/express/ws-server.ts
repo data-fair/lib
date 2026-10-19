@@ -82,6 +82,24 @@ export const subscribeForRequest = async (
 }
 
 let stopped = false
+// parse and validate a raw client frame. Must never throw on arbitrary input:
+// a bare "null" used to pass the typeof guard and then crash the handler.
+export const parseFrame = (str: string): { error: { type: 'error', status: number, data: any, channel?: string } } | { message: { channel: string, type: string, [k: string]: any } } => {
+  let message
+  try {
+    message = JSON.parse(str)
+  } catch (err: any) {
+    return { error: { type: 'error', status: 400, data: err.message ?? err } }
+  }
+  if (!message || typeof message !== 'object' || !message.channel) {
+    return { error: { type: 'error', status: 400, data: '"channel" is required' } }
+  }
+  if (!message.type || ['subscribe', 'unsubscribe'].indexOf(message.type) === -1) {
+    return { error: { type: 'error', channel: message.channel, status: 400, data: 'type should be "subscribe" or "unsubscribe"' } }
+  }
+  return { message }
+}
+
 export const start = async (
   server: Server,
   db: Db,
@@ -99,20 +117,10 @@ export const start = async (
     ws.on('message', async str => {
       if (stopped) return
 
-      let message
+      const parsed = parseFrame(str.toString())
+      if ('error' in parsed) return ws.send(JSON.stringify(parsed.error))
+      const message = parsed.message
       try {
-        message = JSON.parse(str.toString())
-      } catch (err: any) {
-        const errorMessage = { type: 'error', status: 400, data: err.message ?? err }
-        return ws.send(JSON.stringify(errorMessage))
-      }
-      try {
-        if (typeof message !== 'object' || !message.channel) {
-          return ws.send(JSON.stringify({ type: 'error', status: 400, data: '"channel" is required' }))
-        }
-        if (!message.type || ['subscribe', 'unsubscribe'].indexOf(message.type) === -1) {
-          return ws.send(JSON.stringify({ type: 'error', channel: message.channel, status: 400, data: 'type should be "subscribe" or "unsubscribe"' }))
-        }
         if (message.type === 'subscribe') {
           const decision = await subscribeForRequest(req, message.channel, message, canSubscribe, options.channelScopes)
           if (!decision.ok) {
@@ -129,7 +137,7 @@ export const start = async (
         }
       } catch (err: any) {
         const status = err.status ?? err.statusCode ?? 500
-        const errorMessage: Message = { type: 'error', status, data: err.message ?? err, channel: message.channel }
+        const errorMessage: Message = { type: 'error', status, data: err.message ?? err, channel: message?.channel }
         if (status >= 500) internalError('ws-error', err)
         return ws.send(JSON.stringify(errorMessage))
       }
