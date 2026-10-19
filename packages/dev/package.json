@@ -22,10 +22,10 @@
   },
   "type": "module",
   "bin": {
-    "df-dev": "./cli.js",
-    "df-mem-cap": "./mem-cap.sh",
-    "df-worktree": "./worktree.sh",
-    "df-worktree-delete": "./worktree-delete.sh",
-    "df-status": "./status-pane.sh"
+    "df-dev": "cli.js",
+    "df-mem-cap": "mem-cap.sh",
+    "df-worktree": "worktree.sh",
+    "df-worktree-delete": "worktree-delete.sh",
+    "df-status": "status-pane.sh"
   }
 }
