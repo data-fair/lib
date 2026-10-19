@@ -15,6 +15,7 @@ This is an npm-workspaces monorepo. Each package is published independently in t
 | [`@data-fair/lib-vue`](./packages/vue) | Composables and utilities for Vue 3 applications: session, fetch, reactive search params, websockets, notifications… |
 | [`@data-fair/lib-vuetify`](./packages/vuetify) | Vuetify components shared by the stack UIs: personal menu, owner pickers, theme and language switchers… |
 | [`@data-fair/lib-processing-dev`](./packages/processing-dev) | Development and test utilities for processing plugins. |
+| [`@data-fair/lib-dev`](./packages/dev) | The dev environment of the services, for humans and agents: `df-dev` (setup, zellij session, status, logs, restart), `df-worktree`, `df-mem-cap`. |
 
 ## Coding agent skills
 

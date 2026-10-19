@@ -59,6 +59,7 @@
   },
   "workspaces": [
     "packages/common-types",
+    "packages/dev",
     "packages/express",
     "packages/node",
     "packages/processing-dev",
