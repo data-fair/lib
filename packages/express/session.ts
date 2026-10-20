@@ -17,6 +17,8 @@ export type IncomingMessageSession = IncomingMessage & { session?: SessionState 
 const sessionKey = Symbol('session')
 const sessionMiddlewareKey = Symbol('session-middleware')
 const scopeCheckedKey = Symbol('scope-checked')
+const bearerCorsMethods = 'GET, HEAD, POST, PUT, PATCH, DELETE'
+const bearerCorsHeaders = 'Authorization, Content-Type'
 
 // declare that the route checked the scopes of the session (or accepts any scope)
 export function markScopeChecked (req: Request | IncomingMessage) {
@@ -154,6 +156,34 @@ export class Session extends SessionHandler {
     // @ts-ignore - cookies is set by cookie-parser, absent on plain IncomingMessage
     const cookies = req.cookies ?? req.headers.cookie
     return this.readStateFromCookie(cookies, this.onlyDecode?.(req), res && (() => this.unsetCookies(req, res)))
+  }
+
+  // Scoped operations are usable from browsers on other domains (dashboards holding an OAuth access
+  // token). A bearer token is not ambient, the browser never attaches it on its own: a call that
+  // carries one is answered from any origin, without credentials, and the scopes of the token are
+  // what limits it. A call without an Authorization header gets no CORS header, so a page of another
+  // origin never reads a response obtained with the user's cookies.
+  // Only acts on a scope-aware session (init option): a service that does not enforce scopes refuses
+  // scoped tokens anyway. Mount it before the routes, it answers the preflights itself.
+  bearerCors (): RequestHandler {
+    return (req, res, next) => {
+      if (!this.scopeAware || !req.headers.origin) return next()
+      if (req.method === 'OPTIONS') {
+        const requested = (req.headers['access-control-request-headers'] ?? '').toLowerCase().split(',').map(h => h.trim())
+        if (!requested.includes('authorization')) return next()
+        res.set({
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': bearerCorsMethods,
+          'Access-Control-Allow-Headers': bearerCorsHeaders,
+          'Access-Control-Max-Age': '600'
+        })
+        res.status(204).end()
+        return
+      }
+      // also on error responses, so the page can tell a 401 or 403 from a network failure
+      if (/^bearer(\s|$)/i.test(req.headers.authorization ?? '')) res.set('Access-Control-Allow-Origin', '*')
+      next()
+    }
   }
 
   middleware (options: { required?: boolean, adminOnly?: boolean } = {}): RequestHandler {

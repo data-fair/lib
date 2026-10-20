@@ -631,3 +631,65 @@ describe('session.reqWithScope', () => {
     await assert.rejects(session.reqWithScope(mockReq(), 'datasets:write'), { status: 403 })
   })
 })
+
+describe('Session.bearerCors', () => {
+  const corsRes = () => {
+    const res = {
+      statusCode: 200,
+      headers: {} as Record<string, string>,
+      ended: false,
+      set (values: string | Record<string, string>, value?: string) {
+        if (typeof values === 'string') res.headers[values] = value as string
+        else Object.assign(res.headers, values)
+        return res
+      },
+      status (code: number) { res.statusCode = code; return res },
+      end () { res.ended = true; return res }
+    }
+    return res
+  }
+  const run = (session: Session, req: Request) => {
+    const res = corsRes()
+    let nextCalled = false
+    session.bearerCors()(req, res as any, () => { nextCalled = true })
+    return { res, nextCalled }
+  }
+  const scopeAware = () => { const session = new Session(); session.scopeAware = true; return session }
+  const origin = 'https://dashboard.example.org'
+
+  it('answers the preflight of a bearer call from any origin, without credentials', () => {
+    const { res, nextCalled } = run(scopeAware(), mockReq('OPTIONS', { origin, 'access-control-request-method': 'GET', 'access-control-request-headers': 'content-type, Authorization' }))
+    assert.equal(nextCalled, false)
+    assert.equal(res.ended, true)
+    assert.equal(res.statusCode, 204)
+    assert.equal(res.headers['Access-Control-Allow-Origin'], '*')
+    assert.match(res.headers['Access-Control-Allow-Headers'], /Authorization/)
+    assert.match(res.headers['Access-Control-Allow-Methods'], /DELETE/)
+    assert.equal(res.headers['Access-Control-Allow-Credentials'], undefined)
+  })
+
+  it('lets a preflight without Authorization through, untouched', () => {
+    const { res, nextCalled } = run(scopeAware(), mockReq('OPTIONS', { origin, 'access-control-request-method': 'POST', 'access-control-request-headers': 'content-type' }))
+    assert.equal(nextCalled, true)
+    assert.deepEqual(res.headers, {})
+  })
+
+  it('opens a bearer call to any origin, its errors included', () => {
+    const { res, nextCalled } = run(scopeAware(), mockReq('GET', { origin, authorization: 'Bearer abc' }))
+    assert.equal(nextCalled, true)
+    assert.equal(res.headers['Access-Control-Allow-Origin'], '*')
+    assert.equal(run(scopeAware(), mockReq('GET', { origin, authorization: 'bearer' })).res.headers['Access-Control-Allow-Origin'], '*')
+  })
+
+  it('gives no CORS header to a call without a bearer token', () => {
+    assert.deepEqual(run(scopeAware(), mockReq('GET', { origin, cookie: 'id_token=x' })).res.headers, {})
+    assert.deepEqual(run(scopeAware(), mockReq('GET', { origin, authorization: 'Basic abc' })).res.headers, {})
+  })
+
+  it('does nothing for a same-origin call or a service that is not scope-aware', () => {
+    assert.deepEqual(run(scopeAware(), mockReq('GET', { authorization: 'Bearer abc' })).res.headers, {})
+    const { res, nextCalled } = run(new Session(), mockReq('OPTIONS', { origin, 'access-control-request-headers': 'authorization' }))
+    assert.equal(nextCalled, true)
+    assert.deepEqual(res.headers, {})
+  })
+})

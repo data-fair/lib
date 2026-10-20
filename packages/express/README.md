@@ -85,6 +85,13 @@ Permissions, account roles, admin mode and the Vue side are covered by the [`dat
     every route to every scope.
   - A mark lasts for the whole request: a route that checked a scope and calls `next()` into
     another handler passes the mark on to it.
+- Scoped operations are usable from browsers on other domains: mount `session.bearerCors()` before
+  the routes of a scope-aware service. A call carrying `Authorization: Bearer` is answered from any
+  origin (`Access-Control-Allow-Origin: *`, never with credentials) and its preflight is answered
+  directly. A bearer token is not ambient, so the origin adds nothing to it: its scopes are what
+  limit it. Calls without a bearer token get no CORS header. The middleware does nothing unless
+  the session is `scopeAware`, so enforcing scopes and opening scoped operations to browsers go
+  together.
 - Websockets (`ws-server`) refuse scoped sessions unless the service passes
   `start(server, db, canSubscribe, { channelScopes })`: `channelScopes(channel)` returns the scopes
   accepted on that channel (any of them), or `undefined` to refuse scoped sessions there (403).
