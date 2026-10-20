@@ -308,6 +308,10 @@ describe('sync accessors', () => {
   })
 })
 
+// unsigned tokens: only their header is read before readStateFromBearer, which the tests replace
+const jwtLike = (header: object) => Buffer.from(JSON.stringify(header)).toString('base64url') + '.e30.sig'
+const accessTokenLike = jwtLike({ alg: 'RS256', typ: 'at+jwt' })
+
 describe('Session bearer and scopes', () => {
   const scopedState = (): SessionState => ({
     lang: 'fr',
@@ -323,10 +327,10 @@ describe('Session bearer and scopes', () => {
     session.readStateFromBearer = async (token: string) => { bearerToken = token; return scopedState() }
     session.readStateFromCookie = async () => { throw new Error('cookies must not be read') }
     session.scopeAware = true
-    const req = mockReq('GET', { authorization: 'Bearer abc.def.ghi', cookie: 'id_token=x; id_token_sign=y' })
+    const req = mockReq('GET', { authorization: 'Bearer ' + accessTokenLike, cookie: 'id_token=x; id_token_sign=y' })
     markScopeChecked(req)
     const state = await session.req(req)
-    assert.equal(bearerToken, 'abc.def.ghi')
+    assert.equal(bearerToken, accessTokenLike)
     assert.deepEqual(state.scopes, ['datasets:read'])
   })
 
@@ -336,17 +340,38 @@ describe('Session bearer and scopes', () => {
     session.readStateFromBearer = async (token: string) => { bearerToken = token; return scopedState() }
     session.readStateFromCookie = async () => { throw new Error('cookies must not be read') }
     session.scopeAware = true
-    const req = mockReq('GET', { authorization: 'bearer abc.def.ghi', cookie: 'id_token=x; id_token_sign=y' })
+    const req = mockReq('GET', { authorization: 'bearer ' + accessTokenLike, cookie: 'id_token=x; id_token_sign=y' })
     markScopeChecked(req)
     await session.req(req)
-    assert.equal(bearerToken, 'abc.def.ghi')
+    assert.equal(bearerToken, accessTokenLike)
   })
 
-  it('refuses an empty bearer header without reading cookies', async () => {
-    for (const header of ['Bearer', 'Bearer ', 'Bearer\t']) {
+  it('treats a bearer that is not an access token as anonymous, without reading cookies', async () => {
+    const headers = [
+      'Bearer', 'Bearer ', 'Bearer\t',
+      'Bearer some-api-key',
+      'Bearer not.a.jwt',
+      'Bearer ' + jwtLike({ alg: 'RS256', typ: 'JWT' }), // a session token
+      'Bearer ' + jwtLike({ alg: 'RS256' }),
+      'Bearer ' + jwtLike({ alg: 'RS256', typ: 42 }),
+      'Bearer ' + Buffer.from('null').toString('base64url') + '.e30.sig'
+    ]
+    for (const header of headers) {
       const session = new Session()
       session.readStateFromCookie = async () => { throw new Error('cookies must not be read') }
-      await assert.rejects(session.req(mockReq('GET', { authorization: header, cookie: 'id_token=x; id_token_sign=y' })), (err: any) => err.status === 401)
+      session.readStateFromBearer = async () => { throw new Error('bearer must not be read') }
+      const state = await session.req(mockReq('GET', { authorization: header, cookie: 'id_token=x; id_token_sign=y', 'x-forwarded-host': 'x', 'x-forwarded-proto': 'https' }))
+      assert.deepEqual(state, { lang: 'fr' }, header)
+    }
+  })
+
+  it('a token claiming to be an access token stays on the strict path', async () => {
+    for (const typ of ['at+jwt', 'AT+JWT', 'application/at+jwt']) {
+      const session = new Session()
+      session.readStateFromCookie = async () => { throw new Error('cookies must not be read') }
+      session.readStateFromBearer = async () => { throw Object.assign(new Error('access token audience mismatch'), { status: 401 }) }
+      const req = mockReq('GET', { authorization: 'Bearer ' + jwtLike({ alg: 'RS256', typ }), cookie: 'id_token=x; id_token_sign=y', 'x-forwarded-host': 'x', 'x-forwarded-proto': 'https' })
+      await assert.rejects(session.req(req), (err: any) => err.status === 401)
     }
   })
 
@@ -370,7 +395,7 @@ describe('Session bearer and scopes', () => {
       audiences = a
       throw Object.assign(new Error('access token audience cannot be checked'), { status: 401 })
     }
-    await assert.rejects(session.req(mockReq('GET', { authorization: 'Bearer abc.def.ghi' })), (err: any) => err.status === 401)
+    await assert.rejects(session.req(mockReq('GET', { authorization: 'Bearer ' + accessTokenLike })), (err: any) => err.status === 401)
     assert.equal(audiences, undefined)
   })
 
@@ -379,7 +404,7 @@ describe('Session bearer and scopes', () => {
     let audiences: string[] | undefined
     session.readStateFromBearer = async (_token: string, _lang?: string, a?: string[]) => { audiences = a; return scopedState() }
     session.scopeAware = true
-    const req = mockReq('GET', { authorization: 'Bearer abc.def.ghi', 'x-forwarded-host': 'x', 'x-forwarded-proto': 'https' })
+    const req = mockReq('GET', { authorization: 'Bearer ' + accessTokenLike, 'x-forwarded-host': 'x', 'x-forwarded-proto': 'https' })
     markScopeChecked(req)
     await session.req(req)
     assert.deepEqual(audiences, ['https://x'])
@@ -390,7 +415,7 @@ describe('Session bearer and scopes', () => {
     session.init('http://localhost:1234', 'fr', undefined, { scopeAware: true, audiences: s => [s + '/mcp-server'] })
     let audiences: string[] | undefined
     session.readStateFromBearer = async (_token: string, _lang?: string, a?: string[]) => { audiences = a; return scopedState() }
-    const req = mockReq('GET', { authorization: 'Bearer abc.def.ghi', 'x-forwarded-host': 'x', 'x-forwarded-proto': 'https' })
+    const req = mockReq('GET', { authorization: 'Bearer ' + accessTokenLike, 'x-forwarded-host': 'x', 'x-forwarded-proto': 'https' })
     markScopeChecked(req)
     await session.req(req)
     assert.deepEqual(audiences, ['https://x/mcp-server'])

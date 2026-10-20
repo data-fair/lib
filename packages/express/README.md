@@ -52,8 +52,10 @@ Permissions, account roles, admin mode and the Vue side are covered by the [`dat
 
 ### Scopes and bearer tokens
 
-- `Authorization: Bearer <token>` is read before cookies. Only tokens whose JWT header has
-  `typ: at+jwt` are accepted; any other token is a 401.
+- `Authorization: Bearer <token>` is read before cookies, which are then never read. A token whose
+  JWT header has `typ: at+jwt` is verified as an access token, and any failure is a 401. Any other
+  bearer (empty, an API key, a session token, a token of another system) does not claim to be one:
+  the request is anonymous.
 - A token with a `scope` claim produces `sessionState.scopes` (a non-string claim is a 401). A service
   that enforces scopes calls `session.init(directoryUrl, lang, onlyDecode, { scopeAware: true })`;
   otherwise every scope-restricted session gets a 403. `scopeAware` is also honoured by lib-node's

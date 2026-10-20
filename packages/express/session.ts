@@ -35,6 +35,20 @@ function assertRouteCheckedScope (req: Request | IncomingMessage, sessionState: 
   }
 }
 
+// whether the JWT header of a bearer token declares an access token (RFC 9068 typ at+jwt), same
+// test as lib-node's readStateFromBearer; nothing is verified, a forged header only reaches the strict path
+function claimsAccessToken (token: string): boolean {
+  const headerPart = token.split('.')[0]
+  if (!headerPart) return false
+  let typ: unknown
+  try {
+    typ = JSON.parse(Buffer.from(headerPart, 'base64url').toString('utf8'))?.typ
+  } catch {
+    return false
+  }
+  return typeof typ === 'string' && typ.toLowerCase().replace(/^application\//, '') === 'at+jwt'
+}
+
 export class Session extends SessionHandler {
   private onlyDecode?: (req: Request | IncomingMessage) => boolean
   private audiences: (siteUrl: string) => string[] = siteUrl => [siteUrl]
@@ -140,9 +154,14 @@ export class Session extends SessionHandler {
     // a bearer access token wins over cookies: cookies of a browser session must never be mixed
     // with the account binding of an access token
     // the auth scheme is case-insensitive (RFC 7235)
-    // an empty token ('Bearer', 'Bearer ') is still a bearer attempt: refused by readStateFromBearer, never a fallback to cookies
     const bearerMatch = req.headers.authorization?.match(/^bearer(?:\s+(.*))?$/i)
     if (bearerMatch) {
+      const token = (bearerMatch[1] ?? '').trim()
+      // a bearer that does not even claim to be an access token (empty, an API key, a token of another
+      // system) was meant for something else: the request is anonymous, as it was before bearer
+      // support. Never a fallback to cookies, a bearer call must not be answered with the user's
+      // session (cf bearerCors). Only the header is peeked here, readStateFromBearer verifies the rest.
+      if (!claimsAccessToken(token)) return { lang: this.defaultLang }
       // the audience of a bearer is the site it is used on; an internal request (no x-forwarded-host) has none
       let audiences: string[] | undefined
       if (req.headers['x-forwarded-host']) {
@@ -150,7 +169,7 @@ export class Session extends SessionHandler {
         const originReq = { get: (name: string) => { const v = req.headers[name.toLowerCase()]; return Array.isArray(v) ? v[0] : v } } as unknown as Request
         audiences = this.audiences(reqOrigin(originReq) + reqSitePathSafe(req))
       }
-      return this.readStateFromBearer((bearerMatch[1] ?? '').trim(), undefined, audiences)
+      return this.readStateFromBearer(token, undefined, audiences)
     }
     // reuse req.cookies if a cookie-parser middleware already populated it, to avoid re-parsing the Cookie header
     // @ts-ignore - cookies is set by cookie-parser, absent on plain IncomingMessage
