@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib-node",
-  "version": "2.17.0",
+  "version": "2.17.1",
   "description": "Small nodejs related utility functions for the data-fair stack.",
   "files": [
     "**/*.js",
