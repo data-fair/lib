@@ -2,6 +2,7 @@ import type { Db } from 'mongodb'
 import { hostname } from 'node:os'
 import { randomBytes } from 'node:crypto'
 import Debug from 'debug'
+import { internalError } from './observer.js'
 
 const debug = Debug('locks')
 
@@ -35,8 +36,10 @@ export class Locks {
     }
 
     // prolongate lock acquired by this process while it is still active
+    // a mongo error here must not become an unhandled rejection (it would crash the process on any failover)
     this.interval = setInterval(() => {
       this.collection.updateMany({ pid: this.pid }, { $currentDate: { updatedAt: true } })
+        .catch(err => internalError('locks-heartbeat', err))
     }, (ttl / 2) * 1000)
   }
 
