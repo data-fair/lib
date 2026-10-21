@@ -203,6 +203,12 @@ network** (`references/sub-apps.md` lists the ones that lie).
    unchanged. Constraints: same owner, never published (a PATCH carrying `publicationSites`, even
    `[]`, is refused), `PUT /permissions` refused on it, and a build script that finds its apps by
    listing must also list `partOf=true` or it recreates them.
+13. **Editorial density**: KPI rows hold exactly 4 metrics, a section shows 4 or 8 (two full
+   rows), never 5 to 7 (the orphan card centred on its own row reads as unfinished): choose, move
+   a figure into a chart or a text, or drop it. Inside a tab, never put two neighbouring charts of
+   the same type and orientation: shares → donut or treemap, rankings → horizontal bars, time
+   series → line or columns. With `showSources: true`, keep the « Source : … » line out of the
+   block descriptions, or every source shows twice (description and sources bar).
 
 ## 6. Verification checklist
 
