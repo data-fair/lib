@@ -23,7 +23,7 @@ The shared values every service converges to. Apply them in the service branch a
 | CI order | `npm ci` → `lint` → `build-types` → `npm -w ui run build` → `check-types` → env init (`./node_modules/.bin/df-dev init-env`) → deps → tests → `npm audit --omit=dev --audit-level=critical` | vue-tsc needs the `.d.ts` files the UI build generates. Where the tests get their own job(s), a `build` job uploads the generated files (`.type`, `ui/dist`, `ui/dts`) as an artifact for a `static` job (lint, check-types, audit, unit) and the test job(s); one job for everything is fine while it stays under ~10 min (processings) |
 | `.nvmrc` | `24`, unless the repo needs a feature of a later 24.x: then the exact version **and a comment in CONTRIBUTING.md saying which feature** (`.nvmrc` cannot express `^24.21`) | verify each repo that pins one before changing it |
 | `engines` | `"node": "v24"` | |
-| Docker base | `node:24.21.0-alpine3.24` (or the newest 24 used by the other repos), `apk upgrade --no-cache` in `base` | |
+| Docker base | `node:24.22.0-alpine3.24` (or the newest 24 used by the other repos), `apk upgrade --no-cache` in `base` | |
 | Dockerfile runtime | `ENV NODE_ENV=production`, npm/npx/corepack/yarn removed; a minimal `.dockerignore` (`**/node_modules`, `**/dist`, `ui/dts`, `.env`, `data`, `.git`) when the Dockerfile copies whole folders (`ADD ui ui`): otherwise a local build ships the developer's node_modules / stale dist | see "Legitimate differences" for npm and `USER node` |
 | `.gitignore` (root) | the ordered template below; already tracked `docs/superpowers` plans are removed with `git rm --cached`; drop entries nothing produces any more (check before removing) | today several are ignored only by the maintainer's global git ignore |
 | `ui/.gitignore` | the Vite template + `dts` | generated `.d.ts` are never committed (see architecture-conventions.md) |
@@ -59,7 +59,7 @@ docs/superpowers/
 
 - Extra workspaces in `lint` / `check-types`: portals' `portal` (Nuxt), data-fair's `parquet-writer`.
 - data-fair keeps `check-types-ratchet` in `quality` (1800+ legacy API errors) until its baseline reaches 0.
-- portals pins `.nvmrc` to the image's 24.x and `engines.node` to `>=24.11.0`: the portal's postcss / cssnano transitive deps need 24.11 (portals #65).
+- portals pins `.nvmrc` to the image's 24.x (24.22.0) and `engines.node` to `>=24.21.0`: the portal's postcss / cssnano transitive deps need at least 24.11 (portals #65).
 - processings keeps npm in both runtime images, api and worker (lib-node-registry runs `npm rebuild` on plugins); it only drops corepack and yarn.
 - `USER node` stays commented where volumes are mounted as root (data-fair, processings, openapi-viewer, customers, metrics daemon).
 - metrics tests with `node --test`; openapi-viewer's `quality` runs only `test-unit`.

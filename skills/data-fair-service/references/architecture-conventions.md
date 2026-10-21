@@ -43,6 +43,14 @@ export default defineConfig(({ command }) => ({
   - `optimizeDeps.noDiscovery: true` + `optimizeDeps.include` (the 4 pilots): without it, the first visit of a page discovers dependencies and reloads it, which fails cold e2e runs. The include list: run Vite once with discovery on, take the `optimized` keys of `ui/node_modules/.vite/deps/_metadata.json` minus vjsf's `commonjsDeps`; each entry is the exact import specifier (`cronstrue/locales/en`, not `…/en.js`, else Vite serves the raw CommonJS file: blank page). A forgotten CommonJS dependency breaks the page instead of reloading it: validate with a cold cache (`rm -rf ui/node_modules/.vite`) and the e2e warmup.
   - Plugins: VueRouter (`dts: './dts/typed-router.d.ts'`, dev pages excluded at build), Vue, VueI18n, Vuetify (`settingsPath`), AutoImport (`dts: './dts/auto-imports.d.ts'`, `autoImports` from `@data-fair/lib-vuetify/vite.js`), Components (`dts: './dts/components.d.ts'`, `resolvers: [componentsResolver]`).
   - No `build` block unless it differs from Vite's defaults.
+- **Site theme and public info.** `ui/index.html` loads both from simple-directory with hashed, cacheable URLs, and the session reads `window.__PUBLIC_SITE_INFO`:
+
+```html
+<link href="{SITE_PATH}/simple-directory/api/sites/{THEME_CSS_HASH}_theme.css" rel="stylesheet">
+<script src="{SITE_PATH}/simple-directory/api/sites/{PUBLIC_SITE_INFO_HASH}_public.js"></script>
+```
+
+  The API passes `privateDirectoryUrl: config.privateDirectoryUrl` to `createSpaMiddleware`, which fills the hashes (and drops them for `_t_*` theme overrides); the Vite `inject-site-context` plugin fills them with `''` in dev. `main.ts` calls `createSession({ directoryUrl })` **without `siteInfo: true`**: that option fetches `_public` at startup and logs `refreshSiteInfo is deprecated`. A UI that can run without simple-directory (openapi-viewer standalone) injects the two tags through one template param (`extraHtmlTemplateParams`), empty in that mode, and passes `privateDirectoryUrl` only when the directory is used.
 
 ## Open (decide with the maintainer before changing)
 
