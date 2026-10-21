@@ -196,6 +196,13 @@ network** (`references/sub-apps.md` lists the ones that lie).
    hosting page URL and the dashboard can loop. Set `syncParams: 'sandboxed'` on blocks that only
    display (they still receive the dashboard filters); keep `shared-filters` only on a block meant
    to act as a filter.
+12. **Make sub-applications fragments of their dashboard** once it exists:
+   `PATCH /applications/<id> { partOf: { type: 'application', id: <dashboardId> } }`. A fragment is
+   hidden from listings (the portal catalogue and the account's application list stay clean),
+   inherits the dashboard's permissions and is deleted with it; single reads by id (embeds) are
+   unchanged. Constraints: same owner, never published (a PATCH carrying `publicationSites`, even
+   `[]`, is refused), `PUT /permissions` refused on it, and a build script that finds its apps by
+   listing must also list `partOf=true` or it recreates them.
 
 ## 6. Verification checklist
 
