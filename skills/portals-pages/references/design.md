@@ -76,6 +76,19 @@ Puis construire : builders d'`elements.md`, trois appels API de `api-workflow.md
 - `fullWidth` n'agit **qu'à la racine de la page** (`page-element-banner.vue:5`) ; le fond déborde, le contenu reste dans le conteneur.
 - Un hero en premier bloc racine subit `mt-n4` automatique (compensation du padding de page) : ne pas essayer de le « décoller » avec des marges.
 
+### En-tête de page avec fil d'Ariane
+
+Le fil d'Ariane du portail (`breadcrumb.position: 'below-nav'`) est une barre grise à part, au-dessus d'un bandeau d'en-tête coloré. Pour l'intégrer au bandeau : masquer celui de la page (`showBreadcrumbs: false` dans la config de page) et poser le bloc `breadcrumbs` en tête du bandeau.
+
+```js
+{ type: 'banner', uuid: u(), mb: 8, fullWidth: true, pt: 6, pb: 8, background: { color: 'surface' },
+  children: [
+    { type: 'breadcrumbs', uuid: u(), mb: 4 },
+    { type: 'title', uuid: u(), titleSize: 'h3', titleTag: 'h1', bold: true, line: { position: 'bottom-small', color: 'secondary' }, content: '…', color: 'primary' },
+    { type: 'text', uuid: u(), mb: 0, content: 'Introduction.' }
+  ] }
+```
+
 ### Titre de section
 
 ```js
@@ -150,7 +163,19 @@ Une ligne markdown par entrée, **re-triée** avant publication (voir `SKILL.md`
   link: { type: 'external', href: '…', title: 'Échanger sur vos données' } }
 ```
 
-`usePortalConfig: true` reprend le style de bouton du portail. Un seul CTA primaire par page ; le libellé est un verbe (`S’inscrire`, `Télécharger`, `Nous contacter`) — jamais « Cliquez ici ».
+`usePortalConfig: true` reprend le style de bouton du portail ; sans style de bouton défini sur le portail, il rend un simple texte : passer alors `usePortalConfig: false` + `config: { color: 'primary', variant: 'default' }`. Un seul CTA primaire par page ; le libellé est un verbe (`S’inscrire`, `Télécharger`, `Nous contacter`) — jamais « Cliquez ici ».
+
+Le bloc `button` reste petit. Pour l'action principale d'une page, un **gros bouton** est une carte remplie, cliquable, dont le titre avec icône sert de libellé ; une grille de 2 colonnes lui donne la moitié de la largeur (au tiers, le libellé passe sur deux lignes) :
+
+```js
+{ type: 'responsive-grid', uuid: u(), mb: 8, columns: 2, gutter: 'default', align: 'stretch', centered: false,
+  children: [{ type: 'card', uuid: u(), mb: 0, border: false, elevation: 0, contentAlign: 'center', actions: [],
+    background: { color: 'primary' }, hover: { effects: ['darken', 'titleUnderlineAnimated'], color: 'primary' },
+    link: { type: 'external', href: '/contact', target: false },
+    children: [{ type: 'title', uuid: u(), centered: true, titleSize: 'h6', titleTag: 'div', bold: true, line: { position: 'none' }, content: 'Nous écrire', icon: { mdi: { name, svg, svgPath } } }] }] }
+```
+
+Le fond `bg-primary` de la carte pose la couleur de texte `on-primary` : pas de `color` sur le titre.
 
 ## 5. Propriété → rendu : ce qui change vraiment l'aspect
 

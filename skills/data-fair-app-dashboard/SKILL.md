@@ -109,6 +109,13 @@ follow through the `_c_*` key, so **the filter fields must carry concepts**
   on the communes), or the PLM cities appear twice.
 - `periodFilter: true` only works on datasets whose period fields carry `startDate` /
   `endDate` concepts (`timePeriod`); a `time_period` string column does not count.
+- **Linking to a pre-selected territory** (a map of communes, a directory): use the parameter
+  the dashboard writes itself when a reader picks a value, on the hosting page URL:
+  `?_d_<rootId>_<labelField>_in="<label>"` (label field only, value in double quotes, `%22`
+  in a link template). Unquoted values, or the code field, are taken as filters imposed by the
+  page: the figures follow, but the selector of that filter is hidden, so the reader cannot see
+  which territory is shown nor clear it. A lower-level filter with `showAllValues: false` is also
+  hidden until the upper level is chosen.
 - Single-territory portal (one EPCI): one commune filter with `forceOneValue: true` and a
   `startValue`, like Grand Poitiers "Ma commune".
 
