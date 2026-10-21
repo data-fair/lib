@@ -210,7 +210,10 @@ network** (`references/sub-apps.md` lists the ones that lie).
    or columns); two identical neighbouring charts need a reason (the same measure for two
    comparable things, read side by side). A category keeps the same colour in every chart of a tab
    (public / private, a domain…): colour a ranking by its category (`multi-bar` stacked on that
-   field with a manual `colorOrder`) rather than in a single colour. With `showSources: true`, keep the « Source : … » line out of the
+   field with a manual `colorOrder`) rather than in a single colour, and keep it sorted by value,
+   highest on top (`aggSortBy: 'value'`, `sortOrder: 'desc'`): grouped bars default to the label
+   order. On a map, keep the colour for that category and tell the other one by the icon
+   (atelier-carto `icon-single` per layer + `colors.type: 'enum'` on the category field). With `showSources: true`, keep the « Source : … » line out of the
    block descriptions, or every source shows twice (description and sources bar).
 
 ## 6. Verification checklist
