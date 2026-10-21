@@ -208,7 +208,9 @@ network** (`references/sub-apps.md` lists the ones that lie).
    it reads as unfinished: choose, move a figure into a chart or a text, or drop it. Vary the chart
    forms inside a tab (shares → donut or treemap, rankings → horizontal bars, time series → line
    or columns); two identical neighbouring charts need a reason (the same measure for two
-   comparable things, read side by side). With `showSources: true`, keep the « Source : … » line out of the
+   comparable things, read side by side). A category keeps the same colour in every chart of a tab
+   (public / private, a domain…): colour a ranking by its category (`multi-bar` stacked on that
+   field with a manual `colorOrder`) rather than in a single colour. With `showSources: true`, keep the « Source : … » line out of the
    block descriptions, or every source shows twice (description and sources bar).
 
 ## 6. Verification checklist
