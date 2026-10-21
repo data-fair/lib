@@ -190,6 +190,12 @@ network** (`references/sub-apps.md` lists the ones that lie).
    application est protégée" inside a public dashboard.
 10. Right after creation, open the dashboard by **id** (`/data-fair/app/<id>`): the slug
    route can serve a cached protection page.
+11. **Sub-application `syncParams` defaults to `shared-filters`**: a selection made inside a block is
+   emitted to every other block. A click on a map point emits `_d_<datasetId>__id_eq=<row id>`, so
+   every block on that dataset shows one row ("1 équipement"), and the round trip between the
+   hosting page URL and the dashboard can loop. Set `syncParams: 'sandboxed'` on blocks that only
+   display (they still receive the dashboard filters); keep `shared-filters` only on a block meant
+   to act as a filter.
 
 ## 6. Verification checklist
 
