@@ -13,6 +13,19 @@ describe('filter2params', () => {
     assert.deepEqual(filter2params({ type: 'out', field, values: ['a', 'b'] }), { foo_nin: 'a,b' })
   })
 
+  it('escapes values holding a comma, a quote or a backslash as JSON strings', () => {
+    assert.deepEqual(
+      filter2params({ type: 'in', field, values: ['51', '52', '51, 52'] }),
+      { foo_in: '"51","52","51, 52"' }
+    )
+    assert.deepEqual(
+      filter2params({ type: 'out', field, values: ['a"b', 'c\\d'] }),
+      { foo_nin: '"a\\"b","c\\\\d"' }
+    )
+    // sans caractère à échapper, la forme simple est conservée
+    assert.deepEqual(filter2params({ type: 'in', field, values: ['a', 'b'] }), { foo_in: 'a,b' })
+  })
+
   it('maps "interval" to _gte/_lte when both bounds are set', () => {
     assert.deepEqual(filter2params({ type: 'interval', field, minValue: '0', maxValue: '10' }), { foo_gte: '0', foo_lte: '10' })
   })

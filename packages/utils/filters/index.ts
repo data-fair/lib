@@ -57,6 +57,17 @@ export function filters2qs (filters: Filter[] = [], locale = 'fr'): string {
 }
 
 /**
+ * Valeurs d'un paramètre `_in` / `_nin` : `a,b`, ou `"a,b",c` dès qu'une valeur
+ * contient une virgule, un guillemet ou un antislash — l'API relit alors tout le
+ * paramètre en JSON. Sans cet échappement la virgule est prise pour un séparateur.
+ */
+function joinValues (values: (string | number)[]) {
+  return values.some(value => /[",\\]/.test(String(value)))
+    ? values.map(value => JSON.stringify(String(value))).join(',')
+    : values.join(',')
+}
+
+/**
  * Transforme un filtre en paramètres de requête REST (suffixes `_in`, `_nin`,
  * `_gte`, `_lte`, `_starts`, `_exists`, `_nexists`). Retourne `null` si le
  * filtre est vide ou ne peut pas être représenté.
@@ -72,11 +83,11 @@ export function filter2params (filter: Filter): Record<string, string> | null {
   if (!filter.type || filter.type === 'in') {
     const values = Array.isArray(filter.values) ? filter.values : undefined
     if (!values || values.length === 0) return null
-    return { [`${key}_in`]: values.join(',') }
+    return { [`${key}_in`]: joinValues(values) }
   } else if (filter.type === 'out') {
     const values = Array.isArray(filter.values) ? filter.values : undefined
     if (!values || values.length === 0) return null
-    return { [`${key}_nin`]: values.join(',') }
+    return { [`${key}_nin`]: joinValues(values) }
   } else if (filter.type === 'interval') {
     const params: Record<string, string> = {}
     if (![null, undefined, ''].includes(filter.minValue as any)) params[`${key}_gte`] = String(filter.minValue)
