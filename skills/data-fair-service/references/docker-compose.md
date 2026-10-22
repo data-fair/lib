@@ -18,7 +18,10 @@ env-staging3: mongo 8.0.17, ES 8.19.9). Dev follows staging3, where master is de
   `mongo`, `s3`, `s3-init`), then `volumes:`. Inside a service: `profiles`, `image`, `network_mode`,
   `ports`, `depends_on`, `command`, `environment`, `volumes`, `healthcheck`, `mem_limit`.
 - Images of sibling services: the development branch tag (`:master` or `:main`, whichever the repo
-  publishes), never a major tag. Storage: the major tag (`mongo:8`); ES has no floating tag in our
+  publishes), never a major tag. Storage: mongo `8.0.17`, as production, not the major tag: the later
+  8.0 patches refuse every Ubuntu 7.0 kernel (`uname -r` stays `7.0.0-*`, patched ones included,
+  [SERVER-136848](https://jira.mongodb.org/browse/SERVER-136848)), dev machines and the ubuntu-24.04
+  GitHub runners alike (checked 2026-10-22); ES has no floating tag in our
   ghcr image (`ghcr.io/data-fair/elasticsearch` only publishes exact versions, checked 2026-10-14), so
   `8.19.9`, as staging3. Tools (nginx, maildev, clamav): exact versions.
 - maildev (optional, profile `maildev`) only where the repo has a mail flow of its own to develop or
@@ -245,7 +248,8 @@ reset their volumes with this change anyway (mongo 4.2 → 8).
     cpus: 2
 
   mongo:
-    image: mongo:8
+    # production version; later 8.0 patches refuse Ubuntu 7.0 kernels (https://jira.mongodb.org/browse/SERVER-136848)
+    image: mongo:8.0.17
     ports:
       - ${MONGO_PORT}:27017
     # wiredTiger takes half the machine's RAM by default
