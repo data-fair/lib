@@ -89,7 +89,7 @@ layout {
 - The ui pane passes `--port $DEV_UI_PORT` as in the template (the 4 pilots); `vite.config.ts` reads the same variable with `strictPort`, so the flag is redundant but harmless. registry's `vite.config.ts` reads `.env` itself.
 - Keep the repo's env vars and DEBUG flags from the old `dev` scripts; drop `mkdir -p dev/logs`, `| tee …`, `| ts …`, `nvm use`.
 - Nuxt: `… ../node_modules/.bin/df-mem-cap nuxt dev 2>&1 | cat` (no `exec`).
-- A data-fair API keeps its `nodemon --exec 'sh ../dev/run-api.sh'` (no restart feedback loop).
+- Drop any retry around the API command (`node … index.ts || (sleep 2 && touch index.ts)`, data-fair's former `dev/run-api.sh`) and its `--experimental-strip-types` flags: `wait-deps` covers a dependency not up yet, nodemon waits for a file change after a crash, and the retry, run by nodemon through `sh -c`, turned each restart into the next one (API flapping between up and 502).
 - A repo on `node --watch` moves to nodemon (rule in SKILL.md): add `nodemon` to the root devDependencies; a script outside a workspace watches its own folder, e.g. portals' `nodemon -e ts --watch dev --exec "node --disable-warning=ExperimentalWarning" dev/ingress-manager.ts` (run from the root, nodemon would otherwise watch the whole repo).
 - Parse-check the layout without starting anything: copy it with every `command="…"` replaced by `command="true"`, `zellij --layout <copy> attach -b check`, `zellij -s check action list-panes --json`, then `kill-session` + `delete-session`. With an isolated zellij 0.45, set `ZELLIJ_CONFIG_DIR` to a copy of the config dir: its first run migrates `~/.config/zellij/config.kdl` to a format 0.40 cannot read.
 
