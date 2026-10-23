@@ -80,6 +80,8 @@ Clics, saisies, captures. Réservé à trois cas :
 - **rejouer un cas fonctionnel complet** tel qu'un utilisateur le vit (parcours, permissions, messages d'erreur d'interface) ;
 - **une fonctionnalité sans outil et sans API** (réglage purement client, interaction de composant).
 
+Les comportements des composants Vuetify 4 qui font échouer un clic scripté (champs de sélection recouverts, menus téléportés, interrupteurs, transitions, `d-frame`) sont dans `references/vuetify.md`.
+
 ## 3. Carte des surfaces
 
 Ce qui existe où. Les noms ci-dessous sont ceux réellement enregistrés ; la liste exhaustive par page est dans `references/webmcp.md`.
@@ -116,6 +118,7 @@ Une réponse `200` n'est pas une vérification. Pour tout résultat visible par 
 ## Références
 
 - `references/webmcp.md` — snippets (attente, listing, appel, appel dans une iframe, `fetch` same-origin, `curl` via proxy), inventaire des outils par surface, outils des formulaires VJSF.
+- `references/vuetify.md` — clics scriptés sur Vuetify 4 : champs de sélection recouverts, menus et dialogues téléportés, interrupteurs, transitions de stepper, `d-frame`.
 - `references/datasets-api.md` — résolution des slugs, cycle de vie et `409`, caches de lecture, types inférés, extensions et `_geopoint`, applications sur un portail, limites de débit, métadonnées (`modified`, `datasetsMetadata`).
 - `nhi-proxy/docs/usage.md` — câblage du proxy (profils, Playwright MCP, curl, pièges localhost).
 - `portals-pages` — contenu des pages de portail, qui applique cette échelle.
