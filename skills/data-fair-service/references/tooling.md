@@ -21,9 +21,8 @@ The shared values every service converges to. Apply them in the service branch a
 | tsconfig `"types"` | `"types": ["node"]` only in a tsconfig that type-checks code using Node globals or `node:` modules, directly or through imports: the root (API) one, or a `ui/tsconfig.json` whose imports reach API code (catalogs' UI imports reach `api/src/config.ts`, which uses `node:path` and `node:os`); not in a UI tsconfig that only sees browser code | TS 6 no longer loads every `@types/*` package by default, so these fail with TS2591 ("add 'node' to the types field"); keeping Node types out of browser-only code catches `process`/`Buffer` used by mistake in the UI |
 | `check-types` | `tsc && npm -w ui run check-types` (+ other front workspaces, e.g. portals' `portal`); `vue-tsc` in ui | 5 repos never type-checked their UI; **fix every UI type error in the branch** (no ratchet) |
 | CI order | `npm ci` → `lint` → `build-types` → `npm -w ui run build` → `check-types` → env init (`./node_modules/.bin/df-dev init-env`) → deps → tests → `npm audit --omit=dev --audit-level=critical` | vue-tsc needs the `.d.ts` files the UI build generates. Where the tests get their own job(s), a `build` job uploads the generated files (`.type`, `ui/dist`, `ui/dts`) as an artifact for a `static` job (lint, check-types, audit, unit) and the test job(s); one job for everything is fine while it stays under ~10 min (processings) |
-| `.nvmrc` | `24`, unless the repo needs a feature of a later 24.x: then the exact version **and a comment in CONTRIBUTING.md saying which feature** (`.nvmrc` cannot express `^24.21`) | verify each repo that pins one before changing it |
-| `engines` | `"node": "v24"` | |
-| Docker base | `node:24.22.0-alpine3.24` (or the newest 24 used by the other repos), `apk upgrade --no-cache` in `base` | |
+| Node version | **minimum 24.22.1** for `.nvmrc`, the Docker base (`node:24.x-alpine…`, `apk upgrade --no-cache` in `base`) and `engines` (`"node": ">=24.22.1"`); never go below it | 24.22.1 fixes CVE-2026-111497 (Node2Shell, brotli decompression); `nvm use 24` would pick whatever older 24.x is installed |
+| Repo-specific choices | a repo that deviates (exact pin, other alpine, higher floor) explains why in its own repo, next to the line (Dockerfile comment) or in CONTRIBUTING.md (`.nvmrc` takes no comment); read it before changing a version | exceptions listed here went stale; the repo's own note changes with its code |
 | Dockerfile runtime | `ENV NODE_ENV=production`, npm/npx/corepack/yarn removed; a minimal `.dockerignore` (`**/node_modules`, `**/dist`, `ui/dts`, `.env`, `data`, `.git`) when the Dockerfile copies whole folders (`ADD ui ui`): otherwise a local build ships the developer's node_modules / stale dist | see "Legitimate differences" for npm and `USER node` |
 | `.gitignore` (root) | the ordered template below; already tracked `docs/superpowers` plans are removed with `git rm --cached`; drop entries nothing produces any more (check before removing) | today several are ignored only by the maintainer's global git ignore |
 | `ui/.gitignore` | the Vite template + `dts` | generated `.d.ts` are never committed (see architecture-conventions.md) |
@@ -59,11 +58,9 @@ docs/superpowers/
 
 - Extra workspaces in `lint` / `check-types`: portals' `portal` (Nuxt), data-fair's `parquet-writer`.
 - data-fair keeps `check-types-ratchet` in `quality` (1800+ legacy API errors) until its baseline reaches 0.
-- portals pins `.nvmrc` to the image's 24.x (24.22.0) and `engines.node` to `>=24.21.0`: the portal's postcss / cssnano transitive deps need at least 24.11 (portals #65).
 - processings keeps npm in both runtime images, api and worker (lib-node-registry runs `npm rebuild` on plugins); it only drops corepack and yarn.
 - `USER node` stays commented where volumes are mounted as root (data-fair, processings, openapi-viewer, customers, metrics daemon).
 - metrics tests with `node --test`; openapi-viewer's `quality` runs only `test-unit`.
-- data-fair's base image is alpine3.23 (check its libcrypto / gdal pins before bumping).
 - customers runs on GitLab CI.
 
 ## Not decided (leave as is)
