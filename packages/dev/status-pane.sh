@@ -43,8 +43,9 @@ render() {
   [ -s "$up_status" ] && printf '%s%s%s\n\n' "$R" "$(cat "$up_status")" "$N"
 
   # data goes through the environment: awk -v would interpret the backslashes of the ps arguments
+  # LC_ALL=C: sous locale fr, awk lit "1.5GiB" comme 1 et écrit "1,5G" (séparateur décimal)
   S_SERVICES="$services" S_PS="$ps" S_STATS="$stats" S_PROCS="$procs" S_PENDING="$(cat "$up_pending")" \
-  awk -F'\t' -v G="$G" -v Y="$Y" -v R="$R" -v D="$D" -v N="$N" -v session="$session" -v self="$$" '
+  LC_ALL=C awk -F'\t' -v G="$G" -v Y="$Y" -v R="$R" -v D="$D" -v N="$N" -v session="$session" -v self="$$" '
     function kib(v,   n, u) {
       n = v + 0; u = v; sub(/^[0-9.]+ */, "", u)
       if (u == "GiB") return n * 1048576; if (u == "MiB") return n * 1024; if (u == "KiB") return n
