@@ -34,6 +34,8 @@ webServer: isUnitOnly
 
 `baseURL` pointe sur `DEV_SERVER_PORT`, et `base` doit valoir `/app/` (le `||` de `vite.config.ts`, ou `PUBLIC_URL=/app/` dans la commande tant que la config porte `??`). Un tel e2e dépend du réseau et des données de l'instance distante : en reprise, préférer le ramener au modèle mocké.
 
+La garde console (`tests/e2e/fixtures.ts`, `snippets/e2e-fixtures.ts`) s'applique aussi à ce montage, sans les mocks ni l'exception `Unexpected token '%'` (`df-dev-server` substitue le placeholder). `page.on('console')` et `page.on('pageerror')` reçoivent les messages des **iframes** : ceux des visus tierces embarquées par la configuration de dev remontent, et se nomment dans les specs qui les chargent (`test.use({ expectedConsole: … })`, une liste exportée par la fixture). Cas rencontré sur app-dashboards : le style du tileserver de carto-stats n'est autorisé en CORS que pour `http://localhost:5888`, alors que l'e2e tourne sur `E2E_PORT`. Ne pas filtrer pour autant une erreur répétée d'une visu enfant : 500 `Avoided redundant navigation to current location` y signalaient une boucle d'écho dashboard ↔ visu, invisible sans la garde.
+
 ## Husky, commitlint et `npm run quality`
 
 Comme les services (`data-fair`, `portals`, `catalogs`, `processings`) et les plugins, une application installe **husky + commitlint** et fait passer la qualité au push. Ne pas faire tourner les e2e en CI : le hook pre-push les a déjà lancés sur la machine du dev (cf. le commentaire `commits.yml` des services : *« husky already did it on the dev computer »*).
