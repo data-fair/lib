@@ -97,6 +97,7 @@ layout {
 
 - Root `package.json`: `"dev-zellij": "df-dev zellij"`, `"stop-dev-deps": "docker compose --profile '*' stop"`; remove `dev-deps`, `dev-api`, `dev-ui`, `dev-worker`, `dev-bridge`, `dev-mock` (keep workspace `dev` scripts only if CI uses them).
 - Delete `dev/init-env.sh`, `dev/status.sh`, `dev/worktree.sh`, `dev/delete-worktree.sh`, `dev/scripts/log-tee.sh`, `dev/scripts/dev-deps.sh`, `dev/with-memory-cap.sh` (replaced by `df-mem-cap`).
+- CI: validate each job under its own conditions before pushing, not only on the running dev env (which has `.env`, every container and a warm vite): a `static` job runs without `.env` and containers, a tests job on a cold vite (see tooling.md "CI order" and "CI test jobs").
 - CI: `./node_modules/.bin/df-dev init-env` instead of `./dev/init-env.sh`; processes started with local binaries, either the workspace `dev` scripts (`./node_modules/.bin/dotenv -- npm -w api run dev &`, processings) or the pane commands themselves (portals, data-fair), never a bare `npx`; each writes `dev/logs/<pane>.log`, tailed when readiness times out and uploaded with `test-results/` on failure (without them a failing run shows only the compose logs).
 - `tests/state-setup.ts`: drop the `tail -f dev/logs/…` spawn, and the `state-teardown` project and file that killed it; the "API unavailable" message tells agents `npx --no df-dev logs api` / `npx --no df-dev restart api`.
 - Config error messages mentioning `dev/init-env.sh` → `npx --no df-dev setup`.
