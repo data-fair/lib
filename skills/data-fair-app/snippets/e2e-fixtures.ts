@@ -5,7 +5,7 @@
 import { test as base, expect, type Page } from '@playwright/test'
 
 export const test = base.extend<{ consoleGuard: void, expectedConsole: string[] }>({
-  // messages a test provokes on purpose (a failing request), named one by one:
+  // messages (console or page errors) a test provokes on purpose (a failing request), named one by one:
   //   test.use({ expectedConsole: ['status of 500'] })
   // substrings, not RegExp: fixture options are serialized and a RegExp would not survive
   expectedConsole: [[], { option: true }],
@@ -17,6 +17,7 @@ export const test = base.extend<{ consoleGuard: void, expectedConsole: string[] 
       messages.push(`[${msg.type()}] ${msg.text()}`)
     })
     page.on('pageerror', (err) => {
+      if (expectedConsole.some(text => err.message.includes(text))) return
       // harness artifact: Vite serves index.html raw, the inline `window.APPLICATION=%APPLICATION%`
       // fails to parse and setupMocks has already defined window.APPLICATION
       if (err.message === "Unexpected token '%'") return
