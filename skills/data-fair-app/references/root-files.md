@@ -178,13 +178,19 @@ const vueFlatRecommended = pluginVue.configs['flat/recommended'].map(({ plugins,
 export default [
   ...dfLibRecommended,
   ...vueFlatRecommended,
-  ...pluginVuetify.configs['flat/recommended'],
+  ...pluginVuetify.configs['flat/recommended-v4'],
   ...neostandard({ ts: true, env: ['browser'] }),
   {
     rules: {
       'vue/multi-word-component-names': 'off',
       'vue/require-default-prop': 'off',
-      'no-undef': 'off' // typescript s'en charge
+      'no-undef': 'off', // typescript s'en charge
+      // le jeu d'icônes est mdi-svg : une chaîne mdi-* rend une icône vide, sans erreur
+      'vue/no-restricted-static-attribute': ['error', {
+        key: '/^((prepend|append)-(inner-)?)?icon$|-icon$/',
+        value: '/^mdi-/',
+        message: 'mdi-svg iconset: import the path from @mdi/js instead of an mdi-* string.'
+      }]
     }
   },
   {
@@ -195,10 +201,11 @@ export default [
 ]
 ```
 
-> **⚠️ Ordre et double enregistrement du plugin `vue`.** Le `flat/base` de `eslint-plugin-vuetify` enregistre lui-même le plugin `vue`, et **ESLint 9.39+ lève une erreur si un plugin est redéfini**. Empiler naïvement `pluginVue.configs['flat/recommended']` et `pluginVuetify.configs['flat/recommended']` casse donc `npm run lint`. Le contournement — retirer la clé `plugins` de la config de vue avec un `.map(({ plugins, ...rest }) => rest)` — vient de `data-fair/ui`, seul service déjà en ESLint 9.39+ ; `catalogs`/`processings` (ESLint 9.35, presets `flat/base`) n'en ont pas encore besoin mais y passeront en montant de version. Et `neostandard` vient **après** vue et vuetify, pas avant.
+> **⚠️ Ordre et double enregistrement du plugin `vue`.** Le `flat/base` de `eslint-plugin-vuetify` enregistre lui-même le plugin `vue`, et **ESLint 9.39+ lève une erreur si un plugin est redéfini** (ESLint 10 aussi). Empiler naïvement `pluginVue.configs['flat/recommended']` et `pluginVuetify.configs['flat/recommended-v4']` casse donc `npm run lint`. Le contournement — retirer la clé `plugins` de la config de vue avec un `.map(({ plugins, ...rest }) => rest)` — vient de `data-fair/ui`, seul service déjà en ESLint 9.39+ ; `catalogs`/`processings` (ESLint 9.35, presets `flat/base`) n'en ont pas encore besoin mais y passeront en montant de version. Et `neostandard` vient **après** vue et vuetify, pas avant.
 
 - `neostandard({ ts: true, env: ['browser'] })` apporte le **style** et les globals navigateur (`neostandard` en devDependencies).
-- `eslint-plugin-vuetify` détecte les composants et props Vuetify dépréciés — précieux sur une migration depuis Vuetify 2. Les cinq services le configurent (dans leur `ui/`), en `^2.7.2`.
+- `eslint-plugin-vuetify` détecte les composants, props et classes Vuetify dépréciés — précieux sur une migration depuis Vuetify 2. **Preset `flat/recommended-v4`, jamais `flat/recommended`** : ce dernier est le preset Vuetify 3 et laisse passer en silence les ruptures de Vuetify 4 — `align` / `justify` sur `v-row` (retirés : l'alignement ne s'applique plus), classes de typographie renommées (`text-h6` → `text-headline-small`, `text-body-2` → `text-body-medium`, `text-subtitle-1` → `text-body-large`). Passer app-dashboards du premier au second a révélé 9 de ces régressions, toutes corrigées par `--fix`. Les services le configurent ainsi dans leur `ui/`.
+- **Aucune règle de `eslint-plugin-vuetify` ne vérifie les icônes.** Avec le jeu `mdi-svg` (celui de `snippets/main.ts`), une chaîne `icon="mdi-calendar"` rend une icône **vide**, sans erreur ni avertissement : l'icône s'importe depuis `@mdi/js` (`:icon="mdiCalendar"`). La règle `vue/no-restricted-static-attribute` de la config ci-dessus attrape les attributs statiques ; une chaîne dans une liaison (`:icon="'mdi-x'"`) ou dans le script lui échappe.
 - `@data-fair/lib-utils/eslint/recommended.js` est livré avec `lib-utils`, déjà installé : il bloque les imports de modules dépréciés (`@koumoul/sd-vue`, `http-errors`, `rfdc`…). Il ne fait que ça — il ne remplace pas `neostandard`.
 - `src/config/.type/` doit être ignoré : c'est du généré.
 

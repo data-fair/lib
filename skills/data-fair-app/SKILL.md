@@ -392,10 +392,10 @@ Contenus intégraux à copier : **`references/root-files.md`** (package.json et 
 - **peerDependencies de `@data-fair/lib-vue` à déclarer explicitement** — `dayjs` est le piège courant : jamais importé directement, son absence ne se voit ni au `type-check` ni au build tant que npm l'a hissé depuis une dépendance transitive, puis casse ailleurs.
 - **`build-types` avant `type-check` et `build`** sur un clone neuf : `src/config/.type/` est git-ignoré et réexporté par `src/config/index.ts` — ordonner la CI en conséquence.
 - **`.nvmrc` obligatoire dès que `.zellij.kdl` existe** (version majeure seule, ex. `24`) : sans lui, chaque pane sort en `[ EXIT CODE: 127 ]` sans aucun message — l'oubli le plus facile en générant les fichiers racine d'un nouveau projet.
-- **eslint : `neostandard({ ts: true })` + vue + vuetify + `@data-fair/lib-utils/eslint/recommended.js`**, avec le contournement du double enregistrement du plugin `vue` — obligatoire dès **ESLint 9.39+** — config complète dans `references/root-files.md`.
+- **eslint : `neostandard({ ts: true })` + vue + vuetify (preset **`flat/recommended-v4`**, pas `flat/recommended` qui est celui de Vuetify 3) + `@data-fair/lib-utils/eslint/recommended.js`**, avec le contournement du double enregistrement du plugin `vue` — obligatoire dès **ESLint 9.39+** — config complète dans `references/root-files.md`.
 - **Deux plafonds de version que « tout mettre à jour » ne doit pas franchir**, à revérifier avant chaque montée plutôt qu'à recopier :
-  - **ESLint reste en 9.** `neostandard` — 0.13.0, la dernière — déclare `peerDependencies: { eslint: "^9.0.0" }`. ESLint 10 est publié, mais rien dans la chaîne ne le suit encore.
-  - **TypeScript reste en 6.** `typescript-eslint` 8.68 déclare `typescript: ">=4.8.4 <6.1.0"`. TypeScript 7 est publié ; il sortirait de la plage supportée par le parseur.
+  - **TypeScript reste en 6.0** (`typescript: ~6.0.x`, avec `vue-tsc` 3). `typescript-eslint` 8.72 déclare encore `typescript: ">=4.8.4 <6.1.0"`. TypeScript 7 est publié ; il sortirait de la plage supportée par le parseur.
+  - **ESLint 10 est désormais possible** avec `neostandard ^0.14` (`eslint: "^9.22.0 || ^10.0.0"`) ; `eslint-plugin-vue`, `eslint-plugin-vuetify` et `@typescript-eslint/parser` acceptent tous la 10. Le plafond « ESLint 9 » ne tenait qu'à `neostandard` 0.13.
 
   Contrôle : `npm view neostandard peerDependencies` et `npm view typescript-eslint peerDependencies`.
 - **Déclarer `@typescript-eslint/parser`, pas le méta-paquet `typescript-eslint`.** La config nomme le parseur par sa chaîne (`parser: '@typescript-eslint/parser'`) ; le méta-paquet ne servait qu'à le hisser en transitif.
@@ -1214,7 +1214,7 @@ const { data } = useFetch(() => datasetUrl + '/lines', { query: params })
 - [ ] `npm run build` passe
 - [ ] `server.warmup.clientFiles` déclaré dans `vite.config.ts`, et la suite e2e verte **serveur froid** (`df-dev-env --force` tire un nouvel `E2E_PORT`, donc un serveur neuf ; ou tuer le serveur entre deux exécutions) — verte serveur chaud ne prouve rien
 - [ ] `npm run type-check` passe (TS strict)
-- [ ] `npm run lint` passe
+- [ ] `npm run lint` passe, avec le preset `flat/recommended-v4` d'`eslint-plugin-vuetify` et aucune icône en chaîne `mdi-*` (jeu `mdi-svg` : icône vide)
 - [ ] `npm run build-types` relancé après toute modification du schéma (`src/config/.type/` en dépend)
 - [ ] schéma conforme au skill `vjsf` : aucun `x-*` legacy, `size=50` et `{q}`/`qSearchParam` sur les `getItems` data-fair, `discriminator` sur les `oneOf` de variantes
 - [ ] tous les libellés visibles commencent par une majuscule — `title`, `description`, options d'`enum` / `oneOf`, boutons, empty states, messages d'erreur, **y compris les chaînes en dur dans les templates**
