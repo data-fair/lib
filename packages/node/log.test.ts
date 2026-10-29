@@ -2,6 +2,7 @@ import { describe, it, after } from 'node:test'
 import { strict as assert } from 'assert'
 import { hostname } from 'node:os'
 import { Writable } from 'node:stream'
+import { register } from 'prom-client'
 import log, { _resetLogger } from './log.js'
 
 // collect the JSON lines written by the logger
@@ -63,5 +64,51 @@ describe('log output', () => {
     circular.self = circular
     assert.doesNotThrow(() => log.info('x', circular))
     assert.doesNotThrow(() => log.error('x', { get boom () { throw new Error('getter') } }))
+  })
+})
+
+const metricValues = async (name: string) => (await register.getSingleMetric(name)!.get()).values
+
+describe('log metrics', () => {
+  after(() => _resetLogger())
+
+  it('counts warn/alert/error in df_logs with level, code and host', async () => {
+    capture()
+    log.warn('w', { code: 'm-w', host: 'h1' })
+    log.alert('a', { code: 'm-a' })
+    log.error('e', { code: 'm-e' })
+    const v = await metricValues('df_logs')
+    assert.ok(v.find(x => x.labels.code === 'm-w' && x.labels.level === 'warn' && x.labels.host === 'h1' && x.value === 1))
+    assert.ok(v.find(x => x.labels.code === 'm-a' && x.labels.level === 'alert' && x.labels.host === '-' && x.value === 1))
+    assert.ok(v.find(x => x.labels.code === 'm-e' && x.labels.level === 'error' && x.value === 1))
+  })
+
+  it('does not count info lines', async () => {
+    capture()
+    log.info('i', { code: 'm-i' })
+    assert.ok(!(await metricValues('df_logs')).find(x => x.labels.code === 'm-i'))
+  })
+
+  it('counts uncoded lines with an empty code', async () => {
+    capture()
+    log.warn('x', { host: 'm-uncoded' })
+    assert.ok((await metricValues('df_logs')).find(x => x.labels.code === '' && x.labels.host === 'm-uncoded'))
+  })
+
+  it('keeps df_internal_error for error lines', async () => {
+    capture()
+    log.error('e', { code: 'm-ie' })
+    assert.ok((await metricValues('df_internal_error')).find(x => x.labels.errorCode === 'm-ie' && x.value === 1))
+  })
+
+  it('keeps df_events_log only for coded warn/alert', async () => {
+    capture()
+    log.alert('a', { code: 'm-ev-a' })
+    log.warn('w', { host: 'm-ev-uncoded' })
+    log.error('e', { code: 'm-ev-e' })
+    const v = await metricValues('df_events_log')
+    assert.ok(v.find(x => x.labels.code === 'm-ev-a' && x.labels.level === 'alert' && x.value === 1))
+    assert.ok(!v.find(x => x.labels.host === 'm-ev-uncoded'))
+    assert.ok(!v.find(x => x.labels.code === 'm-ev-e'))
   })
 })

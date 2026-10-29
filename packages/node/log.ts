@@ -3,6 +3,7 @@
 
 import { hostname } from 'node:os'
 import { pino, type Logger as PinoLogger, type DestinationStream } from 'pino'
+import { Counter } from 'prom-client'
 import { serializeErr } from './log-err.js'
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'alert' | 'error'
@@ -58,8 +59,36 @@ export function _resetLogger (opts: { destination?: { write (s: string): unknown
 }
 _resetLogger()
 
+export const logsCounter = new Counter({
+  name: 'df_logs',
+  help: 'A counter of warn, alert and error log lines. The code label comes from the code field of the line, it must be a static string.',
+  labelNames: ['level', 'code', 'host']
+})
+
+export const internalErrorCounter = new Counter({
+  name: 'df_internal_error',
+  help: 'DEPRECATED, use df_logs. A counter of error log lines.',
+  labelNames: ['errorCode']
+})
+
+export const eventsLogCounter = new Counter({
+  name: 'df_events_log',
+  help: 'DEPRECATED, use df_logs. A counter of warn and alert log lines that have a code.',
+  labelNames: ['level', 'code', 'host']
+})
+
+const count = (level: LogLevel, fields?: LogFields) => {
+  if (level !== 'warn' && level !== 'alert' && level !== 'error') return
+  const code = typeof fields?.code === 'string' ? fields.code : ''
+  const host = typeof fields?.host === 'string' ? fields.host : '-'
+  logsCounter.inc({ level, code, host })
+  if (level === 'error') internalErrorCounter.inc({ errorCode: code })
+  else if (code) eventsLogCounter.inc({ level, code, host })
+}
+
 const write = (level: LogLevel, msg: string, fields?: LogFields) => {
   try {
+    count(level, fields)
     instance[level](fields ?? {}, msg)
   } catch {
     // logging must never become a new error

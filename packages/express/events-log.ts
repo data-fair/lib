@@ -9,7 +9,7 @@
 import { type Account, type UserRef } from '@data-fair/lib-common-types/session/index.js'
 import { type Request } from 'express'
 import { hostname as getHostname } from 'os'
-import { Counter } from 'prom-client'
+import { eventsLogCounter } from '@data-fair/lib-node/log.js'
 import session from './session.js'
 import { reqIp } from './req-origin.js'
 import { internalError } from '@data-fair/lib-node/observer.js'
@@ -45,11 +45,7 @@ const activeLevels = levels.slice(0, levels.indexOf(level) + 1)
 
 const hostname = getHostname()
 
-export const eventsLogCounter = new Counter({
-  name: 'df_events_log',
-  help: 'A counter of sensitive events logged by the service. Each increment should be accompanied by a log of the event in stdout.',
-  labelNames: ['level', 'code', 'host']
-})
+export { eventsLogCounter }
 
 const globalInfo: { service?: string } = {}
 

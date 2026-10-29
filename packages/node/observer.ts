@@ -9,7 +9,8 @@ import { hostname } from 'node:os'
 import { createServer } from 'node:http'
 import { getHeapSnapshot } from 'node:v8'
 import { pipeline } from 'node:stream/promises'
-import { Registry, Counter, register, collectDefaultMetrics } from 'prom-client'
+import { Registry, register, collectDefaultMetrics } from 'prom-client'
+import log from './log.js'
 import eventPromise from '@data-fair/lib-utils/event-promise.js'
 
 // a special registry for metrics that are global
@@ -18,18 +19,9 @@ export const servicePromRegistry = new Registry()
 
 collectDefaultMetrics()
 
-// local metrics incremented throughout the code
-const internalErrorCounter = new Counter({
-  name: 'df_internal_error',
-  help: 'A counter of errors from any service, worker, etc. Do not use for client errors, only for anomalies that should trigger alerts. Each increment should be accompanied by an error log with matching code.',
-  labelNames: ['errorCode']
-})
-
-export const internalError = (errorCode: string, error: any, ...optionalParams: any) => {
-  internalErrorCounter.inc({ errorCode })
-  const message = error.message || error
-  console.error(`[${errorCode}] ${message}`, ...optionalParams)
-  if (error.stack) console.error(error.stack)
+// temporary bridge, removed with the migration to log
+export const internalError = (errorCode: string, error: any, ..._optionalParams: any) => {
+  log.error(error?.message ?? String(error), { code: errorCode, err: error })
 }
 
 /**
