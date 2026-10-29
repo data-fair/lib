@@ -98,7 +98,8 @@ everything one request did (possibly across services) can be grouped.
 ### Module layout
 
 - `packages/node/log.ts` → `@data-fair/lib-node/log.js`
-  - default export `log`: `debugNs`, `info`, `warn`, `alert`, `error`, `init`.
+  - default export `log`: `info`, `warn`, `alert`, `error`, `init`.
+  - at load, redirects the output of the `debug` module into the logger (see Debug output).
   - `withLogContext(fields, fn)`, `getLogContext()`, worker helpers.
   - owns the counters.
 - `packages/node/observer.ts`: `internalError` and its counter removed (counter moves to `log.ts`);
@@ -106,7 +107,7 @@ everything one request did (possibly across services) can be grouped.
 - `packages/express/events-log.ts` (+ `.d.ts`, test): removed. `EventLog`/`EventLogContext` types
   removed. `session.reqForLogs`/`onLogsError` removed if nothing else uses them (builder checks).
 - `packages/express/session.ts`: `middleware()` opens the request log context.
-- `packages/express/error-handler.ts` and other lib-internal `console`/`debug`/`internalError`/
+- `packages/express/error-handler.ts` and other lib-internal `console`/`internalError`/
   `eventsLog` usage: ported.
 
 ### Logger API
@@ -120,8 +121,6 @@ log.warn('forbidden request', { code: 'forbidden-req', err })
 log.alert('admin api key created', { code: 'df.apikeys.createadmin' })
 log.error('failed to create mongo index', { code: 'mongo-index-fail', err, collection })
 
-const debug = log.debugNs('datasets:finalize')   // same semantics as debugModule('…')
-debug('step done', { step })                     // no-op unless DEBUG matches
 
 await withLogContext({ datasetId }, async () => { … })   // every line inside carries datasetId
 ```
@@ -135,11 +134,25 @@ await withLogContext({ datasetId }, async () => { … })   // every line inside 
   to keep one signature; the README recommends always giving one on these levels.
 - `log.init({ service })` optional, sets the `service` field (falls back to `OTEL_SERVICE_NAME`).
 
-**`log.debugNs(ns)`**: namespace matching uses the `debug` package's own `enabled(ns)`, so `DEBUG`
-syntax is identical (wildcards, `-exclusions`). Enabled namespaces produce pino `debug` lines with a
-`ns` field. Pino's level is `debug` when `DEBUG` is set, `info` otherwise. Evaluated once per
-namespace at creation, like `debug`. Call sites `import debugModule from 'debug'` are ported to
-`log.debugNs`; third-party libraries' own debug output need not be captured.
+### Debug output
+
+Debug logs keep going through the `debug` module: `import debugModule from 'debug'` call sites stay
+unchanged (decided with the user). Only the output is redirected. When `log.ts` loads, it replaces
+two properties of the shared `debug` module (the copy lib-node resolves, normally deduped with the
+services'):
+- `createDebug.formatArgs` → no-op (no color, no namespace prefix, no diff timing);
+- `createDebug.log` → writes a pino `debug` line `{ ns: this.namespace, msg: util.format(...args) }`.
+
+`debug` reads both properties at each call, so instances created before the logger loaded are
+redirected too and import order does not matter (verified in a scratch test). Namespace gating stays
+entirely `debug`'s (`DEBUG` syntax unchanged); pino's own level is always `debug`.
+
+Not used: `pino-debug`. It patches the CommonJS module wrapper, must load before anything requires
+`debug` (first import or preload) and throws for instances created earlier. Limitation of our
+approach: a third-party library bundling its own separate copy of `debug` is not redirected; its
+output only appears when its namespace is enabled, as raw text. Acceptable.
+
+`debug` becomes a declared dependency of lib-node (it is used today without being declared).
 
 ### Levels
 
@@ -270,13 +283,13 @@ Nothing to build in the lib. Notes for deployments, in the README:
 
 ## Rollout
 
-1. lib: implement `log.js` (levels, serializer, counters, context, worker helpers, debug namespaces),
+1. lib: implement `log.js` (levels, serializer, counters, context, worker helpers, debug redirection),
    request scope in `session.middleware()`, remove `eventsLog` and `internalError`, port all
    lib-internal usage. Release **lib-node and lib-express as majors**. README section in lib-node:
    usage, levels, fields, code rules, context rules, OTel notes, migration table
    (`eventsLog.info(code, msg, ctx)` → `log.info(msg, { code })`, `eventsLog.alert` → `log.alert`,
-   `internalError(code, err)` → `log.error(msg, { code, err })`, `debugModule(ns)` → `log.debugNs(ns)`).
-2. data-fair: bump libs, port `console.*`, `debug`, `eventsLog`, `internalError` call sites, add the
+   `internalError(code, err)` → `log.error(msg, { code, err })`; `debug` call sites unchanged).
+2. data-fair: bump libs, port `console.*`, `eventsLog`, `internalError` call sites, add the
    worker context helpers around piscina tasks, add eslint `no-console` for server code. Deploy the
    branch on staging, adapt fluent-bit routes, then release.
 3. Other services, same steps when they bump to the new majors.
@@ -287,8 +300,9 @@ Nothing to build in the lib. Notes for deployments, in the README:
 must allow this for tests — builder's call how).
 
 - JSON shape: fields, label levels, ISO time, no pid; pretty fallback to JSON without `pino-pretty`.
-- levels: `alert` custom level present with its label; debug gating identical to the `debug` package
-  (wildcard, exclusion), nothing emitted when not enabled.
+- levels: `alert` custom level present with its label.
+- debug: an instance created before the logger loaded and one created after both produce pino
+  debug lines with `ns` and the `util.format`ted message; disabled namespaces emit nothing.
 - metrics: `df_logs` incremented for warn/alert/error with `{level, code, host}`, not for
   info/debug; `df_internal_error` on error; `df_events_log` on coded warn/alert.
 - errors: whitelist only (an axios-like error with `config.headers.Authorization` and a mongo-like

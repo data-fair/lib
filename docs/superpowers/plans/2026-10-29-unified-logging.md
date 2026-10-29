@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship one pino-based logger in `@data-fair/lib-node/log.js` (levels, safe error serializer, metrics, implicit context, `DEBUG` namespaces), open the request log context in lib-express `session.middleware()`, and remove `eventsLog` / `internalError` from the lib.
+**Goal:** Ship one pino-based logger in `@data-fair/lib-node/log.js` (levels, safe error serializer, metrics, implicit context, `debug` module output redirected into it), open the request log context in lib-express `session.middleware()`, and remove `eventsLog` / `internalError` from the lib.
 
 **Architecture:** A module-level pino instance writes JSON (prod) or pino-pretty (dev) synchronously to stdout. A thin wrapper exposes `log.<level>(msg, fields?)`, increments prom-client counters for warn/alert/error, and merges an `AsyncLocalStorage` context into each line through a pino `mixin`. lib-express fills that context per request inside `session.middleware()`.
 
-**Tech Stack:** TypeScript (ESM, type stripping), pino 9, pino-pretty 13 (optional peer), debug 4 (namespace matching only), prom-client 15, node:test.
+**Tech Stack:** TypeScript (ESM, type stripping), pino 10, pino-pretty 13 (optional peer), debug 4 (kept as the debug API, output redirected), prom-client 15, node:test.
 
 **Spec:** `docs/superpowers/specs/2026-10-29-unified-logging-design.md`
 
@@ -37,7 +37,7 @@
 
 ## File Structure
 
-- Create `packages/node/log.ts` — logger instance, levels, format selection, wrapper API, counters, context, debug namespaces, test seam.
+- Create `packages/node/log.ts` — logger instance, levels, format selection, wrapper API, counters, context, `debug` output redirection, test seam.
 - Create `packages/node/log-err.ts` — `serializeErr` whitelist serializer (pure, separately testable).
 - Create `packages/node/log.test.ts`, `packages/node/log-err.test.ts`, `packages/node/log-worker.test.ts` (+ fixture `packages/node/test-fixtures/log-worker.ts`).
 - Create `packages/express/req-log-context.ts` (+ test) — `reqLogFields`, `sessionLogFields`.
@@ -52,18 +52,18 @@
 **Files:**
 - Create: `packages/node/log.ts`
 - Test: `packages/node/log.test.ts`
-- Modify: `packages/node/package.json` (dependencies `pino@^9`, `debug@^4`; optional peer `pino-pretty@13` in `peerDependencies` + `peerDependenciesMeta`; devDependency `pino-pretty@^13`), root `package-lock.json` via `npm install`
+- Modify: `packages/node/package.json` (dependencies `pino@^10`, `debug@^4`; optional peer `pino-pretty@13` in `peerDependencies` + `peerDependenciesMeta`; devDependency `pino-pretty@^13`), root `package-lock.json` via `npm install`
 
 **Interfaces:**
 - Produces:
   - `export type LogLevel = 'debug' | 'info' | 'warn' | 'alert' | 'error'`
   - `export type LogFields = { code?: string, err?: unknown, [key: string]: unknown }`
-  - `export interface Logger { info (msg: string, fields?: LogFields): void; warn (...): void; alert (...): void; error (...): void; init (opts: { service?: string }): void; debugNs (ns: string): DebugFn }` (debugNs body in Task 4)
+  - `export interface Logger { info (msg: string, fields?: LogFields): void; warn (...): void; alert (...): void; error (...): void; init (opts: { service?: string }): void }`
   - `export default log: Logger`
   - `/** @internal test seam */ export function _resetLogger (opts?: { destination?: { write (s: string): unknown }, format?: 'json' | 'pretty' }): void` — rebuilds the pino instance; without opts uses the env-driven defaults.
   - internal `write (level: LogLevel, msg: string, fields?: LogFields): void` used by every method (later tasks hook counters and context into it).
 
-- [ ] **Step 1: Install deps** — `npm install -w packages/node pino@^9 debug@^4 && npm install -w packages/node -D pino-pretty@^13`, then add `pino-pretty` to `peerDependencies` (`"13"`) and `peerDependenciesMeta` (`optional: true`). Expected: `node_modules/pino` exists.
+- [ ] **Step 1: Install deps** — `npm install -w packages/node pino@^10 debug@^4 && npm install -w packages/node -D pino-pretty@^13`, then add `pino-pretty` to `peerDependencies` (`"13"`) and `peerDependenciesMeta` (`optional: true`). Expected: `node_modules/pino` exists.
 
 - [ ] **Step 2: Write failing tests** in `packages/node/log.test.ts` with a capture helper:
 
@@ -174,18 +174,18 @@ it('keeps df_events_log only for coded warn/alert', ...)                  // log
 
 ---
 
-### Task 4: Implicit context and debug namespaces
+### Task 4: Implicit context and debug output redirection
 
 **Files:**
 - Modify: `packages/node/log.ts`, `packages/node/log.test.ts`
-- Create: `packages/node/log-worker.test.ts`, `packages/node/test-fixtures/log-worker.ts`
+- Create: `packages/node/log-worker.test.ts`, `packages/node/test-fixtures/log-worker.ts`, `packages/node/test-fixtures/early-debug.ts`
 
 **Interfaces:**
 - Produces:
   - `export type LogContext = Record<string, string | number | boolean | undefined>`
   - `export function withLogContext<T> (fields: LogContext, fn: () => T): T` — runs `fn` in a store = `{ ...parent, ...fields }`.
   - `export function getLogContext (): LogContext` — shallow copy, `{}` outside any scope. Worker propagation uses exactly these two (no extra helpers — my call, they already form the pair the spec asks for).
-  - `export type DebugFn = ((msg: string, ...args: unknown[]) => void) & { enabled: boolean }`; `log.debugNs(ns: string): DebugFn` — `enabled = createDebug.enabled(ns)` at creation; when called with exactly one extra arg that is a plain object it becomes fields, otherwise `msg = util.format(msg, ...args)`; line has `ns` field.
+  - Side effect at module load: on the shared `debug` module (`import createDebug from 'debug'`), `createDebug.formatArgs = () => {}` and `createDebug.log = function (...args) { write('debug', util.format(...args), { ns: this.namespace }) }`. `debug` reads both at each call, so instances created earlier are redirected too. No `debugNs`, no `DebugFn`: call sites keep `import Debug from 'debug'`.
 
 - [ ] **Step 1: Write failing tests:**
 
@@ -203,18 +203,19 @@ it('isolates concurrent scopes across awaits and timers', async () => {
 })
 it('uses the context host as counter label', async () => { capture(); withLogContext({ host: 'ctx-host' }, () => log.warn('x', { code: 'm-ctx' })); /* df_logs{code:'m-ctx', host:'ctx-host'} === 1 */ })
 it('getLogContext returns a copy', () => withLogContext({ a: 1 }, () => { const c = getLogContext(); c.a = 2; assert.equal(getLogContext().a, 1) }))
-it('debug namespaces follow DEBUG matching', () => {
-  createDebug.enable('lt:a*,-lt:a:no'); const lines = capture()
-  log.debugNs('lt:a:yes')('hi %s', 'there'); log.debugNs('lt:a:no')('nope'); log.debugNs('lt:b')('nope')
-  log.debugNs('lt:a:obj')('with fields', { k: 1 })
-  assert.deepEqual(lines.map(l => [l.ns, l.msg, l.level]), [['lt:a:yes', 'hi there', 'debug'], ['lt:a:obj', 'with fields', 'debug']]); assert.equal(lines[1].k, 1)
+// earlyDebug = createDebug('lt:early') is created at the top of log.test.ts, BEFORE `import log from './log.js'`
+// is evaluated (put it in a tiny fixture module imported first: packages/node/test-fixtures/early-debug.ts)
+it('redirects debug output, including instances created before the logger loaded', () => {
+  createDebug.enable('lt:*,-lt:no'); const lines = capture()
+  earlyDebug('hi %s', 'there'); createDebug('lt:late')('late', { k: 1 }); createDebug('lt:no')('nope'); createDebug('other')('nope')
+  assert.deepEqual(lines.map(l => [l.ns, l.msg, l.level]), [['lt:early', 'hi there', 'debug'], ['lt:late', 'late { k: 1 }', 'debug']])
 })
 ```
 
 `log-worker.test.ts`: in a scope `{ datasetId: 'w1' }`, start `new Worker(fixtureUrl, { workerData: { logContext: getLogContext() }, stdout: true })`; the fixture calls `withLogContext(workerData.logContext, () => log.info('in worker'))` with `LOG_FORMAT=json` in the worker `env`; the test reads the worker's stdout, parses the line, asserts `datasetId === 'w1'`. Run the fixture with `execArgv: ['--experimental-strip-types']`.
 
 - [ ] **Step 2: Run** — Expected: FAIL.
-- [ ] **Step 3: Implement** a module-level `AsyncLocalStorage<LogContext>`; mixin returns `{ ...store, service? }` (pino's default mixin merge lets per-call fields win); counter host reads the store.
+- [ ] **Step 3: Implement** a module-level `AsyncLocalStorage<LogContext>`; mixin returns `{ ...store, service? }` (pino's default mixin merge lets per-call fields win); counter host reads the store; the two `debug` property overrides.
 - [ ] **Step 4: Run** `node --experimental-strip-types --test packages/node/log.test.ts packages/node/log-worker.test.ts` — Expected: PASS.
 - [ ] **Step 5: Commit** — `feat(node): implicit log context and DEBUG namespaces`
 
@@ -262,23 +263,21 @@ Update the existing test `sync accessors after a failed middleware do not throw 
 **Files:**
 - Delete: `packages/express/events-log.ts`, `packages/express/events-log.test.ts`
 - Modify: `packages/express/index.ts` (drop the events-log export), `packages/express/session.ts` (remove `reqForLogs`, `onLogsError`, `internalError` import) and its three `reqForLogs` tests, `packages/node/observer.ts` (remove `internalError`; port its `console.*`)
-- Port to `log`: `packages/express/error-handler.ts`, `ws-server.ts`, `req-perf.ts`, `req-origin.ts`, `packages/node/locks.ts`, `events-queue.ts`, `mongo.ts`, `http-agents.ts`, `upgrade-scripts.ts`, `ws-client.ts`, `test-spies.ts`, `packages/node/session.ts`
+- Port to `log` (`internalError`, `eventsLog`, `console.*` only; `debug` usages stay): `packages/express/error-handler.ts`, `ws-server.ts`, `req-perf.ts`, `req-origin.ts`, `packages/node/locks.ts`, `events-queue.ts`, `mongo.ts`, `http-agents.ts`, `upgrade-scripts.ts`, `test-spies.ts`, `packages/node/session.ts`
 - Modify: `eslint.config.mjs`, `packages/node/README.md`, `packages/express/README.md`
 
 **Interfaces:**
-- Consumes: `log`, `DebugFn` (Tasks 1–4).
-- Produces: `upgrade-scripts.ts` `exec: (db: Db, debug: DebugFn) => Promise<void>` (replaces `Debugger`).
+- Consumes: `log` (Tasks 1–4).
 
 Porting rules (apply mechanically):
 - `internalError(code, err)` → `log.error(<short msg>, { code, err })`; when the second arg is a string message → `log.error(message, { code })`.
-- error-handler: `status >= 500` → `log.error('failure while serving http request', { code: 'http', err })`; 403 → `log.warn(err.message, { code: 'forbidden-req' })`; 401 → `log.warn(err.message, { code: 'unauthorized-req' })`; `debugModule('http-errors')` → `log.debugNs('http-errors')`.
-- `Debug(ns)` / `debugModule(ns)` → `log.debugNs(ns)` (same namespace strings).
-- `console.log` → `log.info`, `console.warn` → `log.warn`, `console.error` → `log.error` with a code (`observer` metrics failure: `code: 'observer-metrics'`), `console.debug` → `debugNs`.
+- error-handler: `status >= 500` → `log.error('failure while serving http request', { code: 'http', err })`; 403 → `log.warn(err.message, { code: 'forbidden-req' })`; 401 → `log.warn(err.message, { code: 'unauthorized-req' })`; its `debugModule('http-errors')` stays.
+- `console.log` → `log.info`, `console.warn` → `log.warn`, `console.error` → `log.error` with a code (`observer` metrics failure: `code: 'observer-metrics'`), `console.debug` (test-spies) → the module's existing `debug` instance.
 - `packages/utils/json-schema.ts` stays as is (utils is dependency-free and runs in browsers).
 
-- [ ] **Step 1: Delete, port, and remove** per the lists above. Then `grep -rn "internalError\|eventsLog\|events-log\|from 'debug'\|console\.\(log\|warn\|error\|info\|debug\)" packages/node packages/express --include=*.ts | grep -v '\.d\.ts' | grep -v '\.test\.ts'` — Expected: only `import createDebug from 'debug'` in `packages/node/log.ts` and the `console` call in the Observer startup banner if kept (port it too; expected empty otherwise).
+- [ ] **Step 1: Delete, port, and remove** per the lists above. Then `grep -rn "internalError\|eventsLog\|events-log\|console\.\(log\|warn\|error\|info\|debug\)" packages/node packages/express --include=*.ts | grep -v '\.d\.ts' | grep -v '\.test\.ts'` — Expected: empty.
 - [ ] **Step 2: eslint** — add a block `{ files: ['packages/node/**/*.ts', 'packages/express/**/*.ts'], ignores: ['**/*.test.ts', '**/test-fixtures/**'], rules: { 'no-console': 'error' } }`. Run `npm run lint` — Expected: no errors.
-- [ ] **Step 3: READMEs** — lib-node: replace the `internalError` paragraph with a "Logging" section (usage, levels table, fields table, `code` must be static, context rules from the spec's Implicit context section, worker propagation with `getLogContext`/`withLogContext`, OTel notes incl. `OTEL_LOGS_EXPORTER=none`, migration table from the spec's Rollout step 1); add `pino-pretty` to the optional peers table. lib-express: remove the events-log row, mention that `session.middleware()` opens the log context.
+- [ ] **Step 3: READMEs** — lib-node: replace the `internalError` paragraph with a "Logging" section (usage, levels table, fields table, `debug` stays the debug API (output redirected, limitation with bundled copies), `code` must be static, context rules from the spec's Implicit context section, worker propagation with `getLogContext`/`withLogContext`, OTel notes incl. `OTEL_LOGS_EXPORTER=none`, migration table from the spec's Rollout step 1); add `pino-pretty` to the optional peers table. lib-express: remove the events-log row, mention that `session.middleware()` opens the log context.
 - [ ] **Step 4: Full gate** — `npm run quality` — Expected: build, lint and all tests pass.
 - [ ] **Step 5: Commit**
 
