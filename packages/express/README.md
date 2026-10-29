@@ -8,7 +8,7 @@ Express 5 middlewares and helpers shared by the web services of the data-fair st
 npm i @data-fair/lib-express @data-fair/lib-node express
 ```
 
-Peer dependencies: `@data-fair/lib-node@^2.15.0`, `express@5`, and `ws@8` (optional, only for `ws-server.js`).
+Peer dependencies: `@data-fair/lib-node@^3.0.0`, `express@5`, and `ws@8` (optional, only for `ws-server.js`).
 
 ## Modules
 
