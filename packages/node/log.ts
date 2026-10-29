@@ -2,6 +2,9 @@
 // JSON lines on stdout in production, pretty output in dev, see README for the conventions
 
 import { hostname } from 'node:os'
+import { format } from 'node:util'
+import { AsyncLocalStorage } from 'node:async_hooks'
+import createDebug from 'debug'
 import { pino, type Logger as PinoLogger, type DestinationStream } from 'pino'
 import { Counter } from 'prom-client'
 import { serializeErr } from './log-err.js'
@@ -19,6 +22,24 @@ export interface Logger {
 }
 
 type LogFormat = 'json' | 'pretty'
+
+export type LogContext = Record<string, string | number | boolean | undefined>
+
+// implicit context merged into every log line
+// only small immutable values (ids, keys, short names), never req, documents, buffers, etc
+// long-lived resources (pools, intervals, caches) must be created outside any scope
+// or they would capture it and attribute later lines to the wrong user
+const contextStorage = new AsyncLocalStorage<LogContext>()
+
+/** run fn in a scope where every log line carries the fields of the parent scope plus these */
+export function withLogContext<T> (fields: LogContext, fn: () => T): T {
+  return contextStorage.run({ ...contextStorage.getStore(), ...fields }, fn)
+}
+
+/** a copy of the current context, for example to pass it to a worker thread in a task payload */
+export function getLogContext (): LogContext {
+  return { ...contextStorage.getStore() }
+}
 
 // optional peer dependency, absent in production images
 let prettyFactory: ((opts: Record<string, unknown>) => DestinationStream) | null = null
@@ -54,7 +75,8 @@ export function _resetLogger (opts: { destination?: { write (s: string): unknown
     timestamp: pino.stdTimeFunctions.isoTime,
     formatters: { level: (label) => ({ level: label }) },
     serializers: { err: serializeErr },
-    mixin: () => service ? { service } : {}
+    // per-call fields win over the mixin (pino's default merge strategy)
+    mixin: () => service ? { service, ...contextStorage.getStore() } : { ...contextStorage.getStore() }
   }, destination)
 }
 _resetLogger()
@@ -80,10 +102,11 @@ export const eventsLogCounter = new Counter({
 const count = (level: LogLevel, fields?: LogFields) => {
   if (level !== 'warn' && level !== 'alert' && level !== 'error') return
   const code = typeof fields?.code === 'string' ? fields.code : ''
-  const host = typeof fields?.host === 'string' ? fields.host : '-'
-  logsCounter.inc({ level, code, host })
+  const host = fields?.host ?? contextStorage.getStore()?.host
+  const hostLabel = typeof host === 'string' && host ? host : '-'
+  logsCounter.inc({ level, code, host: hostLabel })
   if (level === 'error') internalErrorCounter.inc({ errorCode: code })
-  else if (code) eventsLogCounter.inc({ level, code, host })
+  else if (code) eventsLogCounter.inc({ level, code, host: hostLabel })
 }
 
 const write = (level: LogLevel, msg: string, fields?: LogFields) => {
@@ -93,6 +116,13 @@ const write = (level: LogLevel, msg: string, fields?: LogFields) => {
   } catch {
     // logging must never become a new error
   }
+}
+
+// the debug module stays the API for debug logs, only its output is redirected here
+// debug reads these properties at each call so instances created earlier are redirected too
+createDebug.formatArgs = function () {}
+createDebug.log = function (this: { namespace: string }, ...args: unknown[]) {
+  write('debug', format(...args), { ns: this.namespace })
 }
 
 const log: Logger = {

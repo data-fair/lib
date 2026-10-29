@@ -3,7 +3,10 @@ import { strict as assert } from 'assert'
 import { hostname } from 'node:os'
 import { Writable } from 'node:stream'
 import { register } from 'prom-client'
-import log, { _resetLogger } from './log.js'
+import createDebug from 'debug'
+// must be imported before log.js, to check that instances created earlier are redirected too
+import { earlyDebug } from './test-fixtures/early-debug.js'
+import log, { _resetLogger, withLogContext, getLogContext } from './log.js'
 
 // collect the JSON lines written by the logger
 const capture = () => {
@@ -110,5 +113,65 @@ describe('log metrics', () => {
     assert.ok(v.find(x => x.labels.code === 'm-ev-a' && x.labels.level === 'alert' && x.value === 1))
     assert.ok(!v.find(x => x.labels.host === 'm-ev-uncoded'))
     assert.ok(!v.find(x => x.labels.code === 'm-ev-e'))
+  })
+})
+
+describe('log context', () => {
+  after(() => _resetLogger())
+
+  it('merges context into lines, per-call fields win', () => {
+    const lines = capture()
+    withLogContext({ datasetId: 'd1', host: 'ctx' }, () => withLogContext({ step: 's' }, () => log.info('x', { host: 'call' })))
+    assert.equal(lines[0].datasetId, 'd1')
+    assert.equal(lines[0].step, 's')
+    assert.equal(lines[0].host, 'call')
+  })
+
+  it('isolates concurrent scopes across awaits and timers', async () => {
+    const lines = capture()
+    const run = (u: string) => withLogContext({ userId: u }, async () => {
+      await new Promise(resolve => setTimeout(resolve, u === 'a' ? 10 : 1))
+      log.info(u)
+      await Promise.resolve()
+      log.info(u)
+    })
+    await Promise.all([run('a'), run('b')])
+    assert.equal(lines.length, 4)
+    for (const l of lines) assert.equal(l.userId, l.msg)
+  })
+
+  it('has no context outside scopes', () => {
+    const lines = capture()
+    log.info('x')
+    assert.equal(lines[0].userId, undefined)
+    assert.deepEqual(getLogContext(), {})
+  })
+
+  it('uses the context host as counter label', async () => {
+    capture()
+    withLogContext({ host: 'ctx-host' }, () => log.warn('x', { code: 'm-ctx' }))
+    assert.ok((await metricValues('df_logs')).find(x => x.labels.code === 'm-ctx' && x.labels.host === 'ctx-host' && x.value === 1))
+  })
+
+  it('getLogContext returns a copy', () => {
+    withLogContext({ a: 1 }, () => {
+      const c = getLogContext()
+      c.a = 2
+      assert.equal(getLogContext().a, 1)
+    })
+  })
+})
+
+describe('debug output', () => {
+  after(() => _resetLogger())
+
+  it('redirects debug output, including instances created before the logger loaded', () => {
+    createDebug.enable('lt:*,-lt:no')
+    const lines = capture()
+    earlyDebug('hi %s', 'there')
+    createDebug('lt:late')('late', { k: 1 })
+    createDebug('lt:no')('nope')
+    createDebug('other')('nope')
+    assert.deepEqual(lines.map(l => [l.ns, l.msg, l.level]), [['lt:early', 'hi there', 'debug'], ['lt:late', 'late { k: 1 }', 'debug']])
   })
 })
