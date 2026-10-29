@@ -27,10 +27,9 @@ const truncateStackHeader = (stack: string) => {
 
 const isPrimitiveCode = (value: unknown): value is string | number => typeof value === 'string' || typeof value === 'number'
 
-const serialize = (value: unknown, depth: number, seen: Set<unknown>): SerializedErr => {
+export function serializeErr (value: unknown, depth = 0): SerializedErr {
   if (value === null || typeof value !== 'object') return { message: truncate(String(value)) }
   const err = value as Record<string, any>
-  seen.add(value)
   const s: SerializedErr = { message: truncate(typeof err.message === 'string' ? err.message : String(value)) }
   if (value instanceof Error) s.type = err.name && err.name !== 'Error' ? err.name : err.constructor?.name ?? 'Error'
   if (typeof err.stack === 'string') s.stack = truncateStackHeader(err.stack)
@@ -41,16 +40,9 @@ const serialize = (value: unknown, depth: number, seen: Set<unknown>): Serialize
     if (typeof err.config?.method === 'string') s.method = err.config.method
     if (typeof err.config?.url === 'string') s.url = err.config.url.split('?')[0]
   }
-  if (err.cause !== undefined && depth < maxDepth && !seen.has(err.cause)) {
-    s.cause = serialize(err.cause, depth + 1, seen)
+  // the depth limit also stops circular causes
+  if (err.cause !== undefined && depth < maxDepth) {
+    s.cause = serializeErr(err.cause, depth + 1)
   }
   return s
-}
-
-export function serializeErr (value: unknown, depth = 0): SerializedErr {
-  try {
-    return serialize(value, depth, new Set())
-  } catch {
-    return { message: 'unserializable error' }
-  }
 }

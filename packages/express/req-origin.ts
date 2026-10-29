@@ -42,12 +42,12 @@ export const reqOrigin = (req: Request) => {
 // first occurrence in the process, then at most hourly: an appending environment would otherwise
 // log an error per request and bury the cause in its own noise
 const FLAG_INTERVAL_MS = 60 * 60 * 1000
-let lastFlagged: number | undefined
-const flagAppendedForwardedFor = (value: string) => {
+const lastFlagged: Record<string, number> = {}
+const flagForwardedFor = (code: string, message: string) => {
   const now = Date.now()
-  if (lastFlagged !== undefined && now - lastFlagged < FLAG_INTERVAL_MS) return
-  lastFlagged = now
-  log.error(`X-Forwarded-For holds several IPs ("${value}"): a layer appends to it, so its first entry can be chosen by the client. The edge proxy must overwrite it with the client address.`, { code: 'x-forwarded-for-several' })
+  if (lastFlagged[code] !== undefined && now - lastFlagged[code] < FLAG_INTERVAL_MS) return
+  lastFlagged[code] = now
+  log.error(message, { code })
 }
 
 // read from req.headers and not req.get: this is also used on the plain IncomingMessage
@@ -55,7 +55,8 @@ const flagAppendedForwardedFor = (value: string) => {
 //
 // Strict by default: a request is limited by its user or by this IP, and one with neither is a
 // misconfiguration. `optional` is for the places where no client IP is legitimate (audit logs, a
-// relay deciding what to forward): undefined without the header, still an error on a non-IP value.
+// relay deciding what to forward): undefined without the header, and undefined on a non-IP value
+// (the environment is flagged, a misconfigured proxy must not fail every request of these places).
 export function reqIp (req: Request | IncomingMessage): string
 export function reqIp (req: Request | IncomingMessage, options: { optional: true }): string | undefined
 export function reqIp (req: Request | IncomingMessage, options?: { optional?: boolean }): string | undefined {
@@ -70,11 +71,18 @@ export function reqIp (req: Request | IncomingMessage, options?: { optional?: bo
   // appended to it, so the first one may be what the client chose: it is still the origin and is
   // used, but the environment is flagged rather than failing every request of a live deployment.
   if (ip.includes(',')) {
-    flagAppendedForwardedFor(ip)
+    flagForwardedFor('x-forwarded-for-several', `X-Forwarded-For holds several IPs ("${ip}"): a layer appends to it, so its first entry can be chosen by the client. The edge proxy must overwrite it with the client address.`)
     ip = ip.split(',')[0]
   }
   ip = ip.trim()
-  if (!isIP(ip)) throw new Error(`The "X-Forwarded-For" header should contain an IP. "${ip}" is not valid.`)
+  if (!isIP(ip)) {
+    const message = `The "X-Forwarded-For" header should contain an IP. "${ip}" is not valid.`
+    if (options?.optional) {
+      flagForwardedFor('x-forwarded-for-invalid', message)
+      return undefined
+    }
+    throw new Error(message)
+  }
   return ip
 }
 

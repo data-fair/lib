@@ -61,28 +61,6 @@ describe('log output', () => {
     assert.equal(lines[0].err.config, undefined)
   })
 
-  it('accepts an Error or an object passed as the message', () => {
-    const lines = capture()
-    log.error(new Error('as msg') as any)
-    log.info({ a: 1 } as any)
-    assert.equal(lines[0].msg, 'as msg')
-    assert.ok(lines[0].err.stack)
-    assert.equal(typeof lines[1].msg, 'string')
-  })
-
-  it('does not let fields override pino keys', () => {
-    const out: string[] = []
-    _resetLogger({ format: 'json', destination: { write: (s: string) => { out.push(s) } } })
-    log.info('real', { level: 'oops', time: 3, msg: 'fake' })
-    const line = JSON.parse(out[0])
-    assert.equal(line.level, 'info')
-    assert.equal(line.msg, 'real')
-    assert.match(line.time, /^\d{4}-/)
-    assert.equal(line.time_, 3)
-    assert.equal(line.level_, 'oops')
-    assert.equal((out[0].match(/"level":/g) ?? []).length, 1)
-  })
-
   it('never throws', () => {
     capture()
     const circular: any = {}

@@ -117,25 +117,8 @@ const count = (level: LogLevel, fields?: LogFields) => {
   else if (code) eventsLogCounter?.inc({ level, code, host: hostLabel })
 }
 
-// keys written by pino itself, a field with the same name would duplicate them in the JSON line
-const reservedKeys = ['level', 'time', 'msg', 'hostname']
-
 const write = (level: LogLevel, msg: string, fields?: LogFields) => {
   try {
-    // tolerate loosely ported calls like log.error(err) from javascript code
-    if (typeof msg !== 'string') {
-      if ((msg as unknown) instanceof Error) fields = { err: msg, ...fields }
-      msg = (msg as any)?.message ?? format(msg)
-    }
-    if (fields && reservedKeys.some(key => key in fields!)) {
-      fields = { ...fields }
-      for (const key of reservedKeys) {
-        if (key in fields) {
-          fields[key + '_'] = fields[key]
-          delete fields[key]
-        }
-      }
-    }
     count(level, fields)
     instance[level](fields ?? {}, msg)
   } catch {

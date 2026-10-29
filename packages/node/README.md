@@ -82,7 +82,7 @@ log.error('failed to create mongo index', { code: 'mongo-index-fail', err, colle
 log.init({ service: 'data-fair' }) // optional, defaults to OTEL_SERVICE_NAME
 ```
 
-Every method has the same signature `(msg, fields?)` and never throws. Fields named like the keys written by pino (`level`, `time`, `msg`, `hostname`) are renamed with a trailing `_`.
+Every method has the same signature `(msg, fields?)` and never throws. Do not use the keys written by pino (`level`, `time`, `msg`, `hostname`) as field names, they would be duplicated in the JSON line.
 
 | Level | Use | Emitted | Counted |
 | --- | --- | --- | --- |

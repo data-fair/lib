@@ -11,11 +11,8 @@ export function reqLogFields (req: Request | IncomingMessage): { ip?: string, ho
   // internal calls are not attributed to a site
   if (!host || host.startsWith('localhost') || host.endsWith(':8080')) host = '-'
   const fields: { ip?: string, host: string } = { host }
-  // a malformed X-Forwarded-For must not make logging break the request
-  try {
-    const ip = reqIp(req, { optional: true })
-    if (ip) fields.ip = ip
-  } catch {}
+  const ip = reqIp(req, { optional: true })
+  if (ip) fields.ip = ip
   return fields
 }
 

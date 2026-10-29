@@ -137,8 +137,18 @@ describe('reqIp', () => {
       assert.equal(reqIp(mockReq({ 'x-forwarded-for': '10.0.0.1, 192.168.1.1' }), { optional: true }), '10.0.0.1')
     })
 
-    it('still throws on a value that is not an IP', () => {
-      assert.throws(() => reqIp(mockReq({ 'x-forwarded-for': 'not-an-ip' }), { optional: true }), /not valid/)
+    it('returns undefined and flags the environment on a value that is not an IP', () => {
+      const lines: any[] = []
+      _resetLogger({ format: 'json', destination: { write: (s: string) => { for (const l of s.split('\n')) if (l) lines.push(JSON.parse(l)) } } })
+      try {
+        assert.equal(reqIp(mockReq({ 'x-forwarded-for': 'not-an-ip' }), { optional: true }), undefined)
+        assert.equal(reqIp(mockReq({ 'x-forwarded-for': 'still-not-an-ip' }), { optional: true }), undefined)
+      } finally {
+        _resetLogger()
+      }
+      const flags = lines.filter(l => l.code === 'x-forwarded-for-invalid')
+      assert.equal(flags.length, 1)
+      assert.equal(flags[0].level, 'error')
     })
 
     it('works on a plain IncomingMessage (websocket upgrade)', () => {

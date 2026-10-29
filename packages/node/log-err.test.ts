@@ -67,9 +67,4 @@ describe('serializeErr', () => {
     assert.equal(s.message, 'obj')
     assert.ok(!JSON.stringify(s).includes('tok'))
   })
-
-  it('never throws on hostile values', () => {
-    const hostile = { get message () { throw new Error('getter') } }
-    assert.doesNotThrow(() => serializeErr(hostile))
-  })
 })
