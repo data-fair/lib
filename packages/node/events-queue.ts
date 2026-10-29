@@ -1,6 +1,6 @@
 import { type Event } from '@data-fair/lib-common-types/event/index.js'
 import { type Notification } from '@data-fair/lib-common-types/notification/index.js'
-import { internalError } from '@data-fair/lib-node/observer.js'
+import log from './log.js'
 // the events service is part of our own infrastructure (configuration, not user input)
 import { privateAxiosInstance as axios } from './axios.js'
 import Debug from 'debug'
@@ -34,7 +34,7 @@ export class EventsQueue {
     // events is an optional service: without its url it is not deployed and events are dropped
     let inactive = !!options.inactive || !options.eventsUrl
     if (!inactive && !options.eventsSecret) {
-      internalError('events-queue', 'the events service url is set but its secret is missing, events are dropped')
+      log.error('the events service url is set but its secret is missing, events are dropped', { code: 'events-queue' })
       inactive = true
     }
     this._options = { ...options, inactive }
@@ -64,7 +64,7 @@ export class EventsQueue {
       try {
         await axios.post(this.options().eventsUrl + '/api/events', events, { headers: { 'x-secret-key': this.options().eventsSecret } })
       } catch (err: any) {
-        internalError('events-queue-push-event', err)
+        log.error('failure to push events', { code: 'events-queue-push-event', err })
         // retry later
         if (err.status >= 500 && events.length < 1000) this.eventsQueue = events.concat(this.eventsQueue)
       }
@@ -77,7 +77,7 @@ export class EventsQueue {
         try {
           await axios.post(this.options().eventsUrl + '/api/notifications', notification, { headers: { 'x-secret-key': this.options().eventsSecret } })
         } catch (err: any) {
-          internalError('events-queue-push-notif', err)
+          log.error('failure to push a notification', { code: 'events-queue-push-notif', err })
           // retry later
           if (err.status >= 500 && (notifications.length + this.notificationsQueue.length) < 1000) {
             this.notificationsQueue.unshift(notification)

@@ -13,6 +13,7 @@ import CacheableLookup from 'cacheable-lookup'
 import HttpAgent, { HttpsAgent } from 'agentkeepalive'
 import { Counter, Gauge } from 'prom-client'
 import { SsrfHttpAgent, SsrfHttpsAgent, getSsrfRules, getProxyEnvName } from './ssrf.js'
+import log from './log.js'
 
 // not very high number of sockets but we don't want to saturate our reverse proxies
 // if a higher number is needed the service should probably be scaled anyway
@@ -29,7 +30,7 @@ export const privateHttpsAgent = new HttpsAgent(keepaliveOpts)
 const createPublicAgents = () => {
   const proxyEnvName = getProxyEnvName()
   if (proxyEnvName) {
-    console.warn(`WARNING: ${proxyEnvName} is defined, the protection against server side request forgery (SSRF) is disabled, outgoing requests are not checked against non public addresses`)
+    log.warn(`${proxyEnvName} is defined, the protection against server side request forgery (SSRF) is disabled, outgoing requests are not checked against non public addresses`)
     return { httpAgent: new HttpAgent(keepaliveOpts), httpsAgent: new HttpsAgent(keepaliveOpts) }
   }
   const rules = getSsrfRules()

@@ -19,17 +19,12 @@ export const servicePromRegistry = new Registry()
 
 collectDefaultMetrics()
 
-// temporary bridge, removed with the migration to log
-export const internalError = (errorCode: string, error: any, ..._optionalParams: any) => {
-  log.error(error?.message ?? String(error), { code: errorCode, err: error })
-}
-
 /**
  * @param {import('node:http').ServerResponse} res
  * @param {any} err
  */
 const httpErrorHandler = (res: ServerResponse, err: any) => {
-  console.error('failed to server prometheus /metrics', err)
+  log.error('failed to serve prometheus metrics', { code: 'observer-metrics', err })
   res.writeHead(500)
   res.end()
 }
@@ -66,9 +61,9 @@ const serveRetainedHeapSnapshot = async (res: ServerResponse) => {
   res.setHeader('Content-Disposition', `attachment; filename="data-fair-${hostname()}-${new Date().toISOString()}.heapsnapshot"`)
   res.setHeader('Content-Type', 'application/octet-stream')
   const start = Date.now()
-  console.log('observer: starting full heap snapshot — event loop will be blocked')
+  log.info('observer: starting full heap snapshot — event loop will be blocked')
   await pipeline(getHeapSnapshot(), res)
-  console.log(`observer: full heap snapshot done in ${Date.now() - start}ms`)
+  log.info('observer: full heap snapshot done', { duration: Date.now() - start })
 }
 
 // live heap allocation sampler
@@ -115,14 +110,7 @@ export const startObserver = async (port = 9090) => {
   })
   server.listen(port)
   await eventPromise(server, 'listening')
-  console.log(`Observer server available on http://localhost:${port}
-    GET /metrics -> get prometheus metrics for this instance
-    GET /service-metrics -> get prometheus metrics shared accross all instances
-    GET /cpu-profile -> generate and fetch a CPU profile
-    GET /heap-profile -> generate and fetch a sampled heap allocation snapshot
-    GET /heap-profile-all -> generate and fetch a sampled heap allocation snapshot including objects collected by GC
-    GET /heap-snapshot -> dump a full retained heap snapshot (blocks the event loop while V8 walks the heap)
-`)
+  log.info(`Observer server available on http://localhost:${port}`, { routes: ['/metrics', '/service-metrics', '/cpu-profile', '/heap-profile', '/heap-profile-all', '/heap-snapshot'] })
 }
 
 export const stopObserver = async () => {

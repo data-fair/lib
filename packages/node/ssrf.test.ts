@@ -126,8 +126,10 @@ describe('ssrf agents', () => {
   it('should disable the protection with a warning behind a proxy', async () => {
     const script = `import ${JSON.stringify(fileURLToPath(new URL('./http-agents.ts', import.meta.url)))}`
     const env = { ...process.env, HTTPS_PROXY: 'http://proxy.example.com:3128' }
-    const { stderr } = await execFileAsync(process.execPath, ['--experimental-strip-types', '--input-type=module', '--eval', script], { env, timeout: 10000 })
-    assert.match(stderr, /WARNING: HTTPS_PROXY is defined, the protection against server side request forgery \(SSRF\) is disabled/)
+    const { stdout } = await execFileAsync(process.execPath, ['--experimental-strip-types', '--input-type=module', '--eval', script], { env: { ...env, LOG_FORMAT: 'json' }, timeout: 10000 })
+    const line = JSON.parse(stdout.split('\n').find(l => l.includes('HTTPS_PROXY')) as string)
+    assert.equal(line.level, 'warn')
+    assert.match(line.msg, /HTTPS_PROXY is defined, the protection against server side request forgery \(SSRF\) is disabled/)
   })
 })
 

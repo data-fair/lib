@@ -6,7 +6,7 @@ import { format } from 'node:util'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import createDebug from 'debug'
 import { pino, type Logger as PinoLogger, type DestinationStream } from 'pino'
-import { Counter } from 'prom-client'
+import type { Counter } from 'prom-client'
 import { serializeErr } from './log-err.js'
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'alert' | 'error'
@@ -81,19 +81,27 @@ export function _resetLogger (opts: { destination?: { write (s: string): unknown
 }
 _resetLogger()
 
-export const logsCounter = new Counter({
+// prom-client is an optional peer dependency, without it log lines are simply not counted
+let promClient: typeof import('prom-client') | null = null
+try {
+  promClient = await import('prom-client')
+} catch {
+  promClient = null
+}
+
+export const logsCounter: Counter<'level' | 'code' | 'host'> | null = promClient && new promClient.Counter({
   name: 'df_logs',
   help: 'A counter of warn, alert and error log lines. The code label comes from the code field of the line, it must be a static string.',
   labelNames: ['level', 'code', 'host']
 })
 
-export const internalErrorCounter = new Counter({
+export const internalErrorCounter: Counter<'errorCode'> | null = promClient && new promClient.Counter({
   name: 'df_internal_error',
   help: 'DEPRECATED, use df_logs. A counter of error log lines.',
   labelNames: ['errorCode']
 })
 
-export const eventsLogCounter = new Counter({
+export const eventsLogCounter: Counter<'level' | 'code' | 'host'> | null = promClient && new promClient.Counter({
   name: 'df_events_log',
   help: 'DEPRECATED, use df_logs. A counter of warn and alert log lines that have a code.',
   labelNames: ['level', 'code', 'host']
@@ -104,9 +112,9 @@ const count = (level: LogLevel, fields?: LogFields) => {
   const code = typeof fields?.code === 'string' ? fields.code : ''
   const host = fields?.host ?? contextStorage.getStore()?.host
   const hostLabel = typeof host === 'string' && host ? host : '-'
-  logsCounter.inc({ level, code, host: hostLabel })
-  if (level === 'error') internalErrorCounter.inc({ errorCode: code })
-  else if (code) eventsLogCounter.inc({ level, code, host: hostLabel })
+  logsCounter?.inc({ level, code, host: hostLabel })
+  if (level === 'error') internalErrorCounter?.inc({ errorCode: code })
+  else if (code) eventsLogCounter?.inc({ level, code, host: hostLabel })
 }
 
 const write = (level: LogLevel, msg: string, fields?: LogFields) => {

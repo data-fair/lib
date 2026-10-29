@@ -1,5 +1,6 @@
 import type { IndexSpecification, CreateIndexesOptions, MongoClientOptions, IndexDirection, Db } from 'mongodb'
 import { MongoClient, MongoError } from 'mongodb'
+import log from './log.js'
 
 type IndexDirections = Record<string, IndexDirection>
 
@@ -21,13 +22,13 @@ export class Mongo {
 
   connect = async (mongoUrl: string, options: MongoClientOptions = {}) => {
     if (this._client) {
-      console.warn('db already connected')
+      log.warn('db already connected')
       return
     }
-    console.log('connecting to mongodb...')
+    log.info('connecting to mongodb...')
     this._client = await MongoClient.connect(mongoUrl, { maxPoolSize: 5, ignoreUndefined: true, ...options })
     this._db = this._client.db()
-    console.log('...ok')
+    log.info('connected to mongodb')
   }
 
   // Create an index if it does not exist and manage overwriting existing and conflicting index definitions
@@ -38,7 +39,7 @@ export class Mongo {
       if (options.name && err instanceof MongoError && (err.code === 85 || err.code === 86)) {
       // if the error is a conflict on keys or params of the index we automatically
       // delete then recreate the index
-        console.log(`drop then recreate index ${collection}/${options.name}`)
+        log.info('drop then recreate index', { collection, index: options.name })
         await this.db.collection(collection).dropIndex(options.name)
         await this.db.collection(collection).createIndex(key, options)
       } else {

@@ -3,7 +3,6 @@
 
 export * from './session.js'
 export { default as errorHandler } from './error-handler.js'
-export * from './events-log.js'
 export * from './find-utils.js'
 export * from '@data-fair/lib-utils/http-errors.js'
 export * from './req-origin.js'

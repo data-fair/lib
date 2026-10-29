@@ -3,7 +3,7 @@ import type { IncomingMessage } from 'node:http'
 import { isIP } from 'node:net'
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
-import { internalError } from '@data-fair/lib-node/observer.js'
+import log from '@data-fair/lib-node/log.js'
 
 export const reqHost = (req: Request) => {
   const forwardedHost = req.get('x-forwarded-host')
@@ -47,7 +47,7 @@ const flagAppendedForwardedFor = (value: string) => {
   const now = Date.now()
   if (lastFlagged !== undefined && now - lastFlagged < FLAG_INTERVAL_MS) return
   lastFlagged = now
-  internalError('x-forwarded-for-several', `X-Forwarded-For holds several IPs ("${value}"): a layer appends to it, so its first entry can be chosen by the client. The edge proxy must overwrite it with the client address.`)
+  log.error(`X-Forwarded-For holds several IPs ("${value}"): a layer appends to it, so its first entry can be chosen by the client. The edge proxy must overwrite it with the client address.`, { code: 'x-forwarded-for-several' })
 }
 
 // read from req.headers and not req.get: this is also used on the plain IncomingMessage
@@ -126,7 +126,7 @@ export const assertReqInternalSecret = (req: Request, expectedSecretKey: string)
   assertReqInternal(req)
   let secretKey = req.get('x-secret-key')
   if (!secretKey && typeof req.query.key === 'string') {
-    console.warn('passing internal secret key through query parameter is not recommended, use x-secret-key header')
+    log.warn('passing internal secret key through query parameter is not recommended, use x-secret-key header')
     secretKey = req.query.key
   }
   if (!secretKeyMatches(secretKey, expectedSecretKey)) throw httpError(401, 'Bad secret key')

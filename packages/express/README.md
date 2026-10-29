@@ -14,10 +14,9 @@ Peer dependencies: `@data-fair/lib-node@^2.15.0`, `express@5`, and `ws@8` (optio
 
 | Import path | Description |
 | --- | --- |
-| `@data-fair/lib-express` | Re-exports the small common pieces: `session.js`, `errorHandler`, events log, find utils, `httpError`, `req-origin.js`, `site.js`, `serve-spa.js`. |
-| `@data-fair/lib-express/session.js` | `session` singleton: verifies the simple-directory session cookies, `session.middleware()`, `reqSession()` / `reqSessionAuthenticated()` / `reqAdminMode()` accessors. |
-| `@data-fair/lib-express/error-handler.js` | Express error handler: maps errors to status codes, counts 5xx with `internalError`, hides 5xx details when `NODE_ENV=production`. |
-| `@data-fair/lib-express/events-log.js` | `info` / `warn` / `alert` logs of sensitive events (audit, security), filtered by `EVENTS_LOG_LEVEL`. |
+| `@data-fair/lib-express` | Re-exports the small common pieces: `session.js`, `errorHandler`, find utils, `httpError`, `req-origin.js`, `site.js`, `serve-spa.js`. |
+| `@data-fair/lib-express/session.js` | `session` singleton: verifies the simple-directory session cookies, `session.middleware()` (also opens the request log context, see `@data-fair/lib-node/log.js`), `reqSession()` / `reqSessionAuthenticated()` / `reqAdminMode()` accessors. |
+| `@data-fair/lib-express/error-handler.js` | Express error handler: maps errors to status codes, logs 5xx as errors and 401/403 as warnings, hides 5xx details when `NODE_ENV=production`. |
 | `@data-fair/lib-express/req-origin.js` | Reverse-proxy aware request info: `reqOrigin()`, `reqHost()`, `reqIp()`, `reqIsInternal()`, `assertReqInternalSecret()`, `secretKeyMatches()`… |
 | `@data-fair/lib-express/site.js` | `createSiteMiddleware(servicePathPart)`: extracts the site path prefix of the request, `reqSitePath()`, `reqSiteUrl()`. |
 | `@data-fair/lib-express/serve-spa.js` | `createSpaMiddleware()`: serves a built SPA with UI config injection, cache headers and CSP. |

@@ -5,6 +5,7 @@ import path from 'path'
 import { readdirSync, readFileSync, statSync } from 'fs'
 import Debug from 'debug'
 import type { Locks } from './locks.js'
+import log from './log.js'
 
 const debug = Debug('upgrade')
 
@@ -51,7 +52,7 @@ export interface UpgradeScript {
 export default async function (db: Db, locks: Locks, basePath = './', isFresh?: () => Promise<boolean>) {
   const ack = await locks.acquire('upgrade')
   if (!ack) {
-    console.warn('upgrade scripts lock is already acquired, skip them')
+    log.warn('upgrade scripts lock is already acquired, skip them')
     // IMPORTANT: this behaviour of running the process when the upgrade scripts are still running on another one
     // implies that they cannot be considered a pre-requisite..
     // if we want to consider the upgrade scripts as a pre-requisite we should implement a wait on all

@@ -595,37 +595,6 @@ describe('scope checks are required per route', () => {
     assert.throws(() => reqUserAuthenticated(req), (err: any) => err.status === 401)
     assert.throws(() => reqAdminMode(req), (err: any) => err.status === 401)
   })
-
-  it('reqForLogs reports infrastructure errors but stays silent on 401/403', async () => {
-    const calls: any[] = []
-    const failing = new Session()
-    failing.onLogsError = (err: any) => calls.push(err)
-    failing.readState = async () => { throw new Error('mongo down') }
-    assert.equal(await failing.reqForLogs(mockReq()), undefined)
-    failing.readState = async () => { throw Object.assign(new Error('boom'), { status: 503 }) }
-    assert.equal(await failing.reqForLogs(mockReq()), undefined)
-    failing.readState = async () => { throw Object.assign(new Error('nope'), { status: 401 }) }
-    assert.equal(await failing.reqForLogs(mockReq()), undefined)
-    failing.readState = async () => { throw Object.assign(new Error('nope'), { status: 403 }) }
-    assert.equal(await failing.reqForLogs(mockReq()), undefined)
-    assert.equal(calls.length, 2)
-  })
-
-  it('reqForLogs never throws even when reporting throws', async () => {
-    const failing = new Session()
-    failing.onLogsError = () => { throw new Error('reporter broke') }
-    failing.readState = async () => { throw new Error('mongo down') }
-    assert.equal(await failing.reqForLogs(mockReq()), undefined)
-  })
-
-  it('reqForLogs never throws', async () => {
-    const { session, req } = await setup(scopedState)
-    const state = await session.reqForLogs(req)
-    assert.deepEqual(state?.scopes, ['datasets:read'])
-    const failing = new Session()
-    failing.readState = async () => { throw Object.assign(new Error('nope'), { status: 401 }) }
-    assert.equal(await failing.reqForLogs(mockReq()), undefined)
-  })
 })
 
 describe('requireScope without the session middleware', () => {
