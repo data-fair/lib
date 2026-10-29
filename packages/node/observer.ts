@@ -9,7 +9,8 @@ import { hostname } from 'node:os'
 import { createServer } from 'node:http'
 import { getHeapSnapshot } from 'node:v8'
 import { pipeline } from 'node:stream/promises'
-import { Registry, Counter, register, collectDefaultMetrics } from 'prom-client'
+import { Registry, register, collectDefaultMetrics } from 'prom-client'
+import log from './log.js'
 import eventPromise from '@data-fair/lib-utils/event-promise.js'
 
 // a special registry for metrics that are global
@@ -18,26 +19,12 @@ export const servicePromRegistry = new Registry()
 
 collectDefaultMetrics()
 
-// local metrics incremented throughout the code
-const internalErrorCounter = new Counter({
-  name: 'df_internal_error',
-  help: 'A counter of errors from any service, worker, etc. Do not use for client errors, only for anomalies that should trigger alerts. Each increment should be accompanied by an error log with matching code.',
-  labelNames: ['errorCode']
-})
-
-export const internalError = (errorCode: string, error: any, ...optionalParams: any) => {
-  internalErrorCounter.inc({ errorCode })
-  const message = error.message || error
-  console.error(`[${errorCode}] ${message}`, ...optionalParams)
-  if (error.stack) console.error(error.stack)
-}
-
 /**
  * @param {import('node:http').ServerResponse} res
  * @param {any} err
  */
 const httpErrorHandler = (res: ServerResponse, err: any) => {
-  console.error('failed to server prometheus /metrics', err)
+  log.error('failed to serve prometheus metrics', { code: 'observer-metrics', err })
   res.writeHead(500)
   res.end()
 }
@@ -74,9 +61,9 @@ const serveRetainedHeapSnapshot = async (res: ServerResponse) => {
   res.setHeader('Content-Disposition', `attachment; filename="data-fair-${hostname()}-${new Date().toISOString()}.heapsnapshot"`)
   res.setHeader('Content-Type', 'application/octet-stream')
   const start = Date.now()
-  console.log('observer: starting full heap snapshot — event loop will be blocked')
+  log.info('observer: starting full heap snapshot — event loop will be blocked')
   await pipeline(getHeapSnapshot(), res)
-  console.log(`observer: full heap snapshot done in ${Date.now() - start}ms`)
+  log.info('observer: full heap snapshot done', { duration: Date.now() - start })
 }
 
 // live heap allocation sampler
@@ -123,14 +110,7 @@ export const startObserver = async (port = 9090) => {
   })
   server.listen(port)
   await eventPromise(server, 'listening')
-  console.log(`Observer server available on http://localhost:${port}
-    GET /metrics -> get prometheus metrics for this instance
-    GET /service-metrics -> get prometheus metrics shared accross all instances
-    GET /cpu-profile -> generate and fetch a CPU profile
-    GET /heap-profile -> generate and fetch a sampled heap allocation snapshot
-    GET /heap-profile-all -> generate and fetch a sampled heap allocation snapshot including objects collected by GC
-    GET /heap-snapshot -> dump a full retained heap snapshot (blocks the event loop while V8 walks the heap)
-`)
+  log.info(`Observer server available on http://localhost:${port}`, { routes: ['/metrics', '/service-metrics', '/cpu-profile', '/heap-profile', '/heap-profile-all', '/heap-snapshot'] })
 }
 
 export const stopObserver = async () => {

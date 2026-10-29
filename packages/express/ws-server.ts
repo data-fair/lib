@@ -22,7 +22,7 @@ import { nanoid } from 'nanoid'
 import { WebSocketServer } from 'ws'
 import { assertScope } from '@data-fair/lib-common-types/session/index.js'
 import { session, markScopeChecked } from '@data-fair/lib-express'
-import { internalError } from '@data-fair/lib-node/observer.js'
+import log from '@data-fair/lib-node/log.js'
 import { initMessagesCollection } from '@data-fair/lib-node/ws-emitter.js'
 
 let cursor: any
@@ -138,7 +138,7 @@ export const start = async (
       } catch (err: any) {
         const status = err.status ?? err.statusCode ?? 500
         const errorMessage: Message = { type: 'error', status, data: err.message ?? err, channel: message?.channel }
-        if (status >= 500) internalError('ws-error', err)
+        if (status >= 500) log.error('failure while handling a websocket message', { code: 'ws-error', err })
         return ws.send(JSON.stringify(errorMessage))
       }
     })
@@ -204,7 +204,7 @@ const initCursor = async (db: Db, messagesCollection: Collection) => {
       }
     } catch (err: any) {
       if (stopped) break
-      console.log('WS tailable cursor was interrupted, reinit it', err && err.message)
+      log.info('WS tailable cursor was interrupted, reinit it', { err })
     }
   }
 }

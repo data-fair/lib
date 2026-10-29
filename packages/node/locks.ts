@@ -2,7 +2,7 @@ import type { Db } from 'mongodb'
 import { hostname } from 'node:os'
 import { randomBytes } from 'node:crypto'
 import Debug from 'debug'
-import { internalError } from './observer.js'
+import log from './log.js'
 
 const debug = Debug('locks')
 
@@ -31,7 +31,7 @@ export class Locks {
     try {
       await this.collection.createIndex({ updatedAt: 1 }, { expireAfterSeconds: ttl })
     } catch (err) {
-      console.log('Failure to create TTL index. Probably because the value changed. Try to update it.')
+      log.info('Failure to create TTL index. Probably because the value changed. Try to update it.')
       db.command({ collMod: 'locks', index: { keyPattern: { updatedAt: 1 }, expireAfterSeconds: ttl } })
     }
 
@@ -39,7 +39,7 @@ export class Locks {
     // a mongo error here must not become an unhandled rejection (it would crash the process on any failover)
     this.interval = setInterval(() => {
       this.collection.updateMany({ pid: this.pid }, { $currentDate: { updatedAt: true } })
-        .catch(err => internalError('locks-heartbeat', err))
+        .catch(err => log.error('failure to prolongate locks', { code: 'locks-heartbeat', err }))
     }, (ttl / 2) * 1000)
   }
 

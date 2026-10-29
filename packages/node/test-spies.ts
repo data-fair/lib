@@ -41,7 +41,7 @@ export function waitFor <T> (eventName: string, timeout = 2000) {
 export function emit (eventName: string, data: any) {
   debug(`Emitting test spy ${eventName} (${pendingPromises[eventName]?.length} listeners)`)
   if (!pendingPromises[eventName]?.length) {
-    console.debug(`No listener for test spy ${eventName}`)
+    debug(`No listener for test spy ${eventName}`)
     return
   }
   for (const p of pendingPromises[eventName]) {

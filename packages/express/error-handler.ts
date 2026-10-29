@@ -1,6 +1,5 @@
 import type { ErrorRequestHandler } from 'express'
-import { internalError } from '@data-fair/lib-node/observer.js'
-import eventsLog from './events-log.js'
+import log from '@data-fair/lib-node/log.js'
 import debugModule from 'debug'
 
 const debug = debugModule('http-errors')
@@ -19,13 +18,13 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   if (err.name === 'MongoServerError' && err.code === 11000) status = 409
 
   if (status >= 500) {
-    internalError('http', 'failure while serving http request', err)
+    log.error('failure while serving http request', { code: 'http', err })
   }
   if (status === 403) {
-    eventsLog.warn('forbidden-req', err.message, { req })
+    log.warn(err.message, { code: 'forbidden-req' })
   }
   if (status === 401) {
-    eventsLog.warn('unauthorized-req', err.message, { req })
+    log.warn(err.message, { code: 'unauthorized-req' })
   }
   res.set('Cache-Control', 'no-cache')
   res.set('Expires', '-1')

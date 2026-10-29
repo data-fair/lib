@@ -6,7 +6,8 @@ import { assertAdminMode, assertAuthenticated, assertScope } from '@data-fair/li
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { reqSitePathSafe, reqIp, reqOrigin } from '@data-fair/lib-express'
 import { SessionHandler } from '@data-fair/lib-node/session.js'
-import { internalError } from '@data-fair/lib-node/observer.js'
+import { withLogContext } from '@data-fair/lib-node/log.js'
+import { reqLogFields, sessionLogFields } from './req-log-context.js'
 
 export * from '@data-fair/lib-common-types/session/index.js'
 
@@ -74,25 +75,6 @@ export class Session extends SessionHandler {
     assertScope(sessionState, accepted)
     markScopeChecked(req)
     return sessionState
-  }
-
-  /** @internal logging only, never for authorization */
-  // reads the session for logging only: never throws, ignores the scope check requirement
-  async reqForLogs (req: Request | IncomingMessage): Promise<SessionState | undefined> {
-    try {
-      return await this.loadState(req)
-    } catch (err: any) {
-      // 401/403 are expected refusals; anything else (jwks fetch, infrastructure) must not vanish
-      if (!err?.status || err.status >= 500) {
-        try { this.onLogsError(err) } catch { /* reporting must never throw either */ }
-      }
-      return undefined
-    }
-  }
-
-  /** @internal test seam, not API */
-  onLogsError (err: unknown) {
-    internalError('event-log-session', err)
   }
 
   private async loadState (req: Request | IncomingMessage, res?: Response | ServerResponse): Promise<SessionState> {
@@ -205,11 +187,19 @@ export class Session extends SessionHandler {
     }
   }
 
+  // also opens the implicit log context of the request (ip, host, user, account)
   middleware (options: { required?: boolean, adminOnly?: boolean } = {}): RequestHandler {
-    return async (req, res, next) => {
-      // @ts-ignore
-      req[sessionMiddlewareKey] = true
-      const sessionState = await this.loadState(req, res)
+    return (req, res, next) => withLogContext(reqLogFields(req), async () => {
+      // errors are handed to next() from inside the scope, so that the error handler's lines keep the context
+      let sessionState: SessionState
+      try {
+        // @ts-ignore
+        req[sessionMiddlewareKey] = true
+        sessionState = await this.loadState(req, res)
+      } catch (err) {
+        next(err)
+        return
+      }
       if (sessionState.user?.pseudoSession && req.method !== 'GET') {
         res.status(403).send('pseudo session only allows GET requests')
         return
@@ -226,8 +216,9 @@ export class Session extends SessionHandler {
           }
         }
       }
-      next()
-    }
+      // not an authorization use of the session, the scope check does not apply
+      withLogContext(sessionLogFields(sessionState), next)
+    })
   }
 }
 

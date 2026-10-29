@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken'
 import JwksClient from 'jwks-rsa'
 import cookie from 'cookie'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
+import log from './log.js'
 
 export type KeySet = 'session' | 'scoped'
 // simple-directory names the keys of its scoped key set scoped-<kid>; the signature still has to
@@ -208,7 +209,7 @@ export class SessionHandler {
         user = verified.payload as User
         this.assertTokenKind('cookie', verified.header, verified.payload, verified.keySet)
       } catch (err: any) {
-        console.warn(err)
+        log.warn('failure to verify a session token', { code: 'session-token', err })
         if (!isTokenFailure(err)) {
           // happens in case of temporary unavailability of SD
           // better not to disconnect user in this case

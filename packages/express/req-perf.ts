@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import { Histogram } from 'prom-client'
 import Debug from 'debug'
+import log from '@data-fair/lib-node/log.js'
 
 const debugReq = Debug('df:observe:req')
 
@@ -36,7 +37,7 @@ export const reqPerfStep = (req: Request, stepName: string) => {
   const reqObserve: { start: number, step: number, routeName?: string } = (req as unknown as any)[reqObserveKey]
 
   if (!reqObserve) {
-    console.warn('reqStep was called on a request that was not initialized for observation')
+    log.warn('reqStep was called on a request that was not initialized for observation')
     return
   }
 
@@ -44,7 +45,7 @@ export const reqPerfStep = (req: Request, stepName: string) => {
     reqObserve.routeName = req.route?.path
   }
   if (!reqObserve.routeName) {
-    console.warn('reqStep was called on a request without a route name')
+    log.warn('reqStep was called on a request without a route name')
     return
   }
 
@@ -53,7 +54,7 @@ export const reqPerfStep = (req: Request, stepName: string) => {
   reqStepHistogram.labels(reqObserve.routeName, stepName).observe(duration / 1000)
   debugReq('request', req.method, req.url, stepName, duration, 'ms')
   if (duration > 1000 && stepName !== 'total' && stepName !== 'finish') {
-    console.log('request', req.method, req.url, stepName, duration, 'ms')
+    log.info('slow request step', { method: req.method, url: req.url, routeName: reqObserve.routeName, step: stepName, duration })
   }
   reqObserve.step = now
 }

@@ -12,7 +12,8 @@ Peer dependencies, all declared optional: install the ones required by the modul
 
 | Peer dependency | Needed by |
 | --- | --- |
-| `prom-client@15` | `observer.js`, `http-agents.js` and everything built on them (`axios.js`, `events-queue.js`…) |
+| `prom-client@15` | `observer.js`, `http-agents.js` and everything built on them (`axios.js`, `events-queue.js`…); without it `log.js` does not count log lines |
+| `pino-pretty@13` | pretty output of `log.js` in dev (falls back to JSON without it) |
 | `mongodb@6` | `mongo.js`, `locks.js`, `upgrade-scripts.js` |
 | `ws@8` | `ws-client.js` |
 | `tough-cookie@5` | `axios-with-cookies.js`, `axios-auth.js` |
@@ -28,7 +29,8 @@ There is no root entry point: import each module by its path.
 | `@data-fair/lib-node/ssrf.js` | SSRF checks for clients that don't use the agents above: `resolvePublicAddress()`, `publicLookup`, `SsrfError`. |
 | `@data-fair/lib-node/axios-with-cookies.js` | Axios instance with a `tough-cookie` cookie jar. |
 | `@data-fair/lib-node/axios-auth.js` | Axios instance logged into simple-directory with email/password. Integration tests only. |
-| `@data-fair/lib-node/observer.js` | Mini web server exposing Prometheus metrics and CPU/heap profiles, plus the shared `internalError()` counter. |
+| `@data-fair/lib-node/log.js` | The logger of the stack: JSON lines on stdout (pretty in dev), implicit context, metrics, `debug` output redirected. |
+| `@data-fair/lib-node/observer.js` | Mini web server exposing Prometheus metrics and CPU/heap profiles. |
 | `@data-fair/lib-node/mongo.js` | `Mongo` connection wrapper (default export: a singleton) with declarative named index management (`configure()`). |
 | `@data-fair/lib-node/locks.js` | Distributed locks stored in a MongoDB `locks` collection with a TTL (default export: a singleton). |
 | `@data-fair/lib-node/upgrade-scripts.js` | Runner for the database migration scripts of a service. |
@@ -64,6 +66,78 @@ For clients that don't use these agents (ftp, sftp, raw sockets, SDKs…), `@dat
 
 See the [`data-fair-security` skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-security) for the stack-wide rules.
 
+## Logging
+
+One logger for everything, imported where needed, never passed around:
+
+```ts
+import log, { withLogContext } from '@data-fair/lib-node/log.js'
+
+log.info('dataset finalized', { datasetId })
+log.info('memory deleted', { code: 'agents.memory.delete' })
+log.warn('forbidden request', { code: 'forbidden-req', err })
+log.alert('admin api key created', { code: 'df.apikeys.createadmin' })
+log.error('failed to create mongo index', { code: 'mongo-index-fail', err, collection })
+
+log.init({ service: 'data-fair' }) // optional, defaults to OTEL_SERVICE_NAME
+```
+
+Every method has the same signature `(msg, fields?)` and never throws. Do not use the keys written by pino (`level`, `time`, `msg`, `hostname`) as field names, they would be duplicated in the JSON line.
+
+| Level | Use | Emitted | Counted |
+| --- | --- | --- | --- |
+| `debug` | through the `debug` module (see below) | only namespaces enabled by `DEBUG` | no |
+| `info` | normal operations, audit trail | always | no |
+| `warn` | client errors, suspicious but expected situations | always | yes |
+| `alert` | events that are not failures but deserve the same scrutiny as errors (mostly security) | always | yes |
+| `error` | internal failures only, never client errors | always | yes |
+
+**Output**: one JSON object per line on stdout when `NODE_ENV=production`, pretty output otherwise (`LOG_FORMAT=json|pretty` overrides). Fields: `time`, `level` (label), `msg`, `hostname`, `service`, `code`, `err`, the context fields, the per-call fields, and `trace_id` / `span_id` / `trace_flags` when OpenTelemetry is active.
+
+**Codes**: `code` is optional on every line. It must be a **static string** (`mongo-index-fail`, `df.apikeys.createadmin`): never put ids, hosts or other dynamic values in it, they go in other fields. It labels the counters.
+
+**Errors**: pass them as the `err` field. They are serialized with a whitelist (`type`, `message`, `stack`, primitive `code`, `status`, `cause`, and `method` / `url` without query string for axios errors), so headers, request config and document content carried by errors never reach the logs. Messages are truncated to 1000 characters (the message of an `AxiosRequestError` starts with the response body).
+
+**Metrics**: `warn`, `alert` and `error` lines increment `df_logs{level, code, host}`. Deprecated, kept during the transition: `df_internal_error{errorCode}` (error lines) and `df_events_log{level, code, host}` (coded warn and alert lines).
+
+**Debug**: keep using the `debug` module (`import Debug from 'debug'`), `DEBUG=ns1,ns2*` works as before. When `log.js` is loaded, the output of the shared `debug` module is redirected into the logger as `debug` lines with a `ns` field. A third-party library bundling its own copy of `debug` is not redirected.
+
+### Implicit context
+
+The fields of the current context are added to every line. `session.middleware()` of `@data-fair/lib-express` opens a context per request with `ip`, `host`, `userId`, `userName`, `accountKey`, `accountDep`, `accountName`. Any code can add fields for a scope:
+
+```ts
+await withLogContext({ datasetId }, async () => {
+  // every line logged in here, even deep in the call stack, carries datasetId
+})
+```
+
+Rules:
+
+- only small immutable values (ids, keys, short names), never `req`, documents or buffers: they stay in memory as long as the scope is alive,
+- create long-lived resources (pools, intervals, caches, queues) at startup, outside any scope, or they capture it and attribute their later lines to the wrong user,
+- event listeners run in the context of the code that emits, not of the code that subscribed.
+
+Worker threads have their own context: pass `getLogContext()` in the task payload and wrap the task with `withLogContext(payload.logContext, ...)` in the worker.
+
+### OpenTelemetry
+
+Nothing to do in the code. Activate the OpenTelemetry Operator auto-instrumentation on the Kubernetes side: its pino instrumentation adds `trace_id`, `span_id` and `trace_flags` to the lines, and the `traceparent` header is propagated on outgoing HTTP calls (third parties included). Set `OTEL_LOGS_EXPORTER=none` so that logs are not also shipped over OTLP. Without the operator (dev, tests, scripts) lines have no trace fields.
+
+### Migration
+
+| Before | After |
+| --- | --- |
+| `eventsLog.info(code, msg, ctx)` | `log.info(msg, { code })` |
+| `eventsLog.warn(code, msg, ctx)` | `log.warn(msg, { code })` |
+| `eventsLog.alert(code, msg, ctx)` | `log.alert(msg, { code })` |
+| `internalError(code, err)` | `log.error(msg, { code, err })` |
+| `console.log` / `console.warn` / `console.error` | `log.info` / `log.warn` / `log.error` with a code |
+| `EVENTS_LOG_LEVEL` | removed, every level but debug is emitted |
+| `import Debug from 'debug'` | unchanged |
+
+User, account, ip and host of `eventsLog`'s context argument now come from the implicit context.
+
 ## Observer
 
 A very light web server for observability, on port 9090 by default:
@@ -74,17 +148,11 @@ A very light web server for observability, on port 9090 by default:
 - `GET /heap-snapshot`: full retained heap snapshot (blocks the event loop while V8 walks the heap).
 
 ```ts
-import { startObserver, stopObserver, internalError } from '@data-fair/lib-node/observer.js'
+import { startObserver, stopObserver } from '@data-fair/lib-node/observer.js'
 
 await startObserver() // or startObserver(port)
 // ...
 await stopObserver()
-```
-
-`internalError(errorCode, error, ...optionalParams)` increments the shared `df_internal_error` counter and logs the error. Use it for anomalies that should trigger alerts, not for client errors:
-
-```ts
-internalError('http', 'failure while serving http request', err)
 ```
 
 Process metrics are plain `prom-client` metrics. A service-level metric (its value depends on a shared state, like the database, not on the activity of the current process) is registered in `servicePromRegistry`:
