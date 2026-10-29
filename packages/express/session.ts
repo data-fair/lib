@@ -7,6 +7,8 @@ import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import { reqSitePathSafe, reqIp, reqOrigin } from '@data-fair/lib-express'
 import { SessionHandler } from '@data-fair/lib-node/session.js'
 import { internalError } from '@data-fair/lib-node/observer.js'
+import { withLogContext } from '@data-fair/lib-node/log.js'
+import { reqLogFields, sessionLogFields } from './req-log-context.js'
 
 export * from '@data-fair/lib-common-types/session/index.js'
 
@@ -205,11 +207,19 @@ export class Session extends SessionHandler {
     }
   }
 
+  // also opens the implicit log context of the request (ip, host, user, account)
   middleware (options: { required?: boolean, adminOnly?: boolean } = {}): RequestHandler {
-    return async (req, res, next) => {
-      // @ts-ignore
-      req[sessionMiddlewareKey] = true
-      const sessionState = await this.loadState(req, res)
+    return (req, res, next) => withLogContext(reqLogFields(req), async () => {
+      // errors are handed to next() from inside the scope, so that the error handler's lines keep the context
+      let sessionState: SessionState
+      try {
+        // @ts-ignore
+        req[sessionMiddlewareKey] = true
+        sessionState = await this.loadState(req, res)
+      } catch (err) {
+        next(err)
+        return
+      }
       if (sessionState.user?.pseudoSession && req.method !== 'GET') {
         res.status(403).send('pseudo session only allows GET requests')
         return
@@ -226,8 +236,9 @@ export class Session extends SessionHandler {
           }
         }
       }
-      next()
-    }
+      // not an authorization use of the session, the scope check does not apply
+      withLogContext(sessionLogFields(sessionState), next)
+    })
   }
 }
 

@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
 import { reqOrigin, reqHost, reqIp, ipRateLimitKey, reqIsInternal, assertReqInternal, assertReqInternalSecret, secretKeyMatches } from './req-origin.js'
+import { _resetLogger } from '@data-fair/lib-node/log.js'
 import type { Request } from 'express'
 import type { IncomingMessage } from 'node:http'
 
@@ -87,16 +88,15 @@ describe('reqIp', () => {
   // appended to it, so the first one may be what the client chose. Still the origin, so it is used,
   // but the environment is flagged (once, then at most hourly) instead of failing every request.
   it('should take the first of several IPs, and flag the environment once', () => {
-    const errors: string[] = []
-    const originalError = console.error
-    console.error = (...args: unknown[]) => { errors.push(String(args[0])) }
+    const lines: any[] = []
+    _resetLogger({ format: 'json', destination: { write: (s: string) => { for (const l of s.split('\n')) if (l) lines.push(JSON.parse(l)) } } })
     try {
       assert.equal(reqIp(mockReq({ 'x-forwarded-for': '10.0.0.1, 192.168.1.1' })), '10.0.0.1')
       assert.equal(reqIp(mockReq({ 'x-forwarded-for': '10.0.0.2, 192.168.1.1' })), '10.0.0.2')
     } finally {
-      console.error = originalError
+      _resetLogger()
     }
-    const flags = errors.filter(e => e.startsWith('[x-forwarded-for-several]'))
+    const flags = lines.filter(l => l.code === 'x-forwarded-for-several').map(l => l.msg)
     assert.equal(flags.length, 1)
     assert.match(flags[0], /must overwrite it/)
   })

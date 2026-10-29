@@ -1,8 +1,9 @@
-import { describe, it } from 'node:test'
+import { describe, it, after } from 'node:test'
 import { strict as assert } from 'assert'
 import { Session, session as defaultSession, requireScope, assertReqScope, allowAnyScope, markScopeChecked, reqSession, reqSessionAuthenticated, reqAdminMode, reqUser, reqUserAuthenticated, setReqUser, setReqSession } from './session.js'
 import type { Request, Response } from 'express'
 import type { SessionState, User } from '@data-fair/lib-common-types/session/index.js'
+import log, { _resetLogger } from '@data-fair/lib-node/log.js'
 
 const testUser: User = {
   email: 'test@example.com',
@@ -194,6 +195,48 @@ describe('Session.middleware', () => {
     await middleware(req, res as any, () => { nextCalled = true })
 
     assert.equal(nextCalled, true)
+  })
+})
+
+describe('Session.middleware log context', () => {
+  const captureLogs = () => {
+    const lines: any[] = []
+    _resetLogger({ format: 'json', destination: { write: (s: string) => { for (const l of s.split('\n')) if (l) lines.push(JSON.parse(l)) } } })
+    return lines
+  }
+  after(() => _resetLogger())
+
+  it('opens a log context with request and session fields for later handlers', async () => {
+    const lines = captureLogs()
+    const session = new Session()
+    session.readState = async () => ({ lang: 'fr', user: testUser, account: { type: 'organization', id: 'org1', name: 'Test Org' }, accountRole: 'admin' })
+    await session.middleware()(mockReq('GET', { host: 'example.com', 'x-forwarded-for': '203.0.113.7' }), mockRes(), () => { log.info('in route') })
+    assert.equal(lines[0].userId, 'user1')
+    assert.equal(lines[0].userName, 'Test User')
+    assert.equal(lines[0].accountKey, 'organization.org1')
+    assert.equal(lines[0].ip, '203.0.113.7')
+    assert.equal(lines[0].host, 'example.com')
+  })
+
+  it('hands session failures to next(err) inside the request scope', async () => {
+    const lines = captureLogs()
+    const session = new Session()
+    session.readState = async () => { throw Object.assign(new Error('bad'), { status: 401 }) }
+    await session.middleware()(mockReq('GET', { host: 'example.com' }), mockRes(), (err?: any) => { log.warn(err.message, { code: 'unauthorized-req' }) })
+    assert.equal(lines[0].host, 'example.com')
+    assert.equal(lines[0].code, 'unauthorized-req')
+    assert.equal(lines[0].msg, 'bad')
+  })
+
+  it('logging a scoped session does not trigger the scope check', async () => {
+    const lines = captureLogs()
+    const session = new Session()
+    session.scopeAware = true
+    session.readState = async () => ({ lang: 'fr', user: { ...testUser, scope: 'datasets:read' }, account: { type: 'user', id: 'user1', name: 'Test User' }, accountRole: 'admin', scopes: ['datasets:read'] })
+    let error: any
+    await session.middleware()(mockReq(), mockRes(), (err?: any) => { error = err; log.info('in route') })
+    assert.equal(error, undefined)
+    assert.equal(lines[0].userId, 'user1')
   })
 })
 
@@ -534,14 +577,18 @@ describe('scope checks are required per route', () => {
     session.readState = async () => raw()
     const req = mockReq()
     await assert.rejects(session.req(req), (err: any) => err.status === 401 && /invalid scope claim/.test(err.message))
-    await assert.rejects(Promise.resolve(session.middleware()(mockReq(), mockRes(), () => {})), (err: any) => err.status === 401)
+    let error: any
+    await session.middleware()(mockReq(), mockRes(), (err?: any) => { error = err })
+    assert.equal(error?.status, 401)
   })
 
   it('sync accessors after a failed middleware do not throw a TypeError', async () => {
     const session = new Session()
     session.readState = async () => { throw Object.assign(new Error('x'), { status: 401 }) }
     const req = mockReq()
-    await assert.rejects(Promise.resolve(session.middleware()(req, mockRes(), () => {})))
+    let error: any
+    await session.middleware()(req, mockRes(), (err?: any) => { error = err })
+    assert.equal(error?.status, 401)
     assert.equal(reqSession(req), undefined)
     assert.equal(reqUser(req), undefined)
     assert.throws(() => reqSessionAuthenticated(req), (err: any) => err.status === 401)
