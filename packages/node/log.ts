@@ -89,24 +89,19 @@ try {
   promClient = null
 }
 
-// another copy of this module (or an older lib) may have registered the same counters already
-const getOrCreateCounter = <T extends string>(config: { name: string, help: string, labelNames: T[] }): Counter<T> => {
-  return (promClient!.register.getSingleMetric(config.name) as Counter<T> | undefined) ?? new promClient!.Counter(config)
-}
-
-export const logsCounter: Counter<'level' | 'code' | 'host'> | null = promClient && getOrCreateCounter({
+export const logsCounter: Counter<'level' | 'code' | 'host'> | null = promClient && new promClient.Counter({
   name: 'df_logs',
   help: 'A counter of warn, alert and error log lines. The code label comes from the code field of the line, it must be a static string.',
   labelNames: ['level', 'code', 'host']
 })
 
-export const internalErrorCounter: Counter<'errorCode'> | null = promClient && getOrCreateCounter({
+export const internalErrorCounter: Counter<'errorCode'> | null = promClient && new promClient.Counter({
   name: 'df_internal_error',
   help: 'DEPRECATED, use df_logs. A counter of error log lines.',
   labelNames: ['errorCode']
 })
 
-export const eventsLogCounter: Counter<'level' | 'code' | 'host'> | null = promClient && getOrCreateCounter({
+export const eventsLogCounter: Counter<'level' | 'code' | 'host'> | null = promClient && new promClient.Counter({
   name: 'df_events_log',
   help: 'DEPRECATED, use df_logs. A counter of warn and alert log lines that have a code.',
   labelNames: ['level', 'code', 'host']
