@@ -41,6 +41,15 @@ describe('serializeErr', () => {
     assert.ok(!JSON.stringify(s).includes('body'))
   })
 
+  it('truncates long messages and the message line of stacks', () => {
+    const body = JSON.stringify({ echoed: 'Bearer SECRET', doc: 'x'.repeat(5000) })
+    const err = Object.assign(new Error(`500 - ${body}`), { name: 'AxiosRequestError', status: 500 })
+    const s = serializeErr(err)
+    assert.ok(s.message.length <= 1001, `message length ${s.message.length}`)
+    assert.ok((s.stack ?? '').length < 2000, `stack length ${s.stack?.length}`)
+    assert.ok(s.stack?.includes('at '))
+  })
+
   it('serializes cause recursively and stops on cycles', () => {
     const a: any = new Error('a')
     const b: any = new Error('b', { cause: a })

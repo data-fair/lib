@@ -14,16 +14,26 @@ export interface SerializedErr {
 }
 
 const maxDepth = 5
+// messages can embed response bodies (AxiosRequestError) and the stack repeats the message
+const maxMessageLength = 1000
+
+const truncate = (text: string) => text.length > maxMessageLength ? text.slice(0, maxMessageLength) + '…' : text
+
+const truncateStackHeader = (stack: string) => {
+  const framesIndex = stack.indexOf('\n    at ')
+  if (framesIndex === -1) return truncate(stack)
+  return truncate(stack.slice(0, framesIndex)) + stack.slice(framesIndex)
+}
 
 const isPrimitiveCode = (value: unknown): value is string | number => typeof value === 'string' || typeof value === 'number'
 
 const serialize = (value: unknown, depth: number, seen: Set<unknown>): SerializedErr => {
-  if (value === null || typeof value !== 'object') return { message: String(value) }
+  if (value === null || typeof value !== 'object') return { message: truncate(String(value)) }
   const err = value as Record<string, any>
   seen.add(value)
-  const s: SerializedErr = { message: typeof err.message === 'string' ? err.message : String(value) }
+  const s: SerializedErr = { message: truncate(typeof err.message === 'string' ? err.message : String(value)) }
   if (value instanceof Error) s.type = err.name && err.name !== 'Error' ? err.name : err.constructor?.name ?? 'Error'
-  if (typeof err.stack === 'string') s.stack = err.stack
+  if (typeof err.stack === 'string') s.stack = truncateStackHeader(err.stack)
   if (isPrimitiveCode(err.code)) s.code = err.code
   const status = err.status ?? err.statusCode
   if (typeof status === 'number') s.status = status

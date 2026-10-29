@@ -82,7 +82,7 @@ log.error('failed to create mongo index', { code: 'mongo-index-fail', err, colle
 log.init({ service: 'data-fair' }) // optional, defaults to OTEL_SERVICE_NAME
 ```
 
-Every method has the same signature `(msg, fields?)` and never throws.
+Every method has the same signature `(msg, fields?)` and never throws. Fields named like the keys written by pino (`level`, `time`, `msg`, `hostname`) are renamed with a trailing `_`.
 
 | Level | Use | Emitted | Counted |
 | --- | --- | --- | --- |
@@ -96,7 +96,7 @@ Every method has the same signature `(msg, fields?)` and never throws.
 
 **Codes**: `code` is optional on every line. It must be a **static string** (`mongo-index-fail`, `df.apikeys.createadmin`): never put ids, hosts or other dynamic values in it, they go in other fields. It labels the counters.
 
-**Errors**: pass them as the `err` field. They are serialized with a whitelist (`type`, `message`, `stack`, primitive `code`, `status`, `cause`, and `method` / `url` without query string for axios errors), so headers, bodies and document content carried by errors never reach the logs.
+**Errors**: pass them as the `err` field. They are serialized with a whitelist (`type`, `message`, `stack`, primitive `code`, `status`, `cause`, and `method` / `url` without query string for axios errors), so headers, request config and document content carried by errors never reach the logs. Messages are truncated to 1000 characters (the message of an `AxiosRequestError` starts with the response body).
 
 **Metrics**: `warn`, `alert` and `error` lines increment `df_logs{level, code, host}`. Deprecated, kept during the transition: `df_internal_error{errorCode}` (error lines) and `df_events_log{level, code, host}` (coded warn and alert lines).
 

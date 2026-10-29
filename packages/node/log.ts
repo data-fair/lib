@@ -89,19 +89,24 @@ try {
   promClient = null
 }
 
-export const logsCounter: Counter<'level' | 'code' | 'host'> | null = promClient && new promClient.Counter({
+// another copy of this module (or an older lib) may have registered the same counters already
+const getOrCreateCounter = <T extends string>(config: { name: string, help: string, labelNames: T[] }): Counter<T> => {
+  return (promClient!.register.getSingleMetric(config.name) as Counter<T> | undefined) ?? new promClient!.Counter(config)
+}
+
+export const logsCounter: Counter<'level' | 'code' | 'host'> | null = promClient && getOrCreateCounter({
   name: 'df_logs',
   help: 'A counter of warn, alert and error log lines. The code label comes from the code field of the line, it must be a static string.',
   labelNames: ['level', 'code', 'host']
 })
 
-export const internalErrorCounter: Counter<'errorCode'> | null = promClient && new promClient.Counter({
+export const internalErrorCounter: Counter<'errorCode'> | null = promClient && getOrCreateCounter({
   name: 'df_internal_error',
   help: 'DEPRECATED, use df_logs. A counter of error log lines.',
   labelNames: ['errorCode']
 })
 
-export const eventsLogCounter: Counter<'level' | 'code' | 'host'> | null = promClient && new promClient.Counter({
+export const eventsLogCounter: Counter<'level' | 'code' | 'host'> | null = promClient && getOrCreateCounter({
   name: 'df_events_log',
   help: 'DEPRECATED, use df_logs. A counter of warn and alert log lines that have a code.',
   labelNames: ['level', 'code', 'host']
@@ -117,8 +122,25 @@ const count = (level: LogLevel, fields?: LogFields) => {
   else if (code) eventsLogCounter?.inc({ level, code, host: hostLabel })
 }
 
+// keys written by pino itself, a field with the same name would duplicate them in the JSON line
+const reservedKeys = ['level', 'time', 'msg', 'hostname']
+
 const write = (level: LogLevel, msg: string, fields?: LogFields) => {
   try {
+    // tolerate loosely ported calls like log.error(err) from javascript code
+    if (typeof msg !== 'string') {
+      if ((msg as unknown) instanceof Error) fields = { err: msg, ...fields }
+      msg = (msg as any)?.message ?? format(msg)
+    }
+    if (fields && reservedKeys.some(key => key in fields!)) {
+      fields = { ...fields }
+      for (const key of reservedKeys) {
+        if (key in fields) {
+          fields[key + '_'] = fields[key]
+          delete fields[key]
+        }
+      }
+    }
     count(level, fields)
     instance[level](fields ?? {}, msg)
   } catch {

@@ -14,6 +14,11 @@ describe('reqLogFields', () => {
     assert.equal(reqLogFields(mockReq({ host: 'data-fair:8080' })).ip, undefined)
   })
 
+  it('never throws on a malformed X-Forwarded-For', () => {
+    assert.doesNotThrow(() => reqLogFields(mockReq({ 'x-forwarded-for': 'unknown', host: 'example.com' })))
+    assert.equal(reqLogFields(mockReq({ 'x-forwarded-for': 'garbage, 1.2.3.4', host: 'example.com' })).ip, undefined)
+  })
+
   it('normalizes internal hosts', () => {
     assert.equal(reqLogFields(mockReq({ host: 'example.com' })).host, 'example.com')
     assert.equal(reqLogFields(mockReq({ host: 'data-fair:8080' })).host, '-')
