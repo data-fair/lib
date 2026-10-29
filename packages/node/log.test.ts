@@ -49,6 +49,14 @@ describe('log output', () => {
     assert.throws(() => JSON.parse(out[0]))
   })
 
+  it('serializes err with the safe serializer', () => {
+    const lines = capture()
+    log.warn('x', { err: Object.assign(new Error('e'), { config: { headers: { Authorization: 'secret' } } }) })
+    assert.equal(lines[0].err.message, 'e')
+    assert.ok(lines[0].err.stack)
+    assert.equal(lines[0].err.config, undefined)
+  })
+
   it('never throws', () => {
     capture()
     const circular: any = {}

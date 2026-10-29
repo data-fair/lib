@@ -1,0 +1,46 @@
+// whitelist serializer for errors in logs
+// pino's standard serializer copies all enumerable properties, which leaks secrets for us
+// (axios config headers, request and response bodies, mongo document content, etc.)
+
+export interface SerializedErr {
+  type?: string
+  message: string
+  stack?: string
+  code?: string | number
+  status?: number
+  method?: string
+  url?: string
+  cause?: SerializedErr
+}
+
+const maxDepth = 5
+
+const isPrimitiveCode = (value: unknown): value is string | number => typeof value === 'string' || typeof value === 'number'
+
+const serialize = (value: unknown, depth: number, seen: Set<unknown>): SerializedErr => {
+  if (value === null || typeof value !== 'object') return { message: String(value) }
+  const err = value as Record<string, any>
+  seen.add(value)
+  const s: SerializedErr = { message: typeof err.message === 'string' ? err.message : String(value) }
+  if (value instanceof Error) s.type = err.name && err.name !== 'Error' ? err.name : err.constructor?.name ?? 'Error'
+  if (typeof err.stack === 'string') s.stack = err.stack
+  if (isPrimitiveCode(err.code)) s.code = err.code
+  const status = err.status ?? err.statusCode
+  if (typeof status === 'number') s.status = status
+  if (err.isAxiosError === true || err.name === 'AxiosRequestError') {
+    if (typeof err.config?.method === 'string') s.method = err.config.method
+    if (typeof err.config?.url === 'string') s.url = err.config.url.split('?')[0]
+  }
+  if (err.cause !== undefined && depth < maxDepth && !seen.has(err.cause)) {
+    s.cause = serialize(err.cause, depth + 1, seen)
+  }
+  return s
+}
+
+export function serializeErr (value: unknown, depth = 0): SerializedErr {
+  try {
+    return serialize(value, depth, new Set())
+  } catch {
+    return { message: 'unserializable error' }
+  }
+}

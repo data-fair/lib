@@ -3,6 +3,7 @@
 
 import { hostname } from 'node:os'
 import { pino, type Logger as PinoLogger, type DestinationStream } from 'pino'
+import { serializeErr } from './log-err.js'
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'alert' | 'error'
 
@@ -51,6 +52,7 @@ export function _resetLogger (opts: { destination?: { write (s: string): unknown
     base: { hostname: hostname() },
     timestamp: pino.stdTimeFunctions.isoTime,
     formatters: { level: (label) => ({ level: label }) },
+    serializers: { err: serializeErr },
     mixin: () => service ? { service } : {}
   }, destination)
 }
