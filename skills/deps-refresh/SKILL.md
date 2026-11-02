@@ -20,7 +20,11 @@ docker pull ghcr.io/data-fair/<service>:<version>    # the released image
 trivy image --scanners vuln ghcr.io/data-fair/<service>:<version>
 grep -nE 'uses:|node-version' .github/workflows/*.y*ml
 grep -hE '^FROM node' Dockerfile; cat .nvmrc; grep -A1 '"engines"' package.json
+gh pr list --author app/dependabot --json number,title,headRefName   # open Dependabot PRs
+gh api repos/{owner}/{repo}/dependabot/alerts --jq '[.[]|select(.state=="open")|{pkg:.dependency.package.name,sev:.security_advisory.severity,fix:.security_vulnerability.first_patched_version.identifier}]'
 ```
+
+Open Dependabot PRs and alerts are a third input, not a to-do list: treat each as a pointer to a package, fix it through this pass, never merge the bot's branch on top of it.
 
 Trivy on the built image is not redundant with npm audit. It sees the alpine OS layer, which is usually where the criticals are, plus the npm bundled in the node base image, and it reports only what is actually shipped. npm audit sees the dev tree that never reaches production. Neither alone is a security answer.
 
@@ -95,6 +99,14 @@ Two traps specific to this pass:
 Split commits so a revert is surgical: security and base image, dead-and-replaced deps, verified majors, CI workflows, ui separate from api.
 
 For every major you declined, write down **the specific blocker** — "the image ships the KML driver but not LIBKML", not "needs more work". That sentence is what saves the next session from re-deriving it. Persist it to memory or a follow-up issue, and offer the deferred list as the suggested next piece of work.
+
+### Dependabot leftovers
+
+Dependabot does not clean up after this pass. Its security PRs are only closed when it rescans, and GitHub pauses it on repos whose Dependabot PRs go untouched for 90 days. Paused, it never closes them, so superseded PRs pile up (data-fair once had 17 open, every one already bumped on the default branch).
+
+- In the PR description, list the Dependabot PRs this pass supersedes, after checking each one: the version the bot proposes is `<=` the one in the new lockfile (`jq` over `package-lock.json`), or the package is gone. Keep the list to PRs you checked. A closing keyword (`Closes #N`) only closes issues, never PRs, so merging closes nothing on its own.
+- Once the PR is merged, close them with a comment that names the replacement: `gh pr close <n> --delete-branch --comment "Superseded by #<pr>, <pkg> is now <version> on <default branch>."` This is outward-facing: propose the list and the command, and run them only once the user approves. Closing them also counts as activity, so Dependabot resumes on that repo.
+- Alerts close themselves once the default branch's lockfile no longer contains a vulnerable version. One still open after the merge is a fix that didn't land: check it with `npm ls <pkg>`.
 
 ## Red flags
 
