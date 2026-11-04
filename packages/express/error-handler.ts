@@ -4,6 +4,9 @@ import debugModule from 'debug'
 
 const debug = debugModule('http-errors')
 
+// the url comes from the client and can be logged for anonymous requests, keep log lines bounded
+const maxUrlLength = 1000
+
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // let the default error handler manage closing the connection
   if (res.headersSent) { next(err); return }
@@ -17,14 +20,18 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // a mongodb conflict on an index should usually be returned as a 409
   if (err.name === 'MongoServerError' && err.code === 11000) status = 409
 
+  // originalUrl because req.url is relative to the mount path, and no query string as it can carry secrets
+  const url = req.originalUrl.split('?')[0]
+  const reqFields = { method: req.method, url: url.length > maxUrlLength ? url.slice(0, maxUrlLength) + '…' : url }
+
   if (status >= 500) {
-    log.error('failure while serving http request', { code: 'http', err })
+    log.error('failure while serving http request', { code: 'http', err, ...reqFields })
   }
   if (status === 403) {
-    log.warn(err.message, { code: 'forbidden-req' })
+    log.warn(err.message || 'forbidden request', { code: 'forbidden-req', ...reqFields })
   }
   if (status === 401) {
-    log.warn(err.message, { code: 'unauthorized-req' })
+    log.warn(err.message || 'unauthorized request', { code: 'unauthorized-req', ...reqFields })
   }
   res.set('Cache-Control', 'no-cache')
   res.set('Expires', '-1')
