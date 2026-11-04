@@ -16,7 +16,7 @@ Peer dependencies: `@data-fair/lib-node@^3.0.0`, `express@5`, and `ws@8` (option
 | --- | --- |
 | `@data-fair/lib-express` | Re-exports the small common pieces: `session.js`, `errorHandler`, find utils, `httpError`, `req-origin.js`, `site.js`, `serve-spa.js`. |
 | `@data-fair/lib-express/session.js` | `session` singleton: verifies the simple-directory session cookies, `session.middleware()` (also opens the request log context, see `@data-fair/lib-node/log.js`), `reqSession()` / `reqSessionAuthenticated()` / `reqAdminMode()` accessors. |
-| `@data-fair/lib-express/error-handler.js` | Express error handler: maps errors to status codes, logs 5xx as errors and 401/403 as warnings, hides 5xx details when `NODE_ENV=production`. |
+| `@data-fair/lib-express/error-handler.js` | Express error handler: maps errors to status codes, logs 5xx as errors and 401/403 as warnings (with the method and the url, never the query string), hides 5xx details when `NODE_ENV=production`. |
 | `@data-fair/lib-express/req-origin.js` | Reverse-proxy aware request info: `reqOrigin()`, `reqHost()`, `reqIp()`, `reqIsInternal()`, `assertReqInternalSecret()`, `secretKeyMatches()`… |
 | `@data-fair/lib-express/site.js` | `createSiteMiddleware(servicePathPart)`: extracts the site path prefix of the request, `reqSitePath()`, `reqSiteUrl()`. |
 | `@data-fair/lib-express/serve-spa.js` | `createSpaMiddleware()`: serves a built SPA with UI config injection, cache headers and CSP. |
