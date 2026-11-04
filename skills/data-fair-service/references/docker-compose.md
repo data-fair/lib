@@ -229,6 +229,9 @@ reset their volumes with this change anyway (mongo 4.2 → 8).
       - xpack.watcher.enabled=false
       - stack.templates.enabled=false
       - cluster.deprecation_indexing.enabled=false
+      # CI runners start about 85% full: past the 90% watermark new shards are not allocated
+      # and index creation hangs (cluster red), a dev or CI ES has no disk to protect
+      - cluster.routing.allocation.disk.threshold_enabled=false
       # heap starts at 64m and grows up to 512m (pre-touching a fixed 512m cost ~360m per idle stack)
       - ES_JAVA_OPTS=-Xms64m -Xmx512m
     volumes:
