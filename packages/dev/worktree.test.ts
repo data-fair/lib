@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, realpathSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, realpathSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
@@ -94,5 +94,63 @@ describe('worktree scripts', () => {
     assert.equal(readFileSync(path.join(root, 'README.md'), 'utf8'), 'work in progress\n')
     assert.equal(readFileSync(path.join(root, 'notes.txt'), 'utf8'), 'untracked\n')
     assert.equal(git(root, 'stash', 'list'), '')
+  })
+
+  describe('worktree-delete.sh', () => {
+    // a fake docker on PATH records its calls: the tests never touch the real one
+    const withFakeDocker = (tmp: string) => {
+      const bin = path.join(tmp, 'bin')
+      mkdirSync(bin)
+      writeFileSync(path.join(bin, 'docker'), `#!/bin/sh\necho "$@" >> ${path.join(tmp, 'docker-calls')}\n`, { mode: 0o755 })
+      return { ...isolatedEnv, PATH: `${bin}:${process.env.PATH}` }
+    }
+    const dockerCalls = (tmp: string) => existsSync(path.join(tmp, 'docker-calls')) ? readFileSync(path.join(tmp, 'docker-calls'), 'utf8') : ''
+    const worktree = (pushed: boolean) => {
+      const { tmp, root } = checkout()
+      const dir = path.join(tmp, 'portals_feat-a')
+      git(root, 'worktree', 'add', '-q', '-b', 'feat-a', dir)
+      writeFileSync(path.join(dir, 'a.txt'), 'a\n')
+      git(dir, 'add', '.')
+      git(dir, 'commit', '-q', '-m', 'a')
+      if (pushed) git(dir, 'push', '-q', 'origin', 'feat-a')
+      return { tmp, root, dir, env: withFakeDocker(tmp) }
+    }
+    const del = (root: string, env: NodeJS.ProcessEnv, ...args: string[]) => spawnSync('bash', [script('worktree-delete.sh'), ...args], { cwd: root, encoding: 'utf8', env })
+    const branches = (root: string) => git(root, 'branch', '--format=%(refname:short)').split('\n')
+
+    it('deletes a worktree without a compose file, never calling docker, and its branch', () => {
+      const { tmp, root, dir, env } = worktree(true)
+      const res = del(root, env, 'feat-a')
+      assert.equal(res.status, 0, res.stderr)
+      assert.equal(existsSync(dir), false)
+      assert.deepEqual(branches(root), ['master'])
+      assert.equal(dockerCalls(tmp), '')
+    })
+
+    it('takes the containers down when the worktree has a compose file', () => {
+      const { tmp, root, dir, env } = worktree(true)
+      writeFileSync(path.join(dir, 'docker-compose.yml'), 'services: {}\n')
+      const res = del(root, env, 'feat-a', '-f')
+      assert.equal(res.status, 0, res.stderr)
+      assert.match(dockerCalls(tmp), /^compose --profile \* down -v --remove-orphans --rmi local$/m)
+    })
+
+    it('refuses unpushed commits and keeps the worktree and its branch', () => {
+      const { root, dir, env } = worktree(false)
+      const res = del(root, env, 'feat-a')
+      assert.equal(res.status, 1)
+      assert.match(res.stdout, /1 commit\(s\) not present on any origin ref/)
+      assert.equal(existsSync(dir), true)
+      assert.ok(branches(root).includes('feat-a'))
+    })
+
+    it('with --force, deletes an unpushed branch and prints its commit', () => {
+      const { root, dir, env } = worktree(false)
+      const sha = git(dir, 'rev-parse', '--short', 'HEAD')
+      const res = del(root, env, 'feat-a', '--force')
+      assert.equal(res.status, 0, res.stderr)
+      assert.match(res.stdout, new RegExp(`Deleting branch feat-a \\(was ${sha}\\)`))
+      assert.deepEqual(branches(root), ['master'])
+    })
   })
 })

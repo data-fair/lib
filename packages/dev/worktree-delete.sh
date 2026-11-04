@@ -1,8 +1,10 @@
 #!/bin/bash
-# Delete a worktree (and its docker containers/volumes/local images).
+# Delete a worktree, its branch, and its docker containers/volumes/local images
+# (when the worktree has a compose file).
 #
 # Refuses to proceed if the worktree has uncommitted changes or commits not
-# pushed to any origin ref. Pass -f / --force to bypass these checks.
+# pushed to any origin ref. Pass -f / --force to bypass these checks (e.g. a
+# squash-merged branch); the deleted branch's commit is printed to recover it.
 
 set -e
 
@@ -14,7 +16,7 @@ while [ $# -gt 0 ]; do
         -f|--force) FORCE=true ;;
         -h|--help)
             echo "Usage: df-worktree-delete <branch> [-f|--force]" >&2
-            echo "  --force / -f  skip uncommitted/unpushed safety checks"
+            echo "  --force / -f  skip uncommitted/unpushed safety checks (the branch is deleted all the same)"
             exit 0
             ;;
         -*)
@@ -101,13 +103,23 @@ if [ "$FORCE" != true ]; then
     echo "✓ working tree clean and all commits present on origin"
 fi
 
-echo "Stopping & removing docker compose services in $TARGET_DIR (with volumes and orphans)"
+# the branch checked out in the worktree, deleted with it when it is the one named (not a detached HEAD)
+WORKTREE_BRANCH=$(git -C "$TARGET_DIR" branch --show-current)
+
 cd "$TARGET_DIR"
-# --profile '*' : catch every container the worktree may have started, whatever the repo names its profiles
-# -v : drop named volumes (mongo, elasticsearch, s3mock, clamav…) — data is worktree-scoped
-# --remove-orphans : sweep any container left over from a previous compose file
-# --rmi local : remove images built locally for this worktree (keeps remote-pulled images)
-docker compose --profile '*' down -v --remove-orphans --rmi local
+# a repository without containers has no compose file: docker compose would fail, or find a parent's
+HAS_COMPOSE=false
+for f in compose.yaml compose.yml docker-compose.yaml docker-compose.yml; do
+    [ -f "$f" ] && HAS_COMPOSE=true
+done
+if [ "$HAS_COMPOSE" = true ]; then
+    echo "Stopping & removing docker compose services in $TARGET_DIR (with volumes and orphans)"
+    # --profile '*' : catch every container the worktree may have started, whatever the repo names its profiles
+    # -v : drop named volumes (mongo, elasticsearch, s3mock, clamav…) — data is worktree-scoped
+    # --remove-orphans : sweep any container left over from a previous compose file
+    # --rmi local : remove images built locally for this worktree (keeps remote-pulled images)
+    docker compose --profile '*' down -v --remove-orphans --rmi local
+fi
 
 echo "Removing git worktree at $TARGET_DIR"
 cd "$ORIGIN_DIR"
@@ -117,6 +129,12 @@ else
     git worktree remove "$TARGET_DIR"
 fi
 zellij delete-session "$(basename "$TARGET_DIR")" --force >/dev/null 2>&1 || true
+
+if [ "$WORKTREE_BRANCH" = "$BRANCH_NAME" ]; then
+    # without --force every commit is on origin; with it, the printed commit is the way back
+    echo "Deleting branch $BRANCH_NAME (was $(git rev-parse --short "$BRANCH_NAME"))"
+    git branch -q -D "$BRANCH_NAME"
+fi
 
 echo "-----------------------------------------------"
 echo "✅ Worktree $BRANCH_NAME deleted!"
