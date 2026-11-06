@@ -41,7 +41,7 @@ Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 
 - Markdown sanitisé : `h1-h6`, `p`, listes, tableaux, `strong/em`, liens, `img`, `pre/code`, `blockquote`.
 - **Interdit par le sanitizer** : `<iframe>`, `<script>`, `<video>`, `style=""`, `<details>`. Pour intégrer, utiliser `application` ou `iframe`.
-- `align` (`left` par défaut, `center`, `justify`), `mb`. Portals 2.37.2 et antérieurs : `centered` (bool) à la place, `align` y est refusé.
+- `textAlign` (`left` par défaut, `center`, `justify`), `mb`. Portals 2.37.2 et antérieurs : `centered` (bool) à la place, `textAlign` y est refusé.
 
 ### `alert`
 

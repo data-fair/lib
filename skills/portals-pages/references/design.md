@@ -66,7 +66,7 @@ Puis construire : builders d'`elements.md`, trois appels API de `api-workflow.md
   background: { color: 'primary' },
   children: [
     { type: 'title', uuid: u(), titleSize: 'h2', titleTag: 'h1', centered: true, bold: true, content: '…' },
-    { type: 'text', uuid: u(), align: 'center', mb: 0, content: 'Sous-titre court : à qui ça sert, ce qu’on y trouve.' }
+    { type: 'text', uuid: u(), textAlign: 'center', mb: 0, content: 'Sous-titre court : à qui ça sert, ce qu’on y trouve.' }
   ]
 }
 ```
@@ -215,8 +215,8 @@ Le fond `bg-primary` de la carte pose la couleur de texte `on-primary` : pas de 
 - Éviter d'habiller un titre avec du markdown : dans un bloc `text`, `#` devient un `<h2 class="text-display-medium text-primary mt-12 mb-8">` (marges et couleur non maîtrisées, `lib/packages/utils/marked-vuetify.ts:64-72`). Les blocs `title` existent pour ça.
 - Ancres : `anchor: { enabled: true, inToc: true }` sur chaque H2/H3 (sauf page pleine largeur : `inToc: false`). Le serveur recalcule `_toc` à chaque PATCH ; `anchor.label` raccourcit l'entrée. Depuis que le sommaire existe, une page longue sans sommaire se lit mal.
 - Contenu markdown : listes et tableaux bienvenus, paragraphes courts, un lien par phrase plutôt que des URL nues.
-- Alignement des blocs `text` : à gauche pour tout paragraphe. `align: 'center'` seulement pour un texte très court (une ou deux lignes, sur mobile aussi), car chaque ligne d'un long texte centré commence à un endroit différent. Bonne pratique, sans critère RGAA ni WCAG.
-- `align: 'justify'` uniquement sur demande explicite, en signalant le coût : il ne respecte pas le critère WCAG 1.4.8 (niveau AAA) ni la règle Opquast n° 191, et gêne notamment les personnes dyslexiques. Le RGAA n'a pas de critère sur ce point.
+- Alignement des blocs `text` : à gauche pour tout paragraphe. `textAlign: 'center'` seulement pour un texte très court (une ou deux lignes, sur mobile aussi), car chaque ligne d'un long texte centré commence à un endroit différent. Bonne pratique, sans critère RGAA ni WCAG.
+- `textAlign: 'justify'` uniquement sur demande explicite, en signalant le coût : il ne respecte pas le critère WCAG 1.4.8 (niveau AAA) ni la règle Opquast n° 191, et gêne notamment les personnes dyslexiques. Le RGAA n'a pas de critère sur ce point.
 - Texte alternatif (`title` d'une image) : l'information apportée, pas l'apparence (RGAA 1.1 et 1.3). Libellé de lien ou de bouton : avec son contexte, il dit où il mène (RGAA 6.1), jamais « Cliquez ici ».
 
 ## 7. Rythme, largeurs, responsive
