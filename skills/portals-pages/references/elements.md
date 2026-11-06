@@ -41,7 +41,7 @@ Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 
 - Markdown sanitisé : `h1-h6`, `p`, listes, tableaux, `strong/em`, liens, `img`, `pre/code`, `blockquote`.
 - **Interdit par le sanitizer** : `<iframe>`, `<script>`, `<video>`, `style=""`, `<details>`. Pour intégrer, utiliser `application` ou `iframe`.
-- `centered` (bool), `mb`.
+- `align` (`left` par défaut, `center`, `justify`), `mb`. Portals 2.37.2 et antérieurs : `centered` (bool) à la place, `align` y est refusé.
 
 ### `alert`
 
@@ -154,7 +154,7 @@ const u = () => crypto.randomUUID()
 const H1 = c => ({ uuid: u(), type: 'title', centered: true, titleSize: 'h3', titleTag: 'h1', line: { position: 'none' }, content: c, color: 'primary' })
 const H2 = c => ({ uuid: u(), type: 'title', centered: false, titleSize: 'h5', titleTag: 'h2', line: { position: 'none' }, content: c, color: 'primary', anchor: { enabled: true, inToc: true } })
 const H3 = c => ({ uuid: u(), type: 'title', centered: false, titleSize: 'h6', titleTag: 'h3', line: { position: 'none' }, content: c, color: 'primary', anchor: { enabled: true, inToc: true } })
-const T = c => ({ uuid: u(), type: 'text', centered: false, mb: 4, content: c })   // ne jamais poser _html : régénéré au PATCH
+const T = c => ({ uuid: u(), type: 'text', mb: 4, content: c })   // ne jamais poser _html : régénéré au PATCH
 const DIV = () => ({ uuid: u(), type: 'divider', rounded: true, opacity: 0.2, thickness: 1 })
 const IMG = (img, alt, legend, height) => ({ uuid: u(), type: 'image', mb: 4, height, cover: false, zoomable: true, image: { ...img, mobileAlt: false }, title: alt, legend })
 const IMGC = (img, alt, legend) => ({ uuid: u(), type: 'image', mb: 4, cover: true, zoomable: false, image: { ...img, mobileAlt: false }, title: alt, legend })
