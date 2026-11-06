@@ -243,6 +243,12 @@ Two exceptions only: technical identifiers rendered as-is (`h1`, a dataset field
 
 `description` renders as **markdown** and is the only documentation most users read. Use it for behaviour not obvious from the label: what an empty value means, what the option does *not* affect. On a plain field it folds into a discreet help icon; on an object it becomes an always-visible subtitle block — one reason not to wrap a single field in a titled object.
 
+**Editing tips.** A description can also advise the person filling the form (how to write a good alt text, why not to justify text). Keep them in `description`, with no dedicated component or mandatory format: one or two sentences on a field, a short list when it has several tips, a `###` heading only for a long guide.
+
+- Give the reason, not only the rule.
+- Cite a standard only after reading its official text, and only if it applies: "RGAA criterion 6.1", "WCAG 1.4.8 (level AAA)". State the level when it matters.
+- Keep the wording faithful to the source: a design habit with no criterion behind it is "not recommended", never "non-compliant". The RGAA glossary, for instance, says that skipped heading levels do not fail criterion 9.1 as long as the hierarchy stays consistent.
+
 ## Gotchas
 
 | Trap | Correct move |
