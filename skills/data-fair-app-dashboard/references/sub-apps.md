@@ -15,8 +15,8 @@ still true", not as a permanent fact.
 | Map with several layers | `atelier-carto` 1.8 (Carte multicouche) | Fixed height 700 |
 | Choropleth by territory | `infos-territoires` 1.2 (Carte choroplèthe) | Under a commune filter it shows one polygon: filter at the level above |
 | Hierarchy (NAF sectors…) | `app-treemap` 1.3, `sunburst` 1.0 | |
-| Flows between categories | `sankey` 1.6 | See traps |
-| Proportions grid | `data-fair-proportions` 1.2 (gaufre) | See traps |
+| Flows between categories | `sankey` 1.6 | Follows the filter since 1.6 |
+| Proportions grid | `data-fair-proportions` 1.2 (gaufre) | Follows the filter |
 | Directory with search + detail card | `list-details` (Liste et fiches), `app-catalog` 1.7 | Auto height |
 | Dense or aggregated table | `data-fair-table` 1.0 (Tableau agrégé), `app-table` 1.0, or a `tablePreview` element | `tablePreview` is native and always filtered |
 | Agenda | `app-calendar` 1.3 | See traps |
@@ -39,11 +39,12 @@ the territory filter. Declaring it is **not proof** that it does (below).
 
 ## Known traps by app
 
-**sankey 1.5, data-fair-proportions 1.2** declared `df:filter-concepts: true` and ignored
-`_c_*`: the Sankey showed 28 M workers (France) for Vannes (20,636). `sankey` 1.5 did not
-resolve `x-labels` either (nodes read `5`, `GU`). Rebuilt in `app-charts`:
-`pie`/`aggsBased` for shares, `multi-bar`/`aggsBased` with `groupBy` + `groupsField` for
-category × category. Re-test `sankey` 1.6 on the network before using it.
+**sankey, data-fair-proportions**: `sankey` 1.5 and early `data-fair-proportions` 1.2 builds
+declared `df:filter-concepts: true` and ignored `_c_*`: the Sankey showed 28 M workers
+(France) for Vannes (20,636), and `sankey` 1.5 did not resolve `x-labels` either. Fixed:
+`sankey` 1.6 and the `data-fair-proportions` 1.2 served today send `_c_*` and the static
+filters, and `sankey` shows labels (network check on production, 2026-11). `data-fair-proportions`
+1.0 and 1.1 are untested: upgrade an application still on them before embedding it.
 
 **app-charts**
 - `staticFilters[].field` is `{key, label}` in 1.4 (it was a string in 1.3).
