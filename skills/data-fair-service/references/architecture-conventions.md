@@ -8,7 +8,25 @@ Only "Settled" items are rules. "Open" items list today's variants so they are n
 - **Branch names.** Letters, digits, `.`, `_`, `-`, no `/`, and `<repo>_<branch>` at most 60 characters (enforced by `df-worktree`; the name becomes a directory, a zellij session whose socket path zellij caps at 107 bytes, and a `DEV_HOST` label).
 - **Dev environment.** `@data-fair/lib-dev` + `dev/dev.json` + `.zellij.kdl` as described in SKILL.md and migrate-a-service.md.
 - **Tooling.** [tooling.md](tooling.md).
-- **test-env routers** (unauthenticated, destructive): mounted only when `process.env.NODE_ENV === 'development'`, with a dynamic import so production never loads the module. The dev environment is the test environment: CI starts the API with `NODE_ENV=development` too (with the mocks the dev config needs, e.g. portals' ingress-manager), never a separate `test` mode for the API.
+- **test-env routers** (unauthenticated, destructive): mounted only when `process.env.NODE_ENV === 'development'`, with a dynamic import so production never loads the module. The dev environment is the test environment: CI starts the API with `NODE_ENV=development` too (with the mocks the dev config needs, e.g. portals' ingress-manager). A `test` config (`config/test.*`, `NODE_ENV === 'test'` branches) stays only in a service whose tests load it in their own process (simple-directory's in-process specs, capture, metrics, mcp): this is a recommendation, not a rule. Where nothing loads it, remove it.
+- **Config files.** Every file of `api/config/` and `worker/config/` (`default`, `development`, `production`, `custom-environment-variables`, gitignored `local-*`) is `.mjs` with `export default { … }`; a repo still on `.cjs` or `.js` moves when a task touches its config, no sweep. The format has no measurable cost (about 15 ms for all of them, once, at startup).
+  - node-config loads these files with `require()`: no top-level `await` (`ERR_REQUIRE_ASYNC_MODULE`).
+  - No `import.meta` either: Playwright compiles a config file to CommonJS when a spec loads it, so it fails under the tests only. The dev config finds `.env` with `dotenv.config({ path: ['.env', '../.env'], quiet: true })`, which works from the repo root and from a workspace folder.
+  - `.ts` is out: node-config then needs `ts-node`, which no repo installs.
+  - All the extensions of one basename load and merge silently: a rename removes the old file, local ones included.
+  - The process's nodemon watches `mjs` (`-e js,mjs,ts,json`), otherwise a config edit does not restart it.
+- **Config values.** They live in `config/default.mjs`. `config/type/schema.json` describes and validates them and has no `default` keyword: `assertValid` never applies it (no `useDefaults`), so it would only look like a real default.
+- **Reading the config.** Through `#config` (`src/config.ts`: `assertValid` once, then typed), never `import config from 'config'` with `as any`. The exception is a worker thread that does not load `#config` anyway: validation already ran in the main process and would cost about 45 ms and 4 MB per thread, so it reads `config` with the type alone (data-fair's `geojson2pbf.ts`):
+
+```ts
+import _config from 'config'
+import type { ApiConfig } from '#config'
+
+// no #config in this thread: it would validate again what the main process already validated
+const config = _config as unknown as ApiConfig
+```
+
+- **UI config.** `uiConfig` lists each field exposed to the browser, never a spread of the config, and exports `type UiConfig = typeof uiConfig`, which the UI imports as a type. A few fields stay in `src/config.ts`; a long list gets `src/ui-config.ts`.
 - **BUILD.json.** Written by CI (`reuse-build.yml`) and copied by the Dockerfile (`COPY BUILD.json* ./`). The API reads it in production **without crashing when it is missing** (an image built outside CI must start):
 
 ```ts

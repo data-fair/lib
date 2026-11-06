@@ -72,10 +72,10 @@ layout {
       args "-c" "cd ui && FORCE_COLOR=1 NODE_CONFIG_DIR=../api/config/ exec ../node_modules/.bin/df-mem-cap vite --port $DEV_UI_PORT"
     }
     pane name="api" command="bash" {
-      args "-c" "./node_modules/.bin/df-dev wait-deps && export NODE_CONFIG=$(./node_modules/.bin/df-dev absent-config) && cd api && FORCE_COLOR=1 NODE_ENV=development exec ../node_modules/.bin/nodemon -e js,ts,json index.ts"
+      args "-c" "./node_modules/.bin/df-dev wait-deps && export NODE_CONFIG=$(./node_modules/.bin/df-dev absent-config) && cd api && FORCE_COLOR=1 NODE_ENV=development exec ../node_modules/.bin/nodemon -e js,mjs,ts,json index.ts"
     }
     pane name="worker" command="bash" {
-      args "-c" "./node_modules/.bin/df-dev wait-deps && export NODE_CONFIG=$(./node_modules/.bin/df-dev absent-config) && cd worker && FORCE_COLOR=1 NODE_ENV=development exec ../node_modules/.bin/nodemon -e js,ts,json index.ts"
+      args "-c" "./node_modules/.bin/df-dev wait-deps && export NODE_CONFIG=$(./node_modules/.bin/df-dev absent-config) && cd worker && FORCE_COLOR=1 NODE_ENV=development exec ../node_modules/.bin/nodemon -e js,mjs,ts,json index.ts"
     }
   }
   pane name="url" size=1 borderless=true command="bash" {
