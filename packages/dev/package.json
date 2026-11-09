@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/lib-dev",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Dev environment tooling of the data-fair services: setup, zellij session, status, logs and restart for humans and agents.",
   "files": [
     "**/*.js",
