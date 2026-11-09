@@ -227,7 +227,8 @@ const recurseLocalDefs = (
 ) => {
   if (!schemaFragment) throw new Error('failed to resolve ' + schemaId)
   for (const [key, value] of Object.entries(schemaFragment)) {
-    if (key === '$ref') {
+    // a non-string $ref is a property named "$ref" (OpenAPI 3.1 meta-schema), not a reference
+    if (key === '$ref' && typeof value === 'string') {
       if (schemaId !== originalSchemaId || !value.startsWith('#')) {
         let fullId
         try {
@@ -236,7 +237,7 @@ const recurseLocalDefs = (
           throw new Error(`Failed to normalize URL ${value} from ${schemaId}`)
         }
         const [refSchemaId, refSchemaPath] = fullId.split('#')
-        const refName = value.split('/').pop()
+        const refName = value.slice(value.lastIndexOf('/') + 1)
         if (!localDefsSchemas[refName]) {
           let refSchema = schemas[refSchemaId]
           if (!refSchema) throw new Error('failed to resolve schema ' + refSchemaId)
