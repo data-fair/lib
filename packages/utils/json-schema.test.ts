@@ -63,6 +63,25 @@ describe('json-schema utility functions', () => {
     })
   })
 
+  it('should keep a property named $ref when making local definitions', async () => {
+    const schema = makeLocalDefs({
+      'http://test.com/schema1': {
+        type: 'object',
+        properties: {
+          ref: { $ref: 'http://test.com/schema2' }
+        }
+      },
+      'http://test.com/schema2': {
+        type: 'object',
+        properties: {
+          $ref: { type: 'string', format: 'uri-reference' }
+        }
+      }
+    }, 'http://test.com/schema1')
+    assert.equal(schema.properties.ref.$ref, '#/$defs/schema2')
+    assert.deepEqual(schema.$defs.schema2.properties.$ref, { type: 'string', format: 'uri-reference' })
+  })
+
   it('should transform absolute references to local definitions', async () => {
     const schema = makeLocalDefs({
       'http://test.com/schema1': {
