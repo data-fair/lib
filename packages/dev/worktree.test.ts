@@ -144,6 +144,42 @@ describe('worktree scripts', () => {
       assert.ok(branches(root).includes('feat-a'))
     })
 
+    it('accepts a squash-merged branch whose remote ref was pruned', () => {
+      const { root, dir, env } = worktree(true)
+      writeFileSync(path.join(dir, 'b.txt'), 'b\n')
+      git(dir, 'add', '.')
+      git(dir, 'commit', '-q', '-m', 'b')
+      git(dir, 'push', '-q', 'origin', 'feat-a')
+      // the forge squash-merges on top of a newer master, deletes the branch, then a fetch --prune drops its ref
+      writeFileSync(path.join(root, 'other.txt'), 'o\n')
+      git(root, 'add', '.')
+      git(root, 'commit', '-q', '-m', 'other')
+      git(root, 'merge', '-q', '--squash', 'feat-a')
+      git(root, 'commit', '-q', '-m', 'feat a (#1)')
+      git(root, 'push', '-q', 'origin', 'master', ':feat-a')
+      git(dir, 'fetch', '-q', '--prune')
+      const res = del(root, env, 'feat-a')
+      assert.equal(res.status, 0, res.stdout + res.stderr)
+      assert.match(res.stdout, /branch squash-merged into origin\/master/)
+      assert.equal(existsSync(dir), false)
+      assert.deepEqual(branches(root), ['master'])
+    })
+
+    it('refuses a squash-merged branch with commits added after the merge', () => {
+      const { root, dir, env } = worktree(true)
+      git(root, 'merge', '-q', '--squash', 'feat-a')
+      git(root, 'commit', '-q', '-m', 'feat a (#1)')
+      git(root, 'push', '-q', 'origin', 'master', ':feat-a')
+      writeFileSync(path.join(dir, 'late.txt'), 'late\n')
+      git(dir, 'add', '.')
+      git(dir, 'commit', '-q', '-m', 'late')
+      git(dir, 'fetch', '-q', '--prune')
+      const res = del(root, env, 'feat-a')
+      assert.equal(res.status, 1)
+      assert.match(res.stdout, /2 commit\(s\) not present on any origin ref/)
+      assert.equal(existsSync(dir), true)
+    })
+
     it('with --force, deletes an unpushed branch and prints its commit', () => {
       const { root, dir, env } = worktree(false)
       const sha = git(dir, 'rev-parse', '--short', 'HEAD')

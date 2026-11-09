@@ -3,8 +3,10 @@
 # (when the worktree has a compose file).
 #
 # Refuses to proceed if the worktree has uncommitted changes or commits not
-# pushed to any origin ref. Pass -f / --force to bypass these checks (e.g. a
-# squash-merged branch); the deleted branch's commit is printed to recover it.
+# pushed to any origin ref, unless the branch was squash-merged into origin's
+# default branch (its remote ref is usually gone after a `fetch --prune`).
+# Pass -f / --force to bypass these checks; the deleted branch's commit is
+# printed to recover it.
 
 set -e
 
@@ -90,7 +92,22 @@ if [ "$FORCE" != true ]; then
     # Commits reachable from HEAD but NOT reachable from any origin/* ref.
     # Catches: never-pushed branches, branches ahead of upstream, detached HEAD with unique commits.
     UNPUSHED_COUNT=$(git rev-list --count HEAD --not --remotes=origin 2>/dev/null || echo 0)
+    SQUASHED_INTO=""
     if [ "$UNPUSHED_COUNT" -gt 0 ]; then
+        # A squash-merge rewrites the commits, and once the merged remote branch is pruned they are on
+        # no origin ref: accept them when the whole branch diff, squashed onto its merge base, has the
+        # same patch-id as a commit of origin's default branch.
+        for ref in $(git symbolic-ref -q --short refs/remotes/origin/HEAD) origin/main origin/master; do
+            git rev-parse -q --verify "$ref^{commit}" >/dev/null || continue
+            BASE=$(git merge-base "$ref" HEAD) || continue
+            SQUASH=$(git commit-tree "HEAD^{tree}" -p "$BASE" -m squash)
+            if git cherry "$ref" "$SQUASH" | grep -q '^-'; then
+                SQUASHED_INTO="$ref"
+                break
+            fi
+        done
+    fi
+    if [ "$UNPUSHED_COUNT" -gt 0 ] && [ -z "$SQUASHED_INTO" ]; then
         echo
         echo "❌ Refusing to delete: $TARGET_DIR has $UNPUSHED_COUNT commit(s) not present on any origin ref:"
         git --no-pager log --oneline HEAD --not --remotes=origin | sed 's/^/    /'
@@ -100,7 +117,11 @@ if [ "$FORCE" != true ]; then
     fi
 
     cd "$ORIGIN_DIR"
-    echo "✓ working tree clean and all commits present on origin"
+    if [ -n "$SQUASHED_INTO" ]; then
+        echo "✓ working tree clean and branch squash-merged into $SQUASHED_INTO"
+    else
+        echo "✓ working tree clean and all commits present on origin"
+    fi
 fi
 
 # the branch checked out in the worktree, deleted with it when it is the one named (not a detached HEAD)
