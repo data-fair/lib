@@ -10,6 +10,24 @@ export const composeDown = (root: string, services: string[], runFn = realRun) =
   runFn('docker', ['compose', 'stop', ...services], root)
 }
 
+/**
+ * Pull new images and recreate the containers that already run, so the env uses them
+ * (compose only recreates a container whose image changed). A stopped optional service is
+ * pulled but not started. No service named: every running service.
+ */
+export const composePull = (root: string, services: string[], deps: { exec?: Exec, run?: typeof realRun } = {}) => {
+  const exec = deps.exec ?? realExec
+  const runFn = deps.run ?? realRun
+  const running = exec('docker', ['compose', '--project-directory', root, 'ps', '--services', '--status', 'running']).split('\n').filter(Boolean)
+  const pulled = services.length ? services : running
+  if (!pulled.length) throw new Error('no running service to pull, name the services')
+  runFn('docker', ['compose', 'pull', ...pulled], root)
+  const recreated = pulled.filter(s => running.includes(s))
+  // --no-deps: do not touch (or start) the dependencies of the recreated services
+  if (recreated.length) runFn('docker', ['compose', 'up', '-d', '--wait', '--no-deps', ...recreated], root)
+  return { pulled, recreated }
+}
+
 type PsRow = { Service: string, State: string, Health?: string, ExitCode?: number }
 
 export const pendingDeps = (services: string[], rows: PsRow[]) => services.flatMap(service => {

@@ -5,7 +5,7 @@ import { initEnv } from './env.js'
 import { setup } from './setup.js'
 import { launch } from './launch.js'
 import { logs, restart } from './panes.js'
-import { composeUp, composeDown, waitDeps } from './compose.js'
+import { composeUp, composeDown, composePull, waitDeps } from './compose.js'
 import { collectStatus, renderStatus, checkReadiness } from './status.js'
 import { absentConfig } from './optional.js'
 import { realExec } from './exec.js'
@@ -63,6 +63,12 @@ program.command('up <services...>').description('start optional compose services
 
 program.command('down <services...>').description('stop optional compose services')
   .action((services) => { composeDown(root(), services) })
+
+program.command('pull [services...]').description('pull new images and recreate the running containers that use them (default: every running service)')
+  .action((services) => {
+    const res = composePull(root(), services)
+    console.log(res.recreated.length ? `recreated ${res.recreated.join(', ')} (restart the panes that talk to them if needed)` : 'pulled, no running container to recreate')
+  })
 
 program.command('wait-deps').description('wait until the containers of the active profiles are healthy (first command of process panes; the status pane starts them)')
   .action(async () => { await waitDeps(root()) })

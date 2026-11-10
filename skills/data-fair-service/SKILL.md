@@ -23,6 +23,7 @@ The user starts the session (`npm run dev-zellij`). An agent never starts or kil
 | A process's output | `npx --no df-dev logs <pane> -n 100` |
 | Restart one process | `npx --no df-dev restart <pane>`: Ctrl+C, rerun, waits for the pane's readiness URL |
 | An optional container | `npx --no df-dev up <service>` / `down <service>`, then `restart api` so the config sees it |
+| A new image of a container (a fresh build of mcp, agents…) | `npx --no df-dev pull <service…>`: pulls and recreates the running ones |
 
 - Read the logs before restarting: nodemon, vite and nuxt already reload on file changes.
 - "not ready" from `restart` → report to the user with the logs, never retry in a loop.

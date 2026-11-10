@@ -35,5 +35,6 @@ Dev environment of a data-fair service, for humans and agents. Needs zellij >= 0
 | `npx --no df-dev logs <pane> [-n 100]` | last lines of a pane |
 | `npx --no df-dev restart <pane>` | Ctrl+C, rerun, wait for readiness |
 | `npx --no df-dev up <service…>` / `down <service…>` | optional compose services |
+| `npx --no df-dev pull [service…]` | pull new images and recreate the running containers among them (default: every running service); a stopped optional service is pulled, not started |
 | `npx --no df-dev wait-deps` | first command of the panes that need the containers |
 | `df-mem-cap <cmd>` | run a dev server under a 4G cgroup cap (`DEV_MEMORY_MAX`) |

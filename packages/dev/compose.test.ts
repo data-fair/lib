@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
-import { composeUp, composeDown, waitDeps, pendingDeps } from './compose.js'
+import { composeUp, composeDown, composePull, waitDeps, pendingDeps } from './compose.js'
 import type { Exec } from './exec.js'
 
 const recorder = () => {
@@ -23,6 +23,25 @@ describe('compose', () => {
     const r = recorder()
     composeDown('/x', ['agents'], r.run)
     assert.deepEqual(r.calls, ['docker compose stop agents'])
+  })
+
+  it('pulls the named services and recreates only those that run', () => {
+    const r = recorder()
+    const res = composePull('/x', ['mcp', 'agents'], { exec: () => 'mongo\nmcp\n', run: r.run })
+    assert.deepEqual(r.calls, ['docker compose pull mcp agents', 'docker compose up -d --wait --no-deps mcp'])
+    assert.deepEqual(res, { pulled: ['mcp', 'agents'], recreated: ['mcp'] })
+  })
+
+  it('pulls every running service when none is named', () => {
+    const r = recorder()
+    composePull('/x', [], { exec: () => 'mongo\nmcp\n', run: r.run })
+    assert.deepEqual(r.calls, ['docker compose pull mongo mcp', 'docker compose up -d --wait --no-deps mongo mcp'])
+  })
+
+  it('does not start a stopped optional service it pulled', () => {
+    const r = recorder()
+    composePull('/x', ['agents'], { exec: () => 'mongo\n', run: r.run })
+    assert.deepEqual(r.calls, ['docker compose pull agents'])
   })
 
   it('lists the services of the active profiles that are not ready yet', () => {
