@@ -273,6 +273,31 @@ On an **array** node, `layout.itemTitle` and `layout.itemSubtitle` are JS expres
 - Not to be confused with the **`getItems.itemTitle`** of a select (expression over a fetched `item`), nor with the **`itemTitle` of a list row inside `getItems`** — this one lives directly under `layout` on the array.
 - With `listEditMode: "dialog"` or `"inline-single"`, the title is the only thing the user sees before opening the row — make it carry the discriminating information (name, count, target dataset…).
 
+## Vuetify variant select (cards, chips, buttons, list items)
+
+The same French labels everywhere — the ones of portals (`api/types/footer-elements/schema.js`), not a fresh translation per schema (app-timelines once had three different lists in one file: "Flat", "Élevé", "Clair"…):
+
+```json
+"variant": {
+  "type": "string",
+  "title": "Style des badges",
+  "description": "Le style « Teinté » est déconseillé pour l'accessibilité : le contraste entre le texte et son fond teinté peut être insuffisant.",
+  "default": "text",
+  "oneOf": [
+    { "const": "text", "title": "Texte" },
+    { "const": "outlined", "title": "Contour" },
+    { "const": "tonal", "title": "Teinté" },
+    { "const": "flat", "title": "Plein" },
+    { "const": "elevated", "title": "Surélevé" },
+    { "const": "plain", "title": "Discret" }
+  ]
+}
+```
+
+- All six are valid on every Vuetify component that takes `variant` (`allowedVariants` in `vuetify/lib/composables/variant.js`); drop the ones that make no sense in context (portals leaves `plain` out of its buttons).
+- Keep the `tonal` note when the element takes a palette color: its contrast on the tinted background is only weakly guaranteed (data-fair-app skill, « Conventions d'interface »).
+- A schema written in English with `x-i18n-*`: base `title` Text / Outlined / Tonal / Filled / Elevated / Plain, the labels above in `x-i18n-title.fr`.
+
 ## Hidden fields
 
 ```json

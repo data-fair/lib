@@ -440,6 +440,21 @@ DataFair utilise [VJSF](https://koumoul-dev.github.io/vuetify-jsonschema-form/) 
 
 > **Note** : `df-build-types` est fourni par le package **`@data-fair/lib-types-builder`** (à installer en `devDependencies`).
 
+### Organisation du formulaire : la source, l'essentiel, puis le rendu
+
+Recommandation, pas une règle. Les sections de premier niveau (`allOf` racine, rendues en panneaux) suivent l'ordre dans lequel on configure :
+
+1. **« Source de données »** : le jeu de données et ses filtres prédéfinis. C'est le libellé majoritaire du parc (« Données », « Source des données », « Jeu de données » existent aussi : s'aligner sur la majorité lors d'une reprise).
+2. **Les réglages sans lesquels l'application ne fonctionne pas**, et seulement eux : les colonnes à exploiter, le tri, la période couverte. Nommée d'après ce qu'elle règle (« Chronologie » pour une frise, « Dimensions », « Métriques », « Calques »…), pas d'après l'application, et jamais un générique « Préparation des données ».
+3. **Les réglages de rendu**, en sections nommées d'après ce qu'elles règlent (« Vignettes », « Icône et couleur », « Affichage de la date »…) plutôt qu'un fourre-tout « Rendu », « Options » ou « Autres ».
+
+Le corollaire est le vrai critère : **la source, plus la deuxième section, doivent suffire à une visualisation soignée** sans ouvrir les sections de rendu. Chaque défaut est donc choisi pour être agréable tel quel : couleurs du thème du site (jamais un `#222222`), format adapté au type de la colonne (une colonne `date` sans heure), colonne désignée par concept quand le jeu en porte un. Ce qui ne peut pas avoir de défaut se résout à l'exécution (le concept, sinon un message qui dit quoi choisir), pas par une erreur ni un écran vide.
+
+Deux conséquences sur le schéma :
+
+- Une propriété d'objet peut être répartie sur deux sections (le champ de date dans la deuxième, son format dans une section de rendu) : json-layout fusionne les deux `allOf`, l'édition de l'un ne perd pas l'autre. Le vérifier dans le formulaire sur le cas réel.
+- Ne pas répéter un titre : une liste de choix (`oneOf`) porte son libellé par `oneOfLayout.label` avec `layout: { "title": null }`, plutôt qu'un titre de section au-dessus d'une liste libellée pareil ; une section qui enveloppe des onglets ne réaffiche pas son titre au-dessus d'eux.
+
 ### Langue : tout en français, pas de `x-i18n-*`
 
 Le formulaire de configuration d'application de data-fair **ne supporte pas encore `x-i18n-*`** : il est monté avec `locale: 'fr'` sans l'option `xI18n` (`data-fair/ui/src/components/application/application-config.vue`), donc les traductions `x-i18n-*` sont ignorées et seuls les mots-clés de base s'affichent. Pour le moment, `config-schema.json` s'écrit **entièrement en français** dans les mots-clés de base (`title`, `description`, `markdown`, libellés des `oneOf`, `layout`…), sans aucun `x-i18n-*`. Le mécanisme, et la façon de l'activer dans une UI qui le supporte, sont décrits dans le skill `vjsf`.
@@ -855,6 +870,9 @@ marche par coïncidence sur la machine du développeur.
 - **Classes utilitaires Vuetify plutôt que CSS maison** : ne garde de CSS `scoped` que ce qui n'a pas d'équivalent (une couleur de thème sur fond translucide, `min-height: 0` d'un enfant flex, `scrollbar-gutter`).
 - **Pas de hauteur fixe** (en px ou en %), ni de hauteur calculée par un observateur maison : les hauteurs suivent le contenu. Seule exception, le choix d'une app à hauteur fixe (`h-screen` sur `<v-main>`, défilement interne en flex), qui suit l'écran sans calcul.
 - **Éviter le variant `tonal` pour porter une couleur de la palette** (recommandation, pas une obligation) : le contraste de `primary`, `secondary`, `accent`, `error`, `info`, `warning`, `success` n'est que faiblement garanti sur le fond teinté du `tonal`. Préférer le variant par défaut pour une alerte colorée ; une chip neutre peut rester `tonal`.
+- **Tailles de texte : les classes typographiques de Vuetify** (`text-body-medium`, `text-title-large`…), jamais un `font-size` en px dans un `style`. Les classes sont en `rem` : elles suivent la taille de police réglée dans le navigateur (RGAA 10.4), un px en ligne ne la suit pas. Un réglage de taille numérique de la configuration (curseur 0-9) se traduit en classe par une table, pas en px. Ces classes fixent aussi la graisse : un texte en gras qui en porte une prend `font-weight-bold` en plus.
+- **Couleurs du texte : les classes du thème** (`text-primary`, `text-secondary`, `text-accent`), et **aucune classe** pour la couleur du texte par défaut. `_theme.css` corrige le contraste de ces classes dans chaque thème (clair, sombre, contrasté) ; une couleur écrite en dur ne suit rien. Un `style` en ligne ne reste justifié que pour une couleur **personnalisée** choisie dans la configuration, éclaircie en thème sombre (`adjustForDark` d'app-catalog : luminosité HSL < 0,6 relevée). Dans un schéma, la couleur par défaut d'un texte est donc « Couleur du texte », jamais un `#222222` : enregistré dans chaque configuration, il devient illisible en thème sombre.
+- **Gras visuel : une classe, pas `<strong>`.** Une option « Texte en gras » est un choix de mise en forme : `font-weight-bold` sur l'élément. `<strong>` signale une importance que les technologies d'assistance peuvent restituer ; le réserver à un vrai contenu important, et ne pas dédoubler un élément en paire `<strong>` / `<span>` selon l'option.
 - **Espacements `pl` / `pr` / `ml` / `mr`** plutôt que les variantes logiques `ps` / `pe` / `ms` / `me`.
 - **Une barre d'actions qui doit passer à la ligne** n'est pas un `v-card-actions` (flex sans retour à la ligne) : une ligne `d-flex flex-wrap align-center ga-2`, sans `v-row` / `v-col` quand il n'y a pas de grille.
 
