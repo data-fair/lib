@@ -86,6 +86,8 @@ Ready-to-copy examples (tabs, sliders, icon picker, arrays, hidden and password 
 | `itemTitle` / `itemKey` / `itemValue` / `itemIcon` | expressions over one raw item, alias `item` (or `data` in app schemas — both are exposed) |
 | `searchParams` / `headers` | extra request params |
 
+**A raw item's `icon` is copied even without `itemIcon`.** json-layout fills `item.icon` from `rawItem.icon` unless `itemIcon` is set (`prepareSelectItem`, `@json-layout/core/src/state/index.js`). data-fair's `/schema` endpoint returns an `icon` per column, as an MDI **font** string (`"mdi-calendar"`); the forms render icons with the `mdi-svg` set, so the string lands in `<path d="mdi-calendar">`: no glyph, an empty prepend that shifts every option, and `<path> attribute d: Expected number` in the console. Every column selector fed by `…/schema` sets `"itemIcon": "null"`.
+
 `qSearchParam` is the current form. The older `{q}` placeholder inside the url (`&q={q}`) still works and is equivalent, but it is only worth it when the typed text must be embedded in a larger value (`qs=title:{q}*`). New schemas use `qSearchParam`.
 
 ### Select or autocomplete
@@ -259,6 +261,7 @@ Two exceptions only: technical identifiers rendered as-is (`h1`, a dataset field
 | `parent.value.x` in an `if` | `parent.data.x` |
 | Picker on a paginated endpoint without `qSearchParam` | Becomes a `select` that loads one page at once — add `qSearchParam` |
 | `select` inferred on a list the user has to search in (dataset fields, `getItems.expr`, 10–20 item `enum`) | The 20-item threshold is too high — force `comp: "autocomplete"` (client-side filtering) |
+| Column selector on `…/schema` without `itemIcon` | The column's `icon` (`"mdi-calendar"`, a font name) is copied into the option and rendered as an empty SVG path: blank prepend, console error — set `"itemIcon": "null"` |
 | `&q={q}` in a new `getItems.url` | Older syntax — use `qSearchParam: "q"` unless the text must be embedded (`qs=title:{q}*`) |
 | data-fair URL without `size` | Only 12 results come back — add `&size=50` |
 | Large `oneOf` without `discriminator` | Every branch is tried — the form gets slow; add it (and `ajvOptions: { discriminator: true }` where ajv runs) |

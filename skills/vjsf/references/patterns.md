@@ -156,6 +156,7 @@ the apps skill's subject, not this one's.
   "layout": {
     "getItems": {
       "url": "${rootData.datasets[0].href}/schema?calculated=false",
+      "itemIcon": "null",
       "itemKey": "data.key",
       "itemTitle": "data.label"
     }
@@ -163,7 +164,7 @@ the apps skill's subject, not this one's.
 }
 ```
 
-Inside a list item, climb with `${parent.parent.data.dataset.href}`.
+Inside a list item, climb with `${parent.parent.data.dataset.href}`. `itemIcon: "null"` is not decoration: without it the column's MDI font icon is copied into each option and renders as an empty prepend (see SKILL.md, `getItems`).
 
 **`expr` variant** — the choices already exist in the data, no HTTP call:
 
@@ -191,6 +192,7 @@ When a select or autocomplete has no matching options (e.g. filtered by capabili
     "props": { "noDataText": "Aucun champ numérique disponible." },
     "getItems": {
       "url": "${rootData.datasets[0].href}/schema?calculated=false&type=integer,number",
+      "itemIcon": "null",
       "itemKey": "data.key",
       "itemTitle": "data.label"
     }
@@ -207,6 +209,7 @@ When a select or autocomplete has no matching options (e.g. filtered by capabili
     "getProps": "rootData.metricType?.type === 'words' ? { noDataText: 'Aucune colonne avec la capacité « Statistiques de mots ».' } : { noDataText: 'Aucune colonne textuelle disponible.' }",
     "getItems": {
       "url": "${rootData.datasets[0].href}/schema?calculated=false&${rootData.metricType?.type === 'words' ? 'capability=textAgg' : 'type=string&capability=values'}",
+      "itemIcon": "null",
       "itemKey": "data.key",
       "itemTitle": "data.label"
     }

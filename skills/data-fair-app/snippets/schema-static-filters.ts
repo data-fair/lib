@@ -155,6 +155,8 @@ export default {
     layout: {
       getItems: {
         url: '${rootData.datasets?.[0]?.href || \'\'}/schema?calculated=false',
+        // the column's icon is an mdi-* font name: without this, an empty prepend
+        itemIcon: 'null',
         itemKey: 'data["key"]',
         itemTitle: 'data["label"]'
       }
