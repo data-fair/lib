@@ -20,7 +20,7 @@ Ces fichiers ne se devinent pas et se recopient mal : reprendre celui d'une appl
 
 - `"dev": "df-dev-env && dotenv -- zellij --layout .zellij.kdl"` **suppose que `.zellij.kdl` existe** — sans lui le script échoue. C'est la convention, pas une option. `df-dev-env` génère le `.env` au premier lancement (cf. « Ports de développement »), `dotenv --` le rend visible de tous les panes. Ni `dev-app` ni `dev-server` ne portent plus de variable en préfixe : `vite` lit le `.env` par `loadEnv`, `df-dev-server` par `dotenv`.
 - `build-types` doit tourner **avant** `type-check` et `build` sur un clone neuf : `src/config/.type/` est git-ignoré et `src/config/index.ts` le réexporte. Ordonner la CI en conséquence (`build-types` → `lint` → `type-check` → `build`) — le `"build": "vite build"` nu ne le garantit pas seul.
-- **Scripts de test au tiret comme les services** : `test` / `test-unit` / `test-e2e` (`playwright test --max-failures=1`, `--project unit` / `--project e2e`). Une variante `test:e2e` / `test:unit` (deux-points) se remplace par la forme tiret en reprise. Pas de variante `--ui` en script : le flag se passe à la volée (`npm run test-e2e -- --ui`). `test` et `test-e2e` sont préfixés de `df-dev-env && dotenv --` (ils ont besoin d'`E2E_PORT`) ; `test-unit` ne lance pas de `webServer` et n'a besoin d'aucun port.
+- **Scripts de test au tiret comme les services** : `test` / `test-unit` / `test-e2e` (`playwright test --max-failures=1`, `--project=unit` / `--project=e2e`). **Le `=` est voulu** : `--project` prend plusieurs valeurs, et un filtre passé après `--project e2e` est avalé comme nom de projet (`npm run test-e2e -- 37-` cherche un projet nommé « 37- »). Une variante `test:e2e` / `test:unit` (deux-points) se remplace par la forme tiret en reprise. Pas de variante `--ui` en script : le flag se passe à la volée (`npm run test-e2e -- --ui`). `test` et `test-e2e` sont préfixés de `df-dev-env && dotenv --` (ils ont besoin d'`E2E_PORT`) ; `test-unit` ne lance pas de `webServer` et n'a besoin d'aucun port.
 - **E2E contre `df-dev-server` : l'exception, pas le modèle.** Le modèle ci-dessus ne lance que Vite et mocke tout (`window.APPLICATION`, session, données) : l'e2e est hermétique et tourne au `pre-push` sans rien d'autre. Une application dont l'e2e lit la config live (`GET /config` de `df-dev-server`, alimenté par `.dev-config.json`) et interroge un vrai data-fair dépend de deux serveurs : `df-dev-server` ne sert pas l'application, il **relaie `/app/*` vers Vite** sur `APP_PORT`. Le `webServer` doit alors être un tableau qui démarre Vite **puis** `df-dev-server`, sinon la sonde `/app/` n'aboutit jamais sans `npm run dev` ouvert à côté (« Timed out waiting 60000ms from config.webServer », typiquement au `pre-push`) :
 
 ```ts
@@ -348,8 +348,8 @@ Le plafond ne vise donc que la machine de développement et le hook `pre-push`. 
 ```json
 {
   "test": "df-dev-env && dotenv -- playwright test --max-failures=1",
-  "test-unit": "playwright test --project unit",
-  "test-e2e": "df-dev-env && dotenv -- playwright test --project e2e"
+  "test-unit": "playwright test --project=unit",
+  "test-e2e": "df-dev-env && dotenv -- playwright test --project=e2e"
 }
 ```
 

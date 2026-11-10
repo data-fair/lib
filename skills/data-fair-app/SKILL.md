@@ -50,8 +50,8 @@ Ce skill guide la création et la maintenance d'applications DataFair (visus, ap
   "type-check": "vue-tsc --noEmit",
   "build-types": "df-build-types src/config",
   "test": "df-dev-env && dotenv -- playwright test --max-failures=1",
-  "test-unit": "playwright test --project unit",
-  "test-e2e": "df-dev-env && dotenv -- playwright test --project e2e",
+  "test-unit": "playwright test --project=unit",
+  "test-e2e": "df-dev-env && dotenv -- playwright test --project=e2e",
   "quality": "npm run lint && npm run build-types && npm run type-check && npm run build && npm test && npm audit --omit=dev --audit-level=critical"
 }
 ```
