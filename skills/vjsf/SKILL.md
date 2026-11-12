@@ -191,11 +191,11 @@ Same rendered form and same produced object either way. When a form takes second
 
 ## Internationalization — `x-i18n-<keyword>`
 
-`x-i18n-<keyword>` is a supported json-layout mechanism (`resolveXI18n`), active only when the rendering UI passes the `xI18n: true` option (default `false`) with `locale: session.lang`. The processings UI and the data-fair settings forms do; the data-fair **application config** form does not (`locale: 'fr'`, no `xI18n`), so app schemas show their base keywords. It works on **any keyword**, including inside `layout`, `getItems`, `props` and `oneOfLayout`: `x-i18n-title`, `x-i18n-description`, `x-i18n-markdown`, `x-i18n-placeholder`, `x-i18n-itemTitle`, `x-i18n-label`, `x-i18n-errorMessage`…
+`x-i18n-<keyword>` is a supported json-layout mechanism (`resolveXI18n`), active only when the rendering UI passes the `xI18n: true` option (default `false`) with the user's `locale`. It works on **any keyword**, including inside `layout`, `getItems`, `props` and `oneOfLayout`: `x-i18n-title`, `x-i18n-description`, `x-i18n-markdown`, `x-i18n-placeholder`, `x-i18n-itemTitle`, `x-i18n-label`, `x-i18n-errorMessage`…
 
 Resolution is `value[locale] ?? value[defaultLocale] ?? <the base keyword>`, with `defaultLocale = 'en'`.
 
-**Activating it in a UI** (the form component, not the schema): pass both options to vjsf, as the processings UI does (`processings/ui/src/pages/processings/[id]/index.vue`) and the data-fair settings forms (`ui/src/components/settings/settings-*.vue`):
+**Activating it in a UI** (the form component, not the schema): pass both options to vjsf.
 
 ```ts
 const vjsfOptions = computed(() => ({
@@ -205,17 +205,21 @@ const vjsfOptions = computed(() => ({
 }))
 ```
 
-Without `xI18n: true` the `x-i18n-*` keywords are ignored and the base keywords are shown. Before writing `x-i18n-*` in a schema, check that the UI that renders it sets the option — otherwise the translations are dead text (see the data-fair app config exception above, and the `data-fair-app` skill).
+Without `xI18n: true` the `x-i18n-*` keywords are ignored and the base keywords are shown; without `locale`, vjsf's own messages (add, delete, validation errors) stay in the default language. A UI rendering a schema it does not own (a plugin or application schema) sets both, so that the schema's translations are honoured.
 
-**Recommendation:** where the rendering UI supports it (processings plugins, data-fair settings), write new schemas bilingual — base keyword in English, `x-i18n-*.fr` next to it — so the form follows the user's language; existing French-only schemas can stay as they are (table below).
+**Recommendation: bilingual schemas, English base.** User-facing keywords (`title`, `description`, `markdown`, `oneOf` branch titles, `layout` labels, `messages`, `slots`…) carry English in the base keyword and the French in `x-i18n-<keyword>.fr`. English is the base because it is the resolution fallback (`defaultLocale = 'en'`) and because a base `title` names a generated type (see the technical-title variant below).
 
-**Which mode a schema is in:**
-
-| Situation | What to do |
+| Situation | Recommendation |
 |---|---|
-| Schema entirely in French | **Leave it in French.** No `x-i18n-*` at all. Don't translate a working French-only schema for the sake of it. |
-| Schema in English, or half French / half English | **Internationalize it fully** — every user-facing `title`, `description`, `markdown` gets its `x-i18n-*.fr`. A half-translated schema is the state to fix. |
-| New schema meant to be bilingual | EN in the base keyword + `x-i18n-*.fr` from the start. |
+| New schema | EN in the base keyword + `x-i18n-*.fr` from the start. |
+| Schema entirely in French | When it gets translated: English in the base, the existing French moved into `x-i18n-*.fr`. |
+| Half French / half English | The most confusing state for users — worth finishing first, the same way. |
+
+Descriptions nobody sees in a form (API documentation, technical or internal schemas) need no translation: they are simply written in English, and may use technical terms.
+
+**An override falls back on `en`, not on the base.** Given the resolution order above, a French base with an override holding only `en` shows English to a French user: `value.fr` is missing, `value.en` wins. With an English base the override carries `fr` (and `en` only for the technical-title variant); with a French base, give the override its `fr` too.
+
+**Code that reads a schema keyword outside the form** (a column header built from a property `title`, a label shown in a summary) gets the English base. Resolve the translations with the user's locale first — `resolveXI18n(clone(schema), locale)` from `@data-fair/lib-utils/json-schema.js` (it mutates its argument, hence the clone) — or read `x-i18n-title[locale] ?? title`.
 
 ### The technical-title variant
 
@@ -291,7 +295,7 @@ Two exceptions only: technical identifiers rendered as-is (`h1`, a dataset field
 - [ ] Every other choice list (`enum`, `layout.items`, `getItems.expr`, url without search) is either under ~10 fixed choices or forced to `comp: "autocomplete"`
 - [ ] Lists of dataset values show the `x-labels` label (`values-labels`, list row header `data.label || data.value`) and store the raw value
 - [ ] Exclusive variants use `oneOf` + `const` + `discriminator` (+ branch `title`s, `oneOfLayout` label)
-- [ ] No half-translated schema: either full French, or full base-EN + `x-i18n-*.fr`
+- [ ] Translations: English base keywords + `x-i18n-*.fr` on user-facing strings (recommended, see § Internationalization), and every override resolves to the right text in each locale
 - [ ] Every user-facing label starts with a capital, in sentence case
 - [ ] Conditionally required fields are modelled in the schema, not with `layout.if`
 - [ ] The type-generation pipeline of the host project was rerun (`npm run build-types` where applicable)

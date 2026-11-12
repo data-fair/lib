@@ -1,6 +1,6 @@
 # Recurring vjsf patterns — the fleet canon
 
-Ready-to-copy fragments, aligned with what the maintained data-fair apps and services actually do. French strings are product copy — keep them French (or internationalize with `x-i18n-*`, see SKILL.md).
+Ready-to-copy fragments, aligned with what the maintained data-fair apps and services actually do. The fragments show the French product copy; in a bilingual schema (recommended, see SKILL.md § Internationalization) that French goes in `x-i18n-*.fr` next to an English base keyword.
 
 ## Slider
 
