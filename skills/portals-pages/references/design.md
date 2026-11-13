@@ -54,6 +54,15 @@ Calibrage des pages génériques, à éviter sauf justification par le contenu :
 
 Dépenser le relief à **un** endroit (hero, diagramme, intégration, carte), et garder le reste sobre. Un effet partout n'est plus un effet.
 
+Relire ensuite sa propre trame, puis les blocs une fois construits, contre les tics de page générée. Ce ne sont pas des interdits mais des défauts qu'on n'a pas choisis : quand le contenu les justifie, on les garde.
+
+- un sur-titre en capitales au-dessus de chaque titre (dans l'esprit de la casse de phrase demandée pour les libellés au §5 du `SKILL.md`) ;
+- de l'habillage de gabarit : métadonnées liées par `·` (« A · B · C »), libellés en « MOT — fragment » avec tiret cadratin espacé ;
+- le caractère `→` tapé à la fin du libellé d'un bouton ou d'un lien ; quand une flèche est voulue, utiliser le lien texte avec icône d'`elements.md` (bloc `title` avec `link` et `icon`) ;
+- le hero par défaut « gros chiffre + petit libellé + deux ou trois stats en dessous » : à garder seulement si c'est vraiment la meilleure accroche du sujet, sinon c'est le contenu qui décide (une carte géographique, un diagramme, une citation, un listing réel) ;
+- un seul mot du titre mis en couleur ou en italique ;
+- des cartes surélevées à ombre douce et grand arrondi : ici les cartes restent plates et bordées, avec l'arrondi hérité de `config.defaults` (voir « Grille de cartes » au §4) ; la hiérarchie passe par le contenu, pas par des variations de style.
+
 Puis construire : builders d'`elements.md`, trois appels API de `api-workflow.md`.
 
 ## 4. Recettes de composition
@@ -245,4 +254,5 @@ Le fond `bg-primary` de la carte pose la couleur de texte `on-primary` : pas de 
 - vérifier le **rythme** : aucun bloc collé par accident, aucun « trou » de plusieurs centaines de pixels, aucun double espacement entre le `pt`/`pb` d'une section et le `mb` du bloc voisin ;
 - vérifier ce qui **déborde** : titres longs, tableaux markdown, captures d'écran, iframes, cartes de grille ;
 - vérifier le **contraste** dans les quatre thèmes si possible, au minimum `default` et `dark` : titres colorés sur fond coloré, textes posés sur une image (`tintStrength` trop faible), alertes ;
+- repasser la liste des tics de page générée du §3 sur le rendu réel ;
 - relire une dernière fois avec les yeux d'un visiteur pressé : la promesse de la page est-elle visible sans défiler, et l'action finale est-elle évidente ?
