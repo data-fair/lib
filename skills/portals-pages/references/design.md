@@ -54,6 +54,15 @@ Calibrage des pages génériques, à éviter sauf justification par le contenu :
 
 Dépenser le relief à **un** endroit (hero, diagramme, intégration, carte), et garder le reste sobre. Un effet partout n'est plus un effet.
 
+Relire ensuite sa propre trame contre les tics de page générée. Ce ne sont pas des interdits mais des défauts qu'on n'a pas choisis : quand le contenu les justifie, on les garde.
+
+- un sur-titre en capitales au-dessus de chaque titre (le §5 du `SKILL.md` impose déjà la casse de phrase pour les libellés : c'est la même règle) ;
+- du chrome de gabarit : métadonnées liées par `·` (« A · B · C »), libellés en « MOT — fragment » avec tiret cadratin espacé ;
+- une flèche `→` collée à la fin du texte d'un bouton ou d'un lien ;
+- le hero par défaut « gros chiffre + label minuscule + deux ou trois stats en dessous » : à garder seulement si c'est vraiment la meilleure accroche du sujet, sinon c'est le contenu qui décide (une carte, un diagramme, une citation, un listing réel) ;
+- un seul mot du titre accroché en couleur ou en italique ;
+- toutes les cartes au même arrondi et à la même ombre douce : la hiérarchie passe par le contenu, voir « Grille de cartes » au §4 (ne pas poser `rounded`, suivre `config.defaults`).
+
 Puis construire : builders d'`elements.md`, trois appels API de `api-workflow.md`.
 
 ## 4. Recettes de composition
