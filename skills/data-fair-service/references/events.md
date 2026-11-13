@@ -12,7 +12,8 @@ customers, agents…) sends it the same way. Model to copy: `catalogs/api/src/im
   never use an optional queue (`eventsQueue?.pushEvent`).
 - `await eventsQueue.stop()` on shutdown, so the last events are sent.
 - `pushEvent(event, sessionState)`: pass the session when a user triggered it, the queue fills `originator`.
-  A process with no user sets `originator: { internalProcess: { id, title } }` itself.
+  A process with no user sets `originator: { internalProcess: { id, title } }` itself: `title`, not `name`,
+  is what the events UI shows ("Catalogs Worker"), a missing one shows a generic "Internal process".
 
 ## Topic keys are a contract
 
@@ -33,18 +34,36 @@ event of that resource. Its texts are written right there, English first, both l
 ```ts
 const importTitles = {
   create: (title: string) => ({ en: `The import of the resource ${title} was created`, fr: `L'import de la ressource ${title} a été créé` }),
-  delete: (title: string) => ({ en: `The import of the resource ${title} was deleted`, fr: `L'import de la ressource ${title} a été supprimé` })
+  update: (title: string) => ({ en: `The import of the resource ${title} was updated`, fr: `L'import de la ressource ${title} a été modifié` }),
+  delete: (title: string) => ({ en: `The import of the resource ${title} was deleted`, fr: `L'import de la ressource ${title} a été supprimé` }),
+  replace: (title: string) => ({
+    en: `The import of the resource ${title} was deleted (replaced by a new import)`,
+    fr: `L'import de la ressource ${title} a été supprimé (remplacé par un nouvel import)`
+  })
 }
 
-export const sendImportEvent = (imp: Import, action: keyof typeof importTitles, sessionState?: SessionStateAuthenticated) => {
+export const sendImportEvent = (
+  imp: Import,
+  topicAction: 'create' | 'update' | 'delete',
+  sessionState: SessionStateAuthenticated,
+  textAction: keyof typeof importTitles = topicAction
+) => {
   eventsQueue.pushEvent({
-    title: importTitles[action](imp.remoteResource.title || imp.remoteResource.id),
-    topic: { key: `catalogs:import-${action}:${imp._id}` },
+    title: importTitles[textAction](imp.remoteResource.title || imp.remoteResource.id),
+    topic: { key: `catalogs:import-${topicAction}:${imp._id}` },
     sender: imp.owner,
-    resource: { type: 'import', id: imp._id, title: imp.remoteResource.title }
+    resource: { type: 'catalog', id: imp.catalog.id, title: imp.catalog.title }
   }, sessionState)
 }
+
+// the replaced import is a deletion for the subscribers, with a more precise title
+sendImportEvent(existingImport, 'delete', sessionState, 'replace')
 ```
+
+- The topic action and the text are two parameters: the topic action is a closed list (the keys users
+  subscribe to), the text table can be more precise. A variant of an action ("deleted with its
+  publications", "triggered by a webhook") is a new text, never a new topic key, so nobody's subscription
+  misses it. The text defaults to the topic action, most calls pass only that.
 
 - No key table, no `{title}` interpolation helper, no unit test comparing keys, and no type of our own for the
   `{ en, fr }` objects: a parameter that receives a title or a body is typed `PushEvent['title']` /
