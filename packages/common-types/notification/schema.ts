@@ -16,29 +16,30 @@ export default {
     },
     origin: {
       type: 'string',
-      title: 'Site d\'origine de la souscription',
+      title: 'Origin site of the subscription',
       readOnly: true
     },
     title: {
       type: 'string',
-      title: 'Titre'
+      title: 'Title'
     },
     body: {
       type: 'string',
-      title: 'Contenu'
+      title: 'Content'
     },
     htmlBody: {
       type: 'string',
-      title: 'Contenu HTML'
+      title: 'HTML content'
     },
     locale: {
       type: 'string',
-      title: 'Langue de la notification',
-      enum: ['fr', 'en']
+      title: 'Language of the notification',
+      description: 'Two letters code: the language of the subscription, any language offered by simple-directory',
+      pattern: '^[a-z]{2}$'
     },
     icon: {
       type: 'string',
-      title: 'URL de l\'icone de la notification'
+      title: 'URL of the notification icon'
     },
     // sender is the owner of the topic, topic is global if no sender is given
     sender: { $ref: 'https://github.com/data-fair/lib/event#/$defs/sender' },
@@ -59,21 +60,21 @@ export default {
     },
     outputs: {
       type: 'array',
-      title: 'Sorties',
+      title: 'Outputs',
       items: {
         type: 'string',
         oneOf: [{
           const: 'devices',
-          title: 'recevoir la notification sur vos appareils configurés'
+          title: 'Receive the notification on your configured devices'
         }, {
           const: 'email',
-          title: 'recevoir la notification par email'
+          title: 'Receive the notification by email'
         }]
       }
     },
     url: {
       type: 'string',
-      title: 'défini explicitement ou calculé à partir de subscription.urlTemplate et event.urlParams',
+      title: 'Explicitly defined, or computed from subscription.urlTemplate and event.urlParams',
     },
     date: {
       type: 'string',
@@ -86,7 +87,7 @@ export default {
     },
     extra: {
       type: 'object',
-      description: 'propriétés libres qui varient en fonction du type de notification'
+      description: 'Free properties that vary depending on the type of notification'
     }
   }
 }
