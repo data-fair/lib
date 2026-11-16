@@ -295,7 +295,7 @@ export default {
           type: 'string',
           title: 'Primary color',
           'x-i18n-title': {
-            fr: 'Couleur principale',
+            fr: 'Couleur primaire',
             en: 'Primary color',
             es: 'Color principal',
             it: 'Colore principale',
@@ -509,7 +509,7 @@ export default {
           type: 'string',
           title: 'Primary color',
           'x-i18n-title': {
-            fr: 'Couleur principale',
+            fr: 'Couleur primaire',
             en: 'Primary color',
             es: 'Color principal',
             it: 'Colore principale',
@@ -525,7 +525,7 @@ export default {
           type: 'string',
           title: 'Text color on primary color',
           'x-i18n-title': {
-            fr: 'Couleur de texte sur couleur principale',
+            fr: 'Couleur de texte sur couleur primaire',
             en: 'Text color on primary color',
             es: 'Color de texto sobre color principal',
             it: 'Colore del testo sul colore principale',
@@ -541,7 +541,7 @@ export default {
           type: 'string',
           title: 'Primary text color',
           'x-i18n-title': {
-            fr: 'Couleur de texte principal',
+            fr: 'Couleur de texte primaire',
             en: 'Primary text color',
             es: 'Color de texto principal',
             it: 'Colore del testo principale',
@@ -551,9 +551,9 @@ export default {
           layout: {
             comp: 'color-picker',
             cols: { sm: 6, lg: 4 },
-            hint: 'laissez vide pour utiliser la couleur principale',
+            hint: 'leave empty to use the primary color',
             'x-i18n-hint': {
-              fr: 'laissez vide pour utiliser la couleur principale',
+              fr: 'laissez vide pour utiliser la couleur primaire',
               en: 'leave empty to use the primary color',
               es: 'deje en blanco para usar el color principal',
               it: 'lasciare vuoto per usare il colore principale',
@@ -608,7 +608,7 @@ export default {
           layout: {
             comp: 'color-picker',
             cols: { sm: 6, lg: 4 },
-            hint: 'laissez vide pour utiliser la couleur secondaire',
+            hint: 'leave empty to use the secondary color',
             'x-i18n-hint': {
               fr: 'laissez vide pour utiliser la couleur secondaire',
               en: 'leave empty to use the secondary color',
@@ -665,7 +665,7 @@ export default {
           layout: {
             comp: 'color-picker',
             cols: { sm: 6, lg: 4 },
-            hint: 'laissez vide pour utiliser la couleur accentuée',
+            hint: 'leave empty to use the accent color',
             'x-i18n-hint': {
               fr: 'laissez vide pour utiliser la couleur accentuée',
               en: 'leave empty to use the accent color',
@@ -722,7 +722,7 @@ export default {
           layout: {
             comp: 'color-picker',
             cols: { sm: 6, lg: 4 },
-            hint: 'laissez vide pour utiliser la couleur info',
+            hint: 'leave empty to use the info color',
             'x-i18n-hint': {
               fr: 'laissez vide pour utiliser la couleur info',
               en: 'leave empty to use the info color',
@@ -779,7 +779,7 @@ export default {
           layout: {
             comp: 'color-picker',
             cols: { sm: 6, lg: 4 },
-            hint: 'laissez vide pour utiliser la couleur erreur',
+            hint: 'leave empty to use the error color',
             'x-i18n-hint': {
               fr: 'laissez vide pour utiliser la couleur erreur',
               en: 'leave empty to use the error color',
@@ -836,7 +836,7 @@ export default {
           layout: {
             comp: 'color-picker',
             cols: { sm: 6, lg: 4 },
-            hint: 'laissez vide pour utiliser la couleur avertissement',
+            hint: 'leave empty to use the warning color',
             'x-i18n-hint': {
               fr: 'laissez vide pour utiliser la couleur avertissement',
               en: 'leave empty to use the warning color',
@@ -893,7 +893,7 @@ export default {
           layout: {
             comp: 'color-picker',
             cols: { sm: 6, lg: 4 },
-            hint: 'laissez vide pour utiliser la couleur succès',
+            hint: 'leave empty to use the success color',
             'x-i18n-hint': {
               fr: 'laissez vide pour utiliser la couleur succès',
               en: 'leave empty to use the success color',
