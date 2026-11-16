@@ -13,6 +13,8 @@
         color="white"
         density="comfortable"
         class="mx-1 mt-1"
+        :title="rangeMode ? t('pickRange') : t('pickDate')"
+        :aria-label="rangeMode ? t('pickRange') : t('pickDate')"
         v-bind="props"
       >
         <v-icon color="primary">
@@ -25,13 +27,13 @@
         v-if="rangeMode"
         class="text-h6 px-2"
       >
-        Sélectionnez un interval entre 2 dates
+        {{ t('pickRange') }}
       </h3>
       <h3
         v-else
         class="text-h6 px-2"
       >
-        Sélectionnez une date
+        {{ t('pickDate') }}
       </h3>
       <v-date-picker
         v-model="date"
@@ -44,7 +46,18 @@
   </v-menu>
 </template>
 
+<i18n lang="yaml">
+  en:
+    pickRange: Select a range between 2 dates
+    pickDate: Select a date
+  fr:
+    pickRange: Sélectionnez un intervalle entre 2 dates
+    pickDate: Sélectionnez une date
+</i18n>
+
 <script lang="ts">
+import { useI18n } from 'vue-i18n'
+
 // 1 => 01, 12 => 12
 const padTimeComponent = (val: number) => {
   const s = '' + val
@@ -69,6 +82,10 @@ export default {
     }
   },
   emits: ['update:modelValue'],
+  setup () {
+    const { t } = useI18n()
+    return { t }
+  },
   data: () => ({
     menu: false
   }),
