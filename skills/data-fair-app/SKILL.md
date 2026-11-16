@@ -747,7 +747,7 @@ puis `const { t } = useI18n()` dans le `<script setup>` (la portée locale est a
 
 - **Activer le plugin de compilation** dans `vite.config.ts` : `import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'`, puis `VueI18nPlugin()` dans `plugins`. Sans lui les blocs `<i18n>` ne sont pas compilés. Plusieurs applications l'ont déjà installé sans s'en servir — vérifier avant de l'ajouter.
 - **Dates et durées** : `createLocaleDayjs(session.lang.value)` puis `useLocaleDayjs()`, cf. `snippets/locale-dayjs.ts`.
-- **Nombres et pourcentages** : `n()` plutôt que `toLocaleString()`, voir ci-dessous.
+- **Nombres et pourcentages** : `n()` avec un format nommé, ou `toLocaleString(locale)` sans option pour un nombre simple ; jamais `toLocaleString()` sans locale, voir ci-dessous. Les services suivent la même règle (`data-fair-service`, `references/i18n.md`).
 - **Ne pas porter l'i18n du catalogue dans `index.html`** (un seul `<title>`, une seule `<meta name="description">`) : elle passera par registry, qui porte `title` et `description` en objets `{ en, fr }`.
 - **Casse des libellés** : la règle de majuscule initiale s'applique à toutes les chaînes visibles, traduites ou en dur — voir « Libellés : majuscule initiale, casse de phrase » dans la section VJSF.
 
@@ -1157,8 +1157,10 @@ const items = formatFieldValues(fields[key], raw, { locale: locale.value })  // 
 `formatFieldValue` rend, dans cet ordre : vide → `''` ; coercition d'une chaîne `'true'` / `'1234'`
 selon `field.type` (clé de bucket, paramètre d'URL) ; libellé `x-labels` (repli sur la valeur brute) ;
 nom de fichier d'un attachement, hostname d'une page web (concepts) ; date `DD/MM/YYYY` et date-heure
-`DD/MM/YYYY, HH[h]mm` sur `field.format`, **dans le fuseau porté par la valeur** ; Oui/Non (Yes/No) ;
-nombre groupé par `toLocaleString(locale)`. `formatField(item, field)` est la forme historique sur une
+`DD/MM/YYYY, HH[h]mm` sur `field.format`, **dans le fuseau porté par la valeur** ; Oui/Non (Yes/No,
+et Yes/No hors fr/en) ; nombre groupé par `toLocaleString(locale)`. Les dates gardent ces formats
+en français (défaut) ; une autre `locale` reçoit les formats localisés de dayjs pour cette langue si sa locale dayjs
+est chargée (`01/15/2024 10:00 AM` en anglais), l'anglais sinon. `formatField(item, field)` est la forme historique sur une
 ligne entière. Ne pas réécrire un lookup `x-labels` maison, ni un `dayjs(value).format()` nu (il
 rendrait dans le fuseau du navigateur).
 

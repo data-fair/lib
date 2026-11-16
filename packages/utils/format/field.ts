@@ -1,5 +1,9 @@
 import type { Field } from '@data-fair/lib-common-types/application/index.js'
+import dayjs from 'dayjs'
+import localizedFormat from 'dayjs/plugin/localizedFormat.js'
 import { dateTimeInOwnTimeZone } from './date-tz.js'
+
+dayjs.extend(localizedFormat)
 import { attachmentFilename, webPageLabel } from './attachment.js'
 
 export interface FormatFieldOptions {
@@ -54,19 +58,18 @@ const formatSingleValue = (field: Field, value: unknown, opts: FormatFieldOption
   if (concept === 'attachment') return attachmentFilename('' + coerced)
   if (concept === 'webPage') return webPageLabel('' + coerced)
 
-  // trigger on `format`, like data-fair's own table does
-  // TODO: localize the date patterns. data-fair does not hardcode them either: its
-  // ui/src/composables/dataset/format-date-logic.ts takes the dayjs factory as an argument and the
-  // caller passes @data-fair/lib-vue's `localeDayjs.dayjs`, so `.format('lll'|'L')` resolves through
-  // the localizedFormat plugin. Same move here (an injected factory) rather than a locale table.
+  // trigger on `format`, like data-fair's own table does. French (the default) keeps its historical
+  // patterns; another language reads its dayjs localized formats (L, L LT) when that dayjs locale is loaded
+  // (import 'dayjs/locale/xx.js' to support one), dayjs itself falls back on English otherwise
   if (field.format === 'date-time' || field.format === 'date') {
     const d = dateTimeInOwnTimeZone(coerced)
     if (!d.isValid()) return '' + coerced
-    return d.format(field.format === 'date-time' ? 'DD/MM/YYYY, HH[h]mm' : 'DD/MM/YYYY')
+    if (locale.startsWith('fr')) return d.format(field.format === 'date-time' ? 'DD/MM/YYYY, HH[h]mm' : 'DD/MM/YYYY')
+    return d.locale(locale.split('-')[0]).format(field.format === 'date-time' ? 'L LT' : 'L')
   }
 
   if (typeof coerced === 'boolean') {
-    const [yes, no] = booleanLabels.get(locale.split('-')[0]) ?? booleanLabels.get('fr')!
+    const [yes, no] = booleanLabels.get(locale.split('-')[0]) ?? booleanLabels.get('en')!
     return coerced ? yes : no
   }
   if (typeof coerced === 'number') return coerced.toLocaleString(locale)

@@ -20,8 +20,8 @@ Two independent jobs, same file:
   "layout": "tabs",
   "required": ["datasetMode", "url"],
   "allOf": [
-    { "title": "Jeu de données", "oneOf": [ /* create / update */ ] },
-    { "title": "Paramètres", "properties": { /* … */ } }
+    { "title": "Dataset", "x-i18n-title": { "fr": "Jeu de données" }, "oneOf": [ /* create / update */ ] },
+    { "title": "Parameters", "x-i18n-title": { "fr": "Paramètres" }, "properties": { /* … */ } }
   ]
 }
 ```
@@ -34,29 +34,35 @@ Every plugin that produces a dataset exposes the same discriminated union on `da
 
 ```json
 {
-  "title": "Jeu de données",
+  "title": "Dataset",
+  "x-i18n-title": { "fr": "Jeu de données" },
   "default": { "datasetMode": "update" },
   "oneOf": [
     {
-      "title": "Créer un jeu de données",
+      "title": "Create a dataset",
+      "x-i18n-title": { "fr": "Créer un jeu de données" },
       "required": ["datasetMode"],
       "properties": {
         "datasetMode": { "type": "string", "const": "create", "title": "Action" },
         "datasetTitle": {
           "type": "string",
-          "title": "Titre du jeu de données à créer",
-          "description": "Explication du mode création, rendue en aide contextuelle."
+          "title": "Title of the dataset to create",
+          "x-i18n-title": { "fr": "Titre du jeu de données à créer" },
+          "description": "What the create mode does, shown as contextual help.",
+          "x-i18n-description": { "fr": "Explication du mode création, rendue en aide contextuelle." }
         }
       }
     },
     {
-      "title": "Mettre à jour un jeu de données",
+      "title": "Update a dataset",
+      "x-i18n-title": { "fr": "Mettre à jour un jeu de données" },
       "required": ["dataset"],
       "properties": {
         "datasetMode": { "type": "string", "const": "update", "title": "Action" },
         "dataset": {
           "type": "object",
-          "title": "Jeu de données",
+          "title": "Dataset",
+          "x-i18n-title": { "fr": "Jeu de données" },
           "layout": {
             "getItems": {
               "url": "${context.dataFairUrl}/api/v1/datasets?select=id,title&size=50&${context.ownerFilter}&raw=true",
@@ -67,8 +73,8 @@ Every plugin that produces a dataset exposes the same discriminated union on `da
             }
           },
           "properties": {
-            "id": { "type": "string", "title": "Identifiant" },
-            "title": { "type": "string", "title": "Titre" }
+            "id": { "type": "string", "title": "Identifier" },
+            "title": { "type": "string", "title": "Title" }
           }
         }
       }
@@ -82,7 +88,7 @@ Every plugin that produces a dataset exposes the same discriminated union on `da
 In the `create` branch there is no dataset to point at — only a title to give the one that will be produced. Declare it as a **plain string property at branch level**, exactly like `processing-hello-world`:
 
 ```json
-"datasetTitle": { "type": "string", "title": "Titre du jeu de données à créer" }
+"datasetTitle": { "type": "string", "title": "Title of the dataset to create", "x-i18n-title": { "fr": "Titre du jeu de données à créer" } }
 ```
 
 Wrapping it in a `"dataset": { "type": "object", "title": …, "properties": { "title": … } }` compiles to a `section` component, which renders a titled sub-block with its `description` as an always-visible markdown `subtitle`, wrapping a single field whose own label then repeats the same idea. Two headings and a paragraph for one text input. The flat form compiles to a bare `text-field` and pushes the `description` to the `help` icon — same information, one line.
@@ -111,17 +117,17 @@ A field holding a real secret (password, API key) must pair its schema declarati
 
 ## Internationalization policy
 
-The mechanism (`x-i18n-<keyword>`, technical titles naming the generated types) is in the vjsf skill. The per-plugin policy:
+The mechanism (`x-i18n-<keyword>`, technical titles naming the generated types) is in the vjsf skill. The policy, by what the text is:
 
-| Situation | What to do |
+| Text | Language |
 |---|---|
-| Config entirely in French | **Leave it in French.** No `x-i18n-*` at all. |
-| Config in English, or half French / half English | **Internationalize it fully** — every user-facing label gets its `x-i18n-*.fr`. |
-| New plugin | EN + fr from the start. |
+| Config form (titles, descriptions, option labels, layout texts) | **English base + `x-i18n-*.fr`**, for every public plugin and every new one. A plugin still in French only gets translated fully the next time its schema is touched, never half: English in the base, the existing French moved into `x-i18n-*.fr`. |
+| Logs (`log.*`) and thrown error messages | **English.** No translation: nothing tells the plugin the user's language. |
+| What the plugin writes into data (dataset titles, column titles and descriptions, `x-labels`, product variants and variables) | **French for now**, unchanged until the maintainer decides otherwise: renaming a column breaks the datasets and applications already built on it. |
 
 ## Writing good descriptions
 
-The `description` is rendered as **markdown** and is the only documentation most users read. Use it for behaviour that isn't obvious from the label: what happens on the remote server, what an empty value means, what the option does *not* affect. Bullet lists per case read well. Titles/descriptions are French in this stack.
+The `description` is rendered as **markdown** and is the only documentation most users read. Use it for behaviour that isn't obvious from the label: what happens on the remote server, what an empty value means, what the option does *not* affect. Bullet lists per case read well. Write it in English in `description` and in French in `x-i18n-description.fr`.
 
 ---
 
@@ -142,7 +148,7 @@ Generic schema traps (leftover `x-*`, `${context…}` templates, `item.` prefixe
 ## Checklist before committing a schema change
 
 - [ ] `grep -n '"x-' processing-config-schema.json` returns nothing but `x-exports` / `x-i18n-*`
-- [ ] no half-translated config: if any label is in English, every user-facing label has its `x-i18n-*.fr`
+- [ ] every user-facing label has an English base and its `x-i18n-*.fr` (no override with `en` alone)
 - [ ] `npm run build-types && npm run lint && npm test`
 - [ ] `git diff types/` reviewed — the generated type changed the way you expect
 - [ ] Existing configs still validate (no new `required` without `default`, no silent rename)

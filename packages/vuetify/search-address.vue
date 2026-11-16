@@ -8,24 +8,37 @@
     return-object
     hide-no-data
     hide-details
-    placeholder="Saisissez une adresse"
+    :placeholder="t('placeholder')"
     :variant="variant"
     density="compact"
     menu-icon=""
     @update:search="(search: string) => findAdresses(search)"
   >
     <template #label>
-      Adresse <span class="d-sr-only">Lorsque des résultats sont disponibles, utilisez les flèches haut et bas pour les parcourir et appuyez sur Entrée pour sélectionner. Sur un appareil tactile explorer par toucher ou avec des gestes de balayage.</span>
+      {{ t('label') }} <span class="d-sr-only">{{ t('srHelp') }}</span>
     </template>
   </v-autocomplete>
 </template>
 
+<i18n lang="yaml">
+  en:
+    placeholder: Type an address
+    label: Address
+    srHelp: When results are available, use the up and down arrows to browse them and press Enter to select. On a touch device, explore by touch or with swipe gestures.
+  fr:
+    placeholder: Saisissez une adresse
+    label: Adresse
+    srHelp: Lorsque des résultats sont disponibles, utilisez les flèches haut et bas pour les parcourir et appuyez sur Entrée pour sélectionner. Sur un appareil tactile, explorez par toucher ou avec des gestes de balayage.
+</i18n>
 
 <script setup lang="ts">
 import type { VAutocomplete } from 'vuetify/components/VAutocomplete'
 import { ref, watch } from 'vue'
 import { ofetch } from 'ofetch'
 import { useDebounceFn } from '@vueuse/core'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 defineProps({variant: String as () => VAutocomplete['variant']})
 const emit = defineEmits(['selected'])

@@ -20,7 +20,7 @@ export default {
   },
   oneOf: [
     {
-      title: "Un membre de l'organisation",
+      title: 'An organization member',
       'x-i18n-title': {
         fr: "Un membre de l'organisation",
         en: 'An organization member',
@@ -37,7 +37,7 @@ export default {
         type: { type: 'string', const: 'user' },
         id: {
           type: 'string',
-          title: 'Membre',
+          title: 'Member',
           'x-i18n-title': {
             fr: 'Membre',
             en: 'Member',
@@ -59,7 +59,7 @@ export default {
       }
     },
     {
-      title: 'Un email',
+      title: 'An email',
       'x-i18n-title': {
         fr: 'Un email',
         en: 'An email',
@@ -76,7 +76,7 @@ export default {
         email: {
           type: 'string',
           format: 'email',
-          title: 'Adresse mail',
+          title: 'Email address',
           'x-i18n-title': {
             fr: 'Adresse mail',
             en: 'Email address',
@@ -89,7 +89,7 @@ export default {
       }
     },
     {
-      title: 'Une organisation partenaire',
+      title: 'A partner organization',
       'x-i18n-title': {
         fr: 'Une organisation partenaire',
         en: 'A partner organization',
@@ -108,7 +108,7 @@ export default {
         roles: { type: 'array', const: [], items: { type: 'string' } },
         id: {
           type: 'string',
-          title: 'Partenaire',
+          title: 'Partner',
           'x-i18n-title': {
             fr: 'Partenaire',
             en: 'Partner',
@@ -130,7 +130,7 @@ export default {
       }
     },
     {
-      title: 'Un role ou département de mon organisation',
+      title: 'A role or department of my organization',
       'x-i18n-title': {
         fr: 'Un rôle ou département de mon organisation',
         en: 'A role or department of my organization',
@@ -154,7 +154,7 @@ export default {
         },
         department: {
           type: 'string',
-          title: 'Département',
+          title: 'Department',
           'x-i18n-title': {
             fr: 'Département',
             en: 'Department',
@@ -174,7 +174,7 @@ export default {
         },
         roles: {
           type: 'array',
-          title: 'Rôles',
+          title: 'Roles',
           'x-i18n-title': {
             fr: 'Rôles',
             en: 'Roles',

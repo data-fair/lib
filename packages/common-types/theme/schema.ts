@@ -2,7 +2,7 @@ export default {
   $id: 'https://github.com/data-fair/lib/theme',
   'x-exports': ['types'],
   type: 'object',
-  title: 'Thème',
+  title: 'Theme',
   'x-i18n-title': {
     fr: 'Thème',
     en: 'Theme',
@@ -25,7 +25,7 @@ export default {
         comp: 'tabs',
         if: 'data.assistedMode',
         children: [{
-          title: 'Thème par défaut',
+          title: 'Default theme',
           'x-i18n-title': {
             fr: 'Thème par défaut',
             en: 'Default theme',
@@ -39,7 +39,7 @@ export default {
             { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'colors', dark: false } }
           ]
         }, {
-          title: 'Thème sombre',
+          title: 'Dark theme',
           'x-i18n-title': {
             fr: 'Thème sombre',
             en: 'Dark theme',
@@ -53,7 +53,7 @@ export default {
             { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'darkColors', dark: true } }
           ]
         }, {
-          title: 'Thème à fort contraste',
+          title: 'High contrast theme',
           'x-i18n-title': {
             fr: 'Thème à fort contraste',
             en: 'High contrast theme',
@@ -67,7 +67,7 @@ export default {
             { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'hcColors', dark: false } }
           ]
         }, {
-          title: 'Thème sombre à fort contraste',
+          title: 'Dark high contrast theme',
           'x-i18n-title': {
             fr: 'Thème sombre à fort contraste',
             en: 'Dark high contrast theme',
@@ -86,7 +86,7 @@ export default {
         comp: 'tabs',
         if: '!data.assistedMode',
         children: [{
-          title: 'Thème par défaut',
+          title: 'Default theme',
           'x-i18n-title': {
             fr: 'Thème par défaut',
             en: 'Default theme',
@@ -100,7 +100,7 @@ export default {
             { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'colors', dark: false } }
           ]
         }, {
-          title: 'Thème sombre',
+          title: 'Dark theme',
           'x-i18n-title': {
             fr: 'Thème sombre',
             en: 'Dark theme',
@@ -114,7 +114,7 @@ export default {
             { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'darkColors', dark: true } }
           ]
         }, {
-          title: 'Thème à fort contraste',
+          title: 'High contrast theme',
           'x-i18n-title': {
             fr: 'Thème à fort contraste',
             en: 'High contrast theme',
@@ -128,7 +128,7 @@ export default {
             { name: 'colors-preview', cols: { sm: 5, lg: 3 }, props: { colorsKey: 'hcColors', dark: false } }
           ]
         }, {
-          title: 'Thème sombre à fort contraste',
+          title: 'Dark high contrast theme',
           'x-i18n-title': {
             fr: 'Thème sombre à fort contraste',
             en: 'Dark high contrast theme',
@@ -147,7 +147,7 @@ export default {
   },
   properties: {
     logo: {
-      title: "URL d'un logo",
+      title: 'Logo URL',
       'x-i18n-title': {
         fr: "URL d'un logo",
         en: 'Logo URL',
@@ -159,7 +159,7 @@ export default {
       type: 'string'
     },
     bodyFontFamily: {
-      title: 'Nom de police de caractères pour le corps du texte',
+      title: 'Font name for body text',
       'x-i18n-title': {
         fr: 'Nom de police de caractères pour le corps du texte',
         en: 'Font name for body text',
@@ -168,7 +168,7 @@ export default {
         pt: 'Nome da fonte para o texto do corpo',
         de: 'Schriftartname für den Fließtext'
       },
-      description: 'Par défaut une police Nunito auto-hébergée est utilisée',
+      description: 'By default, a self-hosted Nunito font is used',
       'x-i18n-description': {
         fr: 'Par défaut une police Nunito auto-hébergée est utilisée',
         en: 'By default, a self-hosted Nunito font is used',
@@ -180,7 +180,7 @@ export default {
       type: 'string'
     },
     bodyFontFamilyCss: {
-      title: 'CSS police de caractères pour le corps du texte',
+      title: 'CSS font for body text',
       'x-i18n-title': {
         fr: 'CSS police de caractères pour le corps du texte',
         en: 'CSS font for body text',
@@ -193,7 +193,7 @@ export default {
         comp: 'textarea',
         rows: 3
       },
-      description: 'Vous pouvez copier le CSS proposé par une plateforme comme Google Fonts.',
+      description: 'You can copy the CSS proposed by a platform like Google Fonts.',
       'x-i18n-description': {
         fr: 'Vous pouvez copier le CSS proposé par une plateforme comme Google Fonts.',
         en: 'You can copy the CSS proposed by a platform like Google Fonts.',
@@ -205,7 +205,7 @@ export default {
       type: 'string'
     },
     headingFontFamily: {
-      title: 'Nom de police de caractères pour les titres',
+      title: 'Font name for headings',
       'x-i18n-title': {
         fr: 'Nom de police de caractères pour les titres',
         en: 'Font name for headings',
@@ -214,7 +214,7 @@ export default {
         pt: 'Nome da fonte para títulos',
         de: 'Schriftartname für Überschriften'
       },
-      description: 'Renseignez de la même manière que pour le corps de texte, ou laissez vide pour utiliser la police du corps du texte',
+      description: 'Fill in the same way as for the body text, or leave blank to use the body text font',
       'x-i18n-description': {
         fr: 'Renseignez de la même manière que pour le corps de texte, ou laissez vide pour utiliser la police du corps du texte',
         en: 'Fill in the same way as for the body text, or leave blank to use the body text font',
@@ -226,7 +226,7 @@ export default {
       type: 'string'
     },
     headingFontFamilyCss: {
-      title: 'CSS police de caractères pour les titres',
+      title: 'CSS font for headings',
       'x-i18n-title': {
         fr: 'CSS police de caractères pour les titres',
         en: 'CSS font for headings',
@@ -242,7 +242,7 @@ export default {
       type: 'string'
     },
     preloadLinks: {
-      title: 'Liens de préchargement',
+      title: 'Preload links',
       'x-i18n-title': {
         fr: 'Liens de préchargement',
         en: 'Preload links',
@@ -251,7 +251,7 @@ export default {
         pt: 'Links de pré-carregamento',
         de: 'Vorlade-Links'
       },
-      description: 'Liste des ressources (polices, etc.) à précharger via des balises <link rel="preload">. Généralement renseignée automatiquement.',
+      description: 'Resources (fonts, etc.) preloaded through <link rel="preload"> tags. Usually filled automatically.',
       type: 'array',
       items: {
         type: 'object',
@@ -259,16 +259,16 @@ export default {
         required: ['href'],
         properties: {
           href: { type: 'string', title: 'URL' },
-          as: { type: 'string', title: 'Type de ressource (attribut as)' },
-          type: { type: 'string', title: 'Type MIME' },
-          crossorigin: { type: 'boolean', title: 'Requête CORS (crossorigin)' }
+          as: { type: 'string', title: 'Resource type (as attribute)' },
+          type: { type: 'string', title: 'MIME type' },
+          crossorigin: { type: 'boolean', title: 'CORS request (crossorigin)' }
         }
       },
       layout: 'none'
     },
     assistedMode: {
       type: 'boolean',
-      title: 'Mode de gestion des couleurs simplifié',
+      title: 'Simplified color management mode',
       'x-i18n-title': {
         fr: 'Mode de gestion des couleurs simplifié',
         en: 'Simplified color management mode',
@@ -277,7 +277,7 @@ export default {
         pt: 'Modo de gerenciamento simplificado de cores',
         de: 'Vereinfachter Farbverwaltungsmodus'
       },
-      description: 'Ce mode permet de simplifier la gestion des couleurs. Avec, vous ne renseignez que les couleurs principales (primaire, secondaire, accentuée).\n\nLes autres couleurs sont calculées automatiquement en suivant des règles de contraste pour rester lisibles sur les fonds.\n\n**Attention** : activer ce mode réinitialise les couleurs avancées définies manuellement.',
+      description: 'This mode simplifies color management: you only provide the main colors (primary, secondary, accent).\n\nThe other colors are computed automatically using contrast rules so they remain legible on backgrounds.\n\n**Warning**: enabling this mode resets the advanced colors set manually.',
       'x-i18n-description': {
         fr: 'Ce mode permet de simplifier la gestion des couleurs. Avec, vous ne renseignez que les couleurs principales (primaire, secondaire, accentuée).\n\nLes autres couleurs sont calculées automatiquement en suivant des règles de contraste pour rester lisibles sur les fonds.\n\n**Attention** : activer ce mode réinitialise les couleurs avancées définies manuellement.',
         en: 'This mode simplifies color management: you only provide the main colors (primary, secondary, accent).\n\nThe other colors are computed automatically using contrast rules so they remain legible on backgrounds.\n\n**Warning**: enabling this mode resets the advanced colors set manually.',
@@ -293,7 +293,7 @@ export default {
       properties: {
         primary: {
           type: 'string',
-          title: 'Couleur principale',
+          title: 'Primary color',
           'x-i18n-title': {
             fr: 'Couleur principale',
             en: 'Primary color',
@@ -309,7 +309,7 @@ export default {
         },
         secondary: {
           type: 'string',
-          title: 'Couleur secondaire',
+          title: 'Secondary color',
           'x-i18n-title': {
             fr: 'Couleur secondaire',
             en: 'Secondary color',
@@ -325,7 +325,7 @@ export default {
         },
         accent: {
           type: 'string',
-          title: 'Couleur accentuée',
+          title: 'Accent color',
           'x-i18n-title': {
             fr: 'Couleur accentuée',
             en: 'Accent color',
@@ -344,7 +344,7 @@ export default {
     colors: { $ref: '#/$defs/colors' },
     dark: {
       type: 'boolean',
-      title: 'Proposer ce thème aux utilisateurs',
+      title: 'Offer this theme to users',
       'x-i18n-title': {
         fr: 'Proposer ce thème aux utilisateurs',
         en: 'Offer this theme to users',
@@ -357,7 +357,7 @@ export default {
     darkColors: { $ref: '#/$defs/colors' },
     hc: {
       type: 'boolean',
-      title: 'Proposer ce thème aux utilisateurs',
+      title: 'Offer this theme to users',
       'x-i18n-title': {
         fr: 'Proposer ce thème aux utilisateurs',
         en: 'Offer this theme to users',
@@ -370,7 +370,7 @@ export default {
     hcColors: { $ref: '#/$defs/colors' },
     hcDark: {
       type: 'boolean',
-      title: 'Proposer ce thème aux utilisateurs',
+      title: 'Offer this theme to users',
       'x-i18n-title': {
         fr: 'Proposer ce thème aux utilisateurs',
         en: 'Offer this theme to users',
@@ -411,7 +411,7 @@ export default {
       properties: {
         background: {
           type: 'string',
-          title: 'Couleur de fond',
+          title: 'Background color',
           'x-i18n-title': {
             fr: 'Couleur de fond',
             en: 'Background color',
@@ -427,7 +427,7 @@ export default {
         },
         'on-background': {
           type: 'string',
-          title: 'Couleur de texte sur couleur de fond',
+          title: 'Text color on background color',
           'x-i18n-title': {
             fr: 'Couleur de texte sur couleur de fond',
             en: 'Text color on background color',
@@ -443,7 +443,7 @@ export default {
         },
         surface: {
           type: 'string',
-          title: 'Couleur des surfaces (vignettes, listes, etc)',
+          title: 'Surface color (tiles, lists, etc)',
           'x-i18n-title': {
             fr: 'Couleur des surfaces (vignettes, listes, etc)',
             en: 'Surface color (tiles, lists, etc)',
@@ -459,7 +459,7 @@ export default {
         },
         'on-surface': {
           type: 'string',
-          title: 'Couleur de texte sur couleur des surfaces',
+          title: 'Text color on surface color',
           'x-i18n-title': {
             fr: 'Couleur de texte sur couleur des surfaces',
             en: 'Text color on surface color',
@@ -475,7 +475,7 @@ export default {
         },
         'surface-inverse': {
           type: 'string',
-          title: 'Couleur des surfaces avec contraste inversé',
+          title: 'Surface color with inverted contrast',
           'x-i18n-title': {
             fr: 'Couleur des surfaces avec contraste inversé',
             en: 'Surface color with inverted contrast',
@@ -491,7 +491,7 @@ export default {
         },
         'on-surface-inverse': {
           type: 'string',
-          title: 'Couleur de texte sur couleur des surfaces avec contraste inversé',
+          title: 'Text color on surface color with inverted contrast',
           'x-i18n-title': {
             fr: 'Couleur de texte sur couleur des surfaces avec contraste inversé',
             en: 'Text color on surface color with inverted contrast',
@@ -507,7 +507,7 @@ export default {
         },
         primary: {
           type: 'string',
-          title: 'Couleur principale',
+          title: 'Primary color',
           'x-i18n-title': {
             fr: 'Couleur principale',
             en: 'Primary color',
@@ -523,7 +523,7 @@ export default {
         },
         'on-primary': {
           type: 'string',
-          title: 'Couleur de texte sur couleur principale',
+          title: 'Text color on primary color',
           'x-i18n-title': {
             fr: 'Couleur de texte sur couleur principale',
             en: 'Text color on primary color',
@@ -539,7 +539,7 @@ export default {
         },
         'text-primary': {
           type: 'string',
-          title: 'Couleur de texte principal',
+          title: 'Primary text color',
           'x-i18n-title': {
             fr: 'Couleur de texte principal',
             en: 'Primary text color',
@@ -564,7 +564,7 @@ export default {
         },
         secondary: {
           type: 'string',
-          title: 'Couleur secondaire',
+          title: 'Secondary color',
           'x-i18n-title': {
             fr: 'Couleur secondaire',
             en: 'Secondary color',
@@ -580,7 +580,7 @@ export default {
         },
         'on-secondary': {
           type: 'string',
-          title: 'Couleur de texte sur couleur secondaire',
+          title: 'Text color on secondary color',
           'x-i18n-title': {
             fr: 'Couleur de texte sur couleur secondaire',
             en: 'Text color on secondary color',
@@ -596,7 +596,7 @@ export default {
         },
         'text-secondary': {
           type: 'string',
-          title: 'Couleur de texte secondaire',
+          title: 'Secondary text color',
           'x-i18n-title': {
             fr: 'Couleur de texte secondaire',
             en: 'Secondary text color',
@@ -621,7 +621,7 @@ export default {
         },
         accent: {
           type: 'string',
-          title: 'Couleur accentuée',
+          title: 'Accent color',
           'x-i18n-title': {
             fr: 'Couleur accentuée',
             en: 'Accent color',
@@ -637,7 +637,7 @@ export default {
         },
         'on-accent': {
           type: 'string',
-          title: 'Couleur de texte sur couleur accentuée',
+          title: 'Text color on accent color',
           'x-i18n-title': {
             fr: 'Couleur de texte sur couleur accentuée',
             en: 'Text color on accent color',
@@ -653,7 +653,7 @@ export default {
         },
         'text-accent': {
           type: 'string',
-          title: 'Couleur de texte accentué',
+          title: 'Accent text color',
           'x-i18n-title': {
             fr: 'Couleur de texte accentué',
             en: 'Accent text color',
@@ -678,7 +678,7 @@ export default {
         },
         info: {
           type: 'string',
-          title: 'Couleur info',
+          title: 'Info color',
           'x-i18n-title': {
             fr: 'Couleur info',
             en: 'Info color',
@@ -694,7 +694,7 @@ export default {
         },
         'on-info': {
           type: 'string',
-          title: 'Couleur de texte sur couleur info',
+          title: 'Text color on info color',
           'x-i18n-title': {
             fr: 'Couleur de texte sur couleur info',
             en: 'Text color on info color',
@@ -710,7 +710,7 @@ export default {
         },
         'text-info': {
           type: 'string',
-          title: 'Couleur de texte info',
+          title: 'Info text color',
           'x-i18n-title': {
             fr: 'Couleur de texte info',
             en: 'Info text color',
@@ -735,7 +735,7 @@ export default {
         },
         error: {
           type: 'string',
-          title: 'Couleur erreur',
+          title: 'Error color',
           'x-i18n-title': {
             fr: 'Couleur erreur',
             en: 'Error color',
@@ -751,7 +751,7 @@ export default {
         },
         'on-error': {
           type: 'string',
-          title: 'Couleur de texte sur couleur erreur',
+          title: 'Text color on error color',
           'x-i18n-title': {
             fr: 'Couleur de texte sur couleur erreur',
             en: 'Text color on error color',
@@ -767,7 +767,7 @@ export default {
         },
         'text-error': {
           type: 'string',
-          title: 'Couleur de texte erreur',
+          title: 'Error text color',
           'x-i18n-title': {
             fr: 'Couleur de texte erreur',
             en: 'Error text color',
@@ -792,7 +792,7 @@ export default {
         },
         warning: {
           type: 'string',
-          title: 'Couleur avertissement',
+          title: 'Warning color',
           'x-i18n-title': {
             fr: 'Couleur avertissement',
             en: 'Warning color',
@@ -808,7 +808,7 @@ export default {
         },
         'on-warning': {
           type: 'string',
-          title: 'Couleur de texte sur avertissement',
+          title: 'Text color on warning color',
           'x-i18n-title': {
             fr: 'Couleur de texte sur avertissement',
             en: 'Text color on warning color',
@@ -824,7 +824,7 @@ export default {
         },
         'text-warning': {
           type: 'string',
-          title: 'Couleur de texte avertissement',
+          title: 'Warning text color',
           'x-i18n-title': {
             fr: 'Couleur de texte avertissement',
             en: 'Warning text color',
@@ -849,7 +849,7 @@ export default {
         },
         success: {
           type: 'string',
-          title: 'Couleur succès',
+          title: 'Success color',
           'x-i18n-title': {
             fr: 'Couleur succès',
             en: 'Success color',
@@ -865,7 +865,7 @@ export default {
         },
         'on-success': {
           type: 'string',
-          title: 'Couleur succès',
+          title: 'Success color',
           'x-i18n-title': {
             fr: 'Couleur succès',
             en: 'Success color',
@@ -881,7 +881,7 @@ export default {
         },
         'text-success': {
           type: 'string',
-          title: 'Couleur de texte succès',
+          title: 'Success text color',
           'x-i18n-title': {
             fr: 'Couleur de texte succès',
             en: 'Success text color',
