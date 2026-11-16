@@ -96,8 +96,13 @@ describe('formatFieldValue — dates', () => {
     assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'en' }), '01/15/2024')
     assert.equal(formatFieldValue(f({ format: 'date-time' }), '2024-01-15T10:00:00+01:00', { locale: 'en' }), '01/15/2024 10:00 AM')
   })
-  it('falls back on the English formats for a language other than fr and en', () => {
+  it('falls back on the English formats for a language whose dayjs locale is not loaded', () => {
     assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'de' }), '01/15/2024')
+  })
+  it('uses the formats of a language once its dayjs locale is loaded', async () => {
+    await import('dayjs/locale/es.js')
+    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'es' }), '15/01/2024')
+    assert.equal(formatFieldValue(f({ format: 'date-time' }), '2024-01-15T10:00:00+01:00', { locale: 'es-ES' }), '15/01/2024 10:00')
   })
   it('falls back to the raw value in English too', () => {
     assert.equal(formatFieldValue(f({ format: 'date' }), 'n/a', { locale: 'en' }), 'n/a')

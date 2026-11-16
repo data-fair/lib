@@ -59,12 +59,13 @@ const formatSingleValue = (field: Field, value: unknown, opts: FormatFieldOption
   if (concept === 'webPage') return webPageLabel('' + coerced)
 
   // trigger on `format`, like data-fair's own table does. French (the default) keeps its historical
-  // patterns; every other language reads the English localized formats, like the other fallbacks here
+  // patterns; another language reads its dayjs localized formats (L, L LT) when that dayjs locale is loaded
+  // (import 'dayjs/locale/xx.js' to support one), dayjs itself falls back on English otherwise
   if (field.format === 'date-time' || field.format === 'date') {
     const d = dateTimeInOwnTimeZone(coerced)
     if (!d.isValid()) return '' + coerced
     if (locale.startsWith('fr')) return d.format(field.format === 'date-time' ? 'DD/MM/YYYY, HH[h]mm' : 'DD/MM/YYYY')
-    return d.locale('en').format(field.format === 'date-time' ? 'L LT' : 'L')
+    return d.locale(locale.split('-')[0]).format(field.format === 'date-time' ? 'L LT' : 'L')
   }
 
   if (typeof coerced === 'boolean') {

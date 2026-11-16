@@ -1159,8 +1159,8 @@ selon `field.type` (clé de bucket, paramètre d'URL) ; libellé `x-labels` (rep
 nom de fichier d'un attachement, hostname d'une page web (concepts) ; date `DD/MM/YYYY` et date-heure
 `DD/MM/YYYY, HH[h]mm` sur `field.format`, **dans le fuseau porté par la valeur** ; Oui/Non (Yes/No,
 et Yes/No hors fr/en) ; nombre groupé par `toLocaleString(locale)`. Les dates gardent ces formats
-en français (défaut) ; toute autre `locale` reçoit les formats anglais localisés (`01/15/2024`,
-`01/15/2024 10:00 AM`). `formatField(item, field)` est la forme historique sur une
+en français (défaut) ; une autre `locale` reçoit les formats localisés de dayjs pour cette langue si sa locale dayjs
+est chargée (`01/15/2024 10:00 AM` en anglais), l'anglais sinon. `formatField(item, field)` est la forme historique sur une
 ligne entière. Ne pas réécrire un lookup `x-labels` maison, ni un `dayjs(value).format()` nu (il
 rendrait dans le fuseau du navigateur).
 
