@@ -1,6 +1,5 @@
 import type { Field } from '@data-fair/lib-common-types/application/index.js'
 import dayjs from 'dayjs'
-import 'dayjs/locale/fr.js'
 import localizedFormat from 'dayjs/plugin/localizedFormat.js'
 import { dateTimeInOwnTimeZone } from './date-tz.js'
 
@@ -10,12 +9,6 @@ import { attachmentFilename, webPageLabel } from './attachment.js'
 export interface FormatFieldOptions {
   /** BCP 47 tag, usually session.lang. */
   locale?: string
-  /**
-   * Format dates in the language of `locale` (`L` for a date, `L LT` for a date-time, French for fr,
-   * English for every other language). Off by default: dates keep the French patterns DD/MM/YYYY and
-   * DD/MM/YYYY, HH[h]mm whatever the locale, so callers that already pass a locale for numbers see no change.
-   */
-  localizedDates?: boolean
 }
 
 // Map, not an object literal: a lookup on a key like 'toString' must miss, not walk the prototype chain
@@ -65,14 +58,13 @@ const formatSingleValue = (field: Field, value: unknown, opts: FormatFieldOption
   if (concept === 'attachment') return attachmentFilename('' + coerced)
   if (concept === 'webPage') return webPageLabel('' + coerced)
 
-  // trigger on `format`, like data-fair's own table does
+  // trigger on `format`, like data-fair's own table does. French (the default) keeps its historical
+  // patterns; every other language reads the English localized formats, like the other fallbacks here
   if (field.format === 'date-time' || field.format === 'date') {
     const d = dateTimeInOwnTimeZone(coerced)
     if (!d.isValid()) return '' + coerced
-    if (opts.localizedDates) {
-      return d.locale(locale.startsWith('fr') ? 'fr' : 'en').format(field.format === 'date-time' ? 'L LT' : 'L')
-    }
-    return d.format(field.format === 'date-time' ? 'DD/MM/YYYY, HH[h]mm' : 'DD/MM/YYYY')
+    if (locale.startsWith('fr')) return d.format(field.format === 'date-time' ? 'DD/MM/YYYY, HH[h]mm' : 'DD/MM/YYYY')
+    return d.locale('en').format(field.format === 'date-time' ? 'L LT' : 'L')
   }
 
   if (typeof coerced === 'boolean') {

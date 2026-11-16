@@ -88,26 +88,19 @@ describe('formatFieldValue — dates', () => {
   it('falls back to the raw value when the date cannot be parsed', () => {
     assert.equal(formatFieldValue(f({ format: 'date' }), 'n/a'), 'n/a')
   })
-  it('uses the localized formats of the locale with localizedDates', () => {
-    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'en', localizedDates: true }), '01/15/2024')
-    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'fr', localizedDates: true }), '15/01/2024')
-    assert.equal(
-      formatFieldValue(f({ format: 'date-time' }), '2024-01-15T10:00:00+01:00', { locale: 'en', localizedDates: true }),
-      '01/15/2024 10:00 AM'
-    )
-    assert.equal(
-      formatFieldValue(f({ format: 'date-time' }), '2024-01-15T10:00:00+01:00', { locale: 'fr', localizedDates: true }),
-      '15/01/2024 10:00'
-    )
+  it('keeps the French patterns in French, the default', () => {
+    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'fr' }), '15/01/2024')
+    assert.equal(formatFieldValue(f({ format: 'date-time' }), '2024-01-15T10:00:00+01:00', { locale: 'fr-FR' }), '15/01/2024, 10h00')
   })
-  it('reads English formats for a language other than fr and en', () => {
-    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'de', localizedDates: true }), '01/15/2024')
+  it('uses the English localized formats in English', () => {
+    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'en' }), '01/15/2024')
+    assert.equal(formatFieldValue(f({ format: 'date-time' }), '2024-01-15T10:00:00+01:00', { locale: 'en' }), '01/15/2024 10:00 AM')
   })
-  it('keeps the French patterns without localizedDates, whatever the locale', () => {
-    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'en' }), '15/01/2024')
+  it('falls back on the English formats for a language other than fr and en', () => {
+    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'de' }), '01/15/2024')
   })
-  it('falls back to the raw value with localizedDates too', () => {
-    assert.equal(formatFieldValue(f({ format: 'date' }), 'n/a', { locale: 'en', localizedDates: true }), 'n/a')
+  it('falls back to the raw value in English too', () => {
+    assert.equal(formatFieldValue(f({ format: 'date' }), 'n/a', { locale: 'en' }), 'n/a')
   })
 })
 

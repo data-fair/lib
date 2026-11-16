@@ -1158,10 +1158,9 @@ const items = formatFieldValues(fields[key], raw, { locale: locale.value })  // 
 selon `field.type` (clé de bucket, paramètre d'URL) ; libellé `x-labels` (repli sur la valeur brute) ;
 nom de fichier d'un attachement, hostname d'une page web (concepts) ; date `DD/MM/YYYY` et date-heure
 `DD/MM/YYYY, HH[h]mm` sur `field.format`, **dans le fuseau porté par la valeur** ; Oui/Non (Yes/No,
-et Yes/No hors fr/en) ; nombre groupé par `toLocaleString(locale)`. Avec `localizedDates: true`, les
-dates suivent `locale` (`L` et `L LT` : `15/01/2024 10:00` en fr, `01/15/2024 10:00 AM` en en, l'anglais
-hors fr/en) ; sans l'option elles restent au format français quelle que soit la locale, à passer
-explicitement dans une appli bilingue. `formatField(item, field)` est la forme historique sur une
+et Yes/No hors fr/en) ; nombre groupé par `toLocaleString(locale)`. Les dates gardent ces formats
+en français (défaut) ; toute autre `locale` reçoit les formats anglais localisés (`01/15/2024`,
+`01/15/2024 10:00 AM`). `formatField(item, field)` est la forme historique sur une
 ligne entière. Ne pas réécrire un lookup `x-labels` maison, ni un `dayjs(value).format()` nu (il
 rendrait dans le fuseau du navigateur).
 
