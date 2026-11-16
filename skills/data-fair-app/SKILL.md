@@ -747,7 +747,7 @@ puis `const { t } = useI18n()` dans le `<script setup>` (la portée locale est a
 
 - **Activer le plugin de compilation** dans `vite.config.ts` : `import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'`, puis `VueI18nPlugin()` dans `plugins`. Sans lui les blocs `<i18n>` ne sont pas compilés. Plusieurs applications l'ont déjà installé sans s'en servir — vérifier avant de l'ajouter.
 - **Dates et durées** : `createLocaleDayjs(session.lang.value)` puis `useLocaleDayjs()`, cf. `snippets/locale-dayjs.ts`.
-- **Nombres et pourcentages** : `n()` plutôt que `toLocaleString()`, voir ci-dessous.
+- **Nombres et pourcentages** : `n()` avec un format nommé, ou `toLocaleString(locale)` sans option pour un nombre simple ; jamais `toLocaleString()` sans locale, voir ci-dessous. Les services suivent la même règle (`data-fair-service`, `references/i18n.md`).
 - **Ne pas porter l'i18n du catalogue dans `index.html`** (un seul `<title>`, une seule `<meta name="description">`) : elle passera par registry, qui porte `title` et `description` en objets `{ en, fr }`.
 - **Casse des libellés** : la règle de majuscule initiale s'applique à toutes les chaînes visibles, traduites ou en dur — voir « Libellés : majuscule initiale, casse de phrase » dans la section VJSF.
 
