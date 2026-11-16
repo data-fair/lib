@@ -2,13 +2,6 @@ import type { Field } from '@data-fair/lib-common-types/application/index.js'
 import { describe, it } from 'node:test'
 import { strict as assert } from 'assert'
 import { formatField, formatFieldValue, formatFieldValues } from '@data-fair/lib-utils/format/field.js'
-import dayjs from 'dayjs'
-import 'dayjs/locale/fr.js'
-import localizedFormat from 'dayjs/plugin/localizedFormat.js'
-
-dayjs.extend(localizedFormat)
-// the shape of useLocaleDayjs().dayjs from @data-fair/lib-vue
-const localeDayjs = (locale: string) => (value: string) => dayjs(value).locale(locale)
 
 const f = (props: Partial<Field>): Field => ({ key: 'k', type: 'string', ...props } as Field)
 
@@ -95,23 +88,26 @@ describe('formatFieldValue — dates', () => {
   it('falls back to the raw value when the date cannot be parsed', () => {
     assert.equal(formatFieldValue(f({ format: 'date' }), 'n/a'), 'n/a')
   })
-  it('uses the localized formats of an injected dayjs', () => {
-    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { dayjs: localeDayjs('en') }), '01/15/2024')
-    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { dayjs: localeDayjs('fr') }), '15/01/2024')
+  it('uses the localized formats of the locale with localizedDates', () => {
+    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'en', localizedDates: true }), '01/15/2024')
+    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'fr', localizedDates: true }), '15/01/2024')
     assert.equal(
-      formatFieldValue(f({ format: 'date-time' }), '2024-01-15T10:00:00+01:00', { dayjs: localeDayjs('en') }),
+      formatFieldValue(f({ format: 'date-time' }), '2024-01-15T10:00:00+01:00', { locale: 'en', localizedDates: true }),
       '01/15/2024 10:00 AM'
     )
     assert.equal(
-      formatFieldValue(f({ format: 'date-time' }), '2024-01-15T10:00:00+01:00', { dayjs: localeDayjs('fr') }),
+      formatFieldValue(f({ format: 'date-time' }), '2024-01-15T10:00:00+01:00', { locale: 'fr', localizedDates: true }),
       '15/01/2024 10:00'
     )
   })
-  it('keeps the French patterns when no dayjs is given, whatever the locale', () => {
+  it('reads English formats for a language other than fr and en', () => {
+    assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'de', localizedDates: true }), '01/15/2024')
+  })
+  it('keeps the French patterns without localizedDates, whatever the locale', () => {
     assert.equal(formatFieldValue(f({ format: 'date' }), '2024-01-15', { locale: 'en' }), '15/01/2024')
   })
-  it('falls back to the raw value with an injected dayjs too', () => {
-    assert.equal(formatFieldValue(f({ format: 'date' }), 'n/a', { dayjs: localeDayjs('en') }), 'n/a')
+  it('falls back to the raw value with localizedDates too', () => {
+    assert.equal(formatFieldValue(f({ format: 'date' }), 'n/a', { locale: 'en', localizedDates: true }), 'n/a')
   })
 })
 
