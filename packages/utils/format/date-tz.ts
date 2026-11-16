@@ -14,10 +14,14 @@ export const explicitOffsetMinutes = (value: unknown): number | null => {
   return (match[1] === '-' ? -1 : 1) * (Number(match[2]) * 60 + Number(match[3]))
 }
 
-/** A date-time pinned to its own source timezone; UTC-stored values stay local, like data-fair. */
-export const dateTimeInOwnTimeZone = (value: unknown): Dayjs => {
+/**
+ * A date-time pinned to its own source timezone; UTC-stored values stay local, like data-fair.
+ * `dayjsFactory` lets the caller pass a localized dayjs (it must carry the utc plugin, which this module
+ * extends on the shared dayjs singleton).
+ */
+export const dateTimeInOwnTimeZone = (value: unknown, dayjsFactory: (value: string) => Dayjs = dayjs): Dayjs => {
   const offsetMinutes = explicitOffsetMinutes(value)
-  const d = dayjs(value as string)
+  const d = dayjsFactory(value as string)
   // re-apply the source offset so the rendering does not drift to the runtime timezone
   return offsetMinutes === null ? d : d.utcOffset(offsetMinutes)
 }

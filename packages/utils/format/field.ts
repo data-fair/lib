@@ -1,10 +1,17 @@
 import type { Field } from '@data-fair/lib-common-types/application/index.js'
+import type { Dayjs } from 'dayjs'
 import { dateTimeInOwnTimeZone } from './date-tz.js'
 import { attachmentFilename, webPageLabel } from './attachment.js'
 
 export interface FormatFieldOptions {
   /** BCP 47 tag, usually session.lang. */
   locale?: string
+  /**
+   * A dayjs factory set to the session language, usually `useLocaleDayjs().dayjs` from
+   * @data-fair/lib-vue. When given, dates use its localized formats (`L` for a date, `L LT` for a
+   * date-time); without it they keep the French patterns DD/MM/YYYY and DD/MM/YYYY, HH[h]mm.
+   */
+  dayjs?: (value: string) => Dayjs
 }
 
 // Map, not an object literal: a lookup on a key like 'toString' must miss, not walk the prototype chain
@@ -54,19 +61,18 @@ const formatSingleValue = (field: Field, value: unknown, opts: FormatFieldOption
   if (concept === 'attachment') return attachmentFilename('' + coerced)
   if (concept === 'webPage') return webPageLabel('' + coerced)
 
-  // trigger on `format`, like data-fair's own table does
-  // TODO: localize the date patterns. data-fair does not hardcode them either: its
-  // ui/src/composables/dataset/format-date-logic.ts takes the dayjs factory as an argument and the
-  // caller passes @data-fair/lib-vue's `localeDayjs.dayjs`, so `.format('lll'|'L')` resolves through
-  // the localizedFormat plugin. Same move here (an injected factory) rather than a locale table.
+  // trigger on `format`, like data-fair's own table does. Like data-fair
+  // (ui/src/composables/dataset/format-date-logic.ts), the localized patterns come from an injected dayjs
+  // factory carrying the session language and the localizedFormat plugin, rather than a locale table
   if (field.format === 'date-time' || field.format === 'date') {
-    const d = dateTimeInOwnTimeZone(coerced)
+    const d = dateTimeInOwnTimeZone(coerced, opts.dayjs)
     if (!d.isValid()) return '' + coerced
+    if (opts.dayjs) return d.format(field.format === 'date-time' ? 'L LT' : 'L')
     return d.format(field.format === 'date-time' ? 'DD/MM/YYYY, HH[h]mm' : 'DD/MM/YYYY')
   }
 
   if (typeof coerced === 'boolean') {
-    const [yes, no] = booleanLabels.get(locale.split('-')[0]) ?? booleanLabels.get('fr')!
+    const [yes, no] = booleanLabels.get(locale.split('-')[0]) ?? booleanLabels.get('en')!
     return coerced ? yes : no
   }
   if (typeof coerced === 'number') return coerced.toLocaleString(locale)
