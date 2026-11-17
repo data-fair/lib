@@ -125,7 +125,7 @@ Le fil d'Ariane du portail (`breadcrumb.position: 'below-nav'`) est une barre gr
 ```js
 { type: 'responsive-grid', uuid: u(), columns: 3, gutter: 'default', align: 'stretch',
   children: [
-    { type: 'card', uuid: u(), mb: 0, border: true, elevation: 0, contentAlign: 'start',
+    { type: 'card', uuid: u(), border: true, elevation: 0, contentAlign: 'start', // no `mb` on a card: refused by the page schema
       hover: { effects: ['border', 'titleUnderlineAnimated', 'imageZoom'], color: 'primary' },
       children: [ { type: 'title', uuid: u(), titleSize: 'h6', titleTag: 'h3', content: '…' },
                   { type: 'text', uuid: u(), mb: 0, content: '…' } ],
@@ -147,6 +147,20 @@ Le fil d'Ariane du portail (`breadcrumb.position: 'below-nav'`) est une barre gr
 - Une carte n'a d'effet de survol **que si elle porte un `link`** (`page-element-card.vue:4-7`) ; sans lien, rester sobre.
 - `link` rend toute la carte cliquable via un overlay : les liens et boutons internes restent cliquables.
 - `thumbnail.location: 'top'` rend l'image sur 170 px fixes ; `'left'` occupe une colonne (passe au-dessus sur mobile).
+
+- `columns` n'accepte que 2, 3, 4 ou 6 (5 est refusé). Une carte n'a pas de `mb` : le schéma le refuse. `centered: true` centre la dernière ligne incomplète.
+
+### Bloc à demi-largeur centré (recherche, bouton, encart)
+
+Un bloc seul en pleine largeur (barre de recherche du bandeau d'accueil, formulaire, encart) s'étire sur tout le conteneur. Pour le ramener à la moitié de la largeur, centré, le mettre **seul dans une grille de 2 colonnes centrée** : la ligne incomplète est centrée, et la grille repasse en une colonne sur mobile.
+
+```js
+{ type: 'responsive-grid', uuid: u(), mb: 0, columns: 2, centered: true, gutter: 'default', align: 'stretch',
+  children: [{ type: 'search', uuid: u(), mb: 0, label: 'Chercher un jeu de données : transport, budget…', hideLabel: true,
+    btnPosition: 'included', fullWidth: true, redirectPage: true, centered: true, color: 'secondary', elevation: 0, border: false, rounded: 'default', density: 'comfortable' }] }
+```
+
+Mettre l'exemple de recherche dans le libellé du champ plutôt que dans une ligne de texte clair sous la barre, illisible sur une photo.
 
 ### Deux colonnes (contenu + encart)
 
@@ -172,13 +186,13 @@ Une ligne markdown par entrée, **re-triée** avant publication (voir `SKILL.md`
   link: { type: 'external', href: '…', title: 'Échanger sur vos données' } }
 ```
 
-`usePortalConfig: true` reprend le style de bouton du portail ; sans style de bouton défini sur le portail, il rend un simple texte : passer alors `usePortalConfig: false` + `config: { color: 'primary', variant: 'default' }`. Un seul CTA primaire par page ; le libellé est un verbe (`S’inscrire`, `Télécharger`, `Nous contacter`) — jamais « Cliquez ici ».
+`usePortalConfig: true` reprend le style de bouton du portail ; sans style de bouton défini sur le portail, il rend un simple texte : passer alors `usePortalConfig: false` + `config: { color: 'primary', variant: 'default' }`. Un seul CTA primaire par page ; le libellé est un verbe (`S’inscrire`, `Télécharger`, `Nous contacter`) — jamais « Cliquez ici ». Le libellé nomme aussi sa cible (« Consulter les menus de la restauration scolaire », « Consulter le budget de la Ville ») : deux boutons au même libellé sur une page (« Consulter la visualisation de données » ×2) sont une faute d'accessibilité (RGAA 6.1).
 
 Le bloc `button` reste petit. Pour l'action principale d'une page, un **gros bouton** est une carte remplie, cliquable, dont le titre avec icône sert de libellé ; une grille de 2 colonnes lui donne la moitié de la largeur (au tiers, le libellé passe sur deux lignes) :
 
 ```js
 { type: 'responsive-grid', uuid: u(), mb: 8, columns: 2, gutter: 'default', align: 'stretch', centered: false,
-  children: [{ type: 'card', uuid: u(), mb: 0, border: false, elevation: 0, contentAlign: 'center', actions: [],
+  children: [{ type: 'card', uuid: u(), border: false, elevation: 0, contentAlign: 'center', actions: [],
     background: { color: 'primary' }, hover: { effects: ['darken', 'titleUnderlineAnimated'], color: 'primary' },
     link: { type: 'external', href: '/contact', target: false },
     children: [{ type: 'title', uuid: u(), centered: true, titleSize: 'h6', titleTag: 'div', bold: true, line: { position: 'none' }, content: 'Nous écrire', icon: { mdi: { name, svg, svgPath } } }] }] }

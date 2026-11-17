@@ -122,6 +122,8 @@ Correction : indexer la taille des polices du graphique sur la taille de police 
 
 Les palettes proposées par défaut dans le schéma de configuration doivent respecter ces seuils : c'est le seul endroit où l'application peut protéger l'utilisateur qui configure sa visualisation.
 
+**Variante `tonal` (puces, boutons) : à éviter, ou avec parcimonie.** Le texte est dessiné dans la couleur de la donnée sur un fond pâle de la même teinte : avec une palette de catégories (ocre, vert clair, rose…), le contraste du texte tombe souvent sous 4,5:1 (critère 3.2) et la puce ne se distingue plus du fond. Préférer `outlined` (texte en couleur de texte, bordure en couleur de donnée) ou un fond plein avec texte `on-*`. Ne pas proposer `tonal` comme valeur par défaut dans un schéma de configuration (app-catalog, list-details…), et le remplacer quand on configure une application.
+
 ## Contrôles d'interface — critères 10.7, 11.1
 
 - **10.7** — la prise de focus doit être visible sur **tous** les composants interactifs. Les composants Vuetify avec `outline-style:none`, sans ombre portée et dont le voile de survol reste à opacité 0 en état focus n'affichent aucun indicateur. Vérifier par captures d'écran comparées avec et sans focus, en parcourant réellement à la tabulation — lire le style calculé après un `.focus()` programmatique ne déclenche pas toujours `:focus-visible`.

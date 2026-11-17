@@ -725,6 +725,7 @@ Les points clés :
 | Visualisation atteignable et opérable au clavier, infobulles masquables par Échap | 7.1, 7.3, 10.13, 12.11 |
 | Texte du graphique agrandissable à 200 % — le texte rasterisé d'un canvas ne l'est pas | 10.4 |
 | Séries distinguables autrement que par la couleur, ratios ≥ 3:1 — y compris dans les palettes par défaut du schéma de config | 3.1, 3.3 |
+| Pas de variante `tonal` sur les puces et boutons colorés par la donnée (texte de la teinte sur fond pâle : contraste insuffisant) — `outlined` ou fond plein | 3.2 |
 
 Un rendu **SVG** satisfait gratuitement le critère 10.4 et se rend accessible sur place, contrairement à un canvas. À prendre en compte au moment de choisir une bibliothèque de graphiques.
 
