@@ -125,7 +125,7 @@ Le fil d'Ariane du portail (`breadcrumb.position: 'below-nav'`) est une barre gr
 ```js
 { type: 'responsive-grid', uuid: u(), columns: 3, gutter: 'default', align: 'stretch',
   children: [
-    { type: 'card', uuid: u(), border: true, elevation: 0, contentAlign: 'start', // no `mb` on a card: refused by the page schema
+    { type: 'card', uuid: u(), border: true, elevation: 0, contentAlign: 'start', // a card has no `mb`: the key is dropped at validation, without effect
       hover: { effects: ['border', 'titleUnderlineAnimated', 'imageZoom'], color: 'primary' },
       children: [ { type: 'title', uuid: u(), titleSize: 'h6', titleTag: 'h3', content: '…' },
                   { type: 'text', uuid: u(), mb: 0, content: '…' } ],
@@ -148,7 +148,7 @@ Le fil d'Ariane du portail (`breadcrumb.position: 'below-nav'`) est une barre gr
 - `link` rend toute la carte cliquable via un overlay : les liens et boutons internes restent cliquables.
 - `thumbnail.location: 'top'` rend l'image sur 170 px fixes ; `'left'` occupe une colonne (passe au-dessus sur mobile).
 
-- `columns` n'accepte que 2, 3, 4 ou 6 (5 est refusé). Une carte n'a pas de `mb` : le schéma le refuse. `centered: true` centre la dernière ligne incomplète.
+- `columns` n'accepte que 2, 3, 4 ou 6 (5 est refusé). Une carte n'a pas de `mb` : la clé est retirée à la validation, sans effet (espacer avec le `gutter` de la grille ou le `mb` du bloc voisin). `centered: true` centre la dernière ligne incomplète.
 
 ### Bloc à demi-largeur centré (recherche, bouton, encart)
 
