@@ -17,7 +17,7 @@ async function setupTheme () {
 
 // vuetifySessionOptions(session) fournit :
 // - le thème résolu par resolveTheme parmi QUATRE valeurs : default, dark, hc, hc-dark
-//   (réglages du site + cookie theme + prefers-color-scheme + prefers-contrast)
+//   (réglages du site + cookie theme + prefers-color-scheme + forced-colors: active)
 // - les couleurs du site
 // - la locale
 

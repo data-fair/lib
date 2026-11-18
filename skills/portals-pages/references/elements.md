@@ -30,6 +30,7 @@ Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 - `titleSize` (requis) pilote l'apparence : `h1`…`h6` → `text-h1`…`text-h6` (Vuetify). `titleTag` pilote la balise HTML : `h1`…`h6` ou `div`.
 - Le layout rend le titre du portail en `<h1>` **seulement si l'entête affiche son titre** (`config.header.show && showTitle && !logoPrimaryCentered`) : vérifier dans `GET /portal/api/portal`. Héros d'accueil : `titleSize: 'h2'` + `titleTag: 'h1'`. Page de contenu : `titleSize: 'h3'` + `titleTag: 'h2'` (ou `h1` si aucun autre h1).
 - `anchor.enabled` génère un lien direct ; `anchor.inToc` ajoute l'entrée au sommaire (coché par défaut dans l'éditeur, à écrire explicitement via l'API) ; `anchor.label` raccourcit le libellé du sommaire. Un seul titre dans le sommaire suffit à l'afficher, ce qui neutralise `fluid` sur grand écran jusqu'à portals 2.34.0 : voir « Page pleine largeur » dans `SKILL.md`.
+- **Lien vers une ancre** (bouton « Voir les données » qui descend vers une section) : lien `external` d'`href` `#<slug>`. Le slug est calculé côté serveur depuis le **texte du titre** (`content` passé à `slugify` : « Jeux de données & applications » → `jeux-de-donnees-and-applications`), jamais depuis `anchor.label`, et suffixé `-2`, `-3`… en cas de doublon dans la page (`api/src/pages/operations.ts`). Relire `anchor._slug` après le `PATCH` plutôt que le deviner. Modifier le texte du titre change le slug : le lien ne mène plus nulle part, sans erreur.
 - Autres : `color`, `icon`, `line { position, color, growOnHover? }`, `link` (lien simple).
 - **Lien texte avec flèche** (style ODS « Voir tous les jeux → ») : un `title` avec `link` et `icon: { mdi: { name, svg, svgPath }, color }` ; l'icône est rendue **avant** le texte et fait partie du lien. Le bloc `button` ne peut pas le faire (pas de variante texte, voir `button`).
 
@@ -95,6 +96,7 @@ Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 - `syncParams` : `none`, `sandboxed` (paramètres d'URL cloisonnés par `uuid`), `shared-filters` (partage des filtres `_c`/`_d`).
 - `displayMode` : `auto-resize` (défaut, hauteur optimale), `aspect-ratio` (+ `ratio` : `auto`, `16/9`, `4/3`, `1/1`, `3/2`, `21/9` et `maxHeight`), `fixed-height` (+ `height`, min 150, défaut 500).
 - `actionButtons.items` : `fullscreen`, `capture`, `embed`, `datasets` ; `style` (`icon`/`full`/`text`), `position` (`top`/`bottom`), `alignment` (`start`/`center`/`end`).
+- `staticFilters` : liste `{ key, value }` de filtres par défaut (`_c_…`, `_d_…`) et de couleurs (`_t_primary`, `_t_secondary`) passés à la visu seulement ; règles et versions dans `references/embeds.md`.
 - Détails et comparaison avec `iframe` : `references/embeds.md`.
 
 ### `button`
@@ -111,6 +113,7 @@ Le serveur calcule et stocke en plus, à ne pas écrire soi-même :
 - `usePortalConfig: true` reprend le style de bouton du portail ; sinon `config` porte les couleurs/variantes.
 - `config.variant` ne connaît que `default` (plein), `outlined` et `tonal` : **pas de bouton texte sans fond**. Pour un lien discret, utiliser un `title` avec `link` (voir `title`) ou un lien markdown dans un `text`.
 - `fullWidth` (après 2.33.1, commit `50457b1b`) : bouton pleine largeur, `centered` alors ignoré.
+- `target` (nouvel onglet) est appliqué quel que soit le type de lien sur `button`, `title` et `card`. Le bloc `menu` (liste déroulante de liens) l'ignore : ses liens `external` s'ouvrent **toujours** dans un nouvel onglet, les autres jamais. Pour qu'un lien du menu vers une page du portail ouvre un nouvel onglet, en faire un `external` d'URL absolue. Le menu du portail a encore une autre règle (`portals-config` §6).
 
 ### `divider`
 
@@ -179,6 +182,16 @@ Le serveur traverse récursivement `card`, `banner`, `responsive-grid`, `two-col
 ## Blocs fonctionnels (rappel)
 
 `search`, `topics`, `metrics` (déprécié), `contact`, `custom-agent` (beta) ; `datasets-catalog`, `datasets-list`, `dataset-card`, `dataset-table`, `dataset-form`, `dataset-download` ; `applications-catalog`, `applications-list` ; `reuses-*`, `event-*`, `news-*`. Ces blocs dépendent des fonctionnalités du portail et de ses permissions ; documenter les champs à partir du schéma avant usage.
+
+### Catalogues (`datasets-catalog`, `applications-catalog`)
+
+- Ils ne listent que les jeux et visualisations **publiés sur le portail** (requête `publicationSites=data-fair-portals:<portalId>`). Sur un portail neuf ou de recette où rien n'est encore publié, le catalogue est vide : ce n'est pas un défaut du bloc, publier les ressources sur ce portail.
+- `staticFilters` (portals ≥ 2.34.0) restreint le catalogue sans que le visiteur le voie ni le change : `includedOwners`, `excludedOwners`, `includedTopics`, `includedConcepts`, `includedKeywords`, `types` (jeux) ou `includedBaseApplications` (visus). Chaque valeur est `{ id, title? }` ; les filtres du visiteur ne peuvent que resserrer les valeurs incluses.
+- Id d'un propriétaire : `<type>:<id>:<département>`, avec `-` pour une organisation sans département (`organization:<orgId>:-`). C'est la forme des facettes `owner` de data-fair, qui alimentent la liste du formulaire.
+
+```js
+{ type: 'datasets-catalog', uuid: u(), staticFilters: { includedOwners: [{ id: 'organization:<orgId>:<departement>', title: '<nom du département>' }] } }
+```
 
 ## Structure éditoriale type
 

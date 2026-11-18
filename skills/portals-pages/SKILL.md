@@ -239,6 +239,9 @@ Toute page qui nomme une application DataFair emploie le **libellé de l'applica
 - **Mermaid illisible** → largeur naturelle trop grande ; passer en `TB` et raccourcir les libellés.
 - **Fonds jaune/orange sur le diagramme** → le thème `base` de Mermaid dérive ses fonds de grappes du thème du portail ; neutraliser avec une directive `%%{init: ...}%%` (voir `references/mermaid.md`).
 - **Publication cross-département impossible** → être admin du propriétaire du portail visé, ou passer par `contributorDepartments` + validation par un admin du portail ; pour un transfert durable, transférer l'`owner` de la page (admin requis des deux côtés).
+- **Catalogue vide sur un portail neuf** → il ne liste que les ressources publiées sur ce portail ; les publier (`references/elements.md`, « Catalogues »).
+- **Couleurs d'une visu intégrée sans effet** → champ `colors` écrit sur portals ≥ 2.37.2 ; passer par `staticFilters` `_t_primary` / `_t_secondary` (`references/embeds.md`).
+- **Lien vers une ancre cassé** → le texte du titre a changé ou le slug a été deviné ; relire `anchor._slug` (`references/elements.md`, `title`).
 - **Iframe externe bloquée** → ajouter le domaine dans `allowedFrameSources` ; pour une app de la même instance, préférer le bloc `application`.
 - **`linked page not found` / `403` à l'édition** → le portail appartient à un autre compte que celui de la session ; vérifier `portal.owner` et le rôle de l'identité courante.
 - **Page absente de la liste** → les pages sont **cloisonnées par département** : une page du portail n'est listée que depuis le département qui la possède ; une page absente peut très bien exister (`GET /pages/:id` par son id).
@@ -267,4 +270,4 @@ Toute page qui nomme une application DataFair emploie le **libellé de l'applica
 - `references/elements.md` — catalogue des blocs utiles : champs requis, propriétés courantes, conventions de contenu.
 - `references/design.md` — composition et rendu : parti pris, recettes (hero, sections, grilles, FAQ), table « propriété → rendu » et pièges visuels, typographie/hiérarchie, rythme, thèmes et contraste, relecture visuelle.
 - `references/mermaid.md` — règles de lisibilité, directive de thème, exemple de diagramme de bout en bout.
-- `references/embeds.md` — `application` vs `iframe`, CSP, multi-instance, boutons d'action.
+- `references/embeds.md` — `application` vs `iframe`, filtres par défaut et couleurs (`staticFilters`), CSP, multi-instance, boutons d'action.

@@ -142,6 +142,8 @@ async () => {
 
 Les cookies injectés par le proxy partent automatiquement. Vérifier l'origine courante avant l'appel : après une navigation vers un portail, une URL relative vise le portail et renvoie le HTML de la SPA.
 
+Le proxy n'injecte les cookies de session que sur l'hôte cible du profil ; tout autre hôte est tunnelé sans modification. Un `fetch` lancé depuis une page d'un sous-domaine de portail part donc **anonyme**, même vers une API qui y existe (`401`/`403` sur une écriture). Lancer l'écriture depuis une page de l'hôte cible, ou depuis le shell (`curl` ou Node via le proxy).
+
 ### `curl` via le proxy
 
 ```bash

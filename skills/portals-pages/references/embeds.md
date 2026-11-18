@@ -9,7 +9,7 @@ Deux blocs, deux usages. Le choix se fait sur **l'hôte de l'application**, pas 
 | CSP | aucun réglage | domaine à autoriser dans `allowedFrameSources` |
 | Hauteur | `displayMode` + `ratio`/`maxHeight`/`height` | aucune (déduite par `d-frame`, ratio largeur) |
 | Boutons | plein écran, capture, intégration, sources de données | aucun |
-| État/params | `syncParams` (cloisonné ou filtres partagés) | non |
+| État/params | `syncParams` (cloisonné ou filtres partagés), `staticFilters` (filtres par défaut, couleurs) | non |
 
 ## Bloc `application`
 
@@ -41,6 +41,22 @@ Champs utiles :
 - `displayMode: "aspect-ratio"` + `ratio` (`auto`, `16/9`, `4/3`, `1/1`, `3/2`, `21/9`) + `maxHeight` ;
 - `displayMode: "fixed-height"` + `height` (min 150) : utile pour une carte (600 px) ; à éviter pour du responsive strict ;
 - `syncParams: "sandboxed"` préfixe les paramètres d'URL par le `uuid` du bloc ; `"shared-filters"` partage les filtres `_c`/`_d` avec les autres blocs de la page.
+
+### Filtres par défaut et couleurs (`staticFilters`)
+
+```json
+"staticFilters": [
+  { "key": "_c_codeCommune_in", "value": "86194" },
+  { "key": "_t_primary", "value": "#1E88E5" }
+]
+```
+
+- Paires `{ key, value }` ajoutées à l'URL de l'iframe seulement : `d-frame` ne remonte pas dans l'URL de la page un paramètre resté égal à sa valeur initiale. Ce sont des valeurs par défaut invisibles, que le visiteur peut changer si la visu le permet (portals ≥ 2.34.0).
+- `key` commence par `_c_` (concept, `_c_<concept>_<opérateur>`), `_d_` (`_d_<jdd>_<colonne>_<opérateur>`) ou `_id_`, ou vaut exactement `_t_primary` / `_t_secondary` ; toute autre clé échoue à la validation. Opérateurs : `eq`, `neq`, `in`, `nin` (valeurs séparées par des virgules), `lt`, `lte`, `gt`, `gte`, `starts`, `exists`, `nexists`, `contains`, `search`.
+- **Sélection reçue** : un `_c_`/`_d_` posé sur le champ de sélection que déclare la visu la fait **mettre l'entité en évidence** au lieu de restreindre ses données (une carte garde toutes ses géométries). Convention : skill `data-fair-app`, `references/filters-url-convention.md`. Le marqueur `_s_` est refusé depuis portals 2.37.2 et retiré des pages existantes à la mise à jour.
+- **Couleurs** : `_t_primary` / `_t_secondary` (hexadécimal à 6 chiffres, `#` facultatif) remplacent les couleurs du portail dans cette visu seulement. Toute autre valeur est refusée par le schéma, car simple-directory la rejetterait et la visu perdrait son thème. Le portail les recopie en `primary` / `secondary` pour les visus anciennes, qui ne lisent que ces paramètres.
+- Un tableau de bord ne relaie les `_t_*` à ses sous-applications (et à leurs captures) qu'à partir d'`app-dashboards` 1.1.1 : avant, le cadre prend les couleurs du bloc, les graphiques gardent celles du portail.
+- Versions : les couleurs passent par `_t_*` depuis portals 2.37.2. En 2.37.0 et 2.37.1, c'était un champ `colors { primary, secondary }` du bloc, converti en `_t_*` à la mise à jour : sur une version plus récente, un `colors` écrit par l'API n'a aucun effet.
 
 Sous le capot, le bloc rend un `<d-frame>` dont l'iframe est dans le **shadow root**. Vérification :
 

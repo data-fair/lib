@@ -19,8 +19,9 @@ DashboardConfig
 ├── sectionsTitleStyle
 ├── sections[]
 │   ├── title, description, icon {name, svg, svgPath}
-│   └── rows[] { height, elements[] }     height in px, -1 = auto
+│   └── rows[] { height, heights, elements[] }  height in px, -1 = auto; heights per breakpoint
 ├── showSources                           action bar under each element (source links)
+├── showEmbed, showCapture                other buttons of that bar (false = sources only)
 └── applications[]                        [{id, title}] of every embedded app (not in the schema: the form
                                           maintains it through set-config; mirror it when writing by API)
 ```
@@ -74,7 +75,9 @@ Common keys: `title`, `width` (1 narrow, 2 medium, 3 wide; mix 1 + 2 on a row fo
 | `application` | `/data-fair/app/<id>` | `_d_<rootId>_<field>_<op>` (comparison column prefix removed) **and** `_c_<concept>_<op>` for fields with a concept, plus `_c_date_match`, `_c_geo_distance` |
 | `tablePreview`, `form` | `/data-fair/embed/dataset/<id>/table\|form` | `_d_<rootId>_<field>_<op>`, `_c_<concept>_<op>` mirrored for third-party datasets |
 
-An application on another dataset follows only through `_c_*`, so it filters only if its
+Values are JSON-quoted and comma-separated (`_c_codeCommune_in="56260","56003"`); the API
+accepts that form, do not strip the quotes. An application on another dataset follows only
+through `_c_*`, so it filters only if its
 dataset carries the same concept **and** the app honours `_c_*`. The dashboard writes its
 own state in its URL (`_d_<rootId>_*`, comparison columns prefixed), which is what makes
 the link shareable and what a portals page in `syncParams: 'shared-filters'` relays.
@@ -100,6 +103,18 @@ definitions and source links in each sub-application description, displayed with
   key figures.
 - Rows: several `width: 2` elements per row keep a tab within one or two screens;
   one `width: 3` element only for the map or a dominant chart.
+- `heights {default, sm, md, lg, xl}` (since 1.0.12) overrides `height` per breakpoint,
+  mobile-first: a breakpoint without a value takes the closest smaller one, then
+  `default`, then `height`; `xs` takes that fallback, `xxl` = `xl`. Give a floor (~300 px)
+  to blocks that shrink badly on phones (waffles, maps).
+
+## Sources bar
+
+`showSources: true` lists, under each `application` element, the `datasets[].title` of
+that sub-application's `GET /configuration`. data-fair refreshes these entries from the
+catalogue on every read, so rename the **dataset**, not the sub-app config. The read is
+cached on the sub-app's `updatedAt`: after a rename, `PUT` its config again (same body) to
+serve the new title.
 
 ## Complete example (multi-scale, comparison, method)
 

@@ -119,6 +119,6 @@ Une réponse `200` n'est pas une vérification. Pour tout résultat visible par 
 
 - `references/webmcp.md` — snippets (attente, listing, appel, appel dans une iframe, `fetch` same-origin, `curl` via proxy), inventaire des outils par surface, outils des formulaires VJSF.
 - `references/vuetify.md` — clics scriptés sur Vuetify 4 : champs de sélection recouverts, menus et dialogues téléportés, interrupteurs, transitions de stepper, `d-frame`.
-- `references/datasets-api.md` — résolution des slugs, cycle de vie et `409`, caches de lecture, types inférés, extensions et `_geopoint`, applications sur un portail, limites de débit, métadonnées (`modified`, `datasetsMetadata`).
+- `references/datasets-api.md` — résolution des slugs, cycle de vie et `409`, caches de lecture, types inférés, extensions et `_geopoint`, applications sur un portail, limites de débit, métadonnées (`modified`, `datasetsMetadata`) ; listes par propriétaire et département, permissions (implicites ou explicites, formes de `department`), cloisonnement par ligne (`filterActiveAccount`, `lineOwnership`), jeux REST et pièces jointes de lignes, pièces jointes de métadonnées, données de référence (`storageRatio`), routes de reprise superadmin (`_refinalize`).
 - `nhi-proxy/docs/usage.md` — câblage du proxy (profils, Playwright MCP, curl, pièges localhost).
 - `portals-pages` — contenu des pages de portail, qui applique cette échelle.

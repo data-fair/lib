@@ -152,8 +152,19 @@ if (role === 'admin') { /* can edit */ }
 5. Otherwise -> `null`
 
 Options for `getAccountRole` / `assertAccountRole`:
-- `allAccounts: true` -- check all user's org memberships, not just the currently active one
-- `acceptDepAsRoot: true` -- users in the root org (no department) can access department-scoped resources
+- `allAccounts: true` -- check all user's org memberships, not just the currently active one (the role of the first matching membership is returned)
+- `acceptDepAsRoot: true` -- skip the department check, so a department member acts with their role on the organization root and on the other departments (simple-directory uses it behind its `depAdminIsOrgAdmin` setting). Root members do not need it, see below.
+
+### Organization root and departments
+
+In simple-directory a user is a member of an organization **either at its root or in one or more of its departments, never both** (adding the other kind is refused with a 400; with `singleMembership` the existing membership is moved instead), each membership with its own role. The active account designates one membership, and `matchAccount` (`packages/common-types/session/index.ts`) only checks the department when the **active account** has one:
+
+| Active account | Root resource (`owner` without department) | Resource of department D | Resource of another department |
+|---|---|---|---|
+| Root member, role R | R | R | R |
+| Member of department D, role R | `null` | R | `null` |
+
+So a root admin is admin of every department, a root contributor is contributor of every department, and the ownership filter of a list (above) gives root members the resources of all departments. A service that wants a different rule (a department resource hidden from root members, a department member reaching the root) must say so explicitly, the lib will not.
 
 ### Filtering Lists by Ownership
 

@@ -50,6 +50,24 @@ Schemas and generated types live next to the router:
 `packages/express/identities/types/{post-req,delete-req}/schema.ts`. The
 emitter (simple-directory `api/src/webhooks/service.ts`) uses the same types.
 
+Delivery, as the emitter does it:
+
+- **fire and forget**: the webhook is sent after simple-directory has written
+  its own changes, without blocking the caller, and is **never retried**. A
+  failure (401, 421, 5xx, service down) is only logged (`webhook-identity-post`
+  / `webhook-identity-delete`) and counted in simple-directory's
+  `df_internal_error` metric. A service that misses it keeps its copies until
+  the next `POST` of the same identity; a missed `DELETE` never comes back.
+- **internal calls only**: the router refuses a request carrying
+  `x-forwarded-host` with a 421 (`assertReqInternal`, bypassed only by
+  `IGNORE_ASSERT_REQ_INTERNAL`). `IDENTITIES_WEBHOOKS` must point at the
+  internal URL of each service, not at its public one.
+- one identity per webhook: a renamed organization sends `POST organization`
+  only, never a `POST user` for each member.
+
+What simple-directory changes itself before sending, and which action sends
+which webhook: `references/simple-directory-side.md`.
+
 ## Mounting the router
 
 ```ts

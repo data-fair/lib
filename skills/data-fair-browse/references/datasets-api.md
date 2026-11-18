@@ -5,7 +5,8 @@ Comportements de `/data-fair/api/v1` à connaître avant d'écrire au barreau �
 ## Résoudre un slug
 
 - `GET /datasets/{ref}` accepte un **id** partout, mais un **slug** seulement dans le contexte d'un site de publication : sur l'hôte du portail (slug cherché parmi les jeux du propriétaire du portail), ou sur l'hôte principal avec `?publicationSites=data-fair-portals:<portalId>`. Ailleurs, un slug répond `404` (`getByUniqueRef`, `misc/utils/find.ts` ; contexte posé dans `app.js`). Même règle pour `/applications/{ref}`.
-- En liste, le slug est un filtre ordinaire : `GET /datasets?slug=<slug>` (ou `slugs=a,b`, `ids=a,b`).
+- En liste, `GET /datasets?slug=<slug>` (ou `slugs=a,b`, `ids=a,b`) filtre (`fieldsMap`, `datasets/service.ts`). `q=` est une recherche plein texte et ne regarde pas les slugs.
+- `GET /applications` n'a **pas** de filtre par slug : `?slug=` est ignoré sans erreur et renvoie toute la liste (`fieldsMap`, `applications/service.ts`). Passer par `GET /applications/{id}`, ou `?q=<titre>` puis filtrer sur `slug` côté client.
 
 ## Cycle de vie : `409` pendant un traitement
 
@@ -23,6 +24,7 @@ Comportements de `/data-fair/api/v1` à connaître avant d'écrire au barreau �
 - Les autres routes (`/lines`, agrégations…) servent la copie sans la revalider. Pour forcer la relecture, passer `?finalizedAt=<valeur récente>` : le cache est ignoré si elle est plus récente que la copie. Une valeur plus récente que le jeu lui-même répond `400`.
 - `/lines` vide ou ancien juste après une écriture REST : ce n'est **pas** un délai de rafraîchissement Elasticsearch. Les lignes unitaires et les `_bulk_lines` de moins de 200 000 octets et de 2000 lignes sont indexées dans la requête (`refresh: wait_for`). La cause est le cache HTTP : `/lines` répond `Last-Modified: <finalizedAt>`, qui ne bouge qu'à la finalisation, donc `304` et le navigateur resert l'ancien corps ; sur un jeu public, le reverse proxy garde en plus la réponse 5 min (`Cache-Control: public, max-age=300`). Parade, celle de l'interface : ajouter un paramètre propre à l'écriture, `?indexedAt=<indexedAt renvoyé par _bulk_lines>` (ou n'importe quel horodatage).
 - Les gros bulks, `?async=true` et les bulks avec pièces jointes sont indexés plus tard par le worker : les lignes apparaissent après le traitement.
+- `GET /datasets/{id}/raw` est servi sans aucun cache (`cacheHeaders.noCache`, `routes/files.ts`), mais ne renvoie que le fichier source d'un jeu fichier, pas les lignes indexées, les agrégations ni les extensions (sur un jeu REST, `404`, sauf pour un superadmin). Pour des lignes fraîches, utiliser `?finalizedAt=` / `?indexedAt=` ci-dessus.
 
 ## Types inférés
 
@@ -49,3 +51,63 @@ Comportements de `/data-fair/api/v1` à connaître avant d'écrire au barreau �
 
 - `modified` (date `YYYY-MM-DD`, `PATCH /datasets/{id}`) est la date de modification de la source, distincte des dates automatiques `updatedAt` (métadonnées) et `dataUpdatedAt` (données). Le tri `sort=-modified` utilise `_modified` = `modified`, sinon `dataUpdatedAt`, sinon `updatedAt` (`datasets/utils/compute-modified.ts`). Les portails affichent `modified || dataUpdatedAt`.
 - Le formulaire de métadonnées du back-office n'affiche les champs `creator`, `frequency`, `spatial`, `temporal`, `modified` et `keywords` que si l'organisation les active dans ses paramètres : `settings.datasetsMetadata.<clé>.active: true` (faux par défaut ; `title` en donne le libellé). `searchTerms` est affiché sauf `active: false`. L'API accepte ces champs dans tous les cas, et la fiche d'un portail les montre dès qu'ils sont remplis. Un import qui les remplit doit donc activer ces clés pour qu'ils restent éditables dans le back-office.
+
+## Listes par propriétaire et département
+
+- Il n'y a pas de filtre `department` : `GET /datasets?department=<dep>` et `GET /applications?department=<dep>` l'ignorent et renvoient la même liste. Filtrer plutôt sur le propriétaire : `owner=organization:<orgId>:<dep>` (`<dep>` = `-` pour la racine de l'organisation seule, `*` ou rien pour la racine et tous les départements ; plusieurs propriétaires séparés par des virgules ; un `-` en tête exclut, par exemple `owner=-organization:<orgId>:<dep>`) (`ownerFilters`, `misc/utils/find.ts`).
+- `mine=true` restreint au compte actif de la session, département compris ; `401` sans session.
+
+## Permissions
+
+`PUT /datasets/{id}/permissions` (idem pour `/applications/{id}/permissions`) remplace toute la liste. Une entrée : `{ type, id, department?, roles?, classes?, operations? }` ; sans `type`/`id` = public. Les `classes` se développent en opérations (`list`, `read`, `readAdvanced`, `write`…), `operations` ajoute des opérations isolées.
+
+Qui obtient quoi (`misc/utils/permissions.ts`) :
+
+- **Droits implicites liés à la propriété** : un admin du compte propriétaire peut tout faire ; un contributeur du propriétaire n'obtient que `post` (créer des ressources), pas même la lecture de celle-ci ; un utilisateur n'obtient rien. Tout le reste vient d'entrées explicites.
+- **Racine de l'organisation et départements** : un membre de la racine de l'organisation est traité comme membre de chaque département avec le même rôle, donc un contributeur de la racine obtient les permissions données aux contributeurs d'un département. Un membre d'un département ne correspond qu'aux entrées de la racine ouvertes à tous les départements et à celles de son propre département.
+- **`department` d'une entrée** : absent ou `'*'` = la racine et tous les départements ; `'-'` = la racine seule ; `'<dep>'` = ce département **et la racine**.
+- **`roles`** : vide ou absent = tous les rôles ; sinon le rôle actif doit être listé, les admins correspondent toujours.
+- Une entrée `type: 'user'` (par `id` ou `email`) s'applique quel que soit le compte actif. Les listes (`filterCan`) appliquent les mêmes règles que les lectures unitaires.
+- **Valeurs par défaut à la création** (propriétaire organisation) : `{ roles: ['contrib'], classes: ['write'], operations: ['delete'] }` et `{ roles: ['contrib'], classes: ['list', 'read', 'readAdvanced'] }`, avec `department` = le département du propriétaire ou `'-'` (`initResourcePermissions`). Un **transfert de propriétaire** remet la liste à ces valeurs par défaut, en gardant les entrées publiques et, au sein de la même organisation, les entrées d'utilisateurs et d'autres organisations (`ownerChangePermissions`).
+- **Contributeurs autorisés seulement à mettre à jour les données** d'un jeu fichier : remplacer l'entrée `write` des contributeurs par `{ type: 'organization', id, department, roles: ['contrib'], classes: [], operations: ['writeData', 'cancelDraft'] }`, à côté de l'entrée de lecture. `writeData` (`POST`/`PUT /datasets/{id}`) et `cancelDraft` n'existent que sur les jeux fichier ; les écritures de lignes d'un jeu REST sont d'autres opérations de la classe `write`.
+
+## Cloisonnement par ligne
+
+Ne montrer à chaque lecteur que ses propres lignes d'une table partagée, sans la dupliquer :
+
+- **Côté lecture, jeu virtuel** : une colonne de la source porte le concept `x-refersTo: https://github.com/data-fair/lib/account` (vocabulaire `accountRef`), valeurs `user:<id>` ou `organization:<orgId>` / `organization:<orgId>:<dep>`, plusieurs valeurs permises. Un jeu virtuel par-dessus avec `virtual.filterActiveAccount: true` (la colonne doit être dans son schéma) ne renvoie que les lignes dont la colonne correspond à l'un des comptes du lecteur (`datasets/middlewares.ts`, `es/commons.ts`) :
+  - la source elle-même ne filtre pas : restreindre ses propres permissions et ouvrir le jeu virtuel ;
+  - le lecteur doit être authentifié (`401` sinon), et obtient les lignes de toutes ses appartenances : `user:<id>` plus `organization:<orgId>[:<dep>]` par appartenance. La correspondance est exacte : une ligne marquée `organization:<orgId>` n'est pas renvoyée à un membre d'un département ;
+  - tout membre du propriétaire du jeu virtuel voit toutes les lignes ;
+  - `?account=a,b` restreint à certains des comptes du lecteur, un compte hors de ceux-ci répond `403` ;
+  - ces réponses ne sont jamais mises en cache ; un tel jeu virtuel ne peut pas être l'enfant d'un autre jeu virtuel (`501`).
+- **Côté écriture, jeu REST** : `rest.lineOwnership: true` ajoute les colonnes calculées `_owner` (`<type>:<id>[:<dep>]`) et `_ownerName`, et les routes `/datasets/{id}/own/<type>:<id>[:<dep>]/lines…` (lecture, création, mise à jour, patch, suppression, bulk, révisions). Le segment `<owner>` doit être exactement le compte actif (ou l'utilisateur), sinon `403`. Donner la classe `manageOwnLines` aux contributeurs : ils gèrent leurs lignes sans la classe `write` sur tout le jeu. Refusé tant que l'intégrité est active.
+
+## Jeux REST et pièces jointes de lignes
+
+- Créés avec `POST /datasets` et `{ isRest: true, title, schema, rest: { history?, lineOwnership?, storeUpdatedBy?, ttl? } }`. `rest.history: true` garde les révisions de chaque ligne (`GET …/lines/{lineId}/revisions`).
+- Un fichier attaché à une ligne demande une colonne portant le concept `http://schema.org/DigitalDocument` (le back-office la nomme `attachmentPath`). Envoyer la ligne en `multipart/form-data`, le fichier dans le champ `attachment` et les autres colonnes en champs de formulaire (ou en JSON dans un champ `_body`), vers `POST …/lines`, `PUT` ou `PATCH …/lines/{lineId}`. La réponse porte le chemin stocké dans cette colonne : `<lineId>/<md5>/<nom du fichier>` (`manageAttachment`, `datasets/utils/rest.ts`). Sans `history`, les fichiers précédents de la ligne sont supprimés.
+
+## Pièces jointes de métadonnées
+
+`attachments` d'un jeu (`PATCH /datasets/{id}`), trois `type` (`api/types/dataset/schema.js`) :
+
+- `file` : téléversé avec `POST /datasets/{id}/metadata-attachments` (multipart), puis référencé par son `name` ;
+- `url` : un simple lien, rien n'est téléchargé ;
+- `remoteFile` : `name` (avec une extension correspondant au format) et `targetUrl`. Data-fair télécharge la cible par un **GET**, conditionnel sur ETag / Last-Modified, et la sert depuis `GET /datasets/{id}/metadata-attachments/<name>` (cache de 5 s par défaut, `remoteAttachmentCacheDuration`). Un téléchargement en échec répond `502`. `targetUrl` est en écriture seule (il peut contenir un secret) : il n'est jamais relu, le laisser hors d'un `PATCH` ultérieur sauf si le `name` change, auquel cas il faut le renvoyer.
+
+`includeInCatalogPublications` (`false` par défaut) décide si une pièce jointe `url` ou fichier est recopiée dans les publications sur les catalogues distants (plugins udata, CKAN).
+
+## Données de référence et jeux virtuels d'autres comptes
+
+- `masterData.virtualDatasets.active: true` propose le jeu comme enfant des jeux virtuels **d'autres comptes** (il est alors aussi listé dans le back-office d'un site de publication). Ces comptes doivent quand même pouvoir le lire : les enfants d'un jeu virtuel sont résolus avec les droits de son propriétaire (`recurseDescendants`, `datasets/utils/virtual.ts`), donc la source doit être publique ou porter une permission pour eux. Écrire `masterData` exige un admin de la racine de l'organisation propriétaire (`manageMasterData` ; un admin de département reçoit `403`).
+- Chaque jeu de données de référence est synchronisé vers un service distant `dataset:<id>` (`remote-services/service.ts`). Son drapeau `public` et `virtualDatasets.storageRatio` sont écrits par un superadmin (`PATCH /remote-services/dataset:<id>`) et conservés d'une resynchronisation à l'autre. Quand il n'est pas public, seuls le propriétaire et les organisations de `masterData.shareOrgs` peuvent utiliser ses actions d'extension.
+- `storageRatio` (de 0 à 1, 0 par défaut) facture au jeu virtuel d'un autre compte une part de la taille indexée de l'enfant : `taille indexée de l'enfant × storageRatio × lignes qu'il expose / lignes de l'enfant` (`datasets/utils/storage.ts`). Les enfants du même propriétaire ne sont pas facturés.
+
+## Routes de reprise superadmin
+
+Avec `user.adminMode` seulement (`403` sinon, `datasets/routes/misc.ts`) :
+
+- `POST /datasets/{id}/_refinalize` : remet le jeu (ou son brouillon) en `indexed` pour que le worker relance la finalisation, pour un jeu bloqué avant `finalized` ;
+- `POST /datasets/{id}/_reindex` : réindexation complète ;
+- `DELETE /datasets/{id}/_lock` : supprime les verrous d'un jeu dont le `409` ne finit jamais.

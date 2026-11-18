@@ -19,7 +19,7 @@ const call = async (method, path, body) => {
 }
 
 // 1. A full dataset entry, as the form stores it (needed in datasets[] of the dashboard,
-//    of metrics, atelier-carto, list-details…).
+//    of metrics, atelier-carto, app-catalog…).
 const datasetEntry = async (id) => {
   const d = await call('GET', `/datasets/${id}${bust()}`)
   const e = { id: d.id, href: `${API}/datasets/${d.id}`, title: d.title, slug: d.slug, schema: d.schema }
@@ -53,6 +53,11 @@ const makePublic = (id) => call('PUT', `/applications/${id}/permissions`, [{ cla
 const readConfig = (id) => call('GET', `/applications/${id}/config${bust()}`)
 ```
 
+- **Copy a working application** rather than rebuilding it:
+  `POST /applications { url, title, initFrom: { application: '<sourceId>' } }` copies its
+  configuration, summary, description and attachments, not its permissions. `url` must be
+  exactly the source's base-app URL (same version) or it is a 400; reading the source needs
+  `readDescription` on it. Then read the copy's config, adapt it, `PUT` it.
 - `PATCH /applications/<id>` changes `title`, `description`, `slug` (400 if the slug is
   taken: pick another, do not retry).
 - To change one key of a config: read with the cache-buster, modify, `PUT` the whole
@@ -68,6 +73,7 @@ const readConfig = (id) => call('GET', `/applications/${id}/config${bust()}`)
 |---|---|
 | Base-apps installed and their metas | `GET /base-applications?size=200&select=title,url,meta,version` |
 | Published config schema of a base-app | `GET <baseApp.url>config-schema.json` (or jsdelivr `@<major.minor>/dist/config-schema.json`) |
+| Base-app record lagging behind its release (form ignores a new key) | `POST /base-applications {url}` re-reads its metas and schema (superadmin); a config written by API with the new key already works |
 | Applications already built on a dataset | `GET /applications?dataset=<id>&size=100&select=title,url,visibility` |
 | Datasets matching a theme | `GET /datasets?q=<words>&size=50&select=title,count,timePeriod` (try accent and no-accent spellings) |
 | Concepts of a dataset | `GET /datasets/<id>` → `schema[].x-concept.id` (`codeCommune`, `codeEPCI`, `codeDepartement`, `codeRegion`, `startDate`, `endDate`…); test one with `lines?size=0&_c_<id>_in=<code>` and read `meta.hints` |

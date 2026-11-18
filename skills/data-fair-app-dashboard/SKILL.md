@@ -4,7 +4,7 @@ description: >
   Use when building, configuring or reviewing a dashboard or an observatory made with the
   `@data-fair/app-dashboards` application (DashboardConfig: sections, rows, elements,
   filters, staticFilters, periodFilter, allowDuplicate) and its embedded sub-applications
-  (app-charts, metrics, atelier-carto, list-details, app-treemap…), usually written through
+  (app-charts, metrics, atelier-carto, app-catalog, app-treemap…), usually written through
   the data-fair API rather than the portal forms. Triggers: "tableau de bord",
   "dashboard", "observatoire", "portrait de territoire", "chiffres clés", "ma commune",
   "filtre territoire", "sélecteur de commune / EPCI / département", "mode comparaison",
@@ -85,7 +85,7 @@ field carries a concept, `_c_<concept>_<op>`. Applications on **other datasets**
 follow through the `_c_*` key, so **the filter fields must carry concepts**
 (`codeCommune`, `codeEPCI`, `codeDepartement`, `codeRegion`, `timePeriod`…).
 
-**Multi-scale selector** (proven on "Territoire SIRENE" and the economic observatory):
+**Multi-scale selector**:
 
 ```jsonc
 "filters": [
@@ -104,9 +104,10 @@ follow through the `_c_*` key, so **the filter fields must carry concepts**
   communes. On Koumoul platforms: `communes-de-france` (35,005 rows, `code_*` / `nom_*`
   for commune, EPCI, département, région, plus arrondissement, bassin de vie, aire
   d'attraction, unité urbaine, zone d'emploi), or a dataset enriched with
-  `_infos_commune`. `communes-de-france` also holds the 45 Paris / Lyon / Marseille
-  arrondissements: exclude them with a root static filter (`nin` on their codes, or `in`
-  on the communes), or the PLM cities appear twice.
+  `_infos_commune` (check that those fields carry an `x-concept`, not only an
+  `x-refersTo`: some enriched datasets lack it, §4). `communes-de-france` also holds the
+  45 Paris / Lyon / Marseille arrondissements: exclude them with a root static filter
+  (`nin` on their codes, or `in` on the communes), or the PLM cities appear twice.
 - `periodFilter: true` only works on datasets whose period fields carry `startDate` /
   `endDate` concepts (`timePeriod`); a `time_period` string column does not count.
 - **Linking to a pre-selected territory** (a map of communes, a directory): use the parameter
@@ -169,18 +170,22 @@ network** (`references/sub-apps.md` lists the ones that lie).
 3. **`GET /applications/<id>/config` (alias `/configuration`) can come from cache.**
    Add `?_=<random>` to every read; writing back a stale body silently undoes the previous write.
 4. **Heights**: `-1` (auto) for apps declaring `df:overflow: true` (`metrics`,
-   `list-details`); fixed px for canvas / map apps (`app-charts` 420–520, map 700,
-   101-row pyramid 820). A fixed height on an auto app creates an inner scroll.
+   `app-catalog`); fixed px for canvas / map apps (`app-charts` 420–520, map 700,
+   101-row pyramid 820). A fixed height on an auto app creates an inner scroll; an auto row
+   on an app without `df:overflow` gets the d-frame aspect ratio (1 to 21/9 by width), not
+   its content height.
 5. **An `application` element carries the full base-app**: `baseApp {id, url, meta,
    datasetsFilters}` from `GET /applications/<id>/base-application`, not just its `url`,
    as the form stores it: the meta is how you (and the next agent) know whether the block
    can follow filters.
 6. **Mirror what the form maintains**: `config.applications` = `[{id, title}]` of every
-   embedded application, `config.datasets` = root dataset first (full entry: `id`,
+   embedded application (an application key shared on the dashboard only opens the sub-apps
+   listed there, or its fragments), `config.datasets` = root dataset first (full entry: `id`,
    `href`, `title`, `slug`, `schema`, `finalizedAt`, `bbox`, `timePeriod`).
-7. **Static filter `field` shape differs per app and version**: `metrics`, `list-details`,
-   `app-treemap`, `app-charts` 1.4: `{key, label}`; `app-charts` 1.3: a string;
-   `atelier-carto`: `{key}`. Copy the shape from the published schema of that version.
+7. **Static filter `field` shape differs per app and version**: `metrics`, `app-catalog`,
+   `app-treemap`: `{key, label}`; `app-charts` 1.3 and 1.4: a string (only 1.4.5–1.4.6
+   wanted `{key, label}`); `atelier-carto`: `{key}`. Copy the shape from the published
+   schema of that version: the form rejects the other shape.
 8. **Root static filters reach every block**: the dashboard sends them to each element,
    as `_c_<concept>_<op>` when the field carries a concept. A `staticFilters` entry on
    the root restricts the whole observatory (useful to drop arrondissements, a trap if
@@ -202,7 +207,11 @@ network** (`references/sub-apps.md` lists the ones that lie).
    inherits the dashboard's permissions and is deleted with it; single reads by id (embeds) are
    unchanged. Constraints: same owner, never published (a PATCH carrying `publicationSites`, even
    `[]`, is refused), `PUT /permissions` refused on it, and a build script that finds its apps by
-   listing must also list `partOf=true` or it recreates them.
+   listing must also list `partOf=true` or it recreates them. `partOf` takes `{type, id}` only
+   (any other key, `title` included, is a 400). Owner transfer: `PUT /applications/<dashboardId>/owner`
+   moves the fragments with it since data-fair 6.22 (before: 400 until they are detached); a
+   fragment alone is refused (403). The transfer empties `publicationSites` (except org root →
+   one of its departments) and keeps public permissions: republish after it.
 13. **Editorial density**: aim for 4 KPIs per section, on one row; 6 at most, only as two full rows
    of 3; 8 (two rows of 4) only for an overview tab. Never an orphan card centred on its own row,
    it reads as unfinished: choose, move a figure into a chart or a text, or drop it. Vary the chart
@@ -223,7 +232,8 @@ network** (`references/sub-apps.md` lists the ones that lie).
 - [ ] For each iframe, the data request carries the filter (`_c_codeCommune_in=…` or the
       `<field>_in` filter it translates to). "It displays" is not "it filters".
 - [ ] One known territory checked against an independent source (Insee dossier complet,
-      Observatoire des territoires): population, one rate, one count.
+      Observatoire des territoires) **at the same vintage** (the source's latest is often
+      newer than the portal's: use its historical series): population, one rate, one count.
 - [ ] Switch scale (commune → EPCI → département → none) and confirm every block changes
       or is explicitly marked as not following.
 - [ ] Comparison mode: both columns filter independently.
@@ -237,8 +247,8 @@ network** (`references/sub-apps.md` lists the ones that lie).
 - `references/config.md`: full `DashboardConfig` anatomy for 1.0.11, element types,
   filter propagation channels, text rendering, a complete annotated example.
 - `references/sub-apps.md`: per base-app capabilities, required keys and known traps
-  (app-charts, metrics, atelier-carto, list-details, app-treemap, sankey, proportions,
-  bar-chart-race, app-calendar, infos-territoires), and which visualisation answers which
-  question.
+  (app-charts, metrics, atelier-carto, infos-territoires, app-catalog, app-treemap, sankey,
+  proportions, app-calendar, app-contribs, app-form, app-documents, app-gtfs-map…), and which
+  visualisation answers which question.
 - `references/api-recipes.md`: the API write cycle (create, configure, describe,
   permissions, re-read), dataset entry builder, and verification snippets.
