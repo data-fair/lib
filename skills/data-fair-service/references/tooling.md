@@ -69,7 +69,7 @@ docs/superpowers/
 - data-fair keeps `check-types-ratchet` in `quality` (1800+ legacy API errors) until its baseline reaches 0.
 - processings keeps npm in both runtime images, api and worker (lib-node-registry runs `npm rebuild` on plugins); it only drops corepack and yarn.
 - `USER node` stays commented where volumes are mounted as root (data-fair, processings, openapi-viewer, customers, metrics daemon).
-- metrics tests with `node --test`; openapi-viewer's `quality` runs only `test-unit`.
+- openapi-viewer's `quality` runs only `test-unit`.
 - customers runs on GitLab CI.
 
 ## Not decided (leave as is)
