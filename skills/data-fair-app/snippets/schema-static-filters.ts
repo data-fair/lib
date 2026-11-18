@@ -54,7 +54,7 @@ export default {
               layout: {
                 if: 'parent.data.field',
                 getItems: {
-                  url: '${rootData.datasets?.[0]?.href || \'\'}/values-labels/${parent.data.field?.key || \'\'}?q={q}&q_mode=complete&size=100&stringify=true',
+                  url: '${rootData.datasets?.[0]?.href || \'\'}/values-labels/${parent.data.field?.key || \'\'}?q={q}&q_mode=complete&size=50&stringify=true',
                   itemKey: 'data["value"]',
                   itemTitle: 'data["label"]'
                 }
@@ -75,7 +75,7 @@ export default {
               layout: {
                 if: 'parent.data.field',
                 getItems: {
-                  url: '${rootData.datasets?.[0]?.href || \'\'}/values-labels/${parent.data.field?.key || \'\'}?q={q}&q_mode=complete&size=100&stringify=true',
+                  url: '${rootData.datasets?.[0]?.href || \'\'}/values-labels/${parent.data.field?.key || \'\'}?q={q}&q_mode=complete&size=50&stringify=true',
                   itemKey: 'data["value"]',
                   itemTitle: 'data["label"]'
                 }
