@@ -1,6 +1,6 @@
 ---
 name: data-fair-processing
-description: Use when working on a @data-fair processing plugin (a `processing-*` repo, a `data-fair-processings-plugin` package) — writing or reviewing `processing-config-schema.json`, wiring `prepare`/`run`/`stop`, using the ProcessingContext (log, axios, ws, patchConfig, tmpDir, secrets), generating types with df-build-types, writing `test-it` tests, handling graceful stop, or porting an old CommonJS/JavaScript plugin to the TypeScript+ESM template.
+description: Use when working on a @data-fair processing plugin (a `processing-*` repo, a `data-fair-processings-plugin` package) — writing or reviewing `processing-config-schema.json`, wiring `prepare`/`run`/`stop`, using the ProcessingContext (log, axios, ws, patchConfig, tmpDir, secrets), generating types with df-build-types, writing `test-it` tests, handling graceful stop, creating or updating a dataset (file upload, `?draft=` mode, `_bulk_lines`, `nbErrors`, primary key, waiting for the dataset journal), or porting an old CommonJS/JavaScript plugin to the TypeScript+ESM template.
 ---
 
 # Developing a data-fair processing plugin
@@ -158,6 +158,7 @@ Run tests against a real instance by filling `config/local-test.mjs` (gitignored
 | [config-schema.md](./config-schema.md) | writing/reviewing `processing-config-schema.json` (with the [vjsf skill](../vjsf/SKILL.md) as background) |
 | [typescript-migration.md](./typescript-migration.md) | the repo still has `main: index.js`, `require()`, `mocha`, or no `"type": "module"` |
 | [file-templates.md](./file-templates.md) | exact contents of every boilerplate file |
+| [writing-datasets.md](./writing-datasets.md) | creating or updating a dataset: the four write paths, the `?draft=` mode of a file update, waiting for the journal, `_bulk_lines` errors, primary key, schema resync, choosing the target |
 
 ## Common mistakes
 
@@ -169,5 +170,8 @@ Run tests against a real instance by filling `config/local-test.mjs` (gitignored
 - **cwd-relative `fs.existsSync('./lib/...')`** — resolve with `import.meta.dirname`; the code runs from inside `lib/`.
 - **`exec(\`unzip ... ${x}\`)`** — use `execFile('unzip', ['-o', file, '-d', dir])`, no shell injection.
 - **Joining a remote name into a path** (`path.join(tmpDir, title)`) — `path.basename()` it first; names from remote listings, metadata or ids are attacker-controlled.
+- **Updating a file dataset without `?draft=`** — the file is published with no compatibility check, an HTML error page included. Use `?draft=compatibleOrCancel` with a `forceUpdate` opt-in to `always` (see [writing-datasets.md](./writing-datasets.md)).
+- **Ending the run right after the upload** — data-fair processes the file asynchronously; follow the dataset journal on `context.ws` so that a rejected file fails the run.
+- **Trusting the 200 of `_bulk_lines`** — rejected lines come back in a 200 with `nbErrors > 0`: throw, and never move a cursor or delete the source after it.
 - **Forgetting `patchConfig`** after a create-mode run — the next run creates a second dataset.
 - **Bumping `version`** for a `feat!` — leave it alone.
