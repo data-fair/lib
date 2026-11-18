@@ -95,7 +95,7 @@ export default {
               layout: {
                 if: 'parent.data.field',
                 getItems: {
-                  url: '${rootData.datasets?.[0]?.href || \'\'}/values-labels/${parent.data.field?.key || \'\'}?sort=asc&${parent.data.field?.key || \'\'}_gte={q}&stringify=true&size=20',
+                  url: '${rootData.datasets?.[0]?.href || \'\'}/values-labels/${parent.data.field?.key || \'\'}?sort=asc&${parent.data.field?.key || \'\'}_gte={q}&stringify=true&size=50',
                   itemKey: 'data["value"]',
                   itemTitle: 'data["label"]'
                 }
@@ -107,7 +107,7 @@ export default {
               layout: {
                 if: 'parent.data.field',
                 getItems: {
-                  url: '${rootData.datasets?.[0]?.href || \'\'}/values-labels/${parent.data.field?.key || \'\'}?sort=desc&${parent.data.field?.key || \'\'}_lte={q}&stringify=true&size=20',
+                  url: '${rootData.datasets?.[0]?.href || \'\'}/values-labels/${parent.data.field?.key || \'\'}?sort=desc&${parent.data.field?.key || \'\'}_lte={q}&stringify=true&size=50',
                   itemKey: 'data["value"]',
                   itemTitle: 'data["label"]'
                 }
