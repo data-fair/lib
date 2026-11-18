@@ -383,4 +383,9 @@ playwright-report
 
 ## CI
 
-Les applications sont sur **GitLab CI** (`.gitlab-ci.yml` — aucune app n'a de `.github/workflows`), avec un pipeline `npm install && npm run build-types && npm run lint && npm run type-check && npm run build` : pas de tests ni d'audit en CI, la qualité complète (dont les e2e) est portée par le hook `pre-push` — même philosophie que le `commits.yml` des services GitHub (*« husky already did it on the dev computer »*), mécanisme différent. Respecter l'ordre `build-types` → `lint` → `type-check` → `build` (cf. § package.json).
+Les applications sont réparties sur **deux hébergeurs** : la majorité sur GitLab, une partie sur GitHub (`github.com/data-fair/app-*` : app-form, app-charts, app-dashboards, app-calendar…). Vérifier avec `git remote get-url origin` avant de supposer l'un ou l'autre.
+
+- **Sur GitLab**, l'application porte un `.gitlab-ci.yml` avec le pipeline `npm install && npm run build-types && npm run lint && npm run type-check && npm run build`.
+- **Sur GitHub**, aucune application n'a de `.github/workflows` : pas de CI du tout. Un `.gitlab-ci.yml` présent sur un dépôt GitHub est un reste de migration et ne tourne pas.
+
+Dans les deux cas, ni tests ni audit en CI : la qualité complète (dont les e2e) est portée par le hook `pre-push`, qui est la seule barrière sur un dépôt GitHub — même philosophie que le `commits.yml` des services GitHub (*« husky already did it on the dev computer »*). La publication npm se fait à la main depuis le poste du développeur. Quand une CI existe, respecter l'ordre `build-types` → `lint` → `type-check` → `build` (cf. § package.json).
