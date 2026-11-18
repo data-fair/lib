@@ -173,8 +173,8 @@ import pluginVue from 'eslint-plugin-vue'
 import pluginVuetify from 'eslint-plugin-vuetify'
 import dfLibRecommended from '@data-fair/lib-utils/eslint/recommended.js'
 
-// le flat/base de eslint-plugin-vuetify enregistre déjà le plugin `vue`, et
-// ESLint 9.39+ refuse qu'un plugin soit redéfini — retirer `plugins` de la config de vue.
+// eslint-plugin-vuetify's flat/base already registers the `vue` plugin, and
+// ESLint 9.39+ refuses a redefined plugin: drop `plugins` from the vue config.
 const vueFlatRecommended = pluginVue.configs['flat/recommended'].map(({ plugins, ...rest }) => rest)
 
 export default [
@@ -186,8 +186,8 @@ export default [
     rules: {
       'vue/multi-word-component-names': 'off',
       'vue/require-default-prop': 'off',
-      'no-undef': 'off', // typescript s'en charge
-      // le jeu d'icônes est mdi-svg : une chaîne mdi-* rend une icône vide, sans erreur
+      'no-undef': 'off', // typescript handles it
+      // the iconset is mdi-svg: an mdi-* string renders an empty icon, without any error
       'vue/no-restricted-static-attribute': ['error', {
         key: '/^((prepend|append)-(inner-)?)?icon$|-icon$/',
         value: '/^mdi-/',
@@ -236,12 +236,15 @@ Aucun dépôt maison n'en a. Sur une reprise, le supprimer — mais seulement ap
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
+    "types": ["node"],
     "paths": { "@/*": ["./src/*"] }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
 ```
+
+> **`"types": ["node"]` et `@types/node` en devDependencies** : depuis TypeScript 6, `types` vaut `[]` par défaut, les paquets `@types/*` ne sont plus chargés d'office. Sans cette ligne, les specs qui utilisent `Buffer`, `process`, `node:http` ou `node:net` cassent le `type-check` (`Cannot find name 'Buffer'`). Les types de Vite (`import.meta.env`) restent fournis par une référence `/// <reference types="vite/client" />` dans un `.d.ts` de `src/`.
 
 > **Pas de `baseUrl`** : `baseUrl` est déprécié depuis TypeScript 5/6 et sera retiré dans TS 7.0. `paths` résout automatiquement par rapport au dossier du `tsconfig.json` dès lors que les chemins cibles commencent explicitement par `./` (`"./src/*"` et non `"src/*"`).
 
@@ -273,8 +276,8 @@ export default defineConfig(({ mode }) => {
     server: {
       port,
       strictPort: !!env.APP_PORT,
-      // hmr suit le port du serveur : un websocket resté sur 3000 fait tenir deux
-      // ports à l'application et annule le décalage
+      // hmr follows the server port: a websocket left on 3000 makes the app hold two
+      // ports and defeats the port shift
       hmr: { port, protocol: 'ws' },
       // without it the module graph is only transformed on the first request,
       // and the e2e suite races against that cold start
@@ -307,9 +310,9 @@ import { defineConfig, devices } from '@playwright/test'
 const PORT = Number(process.env.E2E_PORT ?? 3100)
 const BASE_URL = `http://localhost:${PORT}`
 
-// webServer est global à la config : le conditionner pour ne pas lancer Vite sur un run
-// purement unitaire (plutôt que de scinder en deux fichiers). Playwright accepte `--project x`
-// et `--project=x` : les deux formes doivent être lues.
+// webServer is global to the config: make it conditional so a unit-only run does not start
+// Vite (rather than splitting into two files). Playwright accepts `--project x` and
+// `--project=x`: both forms must be read.
 const selectedProjects = process.argv.flatMap((arg, i) => {
   if (arg === '--project') return [process.argv[i + 1]]
   if (arg.startsWith('--project=')) return [arg.slice('--project='.length)]

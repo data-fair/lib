@@ -6,6 +6,8 @@ Référence des paramètres de query supportés par les vues embed les plus util
 
 Affiche les lignes d'un jeu de données sous forme de tableau, liste ou cartes.
 
+Pas de `data-iframe-height` : hauteur fixe, défilement interne. Côté parent, `resize="no"` avec `height` ou `aspect-ratio`.
+
 | Paramètre | Description |
 |-----------|-------------|
 | `draft` | Mode brouillon (`true` / `false`) |
@@ -61,6 +63,8 @@ Carte géographique affichant les données géolocalisées du dataset.
 ## Formulaire — `/embed/dataset/<id>/form`
 
 Formulaire de saisie / édition d'une ligne du dataset.
+
+Pose `data-iframe-height` : côté parent, `resize="auto"` (la hauteur annoncée remplace `height`).
 
 | Paramètre | Description |
 |-----------|-------------|

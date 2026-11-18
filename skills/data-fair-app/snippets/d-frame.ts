@@ -7,6 +7,9 @@
 //   - window.vIframeOptions : côté enfant, l'app est EMBARQUÉE dans un d-frame
 //     (portail, dashboard, autre app). Voir snippets/main.ts pour le setup.
 
+// Enregistre l'élément <d-frame> (customElements.define) ; sans cet import,
+// <d-frame> reste un élément inconnu de taille nulle. Dans main.ts ou le composant.
+import '@data-fair/frame/lib/d-frame.js'
 import createDFrameAdapter from '@data-fair/frame/lib/vue-reactive/state-change-adapter.js'
 import reactiveSearchParams from '@data-fair/lib-vue/reactive-search-params-global.js'
 
@@ -25,7 +28,9 @@ const dFrameAdapter = createDFrameAdapter(reactiveSearchParams)
 // `data-iframe-height` sur la racine de l'app pour que le shim d-frame
 // mesure sa hauteur et l'envoie au parent. Déclarer aussi
 //   <meta name="df:overflow" content="true">   (si la visu peut grandir)
-// dans index.html. Côté parent, le <d-frame> doit porter `resize="auto"` :
+// dans index.html. Côté parent, `resize="auto"` seulement si l'enfant grandit
+// (app en df:overflow="true", formulaire) : la hauteur annoncée remplace
+// `height` / `aspect-ratio`. Sinon (tableau, carte) `resize="no"` + `height`.
 //   <d-frame :src="..." :adapter="dFrameAdapter" resize="auto" />
 // Voir SKILL.md > "Intégration iframe / d-frame" > "Redimensionnement".
 
@@ -34,12 +39,17 @@ const dFrameAdapter = createDFrameAdapter(reactiveSearchParams)
 // un attribut de d-frame mais un préfixe de l'id dans le chemin de l'URL
 // ({accessKey}%3A{id}), interprété côté data-fair (voir snippets/access-key.ts).
 
-// Exemple d'utilisation dans un composant Vue :
+// Exemple d'utilisation dans un composant Vue. `iframe-*` est recopié sur
+// l'iframe (iframe-title : RGAA 2.1, motif « Type - titre »), à la connexion
+// seulement : remonter le <d-frame> (:key) si le titre change.
 /*
 <template>
   <d-frame
     :src="`/data-fair/embed/dataset/${accessKey ? accessKey + '%3A' : ''}${datasetId}/table`"
     :adapter="dFrameAdapter"
+    :iframe-title="`${t('table')} - ${datasetTitle}`"
+    resize="no"
+    height="500px"
   />
 </template>
 

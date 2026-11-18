@@ -131,7 +131,7 @@ Elle doit être propagée aux embeds d-frame pour maintenir les droits d'accès.
 
 ```html
 <!DOCTYPE html>
-<html><!-- pas de lang : posé par le proxy data-fair -->
+<html><!-- no lang: set by the data-fair proxy -->
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -141,16 +141,16 @@ Elle doit être propagée aux embeds d-frame pour maintenir les droits d'accès.
     <link href="/simple-directory/api/sites/_theme.css" rel="stylesheet">
     <script src="/simple-directory/api/sites/_public.js"></script>
 
-    <title>Charts</title><!-- nom du modèle : le proxy le remplace par le titre de l'application -->
+    <title>Charts</title><!-- template name: the proxy replaces it with the application title -->
 
-    <!-- contrat data-fair, lu à l'exécution -->
+    <!-- data-fair contract, read at runtime -->
     <meta name="df:vjsf" content="3">
     <meta name="df:filter-concepts" content="true">
     <meta name="df:sync-config" content="true">
     <meta name="df:sync-state" content="true">
     <meta name="df:overflow" content="false">
 
-    <!-- catalogue, lu à l'import — migrera vers registry -->
+    <!-- catalog, read on import (will move to registry) -->
     <meta name="application-name" content="app-charts">
     <meta name="description" content="A simple charts application for data-fair.">
 
@@ -504,7 +504,7 @@ Les `default` de `config-schema.json` et sa validation sont appliqués par le **
 
 ### Vocabulaire, patterns et sélecteurs → skill `vjsf`
 
-Tout le générique vit dans le skill `vjsf` et n'est pas dupliqué ici : organisation en onglets (`allOf` + `title`), discrimination de type (`discriminator` + `oneOf` + `const` + `oneOfLayout` — gros point de **performance** sur les grands `oneOf`), sélecteurs dynamiques `getItems` (`url` / `expr`, règle **`size=50`** sur les URLs data-fair dont le défaut est 12, messages de liste vide personnalisés `props.noDataText` / dynamique `getProps`), affichage conditionnel (`layout.if` / `layout.switch`), champs cachés (`layout: "none"`), arrays avancés (`itemTitle` / `itemSubtitle` / `itemCopy` / `getDefaultData` / `messages.addItem`), slider soigné (`label: ""` + `slots.before` + ticks), sélecteur d'icônes MDI (`icons-mdi-latest`, URL **absolue `https://koumoul.com/data-fair/api/v1/…` codée en dur — jamais relative**). Les exemples prêts à copier sont dans `vjsf/references/patterns.md`.
+Tout le générique vit dans le skill `vjsf` et n'est pas dupliqué ici : organisation en onglets (`allOf` + `title`), discrimination de type (`discriminator` + `oneOf` + `const` + `oneOfLayout` — gros point de **performance** sur les grands `oneOf`), sélecteurs dynamiques `getItems` (`url` / `expr`, règle **`size=50`** sur les URLs data-fair dont le défaut est 12 (une appli qui a choisi `size=100`, par exemple sur une liste de valeurs comme `values-labels` dans `snippets/schema-static-filters.ts`, garde son choix : plus de valeurs visibles avant la saisie contre une réponse plus lourde à chaque frappe ; ne pas la ramener à 50 lors d'une mise en conformité), messages de liste vide personnalisés `props.noDataText` / dynamique `getProps`), affichage conditionnel (`layout.if` / `layout.switch`), champs cachés (`layout: "none"`), arrays avancés (`itemTitle` / `itemSubtitle` / `itemCopy` / `getDefaultData` / `messages.addItem`), slider soigné (`label: ""` + `slots.before` + ticks), sélecteur d'icônes MDI (`icons-mdi-latest`, URL **absolue `https://koumoul.com/data-fair/api/v1/…` codée en dur — jamais relative**). Les exemples prêts à copier sont dans `vjsf/references/patterns.md`.
 
 ### `x-i18n-*` : inactif dans le formulaire de configuration d'application
 
@@ -649,6 +649,7 @@ Deux patterns selon le besoin :
 - **Toujours utiliser `useFetch`** de `@data-fair/lib-vue/fetch.js` (wrapper réactif autour de `ofetch`) pour les **lectures** de données (GET).
 - `ofetch` direct est toléré pour les **mutations** (POST, PUT, PATCH, DELETE) lorsqu'elles sont encapsulées dans **`useAsyncAction`** (loading, erreur et notification gérés par le composable).
 - `ofetch` direct est aussi réservé aux cas très particuliers (blob, download, upload).
+- **Exception : lectures paginées en plusieurs requêtes** (pagination par curseur `qs: champ:{dernier TO *]`, numérateur et diviseur chargés en parallèle puis annulés ensemble) : `useFetch` (une URL, une réponse) ne sait pas l'exprimer. Les faire en `ofetch` dans un `computedAsync` (ou un `watch`) avec un `AbortController` partagé, annulé à chaque relance ; jamais dans un gestionnaire d'événement brut. Toutes les lectures unitaires restent en `useFetch`.
 - **Jamais `fetch` natif**, jamais `axios`.
 
 **Pourquoi `useFetch` est obligatoire pour les lectures** :
@@ -784,6 +785,7 @@ Les deux peuvent cohabiter dans une même infobulle : `31,546` suivi de `45.66%`
 | Nombre simple, **groupé par trois** | Un format nommé `decimal`, ou `valeur.toLocaleString(locale)` **sans option** — jamais `n(v)` nu ni `n(v, { options })`, voir « Coût » ci-dessous. `useGrouping` vaut déjà `auto` : `31 546` (espace fine insécable U+202F en français) |
 | Décimales d'un nombre simple | Dans le format nommé (`maximumFractionDigits`), trois par défaut |
 | **Pourcentage** | **Nécessaire** : `style: 'percent'` seul rend `maximumFractionDigits: 0`, donc `46 %` au lieu de `45,7 %` |
+| Petit entier interpolé dans un message (`{n} véhicules`, une vitesse, une durée en `s` / `min` / `h`) | **Rien** : sans séparateur de milliers ni décimale, la valeur brute s'affiche à l'identique dans toutes les langues ; `n()` n'apporte rien. Formater dès que la valeur peut dépasser 999 ou porter une décimale |
 
 D'où quelques entrées seulement, posées **directement dans `createI18n`** — pas de module utilitaire,
 il n'y a rien à partager entre fichiers :
@@ -1041,6 +1043,8 @@ if (window.parent !== window) {
 
 Utiliser `@data-fair/frame` (composant `d-frame`) pour intégrer des vues DataFair (tableau, carte, formulaire) dans l'app.
 
+**Enregistrer l'élément** : `import '@data-fair/frame/lib/d-frame.js'` (dans `src/main.ts` ou le composant qui l'utilise) appelle `customElements.define('d-frame', …)`. Sans cet import, `<d-frame>` reste un élément inconnu, de taille nulle, sans erreur.
+
 **Setup dans le composable config** (voir `snippets/d-frame.ts`) :
 
 ```ts
@@ -1057,15 +1061,21 @@ const dFrameAdapter = createDFrameAdapter(reactiveSearchParams)
   <d-frame
     :src="`/data-fair/embed/dataset/${accessKey ? accessKey + '%3A' : ''}${datasetId}/table`"
     :adapter="dFrameAdapter"
+    :iframe-title="`${t('table')} - ${dataset.title}`"
+    resize="no"
   />
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { useConfig } from '@/composables/config'
 
 const { dFrameAdapter, accessKey } = useConfig()
+const { t } = useI18n()
 </script>
 ```
+
+**Titre de l'iframe (RGAA 2.1)** : tout attribut `iframe-*` du `<d-frame>` est recopié sur l'iframe sans le préfixe (`updateIframeExtraAttrs`, `DFrameElement.js`). Poser `iframe-title` au motif des portails, « Type - titre » (`` `${t('application')} - ${title}` ``). La copie a lieu à la connexion de l'élément seulement (0.18) : un titre qui change ensuite impose de remonter le `<d-frame>` (`:key`).
 
 L'adapter synchronise automatiquement les paramètres de recherche entre l'app parent et l'embed. L'accessKey propage les droits d'accès : ce n'est **pas** une prop de `d-frame` (le composant n'a pas d'attribut `access-key`) mais un préfixe de l'id de la ressource dans le chemin de l'URL (`{accessKey}%3A{id}`), interprété côté data-fair — même mécanique pour `/data-fair/app/{accessKey}%3A{appId}`.
 
@@ -1104,6 +1114,8 @@ Le redimensionnement des embeds d-frame remplace l'ancien `iframe-resizer` (chem
   />
 </template>
 ```
+
+> **Règle** : `resize="auto"` seulement si l'enfant grandit (application en `df:overflow="true"`, formulaire `/embed/dataset/<id>/form`, qui pose `data-iframe-height`) ; sinon `resize="no"` avec `height` ou `aspect-ratio`. En `auto`, la hauteur annoncée par l'enfant **remplace** `height` et `aspect-ratio` (`updateStyle`, `DFrameElement.js`) : un formulaire dans un `<d-frame height="400px">` déborde. Le tableau `/embed/dataset/<id>/table` ne pose pas `data-iframe-height` (hauteur fixe, défilement interne).
 
 > **Sans attribut `resize`, le mode vaut `auto`** (`DFrameElement.js`, `@data-fair/frame` 0.18) : un `<d-frame>` suit la hauteur annoncée par son contenu. Une app **à hauteur fixe** (`df:overflow="false"`, qui remplit son viewport et défile à l'intérieur) qui embarque une vue data-fair pose donc `resize="no"` sans `height` ni `aspect-ratio` : le `<d-frame>` occupe alors toute la hauteur de son conteneur (un enfant flex en `flex-grow-1` avec `min-height: 0`). Une telle app ne pose ni `data-iframe-height` ni `window.iFrameResizer`.
 

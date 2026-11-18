@@ -105,6 +105,7 @@ Voir la section dédiée "HTTP" plus bas pour les détails sur `useFetch`.
 | `v-app-bar absolute` | `v-app-bar :absolute="true"` |
 | `v-row dense` | `v-row density="compact"` (`dense` est déprécié, le runtime avertit mais `eslint-plugin-vuetify` ne le voit pas) |
 | Classes typographiques Material 2 : `.text-h1`…`.text-h6`, `.text-subtitle-*`, `.text-body-1/2`, `.text-caption`, `.text-overline` | **Plus émises par Vuetify 4** (vérifiable dans le CSS buildé) : elles rendent à la taille par défaut sans erreur. Noms Material 3 : `text-display-*`, `text-headline-*`, `text-title-*`, `text-body-*`, `text-label-*`, avec variantes responsives `text-md-*` |
+| Correspondance Material 2 → 3 | `text-h1` → `text-display-large`, `text-h2` → `text-display-medium`, `text-h3` → `text-display-small`, `text-h4` → `text-headline-large`, `text-h5` → `text-headline-medium`, `text-h6` → `text-headline-small`, `text-subtitle-1` → `text-title-medium`, `text-subtitle-2` → `text-title-small`, `text-body-1` → `text-body-large`, `text-body-2` → `text-body-medium`, `text-caption` → `text-body-small`, `text-overline` → `text-label-small text-uppercase`, `text-button` → `text-label-large`. Chercher aussi dans les tests (sélecteurs CSS sur ces classes) |
 | Thème via JS | Thème via CSS variables + `vuetifySessionOptions` |
 
 ## Vue CLI → Vite

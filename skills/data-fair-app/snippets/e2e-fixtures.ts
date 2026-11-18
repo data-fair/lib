@@ -66,8 +66,11 @@ export async function setupMocks (page: Page, application: Record<string, unknow
   })
 
   // defined before any script of the page; `writable: false` makes the inline assignment
-  // of index.html unable to overwrite it
+  // of index.html unable to overwrite it. Init scripts also run in every iframe (d-frame
+  // embeds, about:blank): keep them to the top window. An app that embeds data-fair views
+  // also routes their src (e.g. `**/data-fair/embed/**`) to an empty page, Vite answers 404.
   await page.addInitScript((app) => {
+    if (window.self !== window.top) return
     Object.defineProperty(window, 'APPLICATION', { configurable: true, enumerable: true, writable: false, value: app })
   }, application)
 }

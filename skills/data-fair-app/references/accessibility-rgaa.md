@@ -241,6 +241,8 @@ maplibre pose `role="region"`, `aria-label="Map"` et `tabindex="0"` sur son canv
 
 Reste à fournir : la liste des entités affichées, en alternative textuelle.
 
+Cette liste reste **bornée et peu coûteuse** : 50 entrées au plus, jamais recalculée à chaque image. Pour un jeu de lignes data-fair (tuiles vecteur), la lire depuis l'API bornée à la vue — `/lines?bbox=<ouest,sud,est,nord>&size=50&select=<libellé>,…` en `useFetch`, relancé au `moveend` avec un délai, libellé pris sur le concept `rdf-schema#label` — et **pas** par `queryRenderedFeatures` sur toute la vue : sur un jeu dense (16 000 points dans une tuile), cet appel bloque la page, les clics se perdent. Un `queryRenderedFeatures` reste acceptable sur peu d'entités (zones d'un territoire), une fois au `idle`, coupé à 50.
+
 ### Ce qui passe mais mérite un regard
 
 - **Reflow 320 px (10.11)** : les graphiques se recalculent, il n'y a pas de défilement bidirectionnel — le critère est conforme. Mais à cette largeur les libellés d'axes deviennent très denses. Conforme n'est pas lisible : prévoir une réduction du nombre de graduations sous un seuil de largeur.
