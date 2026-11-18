@@ -6,6 +6,10 @@ and published schema for the version you embed, and treat every "trap" as "verif
 still true", not as a permanent fact. Each trap names the version it was read on (code
 or published schema).
 
+These traps hold for a configuration written today. How a configuration written for an
+older version breaks when its application moves to a newer one is in the
+`data-fair-app-upgrades` skill (`references/breaking-changes.md`).
+
 ## Which visualisation for which question
 
 | The reader wants… | Base-app (title on the portal) | Notes |
@@ -115,8 +119,10 @@ Read on 1.6.11 (repository `app-indicators`).
 
 Read on 1.8.9 (repository `app-multilayer-map`).
 
-- `datasets` is required **in addition to** `layers`, with `bbox`, `finalizedAt` and
-  `slug` per entry. Empty `datasets` = no request, map never starts, no console error.
+- `datasets` is required **in addition to** `layers`: entries `{ href, id, title }` plus optional
+  `schema`, `bbox`, `attachmentsAsImage` (`additionalProperties: false`: `slug` or `finalizedAt`
+  are refused); `layers[].dataset` takes only `{ href, id, title }`. Empty `datasets` = no request,
+  map never starts, no console error.
 - `staticFilters[].field` is `{key}`.
 - Leave `category` / `subcategory` empty on layers: the legend's category node has no layer
   ids, a click on it throws and layer toggling stops working.
