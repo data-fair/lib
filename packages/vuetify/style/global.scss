@@ -102,4 +102,11 @@
       word-break: normal;
     }
   }
+
+  // Code blocks of the same rendered markdown never wrap: a long line, or a list item
+  // indented as code by text pasted from Word, ran out of its container. Scroll it inside
+  // its own box, as tables do.
+  pre {
+    overflow-x: auto;
+  }
 }
