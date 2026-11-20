@@ -147,9 +147,7 @@ export class Session extends SessionHandler {
       // the audience of a bearer is the site it is used on; an internal request (no x-forwarded-host) has none
       let audiences: string[] | undefined
       if (req.headers['x-forwarded-host']) {
-        // reqOrigin only needs req.get, a plain IncomingMessage (websocket upgrade) has none
-        const originReq = { get: (name: string) => { const v = req.headers[name.toLowerCase()]; return Array.isArray(v) ? v[0] : v } } as unknown as Request
-        audiences = this.audiences(reqOrigin(originReq) + reqSitePathSafe(req))
+        audiences = this.audiences(reqOrigin(req) + reqSitePathSafe(req))
       }
       return this.readStateFromBearer(token, undefined, audiences)
     }

@@ -5,11 +5,24 @@ import { createHash, timingSafeEqual } from 'node:crypto'
 import { httpError } from '@data-fair/lib-utils/http-errors.js'
 import log from '@data-fair/lib-node/log.js'
 
-export const reqHost = (req: Request) => {
-  const forwardedHost = req.get('x-forwarded-host')
-  if (!forwardedHost) throw new Error('The "X-Forwarded-Host" header is required, please check the configuration of the reverse-proxy.')
-  return forwardedHost.split(',')[0]
+type ReqWithHeaders = Pick<IncomingMessage, 'headers'>
+
+// read from req.headers and not req.get: these also serve the plain IncomingMessage of a websocket
+// upgrade, where the express helpers are not available
+const firstHeader = (req: ReqWithHeaders, name: string): string | undefined => {
+  const value = req.headers[name]
+  return (Array.isArray(value) ? value[0] : value)?.split(',')[0].trim() || undefined
 }
+
+export const reqHost = (req: ReqWithHeaders) => {
+  const forwardedHost = firstHeader(req, 'x-forwarded-host')
+  if (!forwardedHost) throw new Error('The "X-Forwarded-Host" header is required, please check the configuration of the reverse-proxy.')
+  return forwardedHost
+}
+
+// A proxy may forward a websocket upgrade with its own scheme (Traefik sends ws/wss): the origin
+// is the page's, served on the matching http scheme.
+const httpProtocols: Record<string, string> = { http: 'http', https: 'https', ws: 'http', wss: 'https' }
 
 /**
  * similar to https://www.npmjs.com/package/original-url but with these specificities:
@@ -17,26 +30,48 @@ export const reqHost = (req: Request) => {
  *  - only based on the de-facto standard x-forwarded-* headers
  *  - we make these headers required
  *  - limiting the accepted headers and making them required removes any ambiguity that could be exploited
+ *
+ * The result is a normalized origin (lowercase, default port dropped), comparable to new URL(...).origin
+ * and to a browser's Origin header. Works on an express Request and on the plain IncomingMessage of a
+ * websocket upgrade.
+ *
+ * Strict by default: a missing or unusable header is a misconfiguration of the reverse-proxy and throws.
+ * `optional` returns undefined instead, for the places where a request without a site is legitimate
+ * (a socket opened in-cluster, an internal call).
  */
-export const reqOrigin = (req: Request) => {
-  let [host, port] = reqHost(req).split(':')
+export function reqOrigin (req: ReqWithHeaders): string
+export function reqOrigin (req: ReqWithHeaders, options: { optional: true }): string | undefined
+export function reqOrigin (req: ReqWithHeaders, options?: { optional?: boolean }): string | undefined {
+  const fail = (message: string) => {
+    if (options?.optional) return undefined
+    throw new Error(message)
+  }
+  const host = firstHeader(req, 'x-forwarded-host')
+  if (!host) return fail('The "X-Forwarded-Host" header is required, please check the configuration of the reverse-proxy.')
+  const forwardedProto = firstHeader(req, 'x-forwarded-proto')
+  if (!forwardedProto) return fail('The "X-Forwarded-Proto" header is required, please check the configuration of the reverse-proxy.')
+  const protocol = httpProtocols[forwardedProto.toLowerCase()]
+  if (!protocol) return fail(`The "X-Forwarded-Proto" header should be http or https. "${forwardedProto}" is not valid.`)
 
-  let forwardedProto = req.get('x-forwarded-proto')
-  if (!forwardedProto) throw new Error('The "X-Forwarded-Proto" header is required, please check the configuration of the reverse-proxy.')
-  forwardedProto = forwardedProto.split(',')[0]
-
-  const origin = `${forwardedProto}://${host}`
+  let url: URL
+  try {
+    url = new URL(`${protocol}://${host}`)
+  } catch {
+    return fail(`The "X-Forwarded-Host" header should be a host. "${host}" is not valid.`)
+  }
+  // a host carrying anything but a host and port would make an origin out of what the client chose
+  if (url.pathname !== '/' || url.username || url.password || url.search || url.hash) {
+    return fail(`The "X-Forwarded-Host" header should be a host. "${host}" is not valid.`)
+  }
 
   // we didn't make x-forwarded-port required contrary to x-forwarded-host and x-forwarded-proto
   // sometimes the port is passed as part of x-forwarded-host
-  const forwardedPort = req.get('x-forwarded-port')
-  if (forwardedPort) port = forwardedPort.split(',')[0]
-
-  if (port && !(port === '443' && forwardedProto === 'https') && !(port === '80' && forwardedProto === 'http')) {
-    return origin + ':' + port
-  } else {
-    return origin
+  const forwardedPort = firstHeader(req, 'x-forwarded-port')
+  if (forwardedPort) {
+    if (!/^\d{1,5}$/.test(forwardedPort)) return fail(`The "X-Forwarded-Port" header should be a port. "${forwardedPort}" is not valid.`)
+    url.port = forwardedPort
   }
+  return url.origin
 }
 
 // first occurrence in the process, then at most hourly: an appending environment would otherwise
@@ -50,9 +85,6 @@ const flagForwardedFor = (code: string, message: string) => {
   log.error(message, { code })
 }
 
-// read from req.headers and not req.get: this is also used on the plain IncomingMessage
-// of a websocket upgrade, where the express helpers are not available
-//
 // Strict by default: a request is limited by its user or by this IP, and one with neither is a
 // misconfiguration. `optional` is for the places where no client IP is legitimate (audit logs, a
 // relay deciding what to forward): undefined without the header, and undefined on a non-IP value

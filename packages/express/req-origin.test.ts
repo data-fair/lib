@@ -76,6 +76,36 @@ describe('reqOrigin', () => {
     const req = mockReq({ 'x-forwarded-host': 'example.com' })
     assert.throws(() => reqOrigin(req), /X-Forwarded-Proto/)
   })
+
+  it('should read a websocket scheme as its http one (a proxy may forward an upgrade as ws/wss)', () => {
+    assert.equal(reqOrigin(mockReq({ 'x-forwarded-host': 'example.com', 'x-forwarded-proto': 'wss', 'x-forwarded-port': '443' })), 'https://example.com')
+    assert.equal(reqOrigin(mockReq({ 'x-forwarded-host': 'localhost:5600', 'x-forwarded-proto': 'ws' })), 'http://localhost:5600')
+  })
+
+  it('should normalize so it compares equal to a URL origin', () => {
+    assert.equal(reqOrigin(mockReq({ 'x-forwarded-host': 'Example.COM:443', 'x-forwarded-proto': 'HTTPS' })), new URL('https://example.com/a').origin)
+    assert.equal(reqOrigin(mockReq({ 'x-forwarded-host': 'a.example.com, proxy.internal', 'x-forwarded-proto': 'https, http' })), 'https://a.example.com')
+  })
+
+  it('should work on the plain IncomingMessage of a websocket upgrade', () => {
+    const req = { headers: { 'x-forwarded-host': ['example.com'], 'x-forwarded-proto': 'https' } } as unknown as IncomingMessage
+    assert.equal(reqOrigin(req), 'https://example.com')
+  })
+
+  it('should throw on an unusable header', () => {
+    assert.throws(() => reqOrigin(mockReq({ 'x-forwarded-host': 'example.com', 'x-forwarded-proto': 'ftp' })), /X-Forwarded-Proto/)
+    assert.throws(() => reqOrigin(mockReq({ 'x-forwarded-host': 'bad host', 'x-forwarded-proto': 'https' })), /X-Forwarded-Host/)
+    assert.throws(() => reqOrigin(mockReq({ 'x-forwarded-host': 'example.com/path', 'x-forwarded-proto': 'https' })), /X-Forwarded-Host/)
+    assert.throws(() => reqOrigin(mockReq({ 'x-forwarded-host': 'user@example.com', 'x-forwarded-proto': 'https' })), /X-Forwarded-Host/)
+    assert.throws(() => reqOrigin(mockReq({ 'x-forwarded-host': 'example.com', 'x-forwarded-proto': 'https', 'x-forwarded-port': 'x' })), /X-Forwarded-Port/)
+  })
+
+  it('should return undefined instead of throwing when optional', () => {
+    assert.equal(reqOrigin(mockReq({}), { optional: true }), undefined)
+    assert.equal(reqOrigin(mockReq({ 'x-forwarded-host': 'example.com' }), { optional: true }), undefined)
+    assert.equal(reqOrigin(mockReq({ 'x-forwarded-host': 'example.com', 'x-forwarded-proto': 'ftp' }), { optional: true }), undefined)
+    assert.equal(reqOrigin(mockReq({ 'x-forwarded-host': 'example.com', 'x-forwarded-proto': 'wss' }), { optional: true }), 'https://example.com')
+  })
 })
 
 describe('reqIp', () => {
