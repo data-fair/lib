@@ -98,7 +98,7 @@ Built by the worker (`processings/worker/src/task/axios.ts`); `@data-fair/lib-pr
 
 What to do with it:
 
-- **External sources:** pass per-request options (`{ maxRedirects: 5, timeout: 60000 }`) on `context.axios`; a remote host that redirects (http→https, CDN, download link) otherwise fails with a 3xx.
+- **Unauthenticated external sources:** pass per-request options (`{ maxRedirects: 5, timeout: 60000 }`) on `context.axios`; a request that carries credentials keeps `maxRedirects: 0` (see [Security](#security)). A remote host that redirects (http→https, CDN, download link) otherwise fails with a 3xx.
 - **Every HTTP call goes through `context.axios`** — never the raw `axios` package, `axios.create()`, `fetch`, `got` or `request`, and never a custom `httpAgent`/`httpsAgent`/`proxy` option: they bypass the SSRF protection. Credentials, non-HTTP clients and child processes: see [Security](#security) below.
 - **POST/PATCH to data-fair** (bulk lines, file upload) are not retried: wrap them in a small helper retrying 429/5xx, with the body rebuilt by a thunk on each attempt. Reference: `processing-ods/lib/utils.ts` `withRetry429` / `dfRetry` (429 only, 3 retries, fixed 10 s pause, logs each pause). Don't wrap GETs — the built-in retry already applies, the two stack.
 - **Reading an error in code that runs in both worker and tests:** `err.status ?? err.response?.status`, `err.data ?? err.response?.data`.
@@ -130,6 +130,7 @@ A plugin runs inside the shared, multi-tenant workers of the processings service
 |---|---|
 | `fetch`, `got`, `request`, `node-fetch`, raw `axios` | move the call to `context.axios` |
 | AWS SDK (`@aws-sdk/*`) | `requestHandler: new NodeHttpHandler({ httpAgent, httpsAgent })` with the public agents of `@data-fair/lib-node/http-agents.js` |
+| an SDK that only accepts an `instanceof https.Agent` (e.g. `web-push`) | lib-node's agents are agentkeepalive agents: they fail that test and are **silently ignored**. Pass `new https.Agent({ keepAlive: true, lookup: publicLookup })` (`@data-fair/lib-node/ssrf.js`), and `resolvePublicAddress(hostname)` before the call when the host may be an IP literal |
 | another SDK with a user-chosen endpoint | pass those agents if it accepts them; else validate the endpoint (fixed provider domain, strict account-name pattern) |
 | `jsonld` (remote `@context`) | a `documentLoader` that refuses remote URLs, or `jsonld.documentLoaders.node({ httpAgent, httpsAgent })` |
 | ftp, sftp, ssh2, raw sockets | `const ip = await resolvePublicAddress(host)` (`@data-fair/lib-node/ssrf.js`, throws `SsrfError`), then connect **to `ip`**, with TLS `servername` = host: resolving again could give another address. FTP passive mode: the server picks the data-channel IP, use EPSV or check the PASV address with `resolvePublicAddress` too |
@@ -146,7 +147,7 @@ A plugin runs inside the shared, multi-tenant workers of the processings service
 **Remote names never become paths or commands.**
 
 - A file name, title, id or listing entry from a remote server or from the config goes through `path.basename()` (or a whitelist such as `[a-zA-Z0-9._-]`) before joining `tmpDir`, and the resolved path must stay inside `tmpDir`: a traversal writes into another run's files.
-- `execFile(cmd, [args])`, never `exec` with an interpolated string. Never hand a user URL to a child process (GDAL, curl, a headless browser); force the input driver (`ogr2ogr -if GPKG`) so a file cannot be sniffed as a VRT pointing to `/vsicurl/…` or a local path.
+- `execFile(cmd, [args])`, never `exec` with an interpolated string. Never hand a user URL to a child process (GDAL, curl, wget); a headless browser needs request interception that applies the same address check (`resolvePublicAddress`) to every request; force the input driver (`ogr2ogr -if GPKG`) so a file cannot be sniffed as a VRT pointing to `/vsicurl/…` or a local path.
 - Bound what a remote server can make the run do: byte caps on downloads (`maxContentLength` or a counted stream), a page limit on pagination loops, a non-zero `timeout`, limits on archive extraction (zip bombs).
 
 Tests run with `@data-fair/lib-processing-dev`, whose `context.axios` is **not** guarded: a passing test proves nothing about these rules, review them.
