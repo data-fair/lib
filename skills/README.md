@@ -32,8 +32,10 @@ npx skills add data-fair/lib -g
 Install a specific skill only:
 
 ```sh
-npx skills add data-fair/lib --skill data-fair-processing
+npx skills add data-fair/lib --skill data-fair-processing --skill vjsf
 ```
+
+The plugin skills link to `vjsf` (configuration schemas): install it with them.
 
 Target a specific agent (Claude Code, Cursor, etc.):
 
