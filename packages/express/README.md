@@ -47,7 +47,7 @@ app.get('/api/items', async (req, res) => {
 app.use(errorHandler)
 ```
 
-Permissions, account roles, admin mode and the Vue side are covered by the [`data-fair-session` skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-session).
+Permission checks (`assertAccountRole`, `assertAdminMode`, `getAccountRole`) come from `@data-fair/lib-common-types/session/index.js` and are re-exported here; the Vue side is `useSession` of `@data-fair/lib-vue`.
 
 ### Scopes and bearer tokens
 
@@ -106,6 +106,6 @@ Permissions, account roles, admin mode and the Vue side are covered by the [`dat
 
 ## Websockets and identities
 
-- Websocket server: [`data-fair-ws` skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-ws).
-- Identity webhooks (renames, GDPR deletions): [`data-fair-identities` skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-identities).
-- `reqIsInternal()` alone never grants a privilege: see the [`data-fair-security` skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-security).
+- Websocket server: `@data-fair/lib-express/ws-server.js`, with `@data-fair/lib-node/ws-emitter.js` to publish and `useWS` of `@data-fair/lib-vue` to subscribe.
+- Identity webhooks (renames, GDPR deletions): `createIdentitiesRouter()` of `@data-fair/lib-express/identities/index.js`.
+- `reqIsInternal()` only means "no `X-Forwarded-Host` header", which a request forged through a user-provided URL also satisfies: it never grants a privilege alone. Use `assertReqInternalSecret(req, secret)` with a per-integration secret.

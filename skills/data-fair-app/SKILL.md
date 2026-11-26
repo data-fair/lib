@@ -7,7 +7,7 @@ description: >
   config-schema.json, .dev-config.json, df-dev-server, d-frame ou intégration
   iframe, createConfig, useFetch, reactiveSearchParams, index.html et ses métas
   df:*, capture d'écran et miniatures, thème dynamique (_theme.css, mode sombre, surcharge de couleurs _t_*,
-  contraste renforcé), internationalisation de session, accessibilité RGAA d'une
+  contraste renforcé), session (utilisateur, compte actif, rôles, getAccountRole), sécurité des URLs et de l'accessKey, internationalisation de session, accessibilité RGAA d'une
   visualisation, fichiers racine (eslint, tsconfig, vite, zellij, husky,
   commitlint) et tests Playwright.
 ---
@@ -683,6 +683,28 @@ const { data: lines, loading, error } = useFetch('/api/v1/datasets/123/lines')
 
 **Utilitaires d'erreur** — `@data-fair/lib-vue/ui-notif.js` expose `getErrorMsg(error)` et `getErrorCode(error)` pour extraire proprement le message et le code HTTP d'une erreur API (compatible `ofetch`, `axios`, `fetch` natif).
 
+### Session : qui regarde, et avec quels droits
+
+La session est un JWT posé en cookies par simple-directory sur l'origine du portail : `id_token` (lisible) et `id_token_sign` (httpOnly), plus `id_token_org`, `id_token_dep`, `id_token_role` et `i18n_lang` pour le compte actif, le rôle choisi et la langue. L'application ne la stocke pas et ne la transmet jamais elle-même : servie depuis la même origine, ses appels `useFetch` / `ofetch` en URL relative portent les cookies tout seuls.
+
+- **Créée une fois dans `main.ts`** (`await createSession(...)`, cf. `snippets/main.ts`), **lue partout par `useSession()`** de `@data-fair/lib-vue/session.js`.
+- **Le visiteur est souvent anonyme** (portail public, lien partagé, capture). Utiliser `useSession()`, dont `session.user.value` vaut `undefined` sans connexion ; jamais `useSessionAuthenticated()` dans une visu, il lève une erreur sans utilisateur.
+- Les valeurs utiles sont des `computed` : `session.user.value` (`id`, `name`, `adminMode` pour un super-administrateur), `session.account.value` (le compte actif : `{ type: 'user' | 'organization', id, name, department? }`), `session.accountRole.value` (`admin`, `contrib`, `user`…), `session.lang.value`.
+- **Droits sur un jeu de données** : lire `dataset.userPermissions`, injecté dans `window.APPLICATION` à condition d'être dans le `select` du sélecteur (cf. « window.APPLICATION »). C'est la source à privilégier, elle reflète les permissions réelles du visiteur.
+- **Droits sur un propriétaire** (`window.APPLICATION.owner`, `dataset.owner`) : `getAccountRole(session.state, owner)`, exporté par `@data-fair/lib-vue/session.js`. Il renvoie `null` pour un anonyme, `'admin'` en mode super-administrateur ou sur son propre compte utilisateur, sinon le rôle du compte actif s'il correspond au propriétaire. Le département n'est comparé que si le compte actif en a un : un membre à la racine d'une organisation a son rôle sur tous ses départements, un membre d'un département n'a aucun rôle sur une ressource de la racine.
+- **Un contrôle côté client n'est qu'un confort d'interface** (masquer un bouton d'édition). L'API refuse de toute façon ce que la session n'autorise pas : ne jamais compter sur lui pour protéger quoi que ce soit.
+- Changer de compte, de langue ou de mode sombre **recharge le document** (`lib-vue/session.ts`, `watch` sur `account`, `lang` et `dark`) : inutile de surveiller ces valeurs avec un `watch`, elles ne changent pas pendant la vie de la page. Le thème est à part : `switchTheme` recharge aussi, mais en thème `system` un changement de préférence du système (`prefers-color-scheme`, `forced-colors`) met à jour `session.site` (couleurs, `dark`) **sans** rechargement.
+- Le rafraîchissement du jeton (`keepalive`, toutes les 10 minutes) ne tourne que dans une fenêtre de premier niveau, pas dans une iframe ni pendant une capture : une application embarquée compte sur la page qui l'embarque.
+- Connexion : `session.login()` redirige la fenêtre de premier niveau (le portail, pas l'iframe) vers simple-directory, puis revient sur cette page ; en lien, `session.loginUrl()` avec `target="_top"`.
+
+### Sécurité : les identifiants ne quittent pas data-fair
+
+Le navigateur protège déjà l'essentiel (les cookies de session ne partent pas vers une autre origine), mais l'application manipule aussi des URLs venues de sa configuration (fond de carte, image, lien, source externe) et une clé d'accès.
+
+- **L'`accessKey` ne va qu'aux vues data-fair** embarquées par `<d-frame>` (cf. `snippets/access-key.ts`), jamais dans une URL tirée de la configuration ni vers un service tiers.
+- **Décider qu'une URL est « chez data-fair » par l'origine analysée**, jamais par un préfixe ou un `replace` de chaîne : `new URL(u, location.href).origin === new URL(window.APPLICATION.apiUrl).origin`. `https://exemple.fr.evil.com` et `https://exemple.fr@evil.com` passent un `startsWith('https://exemple.fr')`.
+- **Pas d'en-tête d'authentification ajouté à la main** (`x-apiKey`, `Authorization`) : une clé d'API n'a rien à faire dans le code d'une application, qui est servi à tous les visiteurs.
+
 ### Performances
 
 - Débouncer les appels API (`useDebounce` de `@vueuse/core`).
@@ -749,7 +771,7 @@ puis `const { t } = useI18n()` dans le `<script setup>` (la portée locale est a
 
 - **Activer le plugin de compilation** dans `vite.config.ts` : `import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'`, puis `VueI18nPlugin()` dans `plugins`. Sans lui les blocs `<i18n>` ne sont pas compilés. Plusieurs applications l'ont déjà installé sans s'en servir — vérifier avant de l'ajouter.
 - **Dates et durées** : `createLocaleDayjs(session.lang.value)` puis `useLocaleDayjs()`, cf. `snippets/locale-dayjs.ts`.
-- **Nombres et pourcentages** : `n()` avec un format nommé, ou `toLocaleString(locale)` sans option pour un nombre simple ; jamais `toLocaleString()` sans locale, voir ci-dessous. Les services suivent la même règle (`data-fair-service`, `references/i18n.md`).
+- **Nombres et pourcentages** : `n()` avec un format nommé, ou `toLocaleString(locale)` sans option pour un nombre simple ; jamais `toLocaleString()` sans locale, voir ci-dessous.
 - **Ne pas porter l'i18n du catalogue dans `index.html`** (un seul `<title>`, une seule `<meta name="description">`) : elle passera par registry, qui porte `title` et `description` en objets `{ en, fr }`.
 - **Casse des libellés** : la règle de majuscule initiale s'applique à toutes les chaînes visibles, traduites ou en dur — voir « Libellés : majuscule initiale, casse de phrase » dans la section VJSF.
 

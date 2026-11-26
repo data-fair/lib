@@ -21,7 +21,7 @@ description: >
 
 Pour un agent qui **utilise** une plateforme data-fair déployée via un navigateur MCP (chrome-devtools ou Playwright), le plus souvent sous une **identité non humaine** (NHI). Le fil conducteur : la page connaît déjà ses propres opérations, il faut les lui demander avant de simuler un humain.
 
-Cet skill ne couvre **pas** le développement des services (→ `data-fair-session`, `data-fair-ws`, `vjsf`), ni le contenu éditorial des pages de portail (→ `portals-pages`, qui s'appuie sur celui-ci).
+Ce skill ne couvre **pas** le développement du code (applications → `data-fair-app`, plugins de traitement → `data-fair-processing`, formulaires → `vjsf`), ni le contenu éditorial des pages de portail (→ `portals-pages`, qui s'appuie sur celui-ci).
 
 ## 1. L'identité NHI
 

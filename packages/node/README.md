@@ -42,8 +42,6 @@ There is no root entry point: import each module by its path.
 | `@data-fair/lib-node/validation.js` | Re-export of `@data-fair/lib-validation`. |
 | `@data-fair/lib-node/test-spies.js` | Test helpers: turns `// @test:spy(...)` comments into events that tests can `waitFor()`. |
 
-For sessions see the [`data-fair-session` skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-session), for websockets the [`data-fair-ws` skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-ws).
-
 ## Outgoing HTTP requests and SSRF
 
 The default axios instance and the public agents refuse to connect to non public addresses (loopback, private ranges, link-local including the cloud metadata service, etc.). Use them for every URL that a user can influence.
@@ -64,7 +62,7 @@ If `HTTP_PROXY`, `HTTPS_PROXY` or `ALL_PROXY` (or their lowercase forms) is defi
 
 For clients that don't use these agents (ftp, sftp, raw sockets, SDKs…), `@data-fair/lib-node/ssrf.js` exports `resolvePublicAddress(host)` (checks every address of the host and returns the one to connect to) and `publicLookup` (a `dns.lookup` compatible function for any `lookup` option). They apply the same rules and are not disabled by a proxy env variable. `publicLookup` is not called for IP literals: check those with `resolvePublicAddress`.
 
-See the [`data-fair-security` skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-security) for the stack-wide rules.
+Choose the client by where the URL comes from, never by where it points: a user-provided URL that names an internal host goes through the public client and fails. A request sent with the private agents uses `maxRedirects: 0`, since the agents are reused on every redirect hop.
 
 ## Logging
 
@@ -201,5 +199,3 @@ import locks from '@data-fair/lib-node/locks.js'
 await locks.start(db)
 await upgradeScripts(db, locks) // optional: basePath = './', isFresh callback
 ```
-
-The [`upgrade-scripts` skill](https://github.com/data-fair/lib/tree/main/skills/upgrade-scripts) covers the folder-naming rule, idempotency patterns and fresh installs in detail.
