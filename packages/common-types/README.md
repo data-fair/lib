@@ -32,7 +32,7 @@ Each directory module exports its generated types (and `validate` / `assertValid
 
 ### Session
 
-The session state is usually obtained through the session middleware of `@data-fair/lib-express` or `useSession` of `@data-fair/lib-vue`; this package provides its type and the checks. See the [data-fair-session skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-session).
+The session state is usually obtained through the session middleware of `@data-fair/lib-express` or `useSession` of `@data-fair/lib-vue`; this package provides its type and the checks.
 
 ```ts
 import { type SessionState, assertAccountRole } from '@data-fair/lib-common-types/session/index.js'

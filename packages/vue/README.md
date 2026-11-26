@@ -84,7 +84,7 @@ session.login()
 const { user, account, accountRole } = useSessionAuthenticated()
 ```
 
-Roles, admin mode and organization switching are covered by the [data-fair-session skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-session).
+Roles: `getAccountRole(session.state, owner)` (re-exported from `@data-fair/lib-common-types`); admin mode: `session.user.value?.adminMode`; organization switching: `session.switchOrganization(orgId, department?)`.
 
 ## Fetch and actions
 
@@ -128,7 +128,7 @@ useWS('/my-service/api/')?.subscribe<Notification>(`user:${userId}:notifications
 })
 ```
 
-Server side and channel permissions: [data-fair-ws skill](https://github.com/data-fair/lib/tree/main/skills/data-fair-ws).
+The server side is `@data-fair/lib-express/ws-server.js`, where a `canSubscribe` callback decides who may subscribe to a channel.
 
 ## Owners with a deleted department
 

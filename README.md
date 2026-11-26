@@ -19,7 +19,7 @@ This is an npm-workspaces monorepo. Each package is published independently in t
 
 ## Coding agent skills
 
-[`skills/`](./skills) holds skills for AI coding agents working in the data-fair stack (sessions, websockets, upgrade scripts, security, applications, processings, portals…). See [`skills/README.md`](./skills/README.md) for the list and how to install them.
+[`skills/`](./skills) holds skills for AI coding agents working in the data-fair stack (applications, processing plugins, configuration forms, portals…). See [`skills/README.md`](./skills/README.md) for the list and how to install them.
 
 ## Contributing
 
