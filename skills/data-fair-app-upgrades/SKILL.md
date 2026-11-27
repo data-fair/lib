@@ -60,6 +60,17 @@ platform under a non-human identity is `data-fair-browse`.
 7. **Regressions are reported, not worked around silently**: a bug of the target version
    that a configuration cannot fix leaves the application on its version, with a ticket on
    the base application.
+8. **No compatibility code in the application.** A new version may break old configurations:
+   the conversion belongs to the upgrade, not to the application code (no reading or repairing
+   of old configurations, no alias of a deprecated parameter). Two exceptions: old parameters of
+   shared links (a link in circulation cannot be fixed by saving a configuration), and a
+   compatibility whose removal would break silently (wrong values, lost permissions).
+9. **Pace by batch.** Once the owner has validated a batch, prepare the next one without asking
+   again (backups, copies, checks, then present it); promotion still waits for the explicit go.
+   Bricks with only two or three applications to upgrade can share a batch.
+10. **The agent's identity stays in one department.** Never ask for an admin identity at the
+    root of the organization to see every department at once: move it from department to
+    department between batches, and report the root-level applications to the owner instead.
 
 ## 1. Find the versions
 

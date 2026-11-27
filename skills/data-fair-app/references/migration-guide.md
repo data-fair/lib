@@ -108,6 +108,17 @@ Voir la section dédiée "HTTP" plus bas pour les détails sur `useFetch`.
 | Correspondance Material 2 → 3 | `text-h1` → `text-display-large`, `text-h2` → `text-display-medium`, `text-h3` → `text-display-small`, `text-h4` → `text-headline-large`, `text-h5` → `text-headline-medium`, `text-h6` → `text-headline-small`, `text-subtitle-1` → `text-title-medium`, `text-subtitle-2` → `text-title-small`, `text-body-1` → `text-body-large`, `text-body-2` → `text-body-medium`, `text-caption` → `text-body-small`, `text-overline` → `text-label-small text-uppercase`, `text-button` → `text-label-large`. Chercher aussi dans les tests (sélecteurs CSS sur ces classes) |
 | Thème via JS | Thème via CSS variables + `vuetifySessionOptions` |
 
+### Grille : des `gap`, plus de marges ni de padding
+
+En Vuetify 4, `.v-row` dessine ses gouttières par `gap` (24 px en densité par défaut, 16 en `comfortable`, 8 en `compact`, réglable par la prop `gap`), `.v-col` n'a plus de padding et `.v-row` plus de marge négative (`vuetify/lib/components/VGrid/VGrid.css`). Conséquences :
+
+- `ma-0` sur une `v-row` (l'idiome Vuetify 3 « garder les gouttières, annuler la marge négative ») ne fait plus rien : une `<v-row>` nue suffit. Le remplacer mécaniquement par `no-gutters` met le gap à 0 et écrase tous les espacements.
+- `pa-0` / `py-0` / `pr-0` sur une `v-col` ne font plus rien non plus : les supprimer, ils laissent croire à une sémantique qui n'existe plus, et ne jamais compter sur le padding de colonne pour un retrait de bord.
+- Le `gap` ne joue qu'entre les colonnes d'une même row. Entre deux rows adjacentes, `.v-row + .v-row { margin-top: var(--v-col-gap-y) }` impose 24 px invisibles dans le markup : une suite de rows dont l'espacement est piloté par la configuration (lignes d'une fiche personnalisée) porte `no-gutters`. Entre deux rows non adjacentes, rien ne s'applique : réintroduire l'espacement (`mt-4`).
+- Une application déjà servie en Vuetify 4 rend son ancien markup avec ces classes neutralisées : la référence visuelle est ce rendu en production, pas la géométrie Vuetify 3 du source. Ne pas « restaurer » un retrait que la production n'affiche pas.
+
+Avant de toucher une `v-row`, choisir l'intention : gouttière par défaut (`<v-row>`), réduite (`density`) ou nulle (`no-gutters`).
+
 ## Vue CLI → Vite
 
 - Remplacer `vue.config.js` par `vite.config.ts`
