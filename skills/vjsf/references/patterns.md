@@ -71,7 +71,7 @@ One canonical shape — an object `{ name, svg, svgPath }` fed by the `icons-mdi
 - **Rendering**: use `icon.svgPath` (the `d` of a `<path>`) — no `@mdi/js` at runtime. Custom SVG: `<path :d="icon.svgPath">`; Vuetify: `:icon="icon.svgPath"`.
 - Closed lists (e.g. fixed filter icons) can query directly, same absolute host: `https://koumoul.com/data-fair/api/v1/datasets/icons-mdi-latest/lines?name_in=cart,school&select=name,svg,svgPath`.
 
-## Tabs (`allOf` + `title`)
+## Tabs on flat data (`allOf` + `title`)
 
 ```json
 {
@@ -84,7 +84,7 @@ One canonical shape — an object `{ name, svg, svgPath }` fed by the `icons-mdi
 }
 ```
 
-One `allOf` entry = one tab; its `title` is the tab label. Without `layout: "tabs"` the entries still render as stacked sections. Keep the data-source tab first.
+One `allOf` entry = one tab; its `title` is the tab label, and the data stays flat (the form used by data-fair configuration schemas). Titled sub-objects under `properties` also make one tab each, with nested data. Without `layout: "tabs"` the entries still render as stacked sections. Keep the data-source tab first.
 
 ## Discriminated `oneOf`
 

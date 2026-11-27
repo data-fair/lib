@@ -170,7 +170,7 @@ The pattern for exclusive variants (chart types, element types, filter types):
 ```
 
 - Each branch declares the discriminant as a `const` directly in its `properties`, plus a branch `title` (the option label). Without `discriminator`, json-layout infers one from a string `const` distinct in every branch; with no such `const` the first branch whose schema validates wins, and data matching several branches leaves the form invalid with no visible error.
-- Put the discriminant in `required` too: otherwise empty data validates the first branch, which is silently auto-selected (and its `const` written) instead of letting the user choose.
+- Put the discriminant in **each branch's** `required`: otherwise empty data validates the first branch, which is silently auto-selected (and its `const` written) instead of letting the user choose. A `required` on the parent object does not prevent it (checked with `@json-layout/core` 2.13, with and without `discriminator`).
 - `discriminator` is a **major performance point on large `oneOf`**: it lets json-layout and ajv resolve the active branch directly instead of trying every branch. The portals page editor (a ~38-type element `oneOf`) relies on it; without it, opening the form costs seconds. When ajv validates the schema, the option must also be enabled: `ajvOptions: { discriminator: true }`, on the schema the form is compiled from (its root), not only on the sub-schema holding the `oneOf`, or ajv ignores the keyword and validates every branch on each keystroke.
 - With that option ajv enforces the pattern at compile time, and a violation makes the **whole schema** fail to compile (`discriminator: "type" must be required`, `… must have "properties/type"`), not just the faulty branch: the discriminant must be in `required` in every branch (or in the parent), and its `const` (or `enum`) directly in the branch's `properties`, or in the target of a branch that is a bare `$ref`. The error does not name the branch. Compile the schema actually served (the resolved one, e.g. `public/config-schema.json`), not the source.
 - ajv's discriminator does not compose with `unevaluatedProperties`: valid data gets false errors. Close each branch with `additionalProperties: false` instead (inlining the branch definitions if their `$ref` targets rely on `unevaluatedProperties`).
@@ -191,6 +191,8 @@ Order of magnitude, on one large application schema whose shared definitions wer
 
 Same rendered form and same produced object either way. When a form takes seconds to open and the profile points at Ajv codegen (`optimizeNames`, `optimizeNodes`, `subschema`) under json-layout's `compile`, check which of the two it is being fed.
 
+For a schema known at build time, `@koumoul/vjsf-compiler` moves the whole compilation into the build script and emits a standalone `.vue` component (its `webmcp` option generates the WebMCP variant). A Vite app using the runtime compiler lists `commonjsDeps` from `@koumoul/vjsf/utils/build.js` in `optimizeDeps.include`.
+
 ## Internationalization — `x-i18n-<keyword>`
 
 `x-i18n-<keyword>` is a supported json-layout mechanism (`resolveXI18n`), active only when the rendering UI passes the `xI18n: true` option (default `false`) with the user's `locale`. It works on **any keyword**, including inside `layout`, `getItems`, `props` and `oneOfLayout`: `x-i18n-title`, `x-i18n-description`, `x-i18n-markdown`, `x-i18n-placeholder`, `x-i18n-itemTitle`, `x-i18n-label`, `x-i18n-errorMessage`…
@@ -208,6 +210,8 @@ const vjsfOptions = computed(() => ({
 ```
 
 Without `xI18n: true` the `x-i18n-*` keywords are ignored and the base keywords are shown; without `locale`, vjsf's own messages (add, delete, validation errors) stay in the default language. A UI rendering a schema it does not own (a plugin or application schema) sets both, so that the schema's translations are honoured.
+
+vjsf's own messages (add, delete, empty list, validation errors) are overridden through the `messages` option; a list also takes `layout.messages` for its action labels (`addItem`, `delete`, `edit`…).
 
 **Recommendation: bilingual schemas, English base.** User-facing keywords (`title`, `description`, `markdown`, `oneOf` branch titles, `layout` labels, `messages`, `slots`…) carry English in the base keyword and the French in `x-i18n-<keyword>.fr`. English is the base because it is the resolution fallback (`defaultLocale = 'en'`) and because a base `title` names a generated type (see the technical-title variant below).
 
@@ -242,6 +246,15 @@ Generated type `LayersList`; the branch displays "List the available layers" / "
 - When the technical name and the displayed English are the same, **drop the `en` key** — it would only duplicate the base.
 
 An `"en"` key is not a smell by itself. The actual defect is a base title that is neither the displayed English nor a deliberate type name.
+
+## Defaults: the schema `default` is the code fallback
+
+json-layout writes a schema `default` into the data when the form renders (`useDefault: 'data'`), and the first save stores it. Nothing else does: an API, a script or an agent writes a config without its defaults, and older configs predate the keys. The code that reads the config therefore sees both states, the key missing and the key set to its default, and must render them the same way.
+
+- **The fallback for a missing key is the schema `default`, same value.** `default: true` reads as `x !== false`, `default: 'center'` as `x ?? 'center'`, `default: 4` as `x ?? 4`. A bare `if (x)` or `x === true` on a key whose default is `true` renders "off" until the first form save, then "on": the rendering changes without anyone touching that option.
+- **A fallback with no schema `default` gets one**, equal to the fallback, so the form shows the value that actually renders.
+- **A deliberate difference** (compatibility with configs written before a default changed) stays, with a one-line comment at the fallback saying why. Prefer freezing old data instead: when a default changes, an upgrade script writes the old rendering's value where the key is missing, and the fallback follows the new default.
+- When the rendering code lives in another repo than the schema (an application, a plugin, a portal), the rule holds across the two.
 
 ## Label casing
 
@@ -312,4 +325,5 @@ The host service may pin an older vjsf than the editor: a rendering that differs
 - [ ] Translations: English base keywords + `x-i18n-*.fr` on user-facing strings (recommended, see § Internationalization), and every override resolves to the right text in each locale
 - [ ] Every user-facing label starts with a capital, in sentence case
 - [ ] Conditionally required fields are modelled in the schema, not with `layout.if`
+- [ ] Every added or changed `default` matches the fallback of the code that reads the key (§ Defaults)
 - [ ] The type-generation pipeline of the host project was rerun (`npm run build-types` where applicable)

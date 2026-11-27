@@ -17,7 +17,7 @@ Detection: `grep -n '"x-' <schema>` and migrate everything it finds **except** `
 
 | vjsf 2 | vjsf 3+ / json-layout |
 |---|---|
-| `"x-display": "tabs"` | `"layout": "tabs"` — the tabs themselves are the **titled `allOf` entries** of the object, one entry = one tab |
+| `"x-display": "tabs"` | `"layout": "tabs"`: one tab per child of the object (titled sub-objects, or titled `allOf` entries to keep the data flat) |
 | `"x-display": "card"` / `"switch"` / `"textarea"` / … | `"layout": "<comp>"` |
 | `"x-display": "radio"` | `"layout": "radio-group"` |
 | `"x-display": "checkbox"` (non-boolean, multi-choice) | `"layout": "checkbox-group"` |
@@ -49,9 +49,15 @@ The `x-*` values were **property paths**; the json-layout ones are **JS expressi
 
 Forgetting the `item.` prefix or the `$` on `${context…}` is the usual breakage — and like everything else on this page, it fails **silently** (empty select, dead condition).
 
-## Tabs need `allOf`
+## Tabs: one tab per child
 
-vjsf 2 tolerated tabs over plain `properties`. In json-layout, `layout: "tabs"` groups the **`allOf` entries** of the object; each entry's `title` is the tab label:
+`layout: "tabs"` makes one tab per child of the object, labelled by the child's `title`. What the children are decides the data shape:
+
+- titled sub-objects (`properties: { source: { type: "object", title: "Source", properties: … } }`): one tab per sub-object, the data is nested (`{ source: { … } }`);
+- titled `allOf` entries: one tab per entry, the data stays **flat**;
+- plain fields directly under `properties`: one tab per field, rarely what is wanted.
+
+vjsf 2 schemas usually kept their fields flat, so migrating them means `allOf` entries; the data-fair configuration schemas use that form (flat configuration objects):
 
 ```json
 {
@@ -64,7 +70,7 @@ vjsf 2 tolerated tabs over plain `properties`. In json-layout, `layout: "tabs"` 
 }
 ```
 
-A migration that keeps everything under `properties` and just adds `layout: "tabs"` produces one empty tab bar.
+Adding `layout: "tabs"` over flat `properties` without regrouping them gives one tab per field.
 
 ## Automated first pass: `v2compat`
 
@@ -75,7 +81,7 @@ import { v2compat } from '@koumoul/vjsf/compat/v2'
 const v3Schema = v2compat(v2Schema)
 ```
 
-It covers the table above but produces literal translations; after running it, still review expressions (`parent.data`, `item.` prefixes), re-add `size`/`select` on data-fair URLs, and check the tabs/`allOf` structure.
+It covers the table above but produces literal translations; after running it, still review expressions (`parent.data`, `item.` prefixes), re-add `size`/`select` on data-fair URLs, and check how the tabs regroup the fields.
 
 ## After the migration
 
