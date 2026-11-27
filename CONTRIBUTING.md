@@ -151,9 +151,13 @@ and refuses to run outside `main`, on a dirty working tree, or right after a rel
 commit is the only record (per-package releases are **not** git-tagged).
 
 Notes:
+- Never edit a package's `version` by hand, and never in a feature branch or PR: the bump
+  is the release record and only `npm run release`, on `main`, makes it.
 - **Which packages to release?** Only the ones whose source you changed. If you changed a
   package that others depend on, bump/release it first, then bump the dependents' version
-  range if needed and release them too.
+  range if needed and release them too. The commit a published version was built from is
+  `npm view @data-fair/lib-<name> gitHead`; `git log <gitHead>..HEAD -- packages/<dir>`
+  lists what is not released yet.
 - The legacy `v0.x.x` git tags track the root `@data-fair/lib` version; that root-level
   release scheme has been **dormant since 2024** and is not part of day-to-day releases.
 

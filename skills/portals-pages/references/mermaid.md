@@ -29,7 +29,8 @@ Règles pratiques :
 - **libellés courts** (1-3 mots par ligne, `<br/>` pour aérer) : la largeur d'un nœud suit son texte ;
 - viser une largeur naturelle **≤ ~750 px** ; après rendu, vérifier `scale ≥ 0,9` et une police effective ≥ 11 px (snippet dans `references/api-workflow.md`) ;
 - garder `fontSize: 16px` dans la directive : monter la police fait croître la largeur naturelle dans les mêmes proportions, le gain est nul ;
-- un diagramme plus **haut** qu'avant ne pose pas de problème (la page défile).
+- un diagramme plus **haut** ne réduit pas la police (la page défile), mais il repousse le contenu loin pour peu d'information : préférer 3 à 5 nœuds en `flowchart LR` et dire le reste dans le texte ;
+- éviter les libellés d'arêtes : leur fond prend une couleur dérivée du thème.
 
 ## Règle n°2 : neutraliser les couleurs du thème `base`
 

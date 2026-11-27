@@ -150,7 +150,7 @@ A select or list fed by a column's values (a filter value, a colour or icon per 
 }
 ```
 
-**Schema-level conditionals:** `oneOf` with a `const` discriminator (exclusive modes, renders as `one-of-select`, give each branch a `title`); `if`/`then` on an `allOf` entry; `dependentSchemas` once a property is filled. `$ref: "#/$defs/x"` works, including recursive definitions.
+**Schema-level conditionals:** `oneOf` with a `const` discriminator (exclusive modes, renders as `one-of-select`, give each branch a `title`); `if`/`then` on an `allOf` entry; `dependentSchemas` once a property is filled. `$ref: "#/$defs/x"` works, including recursive definitions. A `layout` next to a `$ref` is merged into the referenced node's layout (`if`, `comp`, `props`…), so a shared definition can be hidden or restyled where it is used: `{ "$ref": "#/$defs/alignment", "layout": { "if": "parent.data?.position !== 'none'" } }`.
 
 ## Discriminated `oneOf` — correctness and performance
 
@@ -171,7 +171,9 @@ The pattern for exclusive variants (chart types, element types, filter types):
 
 - Each branch declares the discriminant as a `const` directly in its `properties`, plus a branch `title` (the option label). Without `discriminator`, json-layout infers one from a string `const` distinct in every branch; with no such `const` the first branch whose schema validates wins, and data matching several branches leaves the form invalid with no visible error.
 - Put the discriminant in `required` too: otherwise empty data validates the first branch, which is silently auto-selected (and its `const` written) instead of letting the user choose.
-- `discriminator` is a **major performance point on large `oneOf`**: it lets json-layout and ajv resolve the active branch directly instead of trying every branch. The portals page editor (a ~38-type element `oneOf`) relies on it; without it, opening the form costs seconds. When ajv validates the schema, the option must also be enabled: `ajvOptions: { discriminator: true }`.
+- `discriminator` is a **major performance point on large `oneOf`**: it lets json-layout and ajv resolve the active branch directly instead of trying every branch. The portals page editor (a ~38-type element `oneOf`) relies on it; without it, opening the form costs seconds. When ajv validates the schema, the option must also be enabled: `ajvOptions: { discriminator: true }`, on the schema the form is compiled from (its root), not only on the sub-schema holding the `oneOf`, or ajv ignores the keyword and validates every branch on each keystroke.
+- With that option ajv enforces the pattern at compile time, and a violation makes the **whole schema** fail to compile (`discriminator: "type" must be required`, `… must have "properties/type"`), not just the faulty branch: the discriminant must be in `required` in every branch (or in the parent), and its `const` (or `enum`) directly in the branch's `properties`, or in the target of a branch that is a bare `$ref`. The error does not name the branch. Compile the schema actually served (the resolved one, e.g. `public/config-schema.json`), not the source.
+- ajv's discriminator does not compose with `unevaluatedProperties`: valid data gets false errors. Close each branch with `additionalProperties: false` instead (inlining the branch definitions if their `$ref` targets rely on `unevaluatedProperties`).
 - The variant selector is labelled through **`oneOfLayout`** — a sibling of `oneOf`, not a `title` on the container (that renders a section heading, not the select label): `oneOfLayout: { "label": "…", "x-i18n-label": { "fr": "…" } }`. For long lists add `"autocomplete": true` to `oneOfLayout`.
 - A `default` selecting the initial branch avoids an empty form state.
 
@@ -214,6 +216,8 @@ Without `xI18n: true` the `x-i18n-*` keywords are ignored and the base keywords 
 | New schema | EN in the base keyword + `x-i18n-*.fr` from the start. |
 | Schema entirely in French | When it gets translated: English in the base, the existing French moved into `x-i18n-*.fr`. |
 | Half French / half English | The most confusing state for users — worth finishing first, the same way. |
+
+A label that reads the same in both languages (`URL`, `Port`, `Endpoint`) needs no `x-i18n-*`: the base is shown in every locale.
 
 Descriptions nobody sees in a form (API documentation, technical or internal schemas) need no translation: they are simply written in English, and may use technical terms.
 
@@ -286,7 +290,17 @@ Two exceptions only: technical identifiers rendered as-is (`h1`, a dataset field
 | `cols` tuned against the window size | Breakpoints use the **form's** width (nested sections: their share of it). `cols: 6` = `{ xs: 12, sm: 6 }`, so full width in any form under 600px (dialog, side panel) |
 | Long `inline-single` list (default for arrays of objects) | Non-edited items render the whole item form read-only with `summary` true — hide heavy fields with `if: "!summary"` and set `itemTitle` |
 | Guidance written in `$comment` | Read by neither vjsf nor the WebMCP tools: users and agents never see it. Keep it for maintainer notes; user/agent text goes in a field `description` or `layout.help` (both become the help agents read; a titled section's `description` is a subtitle agents don't get) |
+| `:schema` or `:options` getting a new identity during an edit (a computed reading the edited model, an inline function in the options) | vjsf (4.8.0) builds a new StatefulLayout but mounted fields keep writing into the old one: their next input wipes the other fields' unsaved edits. Keep both stable (depend on primitives, hoist functions, keep the identity while deep-equal), remount with `:key` on a real schema change, and give `v-model` back the very object vjsf emitted (an echo is only recognised by identity) |
 | Verb-phrase base `title` feeding a type generator | Types get named `ListLayers`-style; use a noun phrase, move the verb to `x-i18n-title.en` |
+
+## Testing a schema
+
+To see a schema render without its host service:
+
+- In a browser, with the real vjsf: in a checkout of `koumoul-dev/vuetify-jsonschema-form`, `npm -w doc run dev`, then the `/editor` page. It restores its state from `localStorage['vjsf-editor-state']` = `{ schema, options, data }`: set it (from DevTools) and reload. Put in `options.context` what the expressions read (`dataFairUrl`, `ownerFilter`…). A `fetch` stub for `getItems` must be installed before the page loads (an init script), a later one comes too late.
+- In Node, faster to sweep cases: `compile(schema)` from `@json-layout/core/compile`, then `new StatefulLayout(compiled, compiled.skeletonTrees[compiled.mainTree], options, data)` from `@json-layout/core/state`. Same engine as vjsf: the state tree gives each node's `layout.comp` and the errors.
+
+The host service may pin an older vjsf than the editor: a rendering that differs between the two can come from the version, not the schema.
 
 ## Checklist before committing a schema change
 

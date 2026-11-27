@@ -71,6 +71,8 @@ Un formulaire vjsf 3 / json-layout peut exposer son `StatefulLayout` avec la cla
 | `<prefix>getSchema` | Schéma JSON, si le composant l'a fourni. |
 | `subagent_<prefix>form` | Consigne de délégation (voir « sous-agents » ci-dessous), présent seulement si le composant active `includeSubAgent`. |
 
+Pour un champ de sélection, `setFieldValue` accepte un `suggestionIndex` : l'index d'une valeur dans la dernière liste renvoyée par `getFieldSuggestions` sur ce chemin (le paramètre `query` de celui-ci restreint la liste).
+
 **Les chemins incluent les conteneurs de mise en page** : le titre d'une page de portail est à `/$comp-1/title`, pas `/title`. Les obtenir de `getData`/`describeState`, jamais par déduction depuis le schéma JSON.
 
 ## Outils sous-agents

@@ -242,6 +242,8 @@ Le fond `bg-primary` de la carte pose la couleur de texte `on-primary` : pas de 
 - Alignement des blocs `text` : à gauche pour tout paragraphe. `textAlign: 'center'` seulement pour un texte très court (une ou deux lignes, sur mobile aussi), car chaque ligne d'un long texte centré commence à un endroit différent. Bonne pratique, sans critère RGAA ni WCAG.
 - `textAlign: 'justify'` uniquement sur demande explicite, en signalant le coût : il ne respecte pas le critère WCAG 1.4.8 (niveau AAA) ni la règle Opquast n° 191, et gêne notamment les personnes dyslexiques. Le RGAA n'a pas de critère sur ce point.
 - Texte alternatif (`title` d'une image) : l'information apportée, pas l'apparence (RGAA 1.1 et 1.3). Libellé de lien ou de bouton : avec son contexte, il dit où il mène (RGAA 6.1), jamais « Cliquez ici ».
+- Lien dans un texte : il se distingue autrement que par la couleur (soulignement, icône ou bordure ; le gras ne suffit pas, RGAA 10.6).
+- Lien qui ouvre un nouvel onglet : le RGAA 4.1 n'impose pas de le signaler (le critère 13.2 ne vise qu'une ouverture sans action de l'utilisateur ; l'obligation venait du RGAA 3). Le `title` « … - Nouvelle fenêtre » et l'icône sont une bonne pratique (DSFR, Opquast), à présenter comme une recommandation, pas comme une non-conformité. Le portail complète lui-même à l'affichage les liens du markdown des blocs `text` et `alert` (`title` traduit, `rel="noopener"`, `rel="external"` vers un autre hôte) : rien à écrire à la main.
 
 ## 7. Rythme, largeurs, responsive
 
