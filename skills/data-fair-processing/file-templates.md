@@ -33,7 +33,7 @@ Exact boilerplate for the modern template (Node 24, ESM, native `--experimental-
     "eslint": "^9.26.0",
     "husky": "^9.1.7",
     "neostandard": "^0.12.1",
-    "typescript": "^5.8.3",
+    "typescript": "^5.8.3",          // stays within the peer range of @typescript-eslint/typescript-estree (<6.1): with TypeScript 7 `npm run lint` crashes
     "ws": "^8.19.0"
   },
   "files": ["processing-config-schema.json", "./lib/**/*"]
@@ -45,11 +45,11 @@ Removed devDeps: `@data-fair/processings-test-utils`, `mocha`, `standard`, old `
 
 **LICENSE:** the field becomes `AGPL-3.0-only` — also replace the `LICENSE` file content with the AGPL-3.0-only text. Never delete `LICENSE`, and never leave the field and file inconsistent.
 
-The MIT→AGPL switch is a **standalone org policy, not a side effect of this migration**: it applies by default to every processings *and* catalogs plugin, migrated or not. Doing it outside a TS migration is legitimate.
+The MIT→AGPL switch is a **standalone org policy, not a side effect of this migration**: it applies by default to every processings *and* catalogs plugin, migrated or not. Doing it outside a TS migration is legitimate. Relicensing needs the copyright holders' agreement: when the existing license names an outside contributor, get theirs first.
 
 Copy the LICENSE from a known-good source — `registry/LICENSE` or `processing-datasets-list/LICENSE` (md5 starts `4ae09d45`, 661 lines, verbatim FSF text).
 
-⚠️ Do **not** copy from `data-fair`, `agents`, `metrics` or `notify`: those carry a reformatted variant whose FSF copyright header was replaced by `Copyright (C) 2020 Koumoul`, which contradicts the "changing it is not allowed" clause the file itself still contains, and which also has a `not to s ue` text corruption. Verify after copying:
+⚠️ Do **not** copy from another repo without the checks below: several data-fair service repos (data-fair, portals, processings, catalogs, agents among them) carry a reformatted variant whose FSF copyright header was replaced by `Copyright (C) 2020 Koumoul`, which contradicts the "changing it is not allowed" clause the file itself still contains, and which also has a `not to s ue` text corruption. Verify after copying:
 
 ```sh
 md5sum LICENSE | cut -c1-8            # → 4ae09d45

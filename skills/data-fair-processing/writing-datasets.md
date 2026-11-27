@@ -56,6 +56,8 @@ Wait for the outcome on `context.ws`, and subscribe **before** the upload when t
 
 Reference implementation: `processing-transfer-file/lib/finalize.ts` (`watchFinalization`) and its tests in `test-it/unit/transfer.test.ts` (a fake `ws.waitFor` replaying journal events).
 
+Do not wait for the journal after writing to an **editable** dataset. `waitFor` and `waitForJournal` only see events published after their subscription, they never replay the journal, and an editable dataset is created already `finalized` and finalizes a small `_bulk_lines` write before the response comes back: the wait then hangs until its timeout. Once `_bulk_lines` answers, report from its response (`nbOk`, `nbErrors`, `nbDeleted`, see below). For the same reason, `GET api/v1/datasets/{id}/lines` right after a write can still return the previous state: read lines to compare with an earlier run, not to check the write of the current one.
+
 ## Writing lines: `_bulk_lines` answers 200 with errors
 
 `_bulk_lines` answers **400 only when no line went through**. As soon as one line is accepted, rejected lines come back in a **200** with `nbErrors > 0` and `errors: [{ line, error }]`; an error after the first batch is reported the same way (`line: -1`), and with `?drop=true` the whole operation is cancelled (`cancelled: true`). Checking the HTTP status is not enough.
@@ -79,6 +81,21 @@ The schema sent at creation is frozen unless the plugin updates it: a column add
 
 - Either PATCH the schema before sending the lines (`PATCH api/v1/datasets/{id}` with `schema`), keeping the columns added by hand — reference: `processing-datasets-list`, `processing-gbfs`;
 - or compare the schema with the expected columns and throw with a clear message — reference: `processing-historique-rge` — optionally with an opt-in to update it — reference: `processing-json-mapping` (`forceUpdate`).
+
+## When the source changes its schema
+
+When the plugin embeds the schema of its source (a `schema_<file>.json` it uploads with the file), the output follows the source: do not fabricate empty columns to replace the ones the source removed. Compare the downloaded header with the embedded schema at every run and log a `log.warning` listing removed, added and retyped columns, then update the embedded schema. A removed column silently breaks what users configured on the dataset: an `exprEval` extension failing on a line is always blocking, so the new data is never published and the dataset freezes on its old data while the run stays green. A `forceUpdate` that skips the header check must not skip this warning.
+
+## Annotating the produced dataset
+
+Columns and metadata follow the rules of the data-fair assistant prompts, read them rather than guessing: `ui/src/composables/dataset/agent-schema-annotation-tools.ts`, `agent-property-config-tools.ts`, `agent-summary-tools.ts`, `agent-description-tools.ts`, `agent-metadata-tools.ts` (and their `-logic.ts`). In short:
+
+- column titles of 2 to 5 words; a `description` only for what the title cannot say (unit, convention, meaning of an empty value), never the list of codes (that is `x-labels`) nor anything that changes with the data;
+- a concept (`x-refersTo`) at most once per dataset, with a type matching the column's; when in doubt, none;
+- `summary` in plain text, 300 characters at most, opening on the subject (never "Ce jeu de données…"); `description` in markdown (overview, content, usage notes);
+- `license`, `origin`, `creator`, `keywords`, `spatial`, `temporal`, `frequency` and `conformsTo` filled when known, from the source's own documentation.
+
+Expression trap: `TRIM()` also replaces every non-word character run with a space (`shared/expr-eval.js`), destroying accents, hyphens and apostrophes. An `x-transform` `expr` already receives a trimmed string: `value` is enough to strip surrounding spaces.
 
 ## Choosing the target dataset
 

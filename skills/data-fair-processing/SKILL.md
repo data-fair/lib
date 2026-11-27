@@ -102,7 +102,7 @@ What to do with it:
 - **Every HTTP call goes through `context.axios`** — never the raw `axios` package, `axios.create()`, `fetch`, `got` or `request`, and never a custom `httpAgent`/`httpsAgent`/`proxy` option: they bypass the SSRF protection. Credentials, non-HTTP clients and child processes: see [Security](#security) below.
 - **POST/PATCH to data-fair** (bulk lines, file upload) are not retried: wrap them in a small helper retrying 429/5xx, with the body rebuilt by a thunk on each attempt. Reference: `processing-ods/lib/utils.ts` `withRetry429` / `dfRetry` (429 only, 3 retries, fixed 10 s pause, logs each pause). Don't wrap GETs — the built-in retry already applies, the two stack.
 - **Reading an error in code that runs in both worker and tests:** `err.status ?? err.response?.status`, `err.data ?? err.response?.data`.
-- **Logging:** logs and error messages are in English (language policy in [config-schema.md](config-schema.md#internationalization-policy)). An error thrown from `run` is already turned by the worker into `log.error("<status> - <statusText> - <body> (<url>)")` plus a `log.debug` of the trimmed error — just rethrow. When you catch to add context, `await log.error('what failed', err.response?.data ?? err.data)` (the second argument is a real `extra`), then rethrow.
+- **Logging:** logs and error messages are in English (language policy in [config-schema.md](config-schema.md#internationalization-policy)). An error thrown from `run` is already turned by the worker into `log.error("<status> - <statusText> - <body> (<url>)")` plus a `log.debug` of the trimmed error: just rethrow. When you catch to add context, `await log.error('what failed', err.response?.data ?? err.data)` (the second argument is a real `extra`), then rethrow. `log.step` opens each phase (download, transform, upload), `log.info` carries the detail; messages name the source URL (never a `tmpDir` path), human-readable sizes and line counts.
 
 ### API key and vocabulary
 
@@ -187,9 +187,9 @@ npm run lint            # neostandard + @data-fair/lib-utils/eslint/recommended
 npm test                # node:test over test-it/*.ts
 ```
 
-Run tests against a real instance by filling `config/local-test.mjs` (gitignored) with `dataFairUrl` + `dataFairAPIKey`; tests build a context with `@data-fair/lib-processing-dev/tests-utils.js`.
+Tests build a context with `@data-fair/lib-processing-dev/tests-utils.js` and fake data-fair and the remote source with `nock` (`processing-import-api`, `processing-export-file`): a test run never depends on a real instance and stays within a couple of minutes. A test against a real instance (`dataFairUrl` + `dataFairAPIKey` in the gitignored `config/local-test.mjs`) is opt-in, skipped unless a value of that file enables it (`processing-datasets-list`), not merely because the file exists.
 
-**Never touch `version` in `package.json`** — releases are automated (tag → `publish-production.yml`).
+**Never touch `version` in `package.json`**: releases go through `npm version` (commit `X.Y.Z` and tag `vX.Y.Z`); the tag publishes to the registry (`publish-production.yml`), every push to the default branch to the staging registry. When starting from the template, check that its `version` did not overwrite the project's. A plugin's npm package can be frozen at an old version: read the tags and the workflow runs, not npm, to know what is published.
 
 ## Reference files
 
@@ -198,7 +198,9 @@ Run tests against a real instance by filling `config/local-test.mjs` (gitignored
 | [config-schema.md](./config-schema.md) | writing/reviewing `processing-config-schema.json` (with the [vjsf skill](../vjsf/SKILL.md) as background) |
 | [typescript-migration.md](./typescript-migration.md) | the repo still has `main: index.js`, `require()`, `mocha`, or no `"type": "module"` |
 | [file-templates.md](./file-templates.md) | exact contents of every boilerplate file |
-| [writing-datasets.md](./writing-datasets.md) | creating or updating a dataset: the four write paths, the `?draft=` mode of a file update, waiting for the journal, `_bulk_lines` errors, primary key, schema resync, choosing the target |
+| [writing-datasets.md](./writing-datasets.md) | creating or updating a dataset: the four write paths, the `?draft=` mode of a file update, waiting for the journal, `_bulk_lines` errors, primary key, schema resync, source drift, annotation, choosing the target |
+
+Before calling a plugin ready for release, go through the checklists of `config-schema.md`, `file-templates.md` and `writing-datasets.md` and the vjsf skill, not this file alone: they catch what a quick read misses (a POST to data-fair without a 429 retry, a `getItems` without `size=50`, an untranslated title).
 
 ## Common mistakes
 

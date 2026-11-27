@@ -143,6 +143,7 @@ Generic schema traps (leftover `x-*`, `${context…}` templates, `item.` prefixe
 | Renaming a config property | Existing processings keep the old key; `removeAdditional: true` in the UI then **drops** their value on next save. Rename only with an upgrade path |
 | Adding a `required` property with no `default` | Every existing processing becomes invalid |
 | Hardening the schema (new `required`, narrower `enum`/`pattern`/`type`, `additionalProperties: false`) | The API re-validates the **stored** config on every PATCH, even one touching only `active` or `title`: existing processings get a `400` with the raw Ajv errors until their config is fixed. Loosen, or ship an upgrade path |
+| No migration exists for stored configs | The upgrade path lives in the plugin: keep the old shape accepted (a `deprecated` property with `layout: "none"`, an `anyOf` branch) and convert it in `run` with `patchConfig`, since the worker does not validate the config. A key patched to `null` or `undefined` is deleted |
 | Secret field with no `lib/prepare.ts` handling | The secret stays readable in the config |
 
 ## Checklist before committing a schema change

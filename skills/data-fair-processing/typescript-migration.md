@@ -39,7 +39,7 @@ The reference (`majic`) has ONE transform. Many plugins (e.g. `transform-csv`) d
 | Trap | Correct move |
 |---|---|
 | Committing generated `.type/` dirs | `.gitignore` them; regenerate with `npm run build-types` |
-| Bumping `version` for a "feat!" | Leave `version` alone — releases are automated |
+| Bumping `version` for a "feat!" | Leave `version` alone, releases are automated. Copying files from the template can also overwrite it: check `version` is still the project's |
 | `require('./x/' + v + '.js')` | `(await import('./x/' + v + '.ts')).default` — dynamic import is async |
 | Dropping `.ts` extension in imports | Keep it: `import x from './x.ts'` (NodeNext + allowImportingTsExtensions) |
 | cwd-relative `fs.existsSync('./lib/...')` after moving logic into `lib/` | Resolve with `import.meta.dirname` |
@@ -49,8 +49,9 @@ The reference (`majic`) has ONE transform. Many plugins (e.g. `transform-csv`) d
 | Leaving vjsf 2 `x-*` keywords in the config schema | Silently ignored by the current UI — migrate (see config-schema.md) |
 | `@types/pkg` version | Must match the runtime major (`@types/fs-extra@^11` ⇒ `fs-extra@^11`) — bumping the type may force a runtime major bump |
 | Heterogeneous transforms typed `any` (trips `no-explicit-any`) | Shared type `type Transform = (item: Record<string, string>) => Record<string, unknown>`; guard regex matches instead of `match![1]` |
+| `@types/jsonstream` added for `import JSONStream from 'JSONStream'` | It publishes under the lowercase name: on a case-sensitive filesystem `tsc --noEmit` still reports TS7016, while lint and tests stay green. Drop it and add an ambient `types/JSONStream.d.ts` (`declare module 'JSONStream'` with `parse`/`stringify`) |
 | `csv` combined package | Prefer `csv-parse` + `csv-stringify` (proven ESM named exports: `import { parse } from 'csv-parse'`, `import { stringify } from 'csv-stringify'`) |
-| Deleting `LICENSE` / mismatched `license` field | Replace `LICENSE` with the AGPL-3.0-only text to match the field — don't delete it, don't leave field and file inconsistent. Copy from `registry/LICENSE` (md5 `4ae09d45`), NOT from `data-fair`/`agents`/`metrics`/`notify` (altered FSF header + `s ue` corruption). See file-templates.md |
+| Deleting `LICENSE` / mismatched `license` field | Replace `LICENSE` with the AGPL-3.0-only text to match the field; don't delete it, don't leave field and file inconsistent. Copy from `registry/LICENSE` (md5 `4ae09d45`), not from a service repo without checking (several carry an altered FSF header + `s ue` corruption). See file-templates.md |
 | `plugin-config-schema.json` + its test | Template drops both; delete unless it carries real super-admin plugin config |
 | Unused non-builtin devDeps (`dayjs`, `draftlog`, `iconv-lite`…) | grep-confirm no usage, then drop (not just `util`/`path` shims) |
 | `config` v3 `module.exports` | v4 + `config/default.mjs` `export default` |
